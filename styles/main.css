@@ -1,0 +1,59 @@
+html, body {
+	margin: 0;
+	padding: 0;
+}
+
+.pane-code {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 30%;
+}
+
+.pane-code .CodeMirror {
+	width: 100%;
+	height: 100%;
+	background: #EEEEEE;
+}
+
+.pane-view {
+	position: absolute;
+	left: 30%;
+	top: 0;
+	bottom: 0;
+	right: 0;
+}
+
+.options {
+	display: inline-block;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	background: #FFFFFF;
+	border-top-left-radius: 5px;
+	border-top: 1px solid #EEEEEE;
+	border-left: 1px solid #EEEEEE;
+	font-family: sans-serif;
+	overflow: hidden;
+}
+
+.options a {
+	display: inline-block;
+	padding: 5px 10px;
+}
+
+.options a:not(:last-child) {
+	border-right: 1px solid #EEEEEE;
+}
+
+.options a:link, .options a:visited {
+	color: #666699;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.options a:active, .options a:hover {
+	background: #EEEEEE;
+	color: #6666CC;
+}
