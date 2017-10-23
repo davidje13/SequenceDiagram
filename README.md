@@ -2,6 +2,8 @@
 
 A tool for creating sequence diagrams from a Domain-Specific Language.
 
+[See it in action!](https://davidje13.github.io/SequenceDiagram/)
+
 This project includes a web page for editing the diagrams, but the core
 logic is available as separate components which can be included in
 other projects.
@@ -167,8 +169,8 @@ end
 Contributions are welcome!
 
 If you find a bug or desire a new feature, feel free to report it in
-the GitHub issue tracker, or write the code yourself and make a pull
-request.
+the [GitHub issue tracker](https://github.com/davidje13/SequenceDiagram/issues),
+or write the code yourself and make a pull request.
 
 Pull requests are more likely to be accepted if the code you changed
 is tested (write new tests for new features and bug fixes, and update
@@ -186,3 +188,6 @@ npm install http-server -g;
 # Then
 http-server;
 ```
+
+The current status of the tests on the master branch can be checked at
+[test.htm](https://davidje13.github.io/SequenceDiagram/test.htm)
