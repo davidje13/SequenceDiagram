@@ -32,6 +32,8 @@ define(() => {
 		}
 	}
 
+	const SEP_ZERO = {left: 0, right: 0};
+
 	const NS = 'http://www.w3.org/2000/svg';
 
 	const LINE_HEIGHT = 1.3;
@@ -160,6 +162,24 @@ define(() => {
 			this.diagram.appendChild(this.actions);
 			this.base.appendChild(this.diagram);
 
+			this.separationAgentCap = {
+				'box': this.separationAgentCapBox.bind(this),
+				'cross': this.separationAgentCapCross.bind(this),
+				'bar': this.separationAgentCapBar.bind(this),
+				'none': this.separationAgentCapNone.bind(this),
+			};
+
+			this.separationAction = {
+				'agent begin': this.separationAgent.bind(this),
+				'agent end': this.separationAgent.bind(this),
+				'connection': this.separationConnection.bind(this),
+				'block': this.separationBlock.bind(this),
+				'note over': this.separationNoteOver.bind(this),
+				'note left': this.separationNoteLeft.bind(this),
+				'note right': this.separationNoteRight.bind(this),
+				'note between': this.separationNoteBetween.bind(this),
+			};
+
 			this.renderAgentCap = {
 				'box': this.renderAgentCapBox.bind(this),
 				'cross': this.renderAgentCapCross.bind(this),
@@ -178,121 +198,117 @@ define(() => {
 				'note between': this.renderNoteBetween.bind(this),
 			};
 
-			this.separationAction = {
-				'agent begin': this.separationAgentCap.bind(this),
-				'agent end': this.separationAgentCap.bind(this),
-				'connection': this.separationConnection.bind(this),
-				'block': this.separationBlock.bind(this),
-				'note over': this.separationNoteOver.bind(this),
-				'note left': this.separationNoteLeft.bind(this),
-				'note right': this.separationNoteRight.bind(this),
-				'note between': this.separationNoteBetween.bind(this),
-			};
-
 			this.width = 0;
 			this.height = 0;
 		}
 
-		addSeparation(agentInfo, agent, dist) {
-			let d = agentInfo.separations.get(agent) || 0;
-			agentInfo.separations.set(agent, Math.max(d, dist));
+		addSeparation(agent1, agent2, dist) {
+			const info1 = this.agentInfos.get(agent1);
+			const info2 = this.agentInfos.get(agent2);
+
+			const d1 = info1.separations.get(agent2) || 0;
+			info1.separations.set(agent2, Math.max(d1, dist));
+
+			const d2 = info2.separations.get(agent1) || 0;
+			info2.separations.set(agent1, Math.max(d2, dist));
 		}
 
-		separationAgentCap(agentInfos, stage) {
-			switch(stage.mode) {
-			case 'box':
-			case 'bar':
-				stage.agents.forEach((agent1) => {
-					const info1 = agentInfos.get(agent1);
-					const sep1 = (
-						info1.labelWidth / 2 +
-						AGENT_MARGIN
+		addSeparations(agents, agentSpaces) {
+			agents.forEach((agent1) => {
+				const info1 = this.agentInfos.get(agent1);
+				const sep1 = agentSpaces.get(agent1) || SEP_ZERO;
+				agents.forEach((agent2) => {
+					const info2 = this.agentInfos.get(agent2);
+					if(info2.index >= info1.index) {
+						return;
+					}
+					const sep2 = agentSpaces.get(agent2) || SEP_ZERO;
+					this.addSeparation(
+						agent1,
+						agent2,
+						sep1.right + sep2.left + AGENT_MARGIN
 					);
-					stage.agents.forEach((agent2) => {
-						if(agent1 === agent2) {
-							return;
-						}
-						const info2 = agentInfos.get(agent2);
-						this.addSeparation(info1, agent2,
-							sep1 + info2.labelWidth / 2
-						);
-					});
-					this.visibleAgents.forEach((agent2) => {
-						if(stage.agents.indexOf(agent2) === -1) {
-							const info2 = agentInfos.get(agent2);
-							this.addSeparation(info1, agent2, sep1);
-							this.addSeparation(info2, agent1, sep1);
-						}
-					});
 				});
-				break;
-			case 'cross':
-				stage.agents.forEach((agent1) => {
-					const info1 = agentInfos.get(agent1);
-					const sep1 = (
-						AGENT_CROSS_SIZE / 2 +
-						AGENT_MARGIN
-					);
-					stage.agents.forEach((agent2) => {
-						if(agent1 === agent2) {
-							return;
-						}
-						this.addSeparation(info1, agent2,
-							sep1 + AGENT_CROSS_SIZE / 2
-						);
-					});
-					this.visibleAgents.forEach((agent2) => {
-						if(stage.agents.indexOf(agent2) === -1) {
-							const info2 = agentInfos.get(agent2);
-							this.addSeparation(info1, agent2, sep1);
-							this.addSeparation(info2, agent1, sep1);
-						}
-					});
-				});
-				break;
+			});
+		}
+
+		separationAgentCapBox(agentInfo) {
+			return {
+				left: agentInfo.labelWidth / 2,
+				right: agentInfo.labelWidth / 2,
+			};
+		}
+
+		separationAgentCapCross() {
+			return {
+				left: AGENT_CROSS_SIZE / 2,
+				right: AGENT_CROSS_SIZE / 2,
+			};
+		}
+
+		separationAgentCapBar(agentInfo) {
+			return {
+				left: agentInfo.labelWidth / 2,
+				right: agentInfo.labelWidth / 2,
+			};
+		}
+
+		separationAgentCapNone() {
+			return {left: 0, right: 0};
+		}
+
+		separationAgent({type, mode, agents}) {
+			if(type === 'agent begin') {
+				mergeSets(this.visibleAgents, agents);
 			}
-			if(stage.type === 'agent begin') {
-				mergeSets(this.visibleAgents, stage.agents);
-			} else if(stage.type === 'agent end') {
-				removeAll(this.visibleAgents, stage.agents);
+
+			const agentSpaces = new Map();
+			agents.forEach((agent) => {
+				const info = this.agentInfos.get(agent);
+				const separationFn = this.separationAgentCap[mode];
+				agentSpaces.set(agent, separationFn(info));
+			});
+			this.addSeparations(this.visibleAgents, agentSpaces);
+
+			if(type === 'agent end') {
+				removeAll(this.visibleAgents, agents);
 			}
 		}
 
-		separationConnection(agentInfos, stage) {
-			const w = (
-				this.testTextWidth(this.testConnectWidth, stage.label) +
+		separationConnection({agents, label}) {
+			this.addSeparation(
+				agents[0],
+				agents[1],
+
+				this.testTextWidth(this.testConnectWidth, label) +
 				CONNECT_POINT * 2 +
 				CONNECT_LABEL_PADDING * 2 +
 				ATTRS.AGENT_LINE['stroke-width']
 			);
-			const agent1 = stage.agents[0];
-			const agent2 = stage.agents[1];
-			this.addSeparation(agentInfos.get(agent1), agent2, w);
-			this.addSeparation(agentInfos.get(agent2), agent1, w);
 		}
 
-		separationBlock(/*agentInfos, stage*/) {
+		separationBlock(/*stage*/) {
 			// TODO
 		}
 
-		separationNoteOver(/*agentInfos, stage*/) {
+		separationNoteOver(/*stage*/) {
 			// TODO
 		}
 
-		separationNoteLeft(/*agentInfos, stage*/) {
+		separationNoteLeft(/*stage*/) {
 			// TODO
 		}
 
-		separationNoteRight(/*agentInfos, stage*/) {
+		separationNoteRight(/*stage*/) {
 			// TODO
 		}
 
-		separationNoteBetween(/*agentInfos, stage*/) {
+		separationNoteBetween(/*stage*/) {
 			// TODO
 		}
 
-		checkSeparation(agentInfos, stage) {
-			this.separationAction[stage.type](agentInfos, stage);
+		checkSeparation(stage) {
+			this.separationAction[stage.type](stage);
 		}
 
 		renderAgentCapBox({x, labelWidth, label}) {
@@ -361,37 +377,38 @@ define(() => {
 			};
 		}
 
-		renderAgentBegin(agentInfos, stage) {
+		renderAgentBegin({mode, agents}) {
 			let shifts = {height: 0};
-			stage.agents.forEach((agent) => {
-				const agentInfo = agentInfos.get(agent);
-				shifts = this.renderAgentCap[stage.mode](agentInfo);
+			agents.forEach((agent) => {
+				const agentInfo = this.agentInfos.get(agent);
+				shifts = this.renderAgentCap[mode](agentInfo);
 				agentInfo.latestYStart = this.currentY + shifts.lineBottom;
 			});
 			this.currentY += shifts.height + ACTION_MARGIN;
 		}
 
-		renderAgentEnd(agentInfos, stage) {
+		renderAgentEnd({mode, agents}) {
 			let shifts = {height: 0};
-			stage.agents.forEach((agent) => {
-				const agentInfo = agentInfos.get(agent);
+			agents.forEach((agent) => {
+				const agentInfo = this.agentInfos.get(agent);
 				const x = agentInfo.x;
-				shifts = this.renderAgentCap[stage.mode](agentInfo);
+				shifts = this.renderAgentCap[mode](agentInfo);
 				this.agentLines.appendChild(makeSVGNode('path', Object.assign({
 					'd': (
 						'M ' + x + ' ' + agentInfo.latestYStart +
 						' L ' + x + ' ' + (this.currentY + shifts.lineTop)
 					),
+					'class': 'agent-' + agentInfo.index + '-line',
 				}, ATTRS.AGENT_LINE)));
 				agentInfo.latestYStart = null;
 			});
 			this.currentY += shifts.height + ACTION_MARGIN;
 		}
 
-		renderConnection(agentInfos, {label, agents, line, left, right}) {
+		renderConnection({label, agents, line, left, right}) {
 			/* jshint -W074, -W071 */ // TODO: tidy this up
-			const from = agentInfos.get(agents[0]);
-			const to = agentInfos.get(agents[1]);
+			const from = this.agentInfos.get(agents[0]);
+			const to = this.agentInfos.get(agents[1]);
 
 			const dy = CONNECT_HEIGHT / 2;
 			const dx = CONNECT_POINT;
@@ -466,28 +483,28 @@ define(() => {
 			this.currentY = y + dy + ACTION_MARGIN;
 		}
 
-		renderBlock(/*agentInfos, stage*/) {
+		renderBlock(/*stage*/) {
 			// TODO
 		}
 
-		renderNoteOver(/*agentInfos, stage*/) {
+		renderNoteOver(/*stage*/) {
 			// TODO
 		}
 
-		renderNoteLeft(/*agentInfos, stage*/) {
+		renderNoteLeft(/*stage*/) {
 			// TODO
 		}
 
-		renderNoteRight(/*agentInfos, stage*/) {
+		renderNoteRight(/*stage*/) {
 			// TODO
 		}
 
-		renderNoteBetween(/*agentInfos, stage*/) {
+		renderNoteBetween(/*stage*/) {
 			// TODO
 		}
 
-		addAction(agentInfos, stage) {
-			this.renderAction[stage.type](agentInfos, stage);
+		addAction(stage) {
+			this.renderAction[stage.type](stage);
 		}
 
 		makeTextTester(attrs) {
@@ -510,42 +527,43 @@ define(() => {
 		buildAgentInfos(agents, stages) {
 			const testNameWidth = this.makeTextTester(ATTRS.AGENT_BOX_LABEL);
 
-			const agentInfos = new Map();
-			agents.forEach((agent) => {
-				agentInfos.set(agent, {
+			this.agentInfos = new Map();
+			agents.forEach((agent, index) => {
+				this.agentInfos.set(agent, {
 					label: agent,
 					labelWidth: (
 						this.testTextWidth(testNameWidth, agent) +
 						BOX_PADDING * 2
 					),
+					index,
 					x: null,
 					latestYStart: null,
 					separations: new Map(),
 				});
 			});
-			agentInfos.get('[').labelWidth = 0;
-			agentInfos.get(']').labelWidth = 0;
+			this.agentInfos.get('[').labelWidth = 0;
+			this.agentInfos.get(']').labelWidth = 0;
 
 			this.removeTextTester(testNameWidth);
 
 			this.testConnectWidth = this.makeTextTester(ATTRS.CONNECT_LABEL);
 			this.visibleAgents = ['[', ']'];
-			traverse(stages, this.checkSeparation.bind(this, agentInfos));
+			traverse(stages, this.checkSeparation.bind(this));
 			this.removeTextTester(this.testConnectWidth);
 
-			let currentX = 0;
 			agents.forEach((agent) => {
-				const agentInfo = agentInfos.get(agent);
+				const agentInfo = this.agentInfos.get(agent);
+				let currentX = 0;
 				agentInfo.separations.forEach((dist, otherAgent) => {
-					const otherAgentInfo = agentInfos.get(otherAgent);
+					const otherAgentInfo = this.agentInfos.get(otherAgent);
 					if(otherAgentInfo.x !== null) {
 						currentX = Math.max(currentX, otherAgentInfo.x + dist);
 					}
 				});
 				agentInfo.x = currentX;
+				this.minX = Math.min(this.minX, currentX);
+				this.maxX = Math.max(this.maxX, currentX);
 			});
-
-			return {agentInfos, minX: 0, maxX: currentX};
 		}
 
 		updateBounds(stagesHeight) {
@@ -584,15 +602,18 @@ define(() => {
 
 			this.titleText.nodeValue = meta.title || '';
 
-			const info = this.buildAgentInfos(agents, stages);
+			this.minX = 0;
+			this.maxX = 0;
+			this.buildAgentInfos(agents, stages);
 
-			this.minX = info.minX;
-			this.maxX = info.maxX;
 			this.currentY = 0;
-
-			traverse(stages, this.addAction.bind(this, info.agentInfos));
+			traverse(stages, this.addAction.bind(this));
 
 			this.updateBounds(Math.max(this.currentY - ACTION_MARGIN, 0));
+		}
+
+		getColumnX(name) {
+			return this.agentInfos.get(name).x;
 		}
 
 		svg() {

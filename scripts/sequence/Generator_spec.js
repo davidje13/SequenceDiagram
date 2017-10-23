@@ -14,13 +14,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	const BLOCK_END = 'block end';
 
 	describe('.generate', () => {
-		it('propagates metadata', () => {
+		it('propagates title metadata', () => {
 			const input = {
-				meta: {foo: 'bar'},
+				meta: {title: 'bar'},
 				stages: [],
 			};
 			const sequence = generator.generate(input);
-			expect(sequence.meta).toEqual({foo: 'bar'});
+			expect(sequence.meta).toEqual({title: 'bar'});
 		});
 
 		it('returns an empty sequence for blank input', () => {

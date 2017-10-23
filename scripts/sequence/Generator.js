@@ -184,7 +184,9 @@ define(() => {
 			);
 
 			return {
-				meta,
+				meta: {
+					title: meta.title,
+				},
 				agents,
 				stages: rootStages,
 			};
