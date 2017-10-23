@@ -42,17 +42,18 @@ define(() => {
 	const AGENT_CROSS_SIZE = 20;
 	const AGENT_NONE_HEIGHT = 10;
 	const ACTION_MARGIN = 5;
-	const ARROW_HEIGHT = 8;
-	const ARROW_POINT = 4;
-	const ARROW_LABEL_PADDING = 6;
-	const ARROW_LABEL_MASK_PADDING = 3;
-	const ARROW_LABEL_MARGIN_TOP = 2;
-	const ARROW_LABEL_MARGIN_BOTTOM = 1;
+	const CONNECT_HEIGHT = 8;
+	const CONNECT_POINT = 4;
+	const CONNECT_LABEL_PADDING = 6;
+	const CONNECT_LABEL_MASK_PADDING = 3;
+	const CONNECT_LABEL_MARGIN_TOP = 2;
+	const CONNECT_LABEL_MARGIN_BOTTOM = 1;
 
 	const ATTRS = {
 		TITLE: {
 			'font-family': 'sans-serif',
 			'font-size': 20,
+			'text-anchor': 'middle',
 			'class': 'title',
 		},
 
@@ -70,6 +71,7 @@ define(() => {
 		AGENT_BOX_LABEL: {
 			'font-family': 'sans-serif',
 			'font-size': 12,
+			'text-anchor': 'middle',
 		},
 		AGENT_CROSS: {
 			'fill': 'none',
@@ -81,25 +83,26 @@ define(() => {
 			'height': 5,
 		},
 
-		ARROW_LINE_SOLID: {
+		CONNECT_LINE_SOLID: {
 			'fill': 'none',
 			'stroke': '#000000',
 			'stroke-width': 1,
 		},
-		ARROW_LINE_DASH: {
+		CONNECT_LINE_DASH: {
 			'fill': 'none',
 			'stroke': '#000000',
 			'stroke-width': 1,
 			'stroke-dasharray': '2, 2',
 		},
-		ARROW_LABEL: {
+		CONNECT_LABEL: {
 			'font-family': 'sans-serif',
 			'font-size': 8,
+			'text-anchor': 'middle',
 		},
-		ARROW_LABEL_MASK: {
+		CONNECT_LABEL_MASK: {
 			'fill': '#FFFFFF',
 		},
-		ARROW_HEAD: {
+		CONNECT_HEAD: {
 			'fill': '#000000',
 			'stroke': '#000000',
 			'stroke-width': 1,
@@ -167,24 +170,7 @@ define(() => {
 			this.renderAction = {
 				'agent begin': this.renderAgentBegin.bind(this),
 				'agent end': this.renderAgentEnd.bind(this),
-				'->': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_SOLID, left: false, right: true,
-				}),
-				'<-': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_SOLID, left: true, right: false,
-				}),
-				'<->': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_SOLID, left: true, right: true,
-				}),
-				'-->': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_DASH, left: false, right: true,
-				}),
-				'<--': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_DASH, left: true, right: false,
-				}),
-				'<-->': this.renderArrow.bind(this, {
-					lineAttrs: ATTRS.ARROW_LINE_DASH, left: true, right: true,
-				}),
+				'connection': this.renderConnection.bind(this),
 				'block': this.renderBlock.bind(this),
 				'note over': this.renderNoteOver.bind(this),
 				'note left': this.renderNoteLeft.bind(this),
@@ -195,12 +181,7 @@ define(() => {
 			this.separationAction = {
 				'agent begin': this.separationAgentCap.bind(this),
 				'agent end': this.separationAgentCap.bind(this),
-				'->': this.separationArrow.bind(this),
-				'<-': this.separationArrow.bind(this),
-				'<->': this.separationArrow.bind(this),
-				'-->': this.separationArrow.bind(this),
-				'<--': this.separationArrow.bind(this),
-				'<-->': this.separationArrow.bind(this),
+				'connection': this.separationConnection.bind(this),
 				'block': this.separationBlock.bind(this),
 				'note over': this.separationNoteOver.bind(this),
 				'note left': this.separationNoteLeft.bind(this),
@@ -277,11 +258,11 @@ define(() => {
 			}
 		}
 
-		separationArrow(agentInfos, stage) {
+		separationConnection(agentInfos, stage) {
 			const w = (
-				this.testTextWidth(this.testArrowWidth, stage.label) +
-				ARROW_POINT * 2 +
-				ARROW_LABEL_PADDING * 2 +
+				this.testTextWidth(this.testConnectWidth, stage.label) +
+				CONNECT_POINT * 2 +
+				CONNECT_LABEL_PADDING * 2 +
 				ATTRS.AGENT_LINE['stroke-width']
 			);
 			const agent1 = stage.agents[0];
@@ -322,7 +303,7 @@ define(() => {
 			}, ATTRS.AGENT_BOX)));
 
 			const name = makeSVGNode('text', Object.assign({
-				'x': x - labelWidth / 2 + BOX_PADDING,
+				'x': x,
 				'y': this.currentY + (
 					ATTRS.AGENT_BOX.height +
 					ATTRS.AGENT_BOX_LABEL['font-size'] * (2 - LINE_HEIGHT)
@@ -407,42 +388,47 @@ define(() => {
 			this.currentY += shifts.height + ACTION_MARGIN;
 		}
 
-		renderArrow({lineAttrs, left, right}, agentInfos, stage) {
+		renderConnection(agentInfos, {label, agents, line, left, right}) {
 			/* jshint -W074, -W071 */ // TODO: tidy this up
-			const from = agentInfos.get(stage.agents[0]);
-			const to = agentInfos.get(stage.agents[1]);
+			const from = agentInfos.get(agents[0]);
+			const to = agentInfos.get(agents[1]);
 
-			const dy = ARROW_HEIGHT / 2;
-			const dx = ARROW_POINT;
+			const dy = CONNECT_HEIGHT / 2;
+			const dx = CONNECT_POINT;
 			const dir = (from.x < to.x) ? 1 : -1;
 			const short = ATTRS.AGENT_LINE['stroke-width'];
 			let y = this.currentY;
 
-			if(stage.label) {
-				const mask = makeSVGNode('rect', ATTRS.ARROW_LABEL_MASK);
-				const label = makeSVGNode('text', ATTRS.ARROW_LABEL);
-				label.appendChild(makeText(stage.label));
-				const sz = ATTRS.ARROW_LABEL['font-size'];
+			const lineAttrs = {
+				'solid': ATTRS.CONNECT_LINE_SOLID,
+				'dash': ATTRS.CONNECT_LINE_DASH,
+			};
+
+			if(label) {
+				const mask = makeSVGNode('rect', ATTRS.CONNECT_LABEL_MASK);
+				const labelNode = makeSVGNode('text', ATTRS.CONNECT_LABEL);
+				labelNode.appendChild(makeText(label));
+				const sz = ATTRS.CONNECT_LABEL['font-size'];
 				this.actions.appendChild(mask);
-				this.actions.appendChild(label);
+				this.actions.appendChild(labelNode);
 				y += Math.max(
 					dy,
-					ARROW_LABEL_MARGIN_TOP +
+					CONNECT_LABEL_MARGIN_TOP +
 					sz * LINE_HEIGHT +
-					ARROW_LABEL_MARGIN_BOTTOM
+					CONNECT_LABEL_MARGIN_BOTTOM
 				);
-				const w = label.getComputedTextLength();
-				const x = (from.x + to.x - w) / 2;
+				const w = labelNode.getComputedTextLength();
+				const x = (from.x + to.x) / 2;
 				const yBase = (
 					y -
 					sz * (LINE_HEIGHT - 1) -
-					ARROW_LABEL_MARGIN_BOTTOM
+					CONNECT_LABEL_MARGIN_BOTTOM
 				);
-				label.setAttribute('x', x);
-				label.setAttribute('y', yBase);
-				mask.setAttribute('x', x - ARROW_LABEL_MASK_PADDING);
+				labelNode.setAttribute('x', x);
+				labelNode.setAttribute('y', yBase);
+				mask.setAttribute('x', x - w / 2 - CONNECT_LABEL_MASK_PADDING);
 				mask.setAttribute('y', yBase - sz);
-				mask.setAttribute('width', w + ARROW_LABEL_MASK_PADDING * 2);
+				mask.setAttribute('width', w + CONNECT_LABEL_MASK_PADDING * 2);
 				mask.setAttribute('height', sz * LINE_HEIGHT);
 			} else {
 				y += dy;
@@ -453,7 +439,7 @@ define(() => {
 					'M ' + (from.x + (left ? short : 0) * dir) + ' ' + y +
 					' L ' + (to.x - (right ? short : 0) * dir) + ' ' + y
 				),
-			}, lineAttrs)));
+			}, lineAttrs[line])));
 
 			if(left) {
 				this.actions.appendChild(makeSVGNode('path', Object.assign({
@@ -461,9 +447,9 @@ define(() => {
 						'M ' + (from.x + (dx + short) * dir) + ' ' + (y - dy) +
 						' L ' + (from.x + short * dir) + ' ' + y +
 						' L ' + (from.x + (dx + short) * dir) + ' ' + (y + dy) +
-						(ATTRS.ARROW_HEAD.fill === 'none' ? '' : ' Z')
+						(ATTRS.CONNECT_HEAD.fill === 'none' ? '' : ' Z')
 					),
-				}, ATTRS.ARROW_HEAD)));
+				}, ATTRS.CONNECT_HEAD)));
 			}
 
 			if(right) {
@@ -472,9 +458,9 @@ define(() => {
 						'M ' + (to.x - (dx + short) * dir) + ' ' + (y - dy) +
 						' L ' + (to.x - short * dir) + ' ' + y +
 						' L ' + (to.x - (dx + short) * dir) + ' ' + (y + dy) +
-						(ATTRS.ARROW_HEAD.fill === 'none' ? '' : ' Z')
+						(ATTRS.CONNECT_HEAD.fill === 'none' ? '' : ' Z')
 					),
-				}, ATTRS.ARROW_HEAD)));
+				}, ATTRS.CONNECT_HEAD)));
 			}
 
 			this.currentY = y + dy + ACTION_MARGIN;
@@ -542,10 +528,10 @@ define(() => {
 
 			this.removeTextTester(testNameWidth);
 
-			this.testArrowWidth = this.makeTextTester(ATTRS.ARROW_LABEL);
+			this.testConnectWidth = this.makeTextTester(ATTRS.CONNECT_LABEL);
 			this.visibleAgents = ['[', ']'];
 			traverse(stages, this.checkSeparation.bind(this, agentInfos));
-			this.removeTextTester(this.testArrowWidth);
+			this.removeTextTester(this.testConnectWidth);
 
 			let currentX = 0;
 			agents.forEach((agent) => {
@@ -585,7 +571,7 @@ define(() => {
 				) + ')'
 			);
 
-			this.title.setAttribute('x', (width - titleWidth) / 2);
+			this.title.setAttribute('x', width / 2);
 			this.base.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
 			this.width = width;
 			this.height = height;

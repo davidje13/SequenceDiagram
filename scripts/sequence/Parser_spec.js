@@ -103,6 +103,17 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		});
 	});
 
+	function connectionStage(agents, label = '') {
+		return {
+			type: 'connection',
+			line: 'solid',
+			left: false,
+			right: true,
+			agents,
+			label,
+		};
+	}
+
 	describe('.parse', () => {
 		it('returns an empty sequence for blank input', () => {
 			const parsed = parser.parse('');
@@ -133,37 +144,37 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('converts entries into abstract form', () => {
 			const parsed = parser.parse('A -> B');
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A', 'B'], label: ''},
+				connectionStage(['A', 'B']),
 			]);
 		});
 
 		it('combines multiple tokens into single entries', () => {
 			const parsed = parser.parse('A B -> C D');
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A B', 'C D'], label: ''},
+				connectionStage(['A B', 'C D']),
 			]);
 		});
 
 		it('parses optional labels', () => {
 			const parsed = parser.parse('A B -> C D: foo bar');
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A B', 'C D'], label: 'foo bar'},
+				connectionStage(['A B', 'C D'], 'foo bar'),
 			]);
 		});
 
 		it('converts multiple entries', () => {
 			const parsed = parser.parse('A -> B\nB -> A');
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A', 'B'], label: ''},
-				{type: '->', agents: ['B', 'A'], label: ''},
+				connectionStage(['A', 'B']),
+				connectionStage(['B', 'A']),
 			]);
 		});
 
 		it('ignores blank lines', () => {
 			const parsed = parser.parse('A -> B\n\nB -> A\n');
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A', 'B'], label: ''},
-				{type: '->', agents: ['B', 'A'], label: ''},
+				connectionStage(['A', 'B']),
+				connectionStage(['B', 'A']),
 			]);
 		});
 
@@ -177,12 +188,54 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A <--> B\n'
 			);
 			expect(parsed.stages).toEqual([
-				{type: '->', agents: ['A', 'B'], label: ''},
-				{type: '<-', agents: ['A', 'B'], label: ''},
-				{type: '<->', agents: ['A', 'B'], label: ''},
-				{type: '-->', agents: ['A', 'B'], label: ''},
-				{type: '<--', agents: ['A', 'B'], label: ''},
-				{type: '<-->', agents: ['A', 'B'], label: ''},
+				{
+					type: 'connection',
+					line: 'solid',
+					left: false,
+					right: true,
+					agents: ['A', 'B'],
+					label: '',
+				},
+				{
+					type: 'connection',
+					line: 'solid',
+					left: true,
+					right: false,
+					agents: ['A', 'B'],
+					label: '',
+				},
+				{
+					type: 'connection',
+					line: 'solid',
+					left: true,
+					right: true,
+					agents: ['A', 'B'],
+					label: '',
+				},
+				{
+					type: 'connection',
+					line: 'dash',
+					left: false,
+					right: true,
+					agents: ['A', 'B'],
+					label: '',
+				},
+				{
+					type: 'connection',
+					line: 'dash',
+					left: true,
+					right: false,
+					agents: ['A', 'B'],
+					label: '',
+				},
+				{
+					type: 'connection',
+					line: 'dash',
+					left: true,
+					right: true,
+					agents: ['A', 'B'],
+					label: '',
+				},
 			]);
 		});
 
@@ -192,8 +245,22 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A -> B: B <- A\n'
 			);
 			expect(parsed.stages).toEqual([
-				{type: '<-', agents: ['A', 'B'], label: 'B -> A'},
-				{type: '->', agents: ['A', 'B'], label: 'B <- A'},
+				{
+					type: 'connection',
+					line: 'solid',
+					left: true,
+					right: false,
+					agents: ['A', 'B'],
+					label: 'B -> A',
+				},
+				{
+					type: 'connection',
+					line: 'solid',
+					left: false,
+					right: true,
+					agents: ['A', 'B'],
+					label: 'B <- A',
+				},
 			]);
 		});
 
@@ -299,12 +366,12 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			);
 			expect(parsed.stages).toEqual([
 				{type: 'block begin', mode: 'if', label: 'something happens'},
-				{type: '->', agents: ['A', 'B'], label: ''},
+				connectionStage(['A', 'B']),
 				{type: 'block split', mode: 'else', label: 'something else'},
-				{type: '->', agents: ['A', 'C'], label: ''},
-				{type: '->', agents: ['C', 'B'], label: ''},
+				connectionStage(['A', 'C']),
+				connectionStage(['C', 'B']),
 				{type: 'block split', mode: 'else', label: ''},
-				{type: '->', agents: ['A', 'D'], label: ''},
+				connectionStage(['A', 'D']),
 				{type: 'block end'},
 			]);
 		});

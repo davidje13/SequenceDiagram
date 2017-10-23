@@ -35,11 +35,11 @@ Bowie -> Audience: Sings
 title Connection Types
 
 Foo -> Bar: Simple arrow
-Foo --> Bar: Dotted arrow
+Foo --> Bar: Dashed arrow
 Foo <- Bar: Reversed arrow
-Foo <-- Bar: Reversed dotted arrow
+Foo <-- Bar: Reversed dashed arrow
 Foo <-> Bar: Double arrow
-Foo <--> Bar: Double dotted arrow
+Foo <--> Bar: Double dashed arrow
 
 # An arrow with no label:
 Foo -> Bar

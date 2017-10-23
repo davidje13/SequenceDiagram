@@ -32,14 +32,14 @@ define(() => {
 		'repeat': {type: 'block begin', mode: 'repeat', skip: []},
 	};
 
-	const CONNECTION_TYPES = [
-		'->',
-		'<-',
-		'<->',
-		'-->',
-		'<--',
-		'<-->',
-	];
+	const CONNECTION_TYPES = {
+		'->': {line: 'solid', left: false, right: true},
+		'<-': {line: 'solid', left: true, right: false},
+		'<->': {line: 'solid', left: true, right: true},
+		'-->': {line: 'dash', left: false, right: true},
+		'<--': {line: 'dash', left: true, right: false},
+		'<-->': {line: 'dash', left: true, right: true},
+	};
 
 	const TERMINATOR_TYPES = [
 		'none',
@@ -226,24 +226,26 @@ define(() => {
 			labelSplit = line.length;
 		}
 		let typeSplit = -1;
-		for(let j = 0; j < CONNECTION_TYPES.length; ++ j) {
-			const p = line.indexOf(CONNECTION_TYPES[j]);
-			if(p !== -1 && p < labelSplit) {
-				typeSplit = p;
+		let options = null;
+		for(let j = 0; j < line.length; ++ j) {
+			const opts = CONNECTION_TYPES[line[j]];
+			if(opts) {
+				typeSplit = j;
+				options = opts;
 				break;
 			}
 		}
-		if(typeSplit <= 0 || typeSplit === labelSplit - 1) {
+		if(typeSplit <= 0 || typeSplit >= labelSplit - 1) {
 			return null;
 		}
-		return {
-			type: line[typeSplit],
+		return Object.assign({
+			type: 'connection',
 			agents: [
 				line.slice(0, typeSplit).join(' '),
 				line.slice(typeSplit + 1, labelSplit).join(' '),
 			],
 			label: line.slice(labelSplit + 1).join(' '),
-		};
+		}, options);
 	}
 
 	function parseMeta(line, meta) {
