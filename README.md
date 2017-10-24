@@ -72,11 +72,13 @@ state over Foo: Foo is ponderous
 ```
 title At the bank
 
+begin Person, ATM, Bank
 Person -> ATM: Request money
 ATM -> Bank: Check funds
 if fraud detected
   Bank -> Police: "Get 'em!"
   Police -> Person: "You're nicked"
+  end Police
 else if sufficient funds
   ATM -> Bank: Withdraw funds
   repeat until all requested money handed over
