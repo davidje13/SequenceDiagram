@@ -12,15 +12,34 @@ define(() => {
 		}
 	}
 
+	function removeElement(list, item) {
+		const p = list.indexOf(item);
+		if(p !== -1) {
+			list.splice(p, 1);
+		}
+	}
+
 	function lastElement(list) {
 		return list[list.length - 1];
 	}
+
+	class AgentState {
+		constructor(visible, locked = false) {
+			this.visible = visible;
+			this.locked = locked;
+		}
+	}
+
+	const LOCKED_AGENT = new AgentState(false, true);
+	const DEFAULT_AGENT = new AgentState(false);
 
 	return class Generator {
 		constructor() {
 			this.agentStates = new Map();
 			this.blockCount = 0;
 			this.nesting = [];
+			this.currentSection = null;
+			this.currentNest = null;
 
 			this.stageHandlers = {
 				'agent define': this.handleAgentDefine.bind(this),
@@ -39,14 +58,8 @@ define(() => {
 		}
 
 		addColumnBounds(target, agentL, agentR, involvedAgents = []) {
-			const oldL = target.indexOf(agentL);
-			if(oldL !== -1) {
-				target.splice(oldL, 1);
-			}
-			const oldR = target.indexOf(agentR);
-			if(oldR !== -1) {
-				target.splice(oldR, 1);
-			}
+			removeElement(target, agentL);
+			removeElement(target, agentR);
 
 			let indexL = 0;
 			let indexR = target.length;
@@ -63,48 +76,41 @@ define(() => {
 			target.splice(indexR + 1, 0, agentR);
 		}
 
-		addAgentMod(stageAgents, markVisible, mode) {
-			if(stageAgents.length === 0) {
+		setAgentVis(agents, visible, mode, checked = false) {
+			const filteredAgents = agents.filter((agent) => {
+				const state = this.agentStates.get(agent) || DEFAULT_AGENT;
+				if(state.locked) {
+					if(checked) {
+						throw new Error('Cannot modify agent ' + agent);
+					} else {
+						return false;
+					}
+				}
+				return state.visible !== visible;
+			});
+			if(filteredAgents.length === 0) {
 				return;
 			}
-			stageAgents.forEach((agent) => {
+			filteredAgents.forEach((agent) => {
 				const state = this.agentStates.get(agent);
 				if(state) {
-					state.visible = markVisible;
+					state.visible = visible;
 				} else {
-					this.agentStates.set(agent, {
-						visible: markVisible,
-						locked: false,
-					});
+					this.agentStates.set(agent, new AgentState(visible));
 				}
 			});
-			const type = (markVisible ? 'agent begin' : 'agent end');
+			const type = (visible ? 'agent begin' : 'agent end');
 			const existing = lastElement(this.currentSection.stages) || {};
 			if(existing.type === type && existing.mode === mode) {
-				mergeSets(existing.agents, stageAgents);
-				mergeSets(this.currentNest.agents, stageAgents);
+				mergeSets(existing.agents, filteredAgents);
+				mergeSets(this.currentNest.agents, filteredAgents);
 			} else {
 				this.addStage({
 					type,
-					agents: stageAgents,
+					agents: filteredAgents,
 					mode,
 				});
 			}
-		}
-
-		filterVis(stageAgents, visible, implicit = false) {
-			return stageAgents.filter((agent) => {
-				const state = this.agentStates.get(agent);
-				if(!state) {
-					return !visible;
-				} else if(!state.locked) {
-					return state.visible === visible;
-				} else if(!implicit) {
-					throw new Error('Cannot modify agent ' + agent);
-				} else {
-					return false;
-				}
-			});
 		}
 
 		beginNested(mode, label, name) {
@@ -122,8 +128,8 @@ define(() => {
 				leftColumn: name + '[',
 				rightColumn: name + ']',
 			};
-			this.agentStates.set(name + '[', {visible: false, locked: true});
-			this.agentStates.set(name + ']', {visible: false, locked: true});
+			this.agentStates.set(name + '[', LOCKED_AGENT);
+			this.agentStates.set(name + ']', LOCKED_AGENT);
 			this.nesting.push(this.currentNest);
 
 			return {agents, stages};
@@ -133,11 +139,11 @@ define(() => {
 		}
 
 		handleAgentBegin({agents, mode}) {
-			this.addAgentMod(this.filterVis(agents, false), true, mode);
+			this.setAgentVis(agents, true, mode, true);
 		}
 
 		handleAgentEnd({agents, mode}) {
-			this.addAgentMod(this.filterVis(agents, true), false, mode);
+			this.setAgentVis(agents, false, mode, true);
 		}
 
 		handleBlockBegin({mode, label}) {
@@ -182,11 +188,7 @@ define(() => {
 		}
 
 		handleUnknownStage(stage) {
-			this.addAgentMod(
-				this.filterVis(stage.agents, false, true),
-				true,
-				'box'
-			);
+			this.setAgentVis(stage.agents, true, 'box');
 			this.addStage(stage);
 		}
 
@@ -211,11 +213,7 @@ define(() => {
 				throw new Error('Invalid block nesting');
 			}
 
-			this.addAgentMod(
-				this.filterVis(globals.agents, true, true),
-				false,
-				meta.terminators || 'none'
-			);
+			this.setAgentVis(globals.agents, false, meta.terminators || 'none');
 
 			this.addColumnBounds(
 				globals.agents,
