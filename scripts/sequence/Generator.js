@@ -36,6 +36,7 @@ define(() => {
 	return class Generator {
 		constructor() {
 			this.agentStates = new Map();
+			this.agents = [];
 			this.blockCount = 0;
 			this.nesting = [];
 			this.currentSection = null;
@@ -52,18 +53,13 @@ define(() => {
 			this.handleStage = this.handleStage.bind(this);
 		}
 
-		addStage(stage) {
-			this.currentSection.stages.push(stage);
-			mergeSets(this.currentNest.agents, stage.agents);
-		}
-
-		addColumnBounds(target, agentL, agentR, involvedAgents = []) {
+		addBounds(target, agentL, agentR, involvedAgents = null) {
 			removeElement(target, agentL);
 			removeElement(target, agentR);
 
 			let indexL = 0;
 			let indexR = target.length;
-			if(involvedAgents.length > 0) {
+			if(involvedAgents) {
 				const found = (involvedAgents
 					.map((agent) => target.indexOf(agent))
 					.filter((p) => (p !== -1))
@@ -103,18 +99,21 @@ define(() => {
 			const existing = lastElement(this.currentSection.stages) || {};
 			if(existing.type === type && existing.mode === mode) {
 				mergeSets(existing.agents, filteredAgents);
-				mergeSets(this.currentNest.agents, filteredAgents);
 			} else {
-				this.addStage({
+				this.currentSection.stages.push({
 					type,
 					agents: filteredAgents,
 					mode,
 				});
 			}
+			mergeSets(this.currentNest.agents, filteredAgents);
+			mergeSets(this.agents, filteredAgents);
 		}
 
 		beginNested(mode, label, name) {
-			const agents = [];
+			const nameL = name + '[';
+			const nameR = name + ']';
+			const agents = [nameL, nameR];
 			const stages = [];
 			this.currentSection = {
 				mode,
@@ -122,20 +121,24 @@ define(() => {
 				stages,
 			};
 			this.currentNest = {
-				type: 'block',
 				agents,
-				sections: [this.currentSection],
-				leftColumn: name + '[',
-				rightColumn: name + ']',
+				stage: {
+					type: 'block',
+					sections: [this.currentSection],
+					left: nameL,
+					right: nameR,
+				},
 			};
-			this.agentStates.set(name + '[', LOCKED_AGENT);
-			this.agentStates.set(name + ']', LOCKED_AGENT);
+			this.agentStates.set(nameL, LOCKED_AGENT);
+			this.agentStates.set(nameR, LOCKED_AGENT);
 			this.nesting.push(this.currentNest);
 
 			return {agents, stages};
 		}
 
-		handleAgentDefine() {
+		handleAgentDefine({agents}) {
+			mergeSets(this.currentNest.agents, agents);
+			mergeSets(this.agents, agents);
 		}
 
 		handleAgentBegin({agents, mode}) {
@@ -153,7 +156,7 @@ define(() => {
 		}
 
 		handleBlockSplit({mode, label}) {
-			if(this.currentNest.sections[0].mode !== 'if') {
+			if(this.currentNest.stage.sections[0].mode !== 'if') {
 				throw new Error('Invalid block nesting');
 			}
 			this.currentSection = {
@@ -161,35 +164,34 @@ define(() => {
 				label,
 				stages: [],
 			};
-			this.currentNest.sections.push(this.currentSection);
+			this.currentNest.stage.sections.push(this.currentSection);
 		}
 
 		handleBlockEnd() {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting');
 			}
-			const subNest = this.nesting.pop();
+			const {stage, agents} = this.nesting.pop();
 			this.currentNest = lastElement(this.nesting);
-			this.currentSection = lastElement(this.currentNest.sections);
-			if(subNest.agents.length > 0) {
-				this.addStage(subNest);
-				this.addColumnBounds(
-					this.currentNest.agents,
-					subNest.leftColumn,
-					subNest.rightColumn,
-					subNest.agents
+			this.currentSection = lastElement(this.currentNest.stage.sections);
+			if(stage.sections.some((section) => section.stages.length > 0)) {
+				mergeSets(this.currentNest.agents, agents);
+				mergeSets(this.agents, agents);
+				this.addBounds(
+					this.agents,
+					stage.left,
+					stage.right,
+					agents
 				);
-				this.addColumnBounds(
-					subNest.agents,
-					subNest.leftColumn,
-					subNest.rightColumn
-				);
+				this.currentSection.stages.push(stage);
 			}
 		}
 
 		handleUnknownStage(stage) {
 			this.setAgentVis(stage.agents, true, 'box');
-			this.addStage(stage);
+			this.currentSection.stages.push(stage);
+			mergeSets(this.currentNest.agents, stage.agents);
+			mergeSets(this.agents, stage.agents);
 		}
 
 		handleStage(stage) {
@@ -203,6 +205,7 @@ define(() => {
 
 		generate({stages, meta = {}}) {
 			this.agentStates.clear();
+			this.agents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;
 			const globals = this.beginNested('global', '', '');
@@ -213,19 +216,19 @@ define(() => {
 				throw new Error('Invalid block nesting');
 			}
 
-			this.setAgentVis(globals.agents, false, meta.terminators || 'none');
+			this.setAgentVis(this.agents, false, meta.terminators || 'none');
 
-			this.addColumnBounds(
-				globals.agents,
-				this.currentNest.leftColumn,
-				this.currentNest.rightColumn
+			this.addBounds(
+				this.agents,
+				this.currentNest.stage.left,
+				this.currentNest.stage.right
 			);
 
 			return {
 				meta: {
 					title: meta.title,
 				},
-				agents: globals.agents,
+				agents: this.agents,
 				stages: globals.stages,
 			};
 		}

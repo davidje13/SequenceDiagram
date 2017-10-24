@@ -48,8 +48,32 @@ define(() => {
 	const CONNECT_POINT = 4;
 	const CONNECT_LABEL_PADDING = 6;
 	const CONNECT_LABEL_MASK_PADDING = 3;
-	const CONNECT_LABEL_MARGIN_TOP = 2;
-	const CONNECT_LABEL_MARGIN_BOTTOM = 1;
+	const CONNECT_LABEL_MARGIN = {
+		top: 2,
+		bottom: 1,
+	};
+	const BLOCK_MARGIN = {
+		top: 5,
+		bottom: 5,
+	};
+	const BLOCK_SECTION_PADDING = {
+		top: 1,
+		bottom: 5,
+	};
+	const BLOCK_MODE_PADDING = {
+		top: 1,
+		left: 3,
+		right: 3,
+		bottom: 0,
+	};
+	const BLOCK_LABEL_PADDING = {
+		left: 5,
+		right: 5,
+	};
+	const BLOCK_LABEL_MASK_PADDING = {
+		left: 3,
+		right: 3,
+	};
 
 	const ATTRS = {
 		TITLE: {
@@ -85,6 +109,40 @@ define(() => {
 			'height': 5,
 		},
 
+		BLOCK_BOX: {
+			'fill': 'none',
+			'stroke': '#000000',
+			'stroke-width': 1.5,
+			'rx': 2,
+			'ry': 2,
+		},
+		BLOCK_SEPARATOR: {
+			'stroke': '#000000',
+			'stroke-width': 1.5,
+			'stroke-dasharray': '4, 2',
+		},
+		BLOCK_MODE: {
+			'fill': '#FFFFFF',
+			'stroke': '#000000',
+			'stroke-width': 1,
+			'rx': 2,
+			'ry': 2,
+		},
+		BLOCK_MODE_LABEL: {
+			'font-family': 'sans-serif',
+			'font-weight': 'bold',
+			'font-size': 9,
+			'text-anchor': 'left',
+		},
+		BLOCK_LABEL: {
+			'font-family': 'sans-serif',
+			'font-size': 8,
+			'text-anchor': 'left',
+		},
+		BLOCK_LABEL_MASK: {
+			'fill': '#FFFFFF',
+		},
+
 		CONNECT_LINE_SOLID: {
 			'fill': 'none',
 			'stroke': '#000000',
@@ -94,7 +152,7 @@ define(() => {
 			'fill': 'none',
 			'stroke': '#000000',
 			'stroke-width': 1,
-			'stroke-dasharray': '2, 2',
+			'stroke-dasharray': '4, 2',
 		},
 		CONNECT_LABEL: {
 			'font-family': 'sans-serif',
@@ -126,13 +184,27 @@ define(() => {
 		return o;
 	}
 
-	function traverse(stages, fn) {
+	function traverse(stages, callbacks) {
 		stages.forEach((stage) => {
-			fn(stage);
 			if(stage.type === 'block') {
+				const scope = {};
+				if(callbacks.blockBeginFn) {
+					callbacks.blockBeginFn(scope, stage);
+				}
 				stage.sections.forEach((section) => {
-					traverse(section.stages, fn);
+					if(callbacks.sectionBeginFn) {
+						callbacks.sectionBeginFn(scope, stage, section);
+					}
+					traverse(section.stages, callbacks);
+					if(callbacks.sectionEndFn) {
+						callbacks.sectionEndFn(scope, stage, section);
+					}
 				});
+				if(callbacks.blockEndFn) {
+					callbacks.blockEndFn(scope, stage);
+				}
+			} else if(callbacks.stageFn) {
+				callbacks.stageFn(stage);
 			}
 		});
 	}
@@ -155,9 +227,13 @@ define(() => {
 
 			this.diagram = makeSVGNode('g');
 			this.agentLines = makeSVGNode('g');
+			this.blocks = makeSVGNode('g');
+			this.sections = makeSVGNode('g');
 			this.agentDecor = makeSVGNode('g');
 			this.actions = makeSVGNode('g');
 			this.diagram.appendChild(this.agentLines);
+			this.diagram.appendChild(this.blocks);
+			this.diagram.appendChild(this.sections);
 			this.diagram.appendChild(this.agentDecor);
 			this.diagram.appendChild(this.actions);
 			this.base.appendChild(this.diagram);
@@ -173,7 +249,6 @@ define(() => {
 				'agent begin': this.separationAgent.bind(this),
 				'agent end': this.separationAgent.bind(this),
 				'connection': this.separationConnection.bind(this),
-				'block': this.separationBlock.bind(this),
 				'note over': this.separationNoteOver.bind(this),
 				'note left': this.separationNoteLeft.bind(this),
 				'note right': this.separationNoteRight.bind(this),
@@ -191,11 +266,25 @@ define(() => {
 				'agent begin': this.renderAgentBegin.bind(this),
 				'agent end': this.renderAgentEnd.bind(this),
 				'connection': this.renderConnection.bind(this),
-				'block': this.renderBlock.bind(this),
 				'note over': this.renderNoteOver.bind(this),
 				'note left': this.renderNoteLeft.bind(this),
 				'note right': this.renderNoteRight.bind(this),
 				'note between': this.renderNoteBetween.bind(this),
+			};
+
+			this.separationTraversalFns = {
+				stageFn: this.checkSeparation.bind(this),
+				blockBeginFn: this.separationBlockBegin.bind(this),
+				sectionBeginFn: this.separationSectionBegin.bind(this),
+				blockEndFn: this.separationBlockEnd.bind(this),
+			};
+
+			this.renderTraversalFns = {
+				stageFn: this.addAction.bind(this),
+				blockBeginFn: this.renderBlockBegin.bind(this),
+				sectionBeginFn: this.renderSectionBegin.bind(this),
+				sectionEndFn: this.renderSectionEnd.bind(this),
+				blockEndFn: this.renderBlockEnd.bind(this),
 			};
 
 			this.width = 0;
@@ -280,15 +369,11 @@ define(() => {
 				agents[0],
 				agents[1],
 
-				this.testTextWidth(this.testConnectWidth, label) +
+				this.testTextWidth(this.testConnect, label) +
 				CONNECT_POINT * 2 +
 				CONNECT_LABEL_PADDING * 2 +
 				ATTRS.AGENT_LINE['stroke-width']
 			);
-		}
-
-		separationBlock(/*stage*/) {
-			// TODO
 		}
 
 		separationNoteOver(/*stage*/) {
@@ -305,6 +390,25 @@ define(() => {
 
 		separationNoteBetween(/*stage*/) {
 			// TODO
+		}
+
+		separationBlockBegin(scope, {left, right}) {
+			mergeSets(this.visibleAgents, [left, right]);
+			this.addSeparations(this.visibleAgents, new Map());
+		}
+
+		separationSectionBegin(scope, {left, right}, {mode, label}) {
+			const width = (
+				this.testTextWidth(this.testBlockMode, mode) +
+				BLOCK_MODE_PADDING.left + BLOCK_MODE_PADDING.right +
+				this.testTextWidth(this.testBlockLabel, label) +
+				BLOCK_LABEL_PADDING.left + BLOCK_LABEL_PADDING.right
+			);
+			this.addSeparation(left, right, width);
+		}
+
+		separationBlockEnd(scope, {left, right}) {
+			removeAll(this.visibleAgents, [left, right]);
 		}
 
 		checkSeparation(stage) {
@@ -430,16 +534,16 @@ define(() => {
 				this.actions.appendChild(labelNode);
 				y += Math.max(
 					dy,
-					CONNECT_LABEL_MARGIN_TOP +
+					CONNECT_LABEL_MARGIN.top +
 					sz * LINE_HEIGHT +
-					CONNECT_LABEL_MARGIN_BOTTOM
+					CONNECT_LABEL_MARGIN.bottom
 				);
 				const w = labelNode.getComputedTextLength();
 				const x = (from.x + to.x) / 2;
 				const yBase = (
 					y -
 					sz * (LINE_HEIGHT - 1) -
-					CONNECT_LABEL_MARGIN_BOTTOM
+					CONNECT_LABEL_MARGIN.bottom
 				);
 				labelNode.setAttribute('x', x);
 				labelNode.setAttribute('y', yBase);
@@ -483,10 +587,6 @@ define(() => {
 			this.currentY = y + dy + ACTION_MARGIN;
 		}
 
-		renderBlock(/*stage*/) {
-			// TODO
-		}
-
 		renderNoteOver(/*stage*/) {
 			// TODO
 		}
@@ -501,6 +601,106 @@ define(() => {
 
 		renderNoteBetween(/*stage*/) {
 			// TODO
+		}
+
+		renderBlockBegin(scope) {
+			this.currentY += BLOCK_MARGIN.top;
+
+			scope.y = this.currentY;
+			scope.first = true;
+		}
+
+		renderSectionBegin(scope, {left, right}, {mode, label}) {
+			const agentInfoL = this.agentInfos.get(left);
+			const agentInfoR = this.agentInfos.get(right);
+
+			if(scope.first) {
+				scope.first = false;
+			} else {
+				this.currentY += BLOCK_SECTION_PADDING.bottom;
+				this.sections.appendChild(makeSVGNode('path', Object.assign({
+					'd': (
+						'M' + agentInfoL.x + ' ' + this.currentY +
+						' L' + agentInfoR.x + ' ' + this.currentY
+					),
+				}, ATTRS.BLOCK_SEPARATOR)));
+			}
+
+			let x = agentInfoL.x;
+			if(mode) {
+				const sz = ATTRS.BLOCK_MODE_LABEL['font-size'];
+				const modeBox = makeSVGNode('rect', Object.assign({
+					'x': x,
+					'y': this.currentY,
+					'height': (
+						sz * LINE_HEIGHT +
+						BLOCK_MODE_PADDING.top +
+						BLOCK_MODE_PADDING.bottom
+					),
+				}, ATTRS.BLOCK_MODE));
+				const modeLabel = makeSVGNode('text', Object.assign({
+					'x': x + BLOCK_MODE_PADDING.left,
+					'y': (
+						this.currentY + sz +
+						BLOCK_MODE_PADDING.top
+					),
+				}, ATTRS.BLOCK_MODE_LABEL));
+				modeLabel.appendChild(makeText(mode));
+				this.blocks.appendChild(modeBox);
+				this.actions.appendChild(modeLabel);
+				const w = (
+					modeLabel.getComputedTextLength() +
+					BLOCK_MODE_PADDING.left +
+					BLOCK_MODE_PADDING.right
+				);
+				modeBox.setAttribute('width', w);
+				x += w;
+
+				this.currentY += sz * LINE_HEIGHT;
+			}
+
+			if(label) {
+				x += BLOCK_LABEL_PADDING.left;
+				const sz = ATTRS.BLOCK_LABEL['font-size'];
+				const mask = makeSVGNode('rect', Object.assign({
+					'x': x - BLOCK_LABEL_MASK_PADDING.left,
+					'y': this.currentY - sz * LINE_HEIGHT,
+					'height': sz * LINE_HEIGHT,
+				}, ATTRS.BLOCK_LABEL_MASK));
+				const labelLabel = makeSVGNode('text', Object.assign({
+					'x': x,
+					'y': this.currentY - sz * (LINE_HEIGHT - 1),
+				}, ATTRS.BLOCK_LABEL));
+				labelLabel.appendChild(makeText(label));
+				this.actions.appendChild(mask);
+				this.actions.appendChild(labelLabel);
+				const w = (
+					labelLabel.getComputedTextLength() +
+					BLOCK_LABEL_MASK_PADDING.left +
+					BLOCK_LABEL_MASK_PADDING.right
+				);
+				mask.setAttribute('width', w);
+			}
+
+			this.currentY += BLOCK_SECTION_PADDING.top;
+		}
+
+		renderSectionEnd(/*scope, block, section*/) {
+		}
+
+		renderBlockEnd(scope, {left, right}) {
+			this.currentY += BLOCK_SECTION_PADDING.bottom;
+
+			const agentInfoL = this.agentInfos.get(left);
+			const agentInfoR = this.agentInfos.get(right);
+			this.blocks.appendChild(makeSVGNode('rect', Object.assign({
+				'x': agentInfoL.x,
+				'y': scope.y,
+				'width': agentInfoR.x - agentInfoL.x,
+				'height': this.currentY - scope.y,
+			}, ATTRS.BLOCK_BOX)));
+
+			this.currentY += BLOCK_MARGIN.bottom;
 		}
 
 		addAction(stage) {
@@ -525,14 +725,14 @@ define(() => {
 		}
 
 		buildAgentInfos(agents, stages) {
-			const testNameWidth = this.makeTextTester(ATTRS.AGENT_BOX_LABEL);
+			const testName = this.makeTextTester(ATTRS.AGENT_BOX_LABEL);
 
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
 				this.agentInfos.set(agent, {
 					label: agent,
 					labelWidth: (
-						this.testTextWidth(testNameWidth, agent) +
+						this.testTextWidth(testName, agent) +
 						BOX_PADDING * 2
 					),
 					index,
@@ -544,12 +744,16 @@ define(() => {
 			this.agentInfos.get('[').labelWidth = 0;
 			this.agentInfos.get(']').labelWidth = 0;
 
-			this.removeTextTester(testNameWidth);
+			this.removeTextTester(testName);
 
-			this.testConnectWidth = this.makeTextTester(ATTRS.CONNECT_LABEL);
+			this.testConnect = this.makeTextTester(ATTRS.CONNECT_LABEL);
+			this.testBlockMode = this.makeTextTester(ATTRS.BLOCK_MODE_LABEL);
+			this.testBlockLabel = this.makeTextTester(ATTRS.BLOCK_LABEL);
 			this.visibleAgents = ['[', ']'];
-			traverse(stages, this.checkSeparation.bind(this));
-			this.removeTextTester(this.testConnectWidth);
+			traverse(stages, this.separationTraversalFns);
+			this.removeTextTester(this.testConnect);
+			this.removeTextTester(this.testBlockMode);
+			this.removeTextTester(this.testBlockLabel);
 
 			agents.forEach((agent) => {
 				const agentInfo = this.agentInfos.get(agent);
@@ -597,6 +801,8 @@ define(() => {
 
 		render({meta, agents, stages}) {
 			empty(this.agentLines);
+			empty(this.blocks);
+			empty(this.sections);
 			empty(this.agentDecor);
 			empty(this.actions);
 
@@ -607,12 +813,12 @@ define(() => {
 			this.buildAgentInfos(agents, stages);
 
 			this.currentY = 0;
-			traverse(stages, this.addAction.bind(this));
+			traverse(stages, this.renderTraversalFns);
 
 			this.updateBounds(Math.max(this.currentY - ACTION_MARGIN, 0));
 		}
 
-		getColumnX(name) {
+		getAgentX(name) {
 			return this.agentInfos.get(name).x;
 		}
 

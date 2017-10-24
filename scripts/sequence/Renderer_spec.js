@@ -42,7 +42,7 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 			expect(title.innerHTML).toEqual('Title');
 		});
 
-		it('positions column lines', () => {
+		it('positions agent lines', () => {
 			/*
 				A -> B
 			*/
@@ -61,10 +61,10 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 			const line = element.getElementsByClassName('agent-1-line')[0];
 			const drawnX = Number(line.getAttribute('d').split(' ')[1]);
 
-			expect(drawnX).toEqual(renderer.getColumnX('A'));
+			expect(drawnX).toEqual(renderer.getAgentX('A'));
 		});
 
-		it('arranges columns left-to-right', () => {
+		it('arranges agents left-to-right', () => {
 			/*
 				[ -> A
 				A -> B
@@ -85,11 +85,11 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 				],
 			});
 
-			const xL = renderer.getColumnX('[');
-			const xA = renderer.getColumnX('A');
-			const xB = renderer.getColumnX('B');
-			const xC = renderer.getColumnX('C');
-			const xR = renderer.getColumnX(']');
+			const xL = renderer.getAgentX('[');
+			const xA = renderer.getAgentX('A');
+			const xB = renderer.getAgentX('B');
+			const xC = renderer.getAgentX('C');
+			const xR = renderer.getAgentX(']');
 
 			expect(xA).toBeGreaterThan(xL);
 			expect(xB).toBeGreaterThan(xA);
@@ -97,7 +97,7 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 			expect(xR).toBeGreaterThan(xC);
 		});
 
-		it('allows column reordering for mutually-exclusive columns', () => {
+		it('allows agent reordering for mutually-exclusive agents', () => {
 			/*
 				A -> B: short
 				end B
@@ -123,10 +123,10 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 				],
 			});
 
-			const xA = renderer.getColumnX('A');
-			const xB = renderer.getColumnX('B');
-			const xC = renderer.getColumnX('C');
-			const xD = renderer.getColumnX('D');
+			const xA = renderer.getAgentX('A');
+			const xB = renderer.getAgentX('B');
+			const xC = renderer.getAgentX('C');
+			const xD = renderer.getAgentX('D');
 
 			expect(xB).toBeGreaterThan(xA);
 			expect(xC).toBeGreaterThan(xA);

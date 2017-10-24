@@ -51,6 +51,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(sequence.agents).toEqual(['[', 'B', ']']);
 		});
 
+		it('accounts for define calls when ordering agents', () => {
+			const sequence = generator.generate({stages: [
+				{type: AGENT_DEFINE, agents: ['B']},
+				{type: '->', agents: ['A', 'B']},
+			]});
+			expect(sequence.agents).toEqual(['[', 'B', 'A', ']']);
+		});
+
 		it('creates implicit begin stages for agents when used', () => {
 			const sequence = generator.generate({stages: [
 				{type: '->', agents: ['A', 'B']},
@@ -216,7 +224,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
-		it('records virtual block column names in blocks', () => {
+		it('records virtual block agent names in blocks', () => {
 			const sequence = generator.generate({stages: [
 				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
 				{type: '->', agents: ['A', 'B']},
@@ -225,23 +233,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 			const block0 = sequence.stages[0];
 			expect(block0.type).toEqual('block');
-			expect(block0.leftColumn).toEqual('__BLOCK0[');
-			expect(block0.rightColumn).toEqual('__BLOCK0]');
-		});
-
-		it('records all involved agents in blocks', () => {
-			const sequence = generator.generate({stages: [
-				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
-				{type: '->', agents: ['A', 'B']},
-				{type: BLOCK_SPLIT, mode: 'else', label: 'xyz'},
-				{type: '->', agents: ['A', 'C']},
-				{type: BLOCK_END},
-			]});
-
-			const block0 = sequence.stages[0];
-			expect(block0.agents).toEqual(
-				['__BLOCK0[', 'A', 'B', 'C', '__BLOCK0]']
-			);
+			expect(block0.left).toEqual('__BLOCK0[');
+			expect(block0.right).toEqual('__BLOCK0]');
 		});
 
 		it('records all sections within blocks', () => {
@@ -277,9 +270,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{type: BLOCK_END},
 			]});
 
-			const block0 = sequence.stages[0];
-			expect(block0.type).toEqual('block');
-			expect(block0.agents).toEqual([
+			expect(sequence.agents).toEqual([
+				'[',
 				'__BLOCK0[',
 				'__BLOCK1[',
 				'A',
@@ -287,20 +279,48 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				'C',
 				'__BLOCK1]',
 				'__BLOCK0]',
+				']',
 			]);
-			expect(block0.leftColumn).toEqual('__BLOCK0[');
-			expect(block0.rightColumn).toEqual('__BLOCK0]');
+			const block0 = sequence.stages[0];
+			expect(block0.type).toEqual('block');
+			expect(block0.left).toEqual('__BLOCK0[');
+			expect(block0.right).toEqual('__BLOCK0]');
 
 			const block1 = block0.sections[1].stages[0];
 			expect(block1.type).toEqual('block');
-			expect(block1.agents).toEqual([
+			expect(block1.left).toEqual('__BLOCK1[');
+			expect(block1.right).toEqual('__BLOCK1]');
+		});
+
+		it('preserves block boundaries when agents exist outside', () => {
+			const sequence = generator.generate({stages: [
+				{type: '->', agents: ['A', 'B']},
+				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
+				{type: BLOCK_BEGIN, mode: 'if', label: 'def'},
+				{type: '->', agents: ['A', 'B']},
+				{type: BLOCK_END},
+				{type: BLOCK_END},
+			]});
+
+			expect(sequence.agents).toEqual([
+				'[',
+				'__BLOCK0[',
 				'__BLOCK1[',
-				'C',
 				'A',
+				'B',
 				'__BLOCK1]',
+				'__BLOCK0]',
+				']',
 			]);
-			expect(block1.leftColumn).toEqual('__BLOCK1[');
-			expect(block1.rightColumn).toEqual('__BLOCK1]');
+			const block0 = sequence.stages[2];
+			expect(block0.type).toEqual('block');
+			expect(block0.left).toEqual('__BLOCK0[');
+			expect(block0.right).toEqual('__BLOCK0]');
+
+			const block1 = block0.sections[0].stages[0];
+			expect(block1.type).toEqual('block');
+			expect(block1.left).toEqual('__BLOCK1[');
+			expect(block1.right).toEqual('__BLOCK1]');
 		});
 
 		it('allows empty block parts after split', () => {
@@ -345,6 +365,16 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{type: BLOCK_SPLIT, mode: 'else', label: 'xyz'},
 				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
 				{type: BLOCK_END},
+				{type: BLOCK_END},
+			]});
+
+			expect(sequence.stages).toEqual([]);
+		});
+
+		it('removes blocks which only contain define statements', () => {
+			const sequence = generator.generate({stages: [
+				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
+				{type: AGENT_DEFINE, agents: ['A']},
 				{type: BLOCK_END},
 			]});
 
