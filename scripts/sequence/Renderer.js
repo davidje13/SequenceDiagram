@@ -57,7 +57,7 @@ define(() => {
 		bottom: 5,
 	};
 	const BLOCK_SECTION_PADDING = {
-		top: 1,
+		top: 3,
 		bottom: 5,
 	};
 	const BLOCK_MODE_PADDING = {
