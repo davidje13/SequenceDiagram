@@ -17,178 +17,218 @@ define(() => {
 	}
 
 	return class Generator {
-		findAgents(stages) {
-			const agents = ['['];
-			stages.forEach((stage) => {
-				if(stage.agents) {
-					mergeSets(agents, stage.agents);
-				}
-			});
+		constructor() {
+			this.agentStates = new Map();
+			this.blockCount = 0;
+			this.nesting = [];
 
-			if(agents.indexOf(']') !== -1) {
-				agents.splice(agents.indexOf(']'), 1);
-			}
-			agents.push(']');
-
-			return agents;
+			this.stageHandlers = {
+				'agent define': this.handleAgentDefine.bind(this),
+				'agent begin': this.handleAgentBegin.bind(this),
+				'agent end': this.handleAgentEnd.bind(this),
+				'block begin': this.handleBlockBegin.bind(this),
+				'block split': this.handleBlockSplit.bind(this),
+				'block end': this.handleBlockEnd.bind(this),
+			};
+			this.handleStage = this.handleStage.bind(this);
 		}
 
-		generate({meta = {}, stages}) {
-			const agents = this.findAgents(stages);
+		addStage(stage) {
+			this.currentSection.stages.push(stage);
+			mergeSets(this.currentNest.agents, stage.agents);
+		}
 
-			const agentStates = new Map();
-			agents.forEach((agent) => {
-				agentStates.set(agent, {visible: false, locked: false});
-			});
-			agentStates.get('[').locked = true;
-			agentStates.get(']').locked = true;
-
-			const rootStages = [];
-			let currentSection = {
-				mode: 'global',
-				label: '',
-				stages: rootStages,
-			};
-			let currentNest = {
-				type: 'block',
-				agents: [],
-				root: true,
-				sections: [currentSection],
-			};
-			const nesting = [currentNest];
-
-			function beginNested(stage) {
-				currentSection = {
-					mode: stage.mode,
-					label: stage.label,
-					stages: [],
-				};
-				currentNest = {
-					type: 'block',
-					agents: [],
-					sections: [currentSection],
-				};
-				nesting.push(currentNest);
+		addColumnBounds(target, agentL, agentR, involvedAgents = []) {
+			const oldL = target.indexOf(agentL);
+			if(oldL !== -1) {
+				target.splice(oldL, 1);
+			}
+			const oldR = target.indexOf(agentR);
+			if(oldR !== -1) {
+				target.splice(oldR, 1);
 			}
 
-			function splitNested(stage) {
-				if(currentNest.sections[0].mode !== 'if') {
-					throw new Error('Invalid block nesting');
-				}
-				currentSection = {
-					mode: stage.mode,
-					label: stage.label,
-					stages: [],
-				};
-				currentNest.sections.push(currentSection);
+			let indexL = 0;
+			let indexR = target.length;
+			if(involvedAgents.length > 0) {
+				const found = (involvedAgents
+					.map((agent) => target.indexOf(agent))
+					.filter((p) => (p !== -1))
+				);
+				indexL = found.reduce((a, b) => Math.min(a, b), target.length);
+				indexR = found.reduce((a, b) => Math.max(a, b), indexL) + 1;
 			}
 
-			function addStage(stage) {
-				currentSection.stages.push(stage);
-				mergeSets(currentNest.agents, stage.agents);
-			}
+			target.splice(indexL, 0, agentL);
+			target.splice(indexR + 1, 0, agentR);
+		}
 
-			function endNested() {
-				if(currentNest.root) {
-					throw new Error('Invalid block nesting');
-				}
-				const subNest = nesting.pop();
-				currentNest = lastElement(nesting);
-				currentSection = lastElement(currentNest.sections);
-				if(subNest.agents.length > 0) {
-					addStage(subNest);
-				}
+		addAgentMod(stageAgents, markVisible, mode) {
+			if(stageAgents.length === 0) {
+				return;
 			}
-
-			function addAgentMod(stageAgents, markVisible, mode) {
-				if(stageAgents.length === 0) {
-					return;
-				}
-				stageAgents.forEach((agent) => {
-					agentStates.get(agent).visible = markVisible;
-				});
-				const type = (markVisible ? 'agent begin' : 'agent end');
-				const existing = lastElement(currentSection.stages) || {};
-				if(existing.type === type && existing.mode === mode) {
-					mergeSets(existing.agents, stageAgents);
-					mergeSets(currentNest.agents, stageAgents);
+			stageAgents.forEach((agent) => {
+				const state = this.agentStates.get(agent);
+				if(state) {
+					state.visible = markVisible;
 				} else {
-					addStage({
-						type,
-						agents: stageAgents,
-						mode,
+					this.agentStates.set(agent, {
+						visible: markVisible,
+						locked: false,
 					});
 				}
-			}
-
-			function filterVis(stageAgents, visible, implicit = false) {
-				return stageAgents.filter((agent) => {
-					const state = agentStates.get(agent);
-					if(!state.locked) {
-						return state.visible === visible;
-					} else if(!implicit) {
-						throw new Error('Cannot modify agent ' + agent);
-					} else {
-						return false;
-					}
+			});
+			const type = (markVisible ? 'agent begin' : 'agent end');
+			const existing = lastElement(this.currentSection.stages) || {};
+			if(existing.type === type && existing.mode === mode) {
+				mergeSets(existing.agents, stageAgents);
+				mergeSets(this.currentNest.agents, stageAgents);
+			} else {
+				this.addStage({
+					type,
+					agents: stageAgents,
+					mode,
 				});
 			}
+		}
 
-			stages.forEach((stage) => {
-				/* jshint -W074 */ // It's only a switch statement
-				switch(stage.type) {
-				case 'agent define':
-					break;
-				case 'agent begin':
-					addAgentMod(
-						filterVis(stage.agents, false),
-						true,
-						stage.mode
-					);
-					break;
-				case 'agent end':
-					addAgentMod(
-						filterVis(stage.agents, true),
-						false,
-						stage.mode
-					);
-					break;
-				case 'block begin':
-					beginNested(stage);
-					break;
-				case 'block split':
-					splitNested(stage);
-					break;
-				case 'block end':
-					endNested(stage);
-					break;
-				default:
-					addAgentMod(
-						filterVis(stage.agents, false, true),
-						true,
-						'box'
-					);
-					addStage(stage);
-					break;
+		filterVis(stageAgents, visible, implicit = false) {
+			return stageAgents.filter((agent) => {
+				const state = this.agentStates.get(agent);
+				if(!state) {
+					return !visible;
+				} else if(!state.locked) {
+					return state.visible === visible;
+				} else if(!implicit) {
+					throw new Error('Cannot modify agent ' + agent);
+				} else {
+					return false;
 				}
 			});
+		}
 
-			if(nesting.length !== 1) {
+		beginNested(mode, label, name) {
+			const agents = [];
+			const stages = [];
+			this.currentSection = {
+				mode,
+				label,
+				stages,
+			};
+			this.currentNest = {
+				type: 'block',
+				agents,
+				sections: [this.currentSection],
+				leftColumn: name + '[',
+				rightColumn: name + ']',
+			};
+			this.agentStates.set(name + '[', {visible: false, locked: true});
+			this.agentStates.set(name + ']', {visible: false, locked: true});
+			this.nesting.push(this.currentNest);
+
+			return {agents, stages};
+		}
+
+		handleAgentDefine() {
+		}
+
+		handleAgentBegin({agents, mode}) {
+			this.addAgentMod(this.filterVis(agents, false), true, mode);
+		}
+
+		handleAgentEnd({agents, mode}) {
+			this.addAgentMod(this.filterVis(agents, true), false, mode);
+		}
+
+		handleBlockBegin({mode, label}) {
+			const name = '__BLOCK' + this.blockCount;
+			this.beginNested(mode, label, name);
+			++ this.blockCount;
+		}
+
+		handleBlockSplit({mode, label}) {
+			if(this.currentNest.sections[0].mode !== 'if') {
+				throw new Error('Invalid block nesting');
+			}
+			this.currentSection = {
+				mode,
+				label,
+				stages: [],
+			};
+			this.currentNest.sections.push(this.currentSection);
+		}
+
+		handleBlockEnd() {
+			if(this.nesting.length <= 1) {
+				throw new Error('Invalid block nesting');
+			}
+			const subNest = this.nesting.pop();
+			this.currentNest = lastElement(this.nesting);
+			this.currentSection = lastElement(this.currentNest.sections);
+			if(subNest.agents.length > 0) {
+				this.addStage(subNest);
+				this.addColumnBounds(
+					this.currentNest.agents,
+					subNest.leftColumn,
+					subNest.rightColumn,
+					subNest.agents
+				);
+				this.addColumnBounds(
+					subNest.agents,
+					subNest.leftColumn,
+					subNest.rightColumn
+				);
+			}
+		}
+
+		handleUnknownStage(stage) {
+			this.addAgentMod(
+				this.filterVis(stage.agents, false, true),
+				true,
+				'box'
+			);
+			this.addStage(stage);
+		}
+
+		handleStage(stage) {
+			const handler = this.stageHandlers[stage.type];
+			if(handler) {
+				handler(stage);
+			} else {
+				this.handleUnknownStage(stage);
+			}
+		}
+
+		generate({stages, meta = {}}) {
+			this.agentStates.clear();
+			this.blockCount = 0;
+			this.nesting.length = 0;
+			const globals = this.beginNested('global', '', '');
+
+			stages.forEach(this.handleStage);
+
+			if(this.nesting.length !== 1) {
 				throw new Error('Invalid block nesting');
 			}
 
-			addAgentMod(
-				filterVis(agents, true, true),
+			this.addAgentMod(
+				this.filterVis(globals.agents, true, true),
 				false,
 				meta.terminators || 'none'
+			);
+
+			this.addColumnBounds(
+				globals.agents,
+				this.currentNest.leftColumn,
+				this.currentNest.rightColumn
 			);
 
 			return {
 				meta: {
 					title: meta.title,
 				},
-				agents,
-				stages: rootStages,
+				agents: globals.agents,
+				stages: globals.stages,
 			};
 		}
 	};
