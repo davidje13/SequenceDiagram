@@ -59,7 +59,7 @@ Foo <- ]: From the right
 
 ### Notes & State
 
-<img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="200" align="right" />
+<img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="150" align="right" />
 
 ```
 title Note placements
@@ -118,7 +118,7 @@ terminators bar
 
 ### Alternative Agent Ordering
 
-<img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="200" align="right" />
+<img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="150" align="right" />
 
 ```
 define Baz, Foo
