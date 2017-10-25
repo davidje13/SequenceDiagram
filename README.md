@@ -12,6 +12,8 @@ other projects.
 
 ### Simple Usage
 
+<img src="screenshots/SimpleUsage.png" alt="Simple Usage preview" width="200" align="right" />
+
 ```
 title Labyrinth
 
@@ -30,6 +32,8 @@ Bowie -> Audience: Sings
 ```
 
 ### Connection Types
+
+<img src="screenshots/ConnectionTypes.png" alt="Connection Types preview" width="200" align="right" />
 
 ```
 title Connection Types
@@ -55,6 +59,8 @@ Foo <- ]: From the right
 
 ### Notes & State
 
+<img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="200" align="right" />
+
 ```
 title Note placements
 
@@ -68,6 +74,8 @@ state over Foo: Foo is ponderous
 ```
 
 ### Logic
+
+<img src="screenshots/Logic.png" alt="Logic preview" width="200" align="right" />
 
 ```
 title At the bank
@@ -91,6 +99,8 @@ end
 
 ### Short-Lived Agents
 
+<img src="screenshots/ShortLivedAgents.png" alt="Short Lived Agents preview" width="200" align="right" />
+
 ```
 title "Baz doesn't live long"
 
@@ -107,6 +117,8 @@ terminators bar
 ```
 
 ### Alternative Agent Ordering
+
+<img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="200" align="right" />
 
 ```
 define Baz, Foo
