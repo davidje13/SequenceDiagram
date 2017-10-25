@@ -1,27 +1,5 @@
-define(() => {
+define(['./ArrayUtilities'], (array) => {
 	'use strict';
-
-	function mergeSets(target, b) {
-		if(!b) {
-			return;
-		}
-		for(let i = 0; i < b.length; ++ i) {
-			if(target.indexOf(b[i]) === -1) {
-				target.push(b[i]);
-			}
-		}
-	}
-
-	function removeElement(list, item) {
-		const p = list.indexOf(item);
-		if(p !== -1) {
-			list.splice(p, 1);
-		}
-	}
-
-	function lastElement(list) {
-		return list[list.length - 1];
-	}
 
 	class AgentState {
 		constructor(visible, locked = false) {
@@ -54,8 +32,8 @@ define(() => {
 		}
 
 		addBounds(target, agentL, agentR, involvedAgents = null) {
-			removeElement(target, agentL);
-			removeElement(target, agentR);
+			array.remove(target, agentL);
+			array.remove(target, agentR);
 
 			let indexL = 0;
 			let indexR = target.length;
@@ -96,9 +74,9 @@ define(() => {
 				}
 			});
 			const type = (visible ? 'agent begin' : 'agent end');
-			const existing = lastElement(this.currentSection.stages) || {};
+			const existing = array.last(this.currentSection.stages) || {};
 			if(existing.type === type && existing.mode === mode) {
-				mergeSets(existing.agents, filteredAgents);
+				array.mergeSets(existing.agents, filteredAgents);
 			} else {
 				this.currentSection.stages.push({
 					type,
@@ -106,8 +84,8 @@ define(() => {
 					mode,
 				});
 			}
-			mergeSets(this.currentNest.agents, filteredAgents);
-			mergeSets(this.agents, filteredAgents);
+			array.mergeSets(this.currentNest.agents, filteredAgents);
+			array.mergeSets(this.agents, filteredAgents);
 		}
 
 		beginNested(mode, label, name) {
@@ -137,8 +115,8 @@ define(() => {
 		}
 
 		handleAgentDefine({agents}) {
-			mergeSets(this.currentNest.agents, agents);
-			mergeSets(this.agents, agents);
+			array.mergeSets(this.currentNest.agents, agents);
+			array.mergeSets(this.agents, agents);
 		}
 
 		handleAgentBegin({agents, mode}) {
@@ -172,11 +150,11 @@ define(() => {
 				throw new Error('Invalid block nesting');
 			}
 			const {stage, agents} = this.nesting.pop();
-			this.currentNest = lastElement(this.nesting);
-			this.currentSection = lastElement(this.currentNest.stage.sections);
+			this.currentNest = array.last(this.nesting);
+			this.currentSection = array.last(this.currentNest.stage.sections);
 			if(stage.sections.some((section) => section.stages.length > 0)) {
-				mergeSets(this.currentNest.agents, agents);
-				mergeSets(this.agents, agents);
+				array.mergeSets(this.currentNest.agents, agents);
+				array.mergeSets(this.agents, agents);
 				this.addBounds(
 					this.agents,
 					stage.left,
@@ -190,8 +168,8 @@ define(() => {
 		handleUnknownStage(stage) {
 			this.setAgentVis(stage.agents, true, 'box');
 			this.currentSection.stages.push(stage);
-			mergeSets(this.currentNest.agents, stage.agents);
-			mergeSets(this.agents, stage.agents);
+			array.mergeSets(this.currentNest.agents, stage.agents);
+			array.mergeSets(this.agents, stage.agents);
 		}
 
 		handleStage(stage) {

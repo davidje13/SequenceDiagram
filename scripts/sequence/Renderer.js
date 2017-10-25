@@ -1,66 +1,19 @@
-define(() => {
+define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 	'use strict';
 
-	/* jshint -W071 */ // TODO: break up rendering logic
-
-	const NS = 'http://www.w3.org/2000/svg';
-
-	function makeText(text = '') {
-		return document.createTextNode(text);
-	}
-
-	function makeSVGNode(type, attrs = {}) {
-		const o = document.createElementNS(NS, type);
-		for(let k in attrs) {
-			if(attrs.hasOwnProperty(k)) {
-				o.setAttribute(k, attrs[k]);
-			}
-		}
-		return o;
-	}
-
-	function empty(node) {
-		while(node.childNodes.length > 0) {
-			node.removeChild(node.lastChild);
-		}
-	}
-
-	function mergeSets(target, b) {
-		if(!b) {
-			return;
-		}
-		for(let i = 0; i < b.length; ++ i) {
-			if(target.indexOf(b[i]) === -1) {
-				target.push(b[i]);
-			}
-		}
-	}
-
-	function removeAll(target, b) {
-		if(!b) {
-			return;
-		}
-		for(let i = 0; i < b.length; ++ i) {
-			const p = target.indexOf(b[i]);
-			if(p !== -1) {
-				target.splice(p, 1);
-			}
-		}
-	}
-
 	function boxRenderer(attrs, position) {
-		return makeSVGNode('rect', Object.assign({}, position, attrs));
+		return svg.make('rect', Object.assign({}, position, attrs));
 	}
 
 	function noteRenderer(attrs, flickAttrs, position) {
-		const g = makeSVGNode('g');
+		const g = svg.make('g');
 		const x0 = position.x;
 		const x1 = position.x + position.width;
 		const y0 = position.y;
 		const y1 = position.y + position.height;
 		const flick = 7;
 
-		g.appendChild(makeSVGNode('path', Object.assign({
+		g.appendChild(svg.make('path', Object.assign({
 			'd': (
 				'M ' + x0 + ' ' + y0 +
 				' L ' + (x1 - flick) + ' ' + y0 +
@@ -71,7 +24,7 @@ define(() => {
 			),
 		}, attrs)));
 
-		g.appendChild(makeSVGNode('path', Object.assign({
+		g.appendChild(svg.make('path', Object.assign({
 			'd': (
 				'M ' + (x1 - flick) + ' ' + y0 +
 				' L ' + (x1 - flick) + ' ' + (y0 + flick) +
@@ -87,40 +40,117 @@ define(() => {
 	const LINE_HEIGHT = 1.3;
 	const TITLE_MARGIN = 10;
 	const OUTER_MARGIN = 5;
-	const BOX_PADDING = 10;
+	const AGENT_BOX_PADDING = 10;
 	const AGENT_MARGIN = 10;
 	const AGENT_CROSS_SIZE = 20;
 	const AGENT_NONE_HEIGHT = 10;
 	const ACTION_MARGIN = 5;
-	const CONNECT_HEIGHT = 8;
-	const CONNECT_POINT = 4;
-	const CONNECT_LABEL_PADDING = 6;
-	const CONNECT_LABEL_MASK_PADDING = 3;
-	const CONNECT_LABEL_MARGIN = {
-		top: 2,
-		bottom: 1,
+
+	const CONNECT = {
+		lineAttrs: {
+			'solid': {
+				'fill': 'none',
+				'stroke': '#000000',
+				'stroke-width': 1,
+			},
+			'dash': {
+				'fill': 'none',
+				'stroke': '#000000',
+				'stroke-width': 1,
+				'stroke-dasharray': '4, 2',
+			},
+		},
+		arrow: {
+			width: 4,
+			height: 8,
+			attrs: {
+				'fill': '#000000',
+				'stroke': '#000000',
+				'stroke-width': 1,
+				'stroke-linejoin': 'miter',
+			},
+		},
+		label: {
+			padding: 6,
+			margin: {top: 2, bottom: 1},
+			attrs: {
+				'font-family': 'sans-serif',
+				'font-size': 8,
+				'text-anchor': 'middle',
+			},
+		},
+		mask: {
+			padding: 3,
+			attrs: {
+				'fill': '#FFFFFF',
+			},
+		},
 	};
-	const BLOCK_MARGIN = {
-		top: 0,
-		bottom: 0,
-	};
-	const BLOCK_SECTION_PADDING = {
-		top: 3,
-		bottom: 2,
-	};
-	const BLOCK_MODE_PADDING = {
-		top: 1,
-		left: 3,
-		right: 3,
-		bottom: 0,
-	};
-	const BLOCK_LABEL_PADDING = {
-		left: 5,
-		right: 5,
-	};
-	const BLOCK_LABEL_MASK_PADDING = {
-		left: 3,
-		right: 3,
+
+	const BLOCK = {
+		margin: {
+			top: 0,
+			bottom: 0,
+		},
+		boxAttrs: {
+			'fill': 'none',
+			'stroke': '#000000',
+			'stroke-width': 1.5,
+			'rx': 2,
+			'ry': 2,
+		},
+		section: {
+			padding: {
+				top: 3,
+				bottom: 2,
+			},
+			mode: {
+				padding: {
+					top: 1,
+					left: 3,
+					right: 3,
+					bottom: 0,
+				},
+				boxAttrs: {
+					'fill': '#FFFFFF',
+					'stroke': '#000000',
+					'stroke-width': 1,
+					'rx': 2,
+					'ry': 2,
+				},
+				labelAttrs: {
+					'font-family': 'sans-serif',
+					'font-weight': 'bold',
+					'font-size': 9,
+					'text-anchor': 'left',
+				},
+			},
+			label: {
+				maskPadding: {
+					left: 3,
+					right: 3,
+				},
+				maskAttrs: {
+					'fill': '#FFFFFF',
+				},
+				labelPadding: {
+					left: 5,
+					right: 5,
+				},
+				labelAttrs: {
+					'font-family': 'sans-serif',
+					'font-size': 8,
+					'text-anchor': 'left',
+				},
+			},
+		},
+		separator: {
+			attrs: {
+				'stroke': '#000000',
+				'stroke-width': 1.5,
+				'stroke-dasharray': '4, 2',
+			},
+		},
 	};
 
 	const NOTE = {
@@ -193,66 +223,6 @@ define(() => {
 			'fill': '#000000',
 			'height': 5,
 		},
-
-		BLOCK_BOX: {
-			'fill': 'none',
-			'stroke': '#000000',
-			'stroke-width': 1.5,
-			'rx': 2,
-			'ry': 2,
-		},
-		BLOCK_SEPARATOR: {
-			'stroke': '#000000',
-			'stroke-width': 1.5,
-			'stroke-dasharray': '4, 2',
-		},
-		BLOCK_MODE: {
-			'fill': '#FFFFFF',
-			'stroke': '#000000',
-			'stroke-width': 1,
-			'rx': 2,
-			'ry': 2,
-		},
-		BLOCK_MODE_LABEL: {
-			'font-family': 'sans-serif',
-			'font-weight': 'bold',
-			'font-size': 9,
-			'text-anchor': 'left',
-		},
-		BLOCK_LABEL: {
-			'font-family': 'sans-serif',
-			'font-size': 8,
-			'text-anchor': 'left',
-		},
-		BLOCK_LABEL_MASK: {
-			'fill': '#FFFFFF',
-		},
-
-		CONNECT_LINE_SOLID: {
-			'fill': 'none',
-			'stroke': '#000000',
-			'stroke-width': 1,
-		},
-		CONNECT_LINE_DASH: {
-			'fill': 'none',
-			'stroke': '#000000',
-			'stroke-width': 1,
-			'stroke-dasharray': '4, 2',
-		},
-		CONNECT_LABEL: {
-			'font-family': 'sans-serif',
-			'font-size': 8,
-			'text-anchor': 'middle',
-		},
-		CONNECT_LABEL_MASK: {
-			'fill': '#FFFFFF',
-		},
-		CONNECT_HEAD: {
-			'fill': '#000000',
-			'stroke': '#000000',
-			'stroke-width': 1,
-			'stroke-linejoin': 'miter',
-		},
 	};
 
 	function traverse(stages, callbacks) {
@@ -282,36 +252,6 @@ define(() => {
 
 	return class Renderer {
 		constructor() {
-			this.base = makeSVGNode('svg', {
-				'xmlns': NS,
-				'version': '1.1',
-				'width': '100%',
-				'height': '100%',
-			});
-
-			this.title = makeSVGNode('text', Object.assign({
-				'y': ATTRS.TITLE['font-size'] + OUTER_MARGIN,
-			}, ATTRS.TITLE));
-			this.titleText = makeText();
-			this.title.appendChild(this.titleText);
-			this.base.appendChild(this.title);
-
-			this.diagram = makeSVGNode('g');
-			this.agentLines = makeSVGNode('g');
-			this.blocks = makeSVGNode('g');
-			this.sections = makeSVGNode('g');
-			this.agentDecor = makeSVGNode('g');
-			this.actions = makeSVGNode('g');
-			this.diagram.appendChild(this.agentLines);
-			this.diagram.appendChild(this.blocks);
-			this.diagram.appendChild(this.sections);
-			this.diagram.appendChild(this.agentDecor);
-			this.diagram.appendChild(this.actions);
-			this.base.appendChild(this.diagram);
-
-			this.testers = makeSVGNode('g');
-			this.testersCache = new Map();
-
 			this.separationAgentCap = {
 				'box': this.separationAgentCapBox.bind(this),
 				'cross': this.separationAgentCapCross.bind(this),
@@ -363,6 +303,37 @@ define(() => {
 
 			this.width = 0;
 			this.height = 0;
+			this.buildStaticElements();
+		}
+
+		buildStaticElements() {
+			this.base = svg.makeContainer({
+				'width': '100%',
+				'height': '100%',
+			});
+
+			this.title = svg.make('text', Object.assign({
+				'y': ATTRS.TITLE['font-size'] + OUTER_MARGIN,
+			}, ATTRS.TITLE));
+			this.titleText = svg.makeText();
+			this.title.appendChild(this.titleText);
+			this.base.appendChild(this.title);
+
+			this.diagram = svg.make('g');
+			this.agentLines = svg.make('g');
+			this.blocks = svg.make('g');
+			this.sections = svg.make('g');
+			this.agentDecor = svg.make('g');
+			this.actions = svg.make('g');
+			this.diagram.appendChild(this.agentLines);
+			this.diagram.appendChild(this.blocks);
+			this.diagram.appendChild(this.sections);
+			this.diagram.appendChild(this.agentDecor);
+			this.diagram.appendChild(this.actions);
+			this.base.appendChild(this.diagram);
+
+			this.testers = svg.make('g');
+			this.testersCache = new Map();
 		}
 
 		findExtremes(agents) {
@@ -440,7 +411,7 @@ define(() => {
 
 		separationAgent({type, mode, agents}) {
 			if(type === 'agent begin') {
-				mergeSets(this.visibleAgents, agents);
+				array.mergeSets(this.visibleAgents, agents);
 			}
 
 			const agentSpaces = new Map();
@@ -452,7 +423,7 @@ define(() => {
 			this.addSeparations(this.visibleAgents, agentSpaces);
 
 			if(type === 'agent end') {
-				removeAll(this.visibleAgents, agents);
+				array.removeAll(this.visibleAgents, agents);
 			}
 		}
 
@@ -461,9 +432,9 @@ define(() => {
 				agents[0],
 				agents[1],
 
-				this.testTextWidth(ATTRS.CONNECT_LABEL, label) +
-				CONNECT_POINT * 2 +
-				CONNECT_LABEL_PADDING * 2 +
+				this.testTextWidth(CONNECT.label.attrs, label) +
+				CONNECT.arrow.width * 2 +
+				CONNECT.label.padding * 2 +
 				ATTRS.AGENT_LINE['stroke-width']
 			);
 		}
@@ -553,22 +524,24 @@ define(() => {
 		}
 
 		separationBlockBegin(scope, {left, right}) {
-			mergeSets(this.visibleAgents, [left, right]);
+			array.mergeSets(this.visibleAgents, [left, right]);
 			this.addSeparations(this.visibleAgents, new Map());
 		}
 
 		separationSectionBegin(scope, {left, right}, {mode, label}) {
 			const width = (
-				this.testTextWidth(ATTRS.BLOCK_MODE_LABEL, mode) +
-				BLOCK_MODE_PADDING.left + BLOCK_MODE_PADDING.right +
-				this.testTextWidth(ATTRS.BLOCK_LABEL, label) +
-				BLOCK_LABEL_PADDING.left + BLOCK_LABEL_PADDING.right
+				this.testTextWidth(BLOCK.section.mode.labelAttrs, mode) +
+				BLOCK.section.mode.padding.left +
+				BLOCK.section.mode.padding.right +
+				this.testTextWidth(BLOCK.section.label.labelAttrs, label) +
+				BLOCK.section.label.labelPadding.left +
+				BLOCK.section.label.labelPadding.right
 			);
 			this.addSeparation(left, right, width);
 		}
 
 		separationBlockEnd(scope, {left, right}) {
-			removeAll(this.visibleAgents, [left, right]);
+			array.removeAll(this.visibleAgents, [left, right]);
 		}
 
 		checkSeparation(stage) {
@@ -576,20 +549,20 @@ define(() => {
 		}
 
 		renderAgentCapBox({x, labelWidth, label}) {
-			this.agentDecor.appendChild(makeSVGNode('rect', Object.assign({
+			this.agentDecor.appendChild(svg.make('rect', Object.assign({
 				'x': x - labelWidth / 2,
 				'y': this.currentY,
 				'width': labelWidth,
 			}, ATTRS.AGENT_BOX)));
 
-			const name = makeSVGNode('text', Object.assign({
+			const name = svg.make('text', Object.assign({
 				'x': x,
 				'y': this.currentY + (
 					ATTRS.AGENT_BOX.height +
 					ATTRS.AGENT_BOX_LABEL['font-size'] * (2 - LINE_HEIGHT)
 				) / 2,
 			}, ATTRS.AGENT_BOX_LABEL));
-			name.appendChild(makeText(label));
+			name.appendChild(svg.makeText(label));
 			this.agentDecor.appendChild(name);
 
 			return {
@@ -603,7 +576,7 @@ define(() => {
 			const y = this.currentY;
 			const d = AGENT_CROSS_SIZE / 2;
 
-			this.agentDecor.appendChild(makeSVGNode('path', Object.assign({
+			this.agentDecor.appendChild(svg.make('path', Object.assign({
 				'd': (
 					'M ' + (x - d) + ' ' + y +
 					' L ' + (x + d) + ' ' + (y + d * 2) +
@@ -620,7 +593,7 @@ define(() => {
 		}
 
 		renderAgentCapBar({x, labelWidth}) {
-			this.agentDecor.appendChild(makeSVGNode('rect', Object.assign({
+			this.agentDecor.appendChild(svg.make('rect', Object.assign({
 				'x': x - labelWidth / 2,
 				'y': this.currentY,
 				'width': labelWidth,
@@ -657,7 +630,7 @@ define(() => {
 				const agentInfo = this.agentInfos.get(agent);
 				const x = agentInfo.x;
 				shifts = this.renderAgentCap[mode](agentInfo);
-				this.agentLines.appendChild(makeSVGNode('path', Object.assign({
+				this.agentLines.appendChild(svg.make('path', Object.assign({
 					'd': (
 						'M ' + x + ' ' + agentInfo.latestYStart +
 						' L ' + x + ' ' + (this.currentY + shifts.lineTop)
@@ -674,74 +647,69 @@ define(() => {
 			const from = this.agentInfos.get(agents[0]);
 			const to = this.agentInfos.get(agents[1]);
 
-			const dy = CONNECT_HEIGHT / 2;
-			const dx = CONNECT_POINT;
+			const dy = CONNECT.arrow.height / 2;
+			const dx = CONNECT.arrow.width;
 			const dir = (from.x < to.x) ? 1 : -1;
 			const short = ATTRS.AGENT_LINE['stroke-width'];
 			let y = this.currentY;
 
-			const lineAttrs = {
-				'solid': ATTRS.CONNECT_LINE_SOLID,
-				'dash': ATTRS.CONNECT_LINE_DASH,
-			};
-
 			if(label) {
-				const mask = makeSVGNode('rect', ATTRS.CONNECT_LABEL_MASK);
-				const labelNode = makeSVGNode('text', ATTRS.CONNECT_LABEL);
-				labelNode.appendChild(makeText(label));
-				const sz = ATTRS.CONNECT_LABEL['font-size'];
+				const mask = svg.make('rect', CONNECT.mask.attrs);
+				const labelNode = svg.make('text', CONNECT.label.attrs);
+				labelNode.appendChild(svg.makeText(label));
+				const sz = CONNECT.label.attrs['font-size'];
 				this.actions.appendChild(mask);
 				this.actions.appendChild(labelNode);
 				y += Math.max(
 					dy,
-					CONNECT_LABEL_MARGIN.top +
+					CONNECT.label.margin.top +
 					sz * LINE_HEIGHT +
-					CONNECT_LABEL_MARGIN.bottom
+					CONNECT.label.margin.bottom
 				);
 				const w = labelNode.getComputedTextLength();
 				const x = (from.x + to.x) / 2;
 				const yBase = (
 					y -
 					sz * (LINE_HEIGHT - 1) -
-					CONNECT_LABEL_MARGIN.bottom
+					CONNECT.label.margin.bottom
 				);
 				labelNode.setAttribute('x', x);
 				labelNode.setAttribute('y', yBase);
-				mask.setAttribute('x', x - w / 2 - CONNECT_LABEL_MASK_PADDING);
+				mask.setAttribute('x', x - w / 2 - CONNECT.mask.padding);
 				mask.setAttribute('y', yBase - sz);
-				mask.setAttribute('width', w + CONNECT_LABEL_MASK_PADDING * 2);
+				mask.setAttribute('width', w + CONNECT.mask.padding * 2);
 				mask.setAttribute('height', sz * LINE_HEIGHT);
 			} else {
 				y += dy;
 			}
 
-			this.actions.appendChild(makeSVGNode('path', Object.assign({
+			this.actions.appendChild(svg.make('path', Object.assign({
 				'd': (
 					'M ' + (from.x + (left ? short : 0) * dir) + ' ' + y +
 					' L ' + (to.x - (right ? short : 0) * dir) + ' ' + y
 				),
-			}, lineAttrs[line])));
+			}, CONNECT.lineAttrs[line])));
 
 			if(left) {
-				this.actions.appendChild(makeSVGNode('path', Object.assign({
+				this.actions.appendChild(svg.make('path', Object.assign({
 					'd': (
 						'M ' + (from.x + (dx + short) * dir) + ' ' + (y - dy) +
 						' L ' + (from.x + short * dir) + ' ' + y +
 						' L ' + (from.x + (dx + short) * dir) + ' ' + (y + dy) +
-						(ATTRS.CONNECT_HEAD.fill === 'none' ? '' : ' Z')
+						(CONNECT.arrow.attrs.fill === 'none' ? '' : ' Z')
 					),
-				}, ATTRS.CONNECT_HEAD)));
+				}, CONNECT.arrow.attrs)));
 			}
 
 			if(right) {
-				this.actions.appendChild(makeSVGNode('path', Object.assign({
+				this.actions.appendChild(svg.make('path', Object.assign({
 					'd': (
 						'M ' + (to.x - (dx + short) * dir) + ' ' + (y - dy) +
 						' L ' + (to.x - short * dir) + ' ' + y +
 						' L ' + (to.x - (dx + short) * dir) + ' ' + (y + dy) +
-						(ATTRS.CONNECT_HEAD.fill === 'none' ? '' : ' Z')
+						(CONNECT.arrow.attrs.fill === 'none' ? '' : ' Z')
 					),
-				}, ATTRS.CONNECT_HEAD)));
+				}, CONNECT.arrow.attrs)));
 			}
 
 			this.currentY = y + dy + ACTION_MARGIN;
@@ -754,11 +722,11 @@ define(() => {
 
 			this.currentY += config.margin.top;
 
-			const labelNode = makeSVGNode('text', Object.assign({
+			const labelNode = svg.make('text', Object.assign({
 				'y': this.currentY + config.padding.top + sz,
 				'text-anchor': anchor,
 			}, config.labelAttrs));
-			labelNode.appendChild(makeText(label));
+			labelNode.appendChild(svg.makeText(label));
 			this.actions.appendChild(labelNode);
 
 			const w = labelNode.getComputedTextLength();
@@ -847,54 +815,56 @@ define(() => {
 		}
 
 		renderBlockBegin(scope) {
-			this.currentY += BLOCK_MARGIN.top;
+			this.currentY += BLOCK.margin.top;
 
 			scope.y = this.currentY;
 			scope.first = true;
 		}
 
 		renderSectionBegin(scope, {left, right}, {mode, label}) {
+			/* jshint -W071 */ // TODO: tidy this up (split text rendering)
+
 			const agentInfoL = this.agentInfos.get(left);
 			const agentInfoR = this.agentInfos.get(right);
 
 			if(scope.first) {
 				scope.first = false;
 			} else {
-				this.currentY += BLOCK_SECTION_PADDING.bottom;
-				this.sections.appendChild(makeSVGNode('path', Object.assign({
+				this.currentY += BLOCK.section.padding.bottom;
+				this.sections.appendChild(svg.make('path', Object.assign({
 					'd': (
 						'M' + agentInfoL.x + ' ' + this.currentY +
 						' L' + agentInfoR.x + ' ' + this.currentY
 					),
-				}, ATTRS.BLOCK_SEPARATOR)));
+				}, BLOCK.separator.attrs)));
 			}
 
 			let x = agentInfoL.x;
 			if(mode) {
-				const sz = ATTRS.BLOCK_MODE_LABEL['font-size'];
-				const modeBox = makeSVGNode('rect', Object.assign({
+				const sz = BLOCK.section.mode.labelAttrs['font-size'];
+				const modeBox = svg.make('rect', Object.assign({
 					'x': x,
 					'y': this.currentY,
 					'height': (
 						sz * LINE_HEIGHT +
-						BLOCK_MODE_PADDING.top +
-						BLOCK_MODE_PADDING.bottom
+						BLOCK.section.mode.padding.top +
+						BLOCK.section.mode.padding.bottom
 					),
-				}, ATTRS.BLOCK_MODE));
-				const modeLabel = makeSVGNode('text', Object.assign({
-					'x': x + BLOCK_MODE_PADDING.left,
+				}, BLOCK.section.mode.boxAttrs));
+				const modeLabel = svg.make('text', Object.assign({
+					'x': x + BLOCK.section.mode.padding.left,
 					'y': (
 						this.currentY + sz +
-						BLOCK_MODE_PADDING.top
+						BLOCK.section.mode.padding.top
 					),
-				}, ATTRS.BLOCK_MODE_LABEL));
-				modeLabel.appendChild(makeText(mode));
+				}, BLOCK.section.mode.labelAttrs));
+				modeLabel.appendChild(svg.makeText(mode));
 				this.blocks.appendChild(modeBox);
 				this.actions.appendChild(modeLabel);
 				const w = (
 					modeLabel.getComputedTextLength() +
-					BLOCK_MODE_PADDING.left +
-					BLOCK_MODE_PADDING.right
+					BLOCK.section.mode.padding.left +
+					BLOCK.section.mode.padding.right
 				);
 				modeBox.setAttribute('width', w);
 				x += w;
@@ -903,47 +873,47 @@ define(() => {
 			}
 
 			if(label) {
-				x += BLOCK_LABEL_PADDING.left;
-				const sz = ATTRS.BLOCK_LABEL['font-size'];
-				const mask = makeSVGNode('rect', Object.assign({
-					'x': x - BLOCK_LABEL_MASK_PADDING.left,
+				x += BLOCK.section.label.labelPadding.left;
+				const sz = BLOCK.section.label.labelAttrs['font-size'];
+				const mask = svg.make('rect', Object.assign({
+					'x': x - BLOCK.section.label.maskPadding.left,
 					'y': this.currentY - sz * LINE_HEIGHT,
 					'height': sz * LINE_HEIGHT,
-				}, ATTRS.BLOCK_LABEL_MASK));
-				const labelLabel = makeSVGNode('text', Object.assign({
+				}, BLOCK.section.label.maskAttrs));
+				const labelLabel = svg.make('text', Object.assign({
 					'x': x,
 					'y': this.currentY - sz * (LINE_HEIGHT - 1),
-				}, ATTRS.BLOCK_LABEL));
-				labelLabel.appendChild(makeText(label));
+				}, BLOCK.section.label.labelAttrs));
+				labelLabel.appendChild(svg.makeText(label));
 				this.actions.appendChild(mask);
 				this.actions.appendChild(labelLabel);
 				const w = (
 					labelLabel.getComputedTextLength() +
-					BLOCK_LABEL_MASK_PADDING.left +
-					BLOCK_LABEL_MASK_PADDING.right
+					BLOCK.section.label.maskPadding.left +
+					BLOCK.section.label.maskPadding.right
 				);
 				mask.setAttribute('width', w);
 			}
 
-			this.currentY += BLOCK_SECTION_PADDING.top;
+			this.currentY += BLOCK.section.padding.top;
 		}
 
 		renderSectionEnd(/*scope, block, section*/) {
 		}
 
 		renderBlockEnd(scope, {left, right}) {
-			this.currentY += BLOCK_SECTION_PADDING.bottom;
+			this.currentY += BLOCK.section.padding.bottom;
 
 			const agentInfoL = this.agentInfos.get(left);
 			const agentInfoR = this.agentInfos.get(right);
-			this.blocks.appendChild(makeSVGNode('rect', Object.assign({
+			this.blocks.appendChild(svg.make('rect', Object.assign({
 				'x': agentInfoL.x,
 				'y': scope.y,
 				'width': agentInfoR.x - agentInfoL.x,
 				'height': this.currentY - scope.y,
-			}, ATTRS.BLOCK_BOX)));
+			}, BLOCK.boxAttrs)));
 
-			this.currentY += BLOCK_MARGIN.bottom + ACTION_MARGIN;
+			this.currentY += BLOCK.margin.bottom + ACTION_MARGIN;
 		}
 
 		addAction(stage) {
@@ -953,8 +923,8 @@ define(() => {
 		testTextWidth(attrs, content) {
 			let tester = this.testersCache.get(attrs);
 			if(!tester) {
-				const text = makeText();
-				const node = makeSVGNode('text', attrs);
+				const text = svg.makeText();
+				const node = svg.make('text', attrs);
 				node.appendChild(text);
 				this.testers.appendChild(node);
 				tester = {text, node};
@@ -966,7 +936,7 @@ define(() => {
 		}
 
 		buildAgentInfos(agents, stages) {
-			empty(this.testers);
+			svg.empty(this.testers);
 			this.testersCache.clear();
 			this.diagram.appendChild(this.testers);
 
@@ -976,7 +946,7 @@ define(() => {
 					label: agent,
 					labelWidth: (
 						this.testTextWidth(ATTRS.AGENT_BOX_LABEL, agent) +
-						BOX_PADDING * 2
+						AGENT_BOX_PADDING * 2
 					),
 					index,
 					x: null,
@@ -1036,11 +1006,11 @@ define(() => {
 		}
 
 		render({meta, agents, stages}) {
-			empty(this.agentLines);
-			empty(this.blocks);
-			empty(this.sections);
-			empty(this.agentDecor);
-			empty(this.actions);
+			svg.empty(this.agentLines);
+			svg.empty(this.blocks);
+			svg.empty(this.sections);
+			svg.empty(this.agentDecor);
+			svg.empty(this.actions);
 
 			this.titleText.nodeValue = meta.title || '';
 
