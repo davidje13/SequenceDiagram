@@ -326,6 +326,10 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			}]);
 		});
 
+		it('rejects note between for a single agent', () => {
+			expect(() => parser.parse('state between A: hi')).toThrow();
+		});
+
 		it('converts state', () => {
 			const parsed = parser.parse('state over A: doing stuff');
 			expect(parsed.stages).toEqual([{

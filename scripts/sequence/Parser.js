@@ -51,19 +51,17 @@ define(() => {
 	const NOTE_TYPES = {
 		'note': {
 			mode: 'note',
-			multiAgent: true,
 			types: {
-				'over': {type: 'note over', skip: []},
-				'left': {type: 'note left', skip: ['of']},
-				'right': {type: 'note right', skip: ['of']},
-				'between': {type: 'note between', skip: []},
+				'over': {type: 'note over', skip: [], min: 1, max: null},
+				'left': {type: 'note left', skip: ['of'], min: 1, max: null},
+				'right': {type: 'note right', skip: ['of'], min: 1, max: null},
+				'between': {type: 'note between', skip: [], min: 2, max: null},
 			},
 		},
 		'state': {
 			mode: 'state',
-			multiAgent: false,
 			types: {
-				'over': {type: 'note over', skip: []},
+				'over': {type: 'note over', skip: [], min: 1, max: 1},
 			},
 		},
 	};
@@ -209,7 +207,10 @@ define(() => {
 		let skip = 2;
 		skip = skipOver(line, skip, type.skip);
 		const agents = parseCommaList(line.slice(skip, labelSplit));
-		if(agents.length < 1 || (agents.length > 1 && !mode.multiAgent)) {
+		if(
+			agents.length < type.min ||
+			(type.max !== null && agents.length > type.max)
+		) {
 			throw new Error('Invalid ' + line[0] + ': ' + line.join(' '));
 		}
 		return {

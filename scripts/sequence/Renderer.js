@@ -3,6 +3,22 @@ define(() => {
 
 	/* jshint -W071 */ // TODO: break up rendering logic
 
+	const NS = 'http://www.w3.org/2000/svg';
+
+	function makeText(text = '') {
+		return document.createTextNode(text);
+	}
+
+	function makeSVGNode(type, attrs = {}) {
+		const o = document.createElementNS(NS, type);
+		for(let k in attrs) {
+			if(attrs.hasOwnProperty(k)) {
+				o.setAttribute(k, attrs[k]);
+			}
+		}
+		return o;
+	}
+
 	function empty(node) {
 		while(node.childNodes.length > 0) {
 			node.removeChild(node.lastChild);
@@ -32,9 +48,41 @@ define(() => {
 		}
 	}
 
-	const SEP_ZERO = {left: 0, right: 0};
+	function boxRenderer(attrs, position) {
+		return makeSVGNode('rect', Object.assign({}, position, attrs));
+	}
 
-	const NS = 'http://www.w3.org/2000/svg';
+	function noteRenderer(attrs, flickAttrs, position) {
+		const g = makeSVGNode('g');
+		const x0 = position.x;
+		const x1 = position.x + position.width;
+		const y0 = position.y;
+		const y1 = position.y + position.height;
+		const flick = 7;
+
+		g.appendChild(makeSVGNode('path', Object.assign({
+			'd': (
+				'M ' + x0 + ' ' + y0 +
+				' L ' + (x1 - flick) + ' ' + y0 +
+				' L ' + x1 + ' ' + (y0 + flick) +
+				' L ' + x1 + ' ' + y1 +
+				' L ' + x0 + ' ' + y1 +
+				' Z'
+			),
+		}, attrs)));
+
+		g.appendChild(makeSVGNode('path', Object.assign({
+			'd': (
+				'M ' + (x1 - flick) + ' ' + y0 +
+				' L ' + (x1 - flick) + ' ' + (y0 + flick) +
+				' L ' + x1 + ' ' + (y0 + flick)
+			),
+		}, flickAttrs)));
+
+		return g;
+	}
+
+	const SEP_ZERO = {left: 0, right: 0};
 
 	const LINE_HEIGHT = 1.3;
 	const TITLE_MARGIN = 10;
@@ -53,12 +101,12 @@ define(() => {
 		bottom: 1,
 	};
 	const BLOCK_MARGIN = {
-		top: 5,
-		bottom: 5,
+		top: 0,
+		bottom: 0,
 	};
 	const BLOCK_SECTION_PADDING = {
 		top: 3,
-		bottom: 5,
+		bottom: 2,
 	};
 	const BLOCK_MODE_PADDING = {
 		top: 1,
@@ -73,6 +121,43 @@ define(() => {
 	const BLOCK_LABEL_MASK_PADDING = {
 		left: 3,
 		right: 3,
+	};
+
+	const NOTE = {
+		'note': {
+			margin: {top: 0, left: 5, right: 5, bottom: 0},
+			padding: {top: 5, left: 5, right: 10, bottom: 5},
+			overlap: {left: 10, right: 10},
+			boxRenderer: noteRenderer.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 1,
+			}, {
+				'fill': 'none',
+				'stroke': '#000000',
+				'stroke-width': 1,
+			}),
+			labelAttrs: {
+				'font-family': 'sans-serif',
+				'font-size': 8,
+			},
+		},
+		'state': {
+			margin: {top: 0, left: 5, right: 5, bottom: 0},
+			padding: {top: 7, left: 7, right: 7, bottom: 7},
+			overlap: {left: 10, right: 10},
+			boxRenderer: boxRenderer.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 1,
+				'rx': 10,
+				'ry': 10,
+			}),
+			labelAttrs: {
+				'font-family': 'sans-serif',
+				'font-size': 8,
+			},
+		},
 	};
 
 	const ATTRS = {
@@ -170,20 +255,6 @@ define(() => {
 		},
 	};
 
-	function makeText(text = '') {
-		return document.createTextNode(text);
-	}
-
-	function makeSVGNode(type, attrs = {}) {
-		const o = document.createElementNS(NS, type);
-		for(let k in attrs) {
-			if(attrs.hasOwnProperty(k)) {
-				o.setAttribute(k, attrs[k]);
-			}
-		}
-		return o;
-	}
-
 	function traverse(stages, callbacks) {
 		stages.forEach((stage) => {
 			if(stage.type === 'block') {
@@ -238,6 +309,9 @@ define(() => {
 			this.diagram.appendChild(this.actions);
 			this.base.appendChild(this.diagram);
 
+			this.testers = makeSVGNode('g');
+			this.testersCache = new Map();
+
 			this.separationAgentCap = {
 				'box': this.separationAgentCapBox.bind(this),
 				'cross': this.separationAgentCapCross.bind(this),
@@ -291,6 +365,24 @@ define(() => {
 			this.height = 0;
 		}
 
+		findExtremes(agents) {
+			let min = null;
+			let max = null;
+			agents.forEach((agent) => {
+				const info = this.agentInfos.get(agent);
+				if(min === null || info.index < min.index) {
+					min = info;
+				}
+				if(max === null || info.index > max.index) {
+					max = info;
+				}
+			});
+			return {
+				left: min.label,
+				right: max.label,
+			};
+		}
+
 		addSeparation(agent1, agent2, dist) {
 			const info1 = this.agentInfos.get(agent1);
 			const info2 = this.agentInfos.get(agent2);
@@ -303,19 +395,19 @@ define(() => {
 		}
 
 		addSeparations(agents, agentSpaces) {
-			agents.forEach((agent1) => {
-				const info1 = this.agentInfos.get(agent1);
-				const sep1 = agentSpaces.get(agent1) || SEP_ZERO;
-				agents.forEach((agent2) => {
-					const info2 = this.agentInfos.get(agent2);
-					if(info2.index >= info1.index) {
+			agents.forEach((agentR) => {
+				const infoR = this.agentInfos.get(agentR);
+				const sepR = agentSpaces.get(agentR) || SEP_ZERO;
+				agents.forEach((agentL) => {
+					const infoL = this.agentInfos.get(agentL);
+					if(infoL.index >= infoR.index) {
 						return;
 					}
-					const sep2 = agentSpaces.get(agent2) || SEP_ZERO;
+					const sepL = agentSpaces.get(agentL) || SEP_ZERO;
 					this.addSeparation(
-						agent1,
-						agent2,
-						sep1.right + sep2.left + AGENT_MARGIN
+						agentR,
+						agentL,
+						sepR.left + sepL.right + AGENT_MARGIN
 					);
 				});
 			});
@@ -369,27 +461,95 @@ define(() => {
 				agents[0],
 				agents[1],
 
-				this.testTextWidth(this.testConnect, label) +
+				this.testTextWidth(ATTRS.CONNECT_LABEL, label) +
 				CONNECT_POINT * 2 +
 				CONNECT_LABEL_PADDING * 2 +
 				ATTRS.AGENT_LINE['stroke-width']
 			);
 		}
 
-		separationNoteOver(/*stage*/) {
-			// TODO
+		separationNoteOver({agents, mode, label}) {
+			const config = NOTE[mode];
+			const width = (
+				this.testTextWidth(config.labelAttrs, label) +
+				config.padding.left +
+				config.padding.right
+			);
+
+			const agentSpaces = new Map();
+			if(agents.length > 1) {
+				const {left, right} = this.findExtremes(agents);
+
+				this.addSeparation(
+					left,
+					right,
+
+					width -
+					config.overlap.left -
+					config.overlap.right
+				);
+
+				agentSpaces.set(left, {left: config.overlap.left, right: 0});
+				agentSpaces.set(right, {left: 0, right: config.overlap.right});
+			} else {
+				agentSpaces.set(agents[0], {
+					left: width / 2,
+					right: width / 2,
+				});
+			}
+			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteLeft(/*stage*/) {
-			// TODO
+		separationNoteLeft({agents, mode, label}) {
+			const config = NOTE[mode];
+			const {left} = this.findExtremes(agents);
+
+			const agentSpaces = new Map();
+			agentSpaces.set(left, {
+				left: (
+					this.testTextWidth(config.labelAttrs, label) +
+					config.padding.left +
+					config.padding.right +
+					config.margin.left +
+					config.margin.right
+				),
+				right: 0,
+			});
+			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteRight(/*stage*/) {
-			// TODO
+		separationNoteRight({agents, mode, label}) {
+			const config = NOTE[mode];
+			const {right} = this.findExtremes(agents);
+
+			const agentSpaces = new Map();
+			agentSpaces.set(right, {
+				left: 0,
+				right: (
+					this.testTextWidth(config.labelAttrs, label) +
+					config.padding.left +
+					config.padding.right +
+					config.margin.left +
+					config.margin.right
+				),
+			});
+			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteBetween(/*stage*/) {
-			// TODO
+		separationNoteBetween({agents, mode, label}) {
+			const config = NOTE[mode];
+			const {left, right} = this.findExtremes(agents);
+
+			this.addSeparation(
+				left,
+				right,
+
+				this.testTextWidth(config.labelAttrs, label) +
+				config.padding.left +
+				config.padding.right +
+				config.margin.left +
+				config.margin.right
+			);
 		}
 
 		separationBlockBegin(scope, {left, right}) {
@@ -399,9 +559,9 @@ define(() => {
 
 		separationSectionBegin(scope, {left, right}, {mode, label}) {
 			const width = (
-				this.testTextWidth(this.testBlockMode, mode) +
+				this.testTextWidth(ATTRS.BLOCK_MODE_LABEL, mode) +
 				BLOCK_MODE_PADDING.left + BLOCK_MODE_PADDING.right +
-				this.testTextWidth(this.testBlockLabel, label) +
+				this.testTextWidth(ATTRS.BLOCK_LABEL, label) +
 				BLOCK_LABEL_PADDING.left + BLOCK_LABEL_PADDING.right
 			);
 			this.addSeparation(left, right, width);
@@ -587,20 +747,103 @@ define(() => {
 			this.currentY = y + dy + ACTION_MARGIN;
 		}
 
-		renderNoteOver(/*stage*/) {
-			// TODO
+		renderNote({xMid = null, x0 = null, x1 = null}, anchor, mode, label) {
+			const config = NOTE[mode];
+
+			const sz = config.labelAttrs['font-size'];
+
+			this.currentY += config.margin.top;
+
+			const labelNode = makeSVGNode('text', Object.assign({
+				'y': this.currentY + config.padding.top + sz,
+				'text-anchor': anchor,
+			}, config.labelAttrs));
+			labelNode.appendChild(makeText(label));
+			this.actions.appendChild(labelNode);
+
+			const w = labelNode.getComputedTextLength();
+			const fullW = w + config.padding.left + config.padding.right;
+			if(x0 === null && xMid !== null) {
+				x0 = xMid - fullW / 2;
+			}
+			if(x1 === null && x0 !== null) {
+				x1 = x0 + fullW;
+			} else if(x0 === null) {
+				x0 = x1 - fullW;
+			}
+			switch(anchor) {
+			case 'start':
+				labelNode.setAttribute('x', x0 + config.padding.left);
+				break;
+			case 'end':
+				labelNode.setAttribute('x', x1 - config.padding.right);
+				break;
+			default:
+				labelNode.setAttribute('x', (
+					x0 + config.padding.left +
+					x1 - config.padding.right
+				) / 2);
+			}
+
+			this.actions.insertBefore(config.boxRenderer({
+				x: x0,
+				y: this.currentY,
+				width: x1 - x0,
+				height: (
+					config.padding.top +
+					sz * LINE_HEIGHT +
+					config.padding.bottom
+				),
+			}), labelNode);
+
+			this.currentY += (
+				config.padding.top +
+				sz * LINE_HEIGHT +
+				config.padding.bottom +
+				config.margin.bottom +
+				ACTION_MARGIN
+			);
 		}
 
-		renderNoteLeft(/*stage*/) {
-			// TODO
+		renderNoteOver({agents, mode, label}) {
+			const config = NOTE[mode];
+
+			if(agents.length > 1) {
+				const {left, right} = this.findExtremes(agents);
+				this.renderNote({
+					x0: this.agentInfos.get(left).x - config.overlap.left,
+					x1: this.agentInfos.get(right).x + config.overlap.right,
+				}, 'middle', mode, label);
+			} else {
+				const xMid = this.agentInfos.get(agents[0]).x;
+				this.renderNote({xMid}, 'middle', mode, label);
+			}
 		}
 
-		renderNoteRight(/*stage*/) {
-			// TODO
+		renderNoteLeft({agents, mode, label}) {
+			const config = NOTE[mode];
+
+			const {left} = this.findExtremes(agents);
+			const x1 = this.agentInfos.get(left).x - config.margin.right;
+			this.renderNote({x1}, 'end', mode, label);
 		}
 
-		renderNoteBetween(/*stage*/) {
-			// TODO
+		renderNoteRight({agents, mode, label}) {
+			const config = NOTE[mode];
+
+			const {right} = this.findExtremes(agents);
+			const x0 = this.agentInfos.get(right).x + config.margin.left;
+			this.renderNote({x0}, 'start', mode, label);
+		}
+
+		renderNoteBetween({agents, mode, label}) {
+			const {left, right} = this.findExtremes(agents);
+			const xMid = (
+				this.agentInfos.get(left).x +
+				this.agentInfos.get(right).x
+			) / 2;
+
+			this.renderNote({xMid}, 'middle', mode, label);
 		}
 
 		renderBlockBegin(scope) {
@@ -700,39 +943,39 @@ define(() => {
 				'height': this.currentY - scope.y,
 			}, ATTRS.BLOCK_BOX)));
 
-			this.currentY += BLOCK_MARGIN.bottom;
+			this.currentY += BLOCK_MARGIN.bottom + ACTION_MARGIN;
 		}
 
 		addAction(stage) {
 			this.renderAction[stage.type](stage);
 		}
 
-		makeTextTester(attrs) {
-			const text = makeText();
-			const node = makeSVGNode('text', attrs);
-			node.appendChild(text);
-			this.agentDecor.appendChild(node);
-			return {text, node};
-		}
+		testTextWidth(attrs, content) {
+			let tester = this.testersCache.get(attrs);
+			if(!tester) {
+				const text = makeText();
+				const node = makeSVGNode('text', attrs);
+				node.appendChild(text);
+				this.testers.appendChild(node);
+				tester = {text, node};
+				this.testersCache.set(attrs, tester);
+			}
 
-		testTextWidth(tester, text) {
-			tester.text.nodeValue = text;
+			tester.text.nodeValue = content;
 			return tester.node.getComputedTextLength();
 		}
 
-		removeTextTester(tester) {
-			this.agentDecor.removeChild(tester.node);
-		}
-
 		buildAgentInfos(agents, stages) {
-			const testName = this.makeTextTester(ATTRS.AGENT_BOX_LABEL);
+			empty(this.testers);
+			this.testersCache.clear();
+			this.diagram.appendChild(this.testers);
 
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
 				this.agentInfos.set(agent, {
 					label: agent,
 					labelWidth: (
-						this.testTextWidth(testName, agent) +
+						this.testTextWidth(ATTRS.AGENT_BOX_LABEL, agent) +
 						BOX_PADDING * 2
 					),
 					index,
@@ -744,16 +987,9 @@ define(() => {
 			this.agentInfos.get('[').labelWidth = 0;
 			this.agentInfos.get(']').labelWidth = 0;
 
-			this.removeTextTester(testName);
-
-			this.testConnect = this.makeTextTester(ATTRS.CONNECT_LABEL);
-			this.testBlockMode = this.makeTextTester(ATTRS.BLOCK_MODE_LABEL);
-			this.testBlockLabel = this.makeTextTester(ATTRS.BLOCK_LABEL);
 			this.visibleAgents = ['[', ']'];
 			traverse(stages, this.separationTraversalFns);
-			this.removeTextTester(this.testConnect);
-			this.removeTextTester(this.testBlockMode);
-			this.removeTextTester(this.testBlockLabel);
+			this.diagram.removeChild(this.testers);
 
 			agents.forEach((agent) => {
 				const agentInfo = this.agentInfos.get(agent);
