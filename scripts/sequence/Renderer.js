@@ -319,18 +319,16 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 			this.title.appendChild(this.titleText);
 			this.base.appendChild(this.title);
 
-			this.diagram = svg.make('g');
 			this.agentLines = svg.make('g');
 			this.blocks = svg.make('g');
 			this.sections = svg.make('g');
 			this.agentDecor = svg.make('g');
 			this.actions = svg.make('g');
-			this.diagram.appendChild(this.agentLines);
-			this.diagram.appendChild(this.blocks);
-			this.diagram.appendChild(this.sections);
-			this.diagram.appendChild(this.agentDecor);
-			this.diagram.appendChild(this.actions);
-			this.base.appendChild(this.diagram);
+			this.base.appendChild(this.agentLines);
+			this.base.appendChild(this.blocks);
+			this.base.appendChild(this.sections);
+			this.base.appendChild(this.agentDecor);
+			this.base.appendChild(this.actions);
 
 			this.testers = svg.make('g');
 			this.testersCache = new Map();
@@ -938,7 +936,7 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 		buildAgentInfos(agents, stages) {
 			svg.empty(this.testers);
 			this.testersCache.clear();
-			this.diagram.appendChild(this.testers);
+			this.base.appendChild(this.testers);
 
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
@@ -959,7 +957,7 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 
 			this.visibleAgents = ['[', ']'];
 			traverse(stages, this.separationTraversalFns);
-			this.diagram.removeChild(this.testers);
+			this.base.removeChild(this.testers);
 
 			agents.forEach((agent) => {
 				const agentInfo = this.agentInfos.get(agent);
@@ -978,31 +976,26 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 
 		updateBounds(stagesHeight) {
 			const titleWidth = this.title.getComputedTextLength();
-			const stagesWidth = (this.maxX - this.minX);
 
-			const width = Math.ceil(
-				Math.max(stagesWidth, titleWidth) +
-				OUTER_MARGIN * 2
-			);
-			const height = Math.ceil(
-				ATTRS.TITLE['font-size'] * LINE_HEIGHT +
-				TITLE_MARGIN +
-				stagesHeight +
-				OUTER_MARGIN * 2
-			);
+			const cx = (this.minX + this.maxX) / 2;
+			this.title.setAttribute('x', cx);
+			this.title.setAttribute('y', -TITLE_MARGIN);
 
-			this.diagram.setAttribute('transform',
-				'translate(' + ((width - stagesWidth) / 2 - this.minX) + ',' + (
-					OUTER_MARGIN +
-					ATTRS.TITLE['font-size'] * LINE_HEIGHT +
-					TITLE_MARGIN
-				) + ')'
+			const x0 = Math.min(this.minX, cx - titleWidth / 2) - OUTER_MARGIN;
+			const x1 = Math.max(this.maxX, cx + titleWidth / 2) + OUTER_MARGIN;
+			const y0 = (
+				-TITLE_MARGIN
+				- ATTRS.TITLE['font-size'] * LINE_HEIGHT
+				- OUTER_MARGIN
 			);
+			const y1 = stagesHeight + OUTER_MARGIN;
 
-			this.title.setAttribute('x', width / 2);
-			this.base.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
-			this.width = width;
-			this.height = height;
+			this.base.setAttribute('viewBox', (
+				x0 + ' ' + y0 + ' ' +
+				(x1 - x0) + ' ' + (y1 - y0)
+			));
+			this.width = (x1 - x0);
+			this.height = (y1 - y0);
 		}
 
 		render({meta, agents, stages}) {
@@ -1021,7 +1014,8 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 			this.currentY = 0;
 			traverse(stages, this.renderTraversalFns);
 
-			this.updateBounds(Math.max(this.currentY - ACTION_MARGIN, 0));
+			const stagesHeight = Math.max(this.currentY - ACTION_MARGIN, 0);
+			this.updateBounds(stagesHeight);
 		}
 
 		getAgentX(name) {
