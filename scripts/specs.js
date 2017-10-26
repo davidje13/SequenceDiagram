@@ -5,4 +5,5 @@ define([
 	'sequence/Renderer_spec',
 	'sequence/ArrayUtilities_spec',
 	'sequence/SVGUtilities_spec',
+	'sequence/SVGTextBlock_spec',
 ]);

@@ -1,4 +1,12 @@
-define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
+define([
+	'./ArrayUtilities',
+	'./SVGUtilities',
+	'./SVGTextBlock',
+], (
+	array,
+	svg,
+	SVGTextBlock
+) => {
 	'use strict';
 
 	function boxRenderer(attrs, position) {
@@ -312,13 +320,6 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 				'height': '100%',
 			});
 
-			this.title = svg.make('text', Object.assign({
-				'y': ATTRS.TITLE['font-size'] + OUTER_MARGIN,
-			}, ATTRS.TITLE));
-			this.titleText = svg.makeText();
-			this.title.appendChild(this.titleText);
-			this.base.appendChild(this.title);
-
 			this.agentLines = svg.make('g');
 			this.blocks = svg.make('g');
 			this.sections = svg.make('g');
@@ -329,6 +330,7 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 			this.base.appendChild(this.sections);
 			this.base.appendChild(this.agentDecor);
 			this.base.appendChild(this.actions);
+			this.title = new SVGTextBlock(this.base, ATTRS.TITLE, LINE_HEIGHT);
 
 			this.testers = svg.make('g');
 			this.testersCache = new Map();
@@ -975,19 +977,16 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 		}
 
 		updateBounds(stagesHeight) {
-			const titleWidth = this.title.getComputedTextLength();
-
 			const cx = (this.minX + this.maxX) / 2;
-			this.title.setAttribute('x', cx);
-			this.title.setAttribute('y', -TITLE_MARGIN);
-
-			const x0 = Math.min(this.minX, cx - titleWidth / 2) - OUTER_MARGIN;
-			const x1 = Math.max(this.maxX, cx + titleWidth / 2) + OUTER_MARGIN;
-			const y0 = (
-				-TITLE_MARGIN
-				- ATTRS.TITLE['font-size'] * LINE_HEIGHT
-				- OUTER_MARGIN
+			const titleY = ((this.title.height > 0) ?
+				(-TITLE_MARGIN - this.title.height) : 0
 			);
+			this.title.reanchor(cx, titleY);
+
+			const halfTitleWidth = this.title.width / 2;
+			const x0 = Math.min(this.minX, cx - halfTitleWidth) - OUTER_MARGIN;
+			const x1 = Math.max(this.maxX, cx + halfTitleWidth) + OUTER_MARGIN;
+			const y0 = titleY - OUTER_MARGIN;
 			const y1 = stagesHeight + OUTER_MARGIN;
 
 			this.base.setAttribute('viewBox', (
@@ -1005,7 +1004,7 @@ define(['./ArrayUtilities', './SVGUtilities'], (array, svg) => {
 			svg.empty(this.agentDecor);
 			svg.empty(this.actions);
 
-			this.titleText.nodeValue = meta.title || '';
+			this.title.setText(meta.title);
 
 			this.minX = 0;
 			this.maxX = 0;
