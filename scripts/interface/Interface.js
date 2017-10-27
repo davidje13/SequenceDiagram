@@ -38,6 +38,7 @@ define(['codemirror'], (CodeMirror) => {
 			this.generator = generator;
 			this.renderer = renderer;
 			this.defaultCode = defaultCode;
+			this.minScale = 1.5;
 
 			this.debounced = null;
 			this.latestSeq = null;
@@ -56,6 +57,7 @@ define(['codemirror'], (CodeMirror) => {
 		build(container) {
 			this.codePane = makeNode('div', {'class': 'pane-code'});
 			this.viewPane = makeNode('div', {'class': 'pane-view'});
+			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
 
 			this.downloadPNG = makeNode('a', {
 				'href': '#',
@@ -80,6 +82,7 @@ define(['codemirror'], (CodeMirror) => {
 			this.options.appendChild(this.downloadPNG);
 			this.options.appendChild(this.downloadSVG);
 			this.viewPane.appendChild(this.options);
+			this.viewPane.appendChild(this.viewPaneInner);
 
 			container.appendChild(this.codePane);
 			container.appendChild(this.viewPane);
@@ -88,10 +91,16 @@ define(['codemirror'], (CodeMirror) => {
 				value: this.defaultCode,
 				mode: '',
 			});
-			this.viewPane.appendChild(this.renderer.svg());
+			this.viewPaneInner.appendChild(this.renderer.svg());
 
 			this.code.on('change', () => this.update(false));
 			this.update();
+		}
+
+		updateMinSize(width, height) {
+			const style = this.viewPaneInner.style;
+			style.minWidth = Math.ceil(width * this.minScale) + 'px';
+			style.minHeight = Math.ceil(height * this.minScale) + 'px';
 		}
 
 		redraw(sequence) {
@@ -101,6 +110,7 @@ define(['codemirror'], (CodeMirror) => {
 			this.svgDirty = true;
 			this.renderedSeq = sequence;
 			this.renderer.render(sequence);
+			this.updateMinSize(this.renderer.width, this.renderer.height);
 		}
 
 		update(immediate = true) {
