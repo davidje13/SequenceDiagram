@@ -59,7 +59,7 @@ defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
 
 			const element = renderer.svg();
 			const line = element.getElementsByClassName('agent-1-line')[0];
-			const drawnX = Number(line.getAttribute('d').split(' ')[1]);
+			const drawnX = Number(line.getAttribute('x1'));
 
 			expect(drawnX).toEqual(renderer.getAgentX('A'));
 		});

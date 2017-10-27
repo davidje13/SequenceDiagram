@@ -1,16 +1,23 @@
 define(['./SVGUtilities'], (svg) => {
 	'use strict';
 
-	return class SVGTextBlock {
+	function fontDetails(attrs) {
+		const size = Number(attrs['font-size']);
+		const lineHeight = size * (Number(attrs['line-height']) || 1);
+		return {
+			size,
+			lineHeight,
+		};
+	}
+
+	class SVGTextBlock {
 		constructor(
 			container,
 			attrs,
-			lineHeight,
 			{text = '', x = 0, y = 0} = {}
 		) {
 			this.container = container;
 			this.attrs = attrs;
-			this.lineHeight = lineHeight;
 			this.text = '';
 			this.x = x;
 			this.y = y;
@@ -21,12 +28,11 @@ define(['./SVGUtilities'], (svg) => {
 		}
 
 		_updateY() {
-			const sz = Number(this.attrs['font-size']);
-			const space = sz * this.lineHeight;
+			const {size, lineHeight} = fontDetails(this.attrs);
 			this.nodes.forEach(({element}, i) => {
-				element.setAttribute('y', this.y + i * space + sz);
+				element.setAttribute('y', this.y + i * lineHeight + size);
 			});
-			this.height = space * this.nodes.length;
+			this.height = lineHeight * this.nodes.length;
 		}
 
 		_rebuildNodes(count) {
@@ -49,6 +55,14 @@ define(['./SVGUtilities'], (svg) => {
 				}
 			}
 			this._updateY();
+		}
+
+		firstLine() {
+			if(this.nodes.length > 0) {
+				return this.nodes[0].element;
+			} else {
+				return null;
+			}
 		}
 
 		setText(newText) {
@@ -93,5 +107,69 @@ define(['./SVGUtilities'], (svg) => {
 			this.width = 0;
 			this.height = 0;
 		}
-	};
+	}
+
+	class SizeTester {
+		constructor(container) {
+			this.testers = svg.make('g', {'display': 'none'});
+			this.container = container;
+			this.cache = new Map();
+		}
+
+		measure(attrs, content) {
+			if(!content) {
+				return {width: 0, height: 0};
+			}
+
+			let tester = this.cache.get(attrs);
+			if(!tester) {
+				const text = svg.makeText();
+				const node = svg.make('text', attrs);
+				node.appendChild(text);
+				this.testers.appendChild(node);
+				tester = {text, node};
+				this.cache.set(attrs, tester);
+			}
+
+			if(!this.testers.parentNode) {
+				this.container.appendChild(this.testers);
+			}
+
+			const lines = content.split('\n');
+			let width = 0;
+			lines.forEach((line) => {
+				tester.text.nodeValue = line;
+				width = Math.max(width, tester.node.getComputedTextLength());
+			});
+
+			return {
+				width,
+				height: lines.length * fontDetails(attrs).lineHeight,
+			};
+		}
+
+		measureHeight(attrs, content) {
+			if(!content) {
+				return 0;
+			}
+
+			const lines = content.split('\n');
+			return lines.length * fontDetails(attrs).lineHeight;
+		}
+
+		resetCache() {
+			svg.empty(this.testers);
+			this.cache.clear();
+		}
+
+		detach() {
+			if(this.testers.parentNode) {
+				this.container.removeChild(this.testers);
+			}
+		}
+	}
+
+	SVGTextBlock.SizeTester = SizeTester;
+
+	return SVGTextBlock;
 });

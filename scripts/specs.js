@@ -6,4 +6,5 @@ define([
 	'sequence/ArrayUtilities_spec',
 	'sequence/SVGUtilities_spec',
 	'sequence/SVGTextBlock_spec',
+	'sequence/SVGShapes_spec',
 ]);

@@ -29,6 +29,8 @@ Gremlin -> Bowie: Do what?
 Bowie -> Gremlin: Remind me of the babe!
 
 Bowie -> Audience: Sings
+
+terminators box
 ```
 
 ### Connection Types
@@ -62,12 +64,13 @@ Foo <- ]: From the right
 <img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="150" align="right" />
 
 ```
-title Note placements
+title Note Placements
 
 note over Foo: Foo says something
 note left of Foo: Stuff
 note right of Bar: More stuff
-note over Foo, Bar: Foo and Bar
+note over Foo, Bar: "Foo and Bar
+on multiple lines"
 note between Foo, Bar: Link
 
 state over Foo: Foo is ponderous
@@ -78,7 +81,7 @@ state over Foo: Foo is ponderous
 <img src="screenshots/Logic.png" alt="Logic preview" width="200" align="right" />
 
 ```
-title At the bank
+title At the Bank
 
 begin Person, ATM, Bank
 Person -> ATM: Request money
@@ -95,6 +98,25 @@ else if sufficient funds
 else
   ATM -> Person: Error
 end
+```
+
+### Multiline Text
+
+<img src="screenshots/MultilineText.png" alt="Multiline Text preview" width="150" align="right" />
+
+```
+title 'My Multiline
+Title'
+
+note over Foo: 'Also possible\nwith escapes'
+
+Foo -> Bar: 'Lines of text\non this arrow'
+
+if 'Even multiline\ninside conditions like this'
+  Foo -> 'Multiline\nagent'
+end
+
+state over Foo: 'Newlines here,\ntoo!'
 ```
 
 ### Short-Lived Agents
