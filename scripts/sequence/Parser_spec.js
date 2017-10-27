@@ -1,8 +1,6 @@
 defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 	'use strict';
 
-	/* jshint -W071 */ // Allow lots of tests
-
 	const parser = new Parser();
 
 	describe('.tokenise', () => {

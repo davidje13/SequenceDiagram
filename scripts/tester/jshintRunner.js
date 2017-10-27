@@ -28,6 +28,15 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 		'fail',
 	].concat(PREDEF);
 
+	const OPTS = Object.assign({}, jshintConfig, {
+		predef: PREDEF,
+	});
+
+	const OPTS_TEST = Object.assign({}, jshintConfig, {
+		predef: PREDEF_TEST,
+		maxstatements: 50, // allow lots of tests
+	});
+
 	function formatError(error) {
 		const evidence = (error.evidence || '').replace(/\t/g, '    ');
 		if(error.code === 'W140') {
@@ -58,8 +67,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 				path.endsWith('specRunner.js') ||
 				path.includes('/stubs/')
 			);
-			const predef = test ? PREDEF_TEST : PREDEF;
-			JSHINT(src, Object.assign({predef}, jshintConfig));
+			JSHINT(src, test ? OPTS_TEST : OPTS);
 			(JSHINT.errors
 				.map(formatError)
 				.filter((error) => (error !== null))

@@ -1,8 +1,6 @@
 defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	'use strict';
 
-	/* jshint -W071 */ // Allow lots of tests
-
 	const generator = new Generator();
 
 	const AGENT_DEFINE = 'agent define';
