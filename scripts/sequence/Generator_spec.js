@@ -31,6 +31,26 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(sequence.agents).toEqual(['[', ']']);
 		});
 
+		it('passes marks and async through', () => {
+			const sequence = generator.generate({stages: [
+				{type: 'mark', name: 'foo'},
+				{type: 'async', target: 'foo'},
+				{type: 'async', target: ''},
+			]});
+			expect(sequence.stages).toEqual([
+				{type: 'mark', name: 'foo'},
+				{type: 'async', target: 'foo'},
+				{type: 'async', target: ''},
+			]);
+		});
+
+		it('rejects attempts to jump to markers not yet defined', () => {
+			expect(() => generator.generate({stages: [
+				{type: 'async', target: 'foo'},
+				{type: 'mark', name: 'foo'},
+			]})).toThrow();
+		});
+
 		it('returns aggregated agents', () => {
 			const sequence = generator.generate({stages: [
 				{type: '->', agents: ['A', 'B']},
@@ -369,10 +389,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(sequence.stages).toEqual([]);
 		});
 
-		it('removes blocks which only contain define statements', () => {
+		it('removes blocks containing only define statements / markers', () => {
 			const sequence = generator.generate({stages: [
 				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
 				{type: AGENT_DEFINE, agents: ['A']},
+				{type: 'mark', name: 'foo'},
 				{type: BLOCK_END},
 			]});
 

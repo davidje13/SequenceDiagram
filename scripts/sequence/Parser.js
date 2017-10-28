@@ -1,4 +1,4 @@
-define(() => {
+define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
 	function execAt(str, reg, i) {
@@ -160,124 +160,162 @@ define(() => {
 		return list;
 	}
 
-	function parseBlockCommand(line) {
-		if(line[0] === 'end' && line.length === 1) {
-			return {type: 'block end'};
-		}
-
-		const type = BLOCK_TYPES[line[0]];
-		if(!type) {
-			return null;
-		}
-		let skip = 1;
-		if(line.length > skip) {
-			skip = skipOver(line, skip, type.skip, 'Invalid block command');
-		}
-		skip = skipOver(line, skip, [':']);
-		return {
-			type: type.type,
-			mode: type.mode,
-			label: line.slice(skip).join(' '),
-		};
-	}
-
-	function parseAgentCommand(line) {
-		const type = AGENT_MANIPULATION_TYPES[line[0]];
-		if(!type) {
-			return null;
-		}
-		if(line.length <= 1) {
-			return null;
-		}
-		return Object.assign({
-			agents: parseCommaList(line.slice(1)),
-		}, type);
-	}
-
-	function parseNote(line) {
-		const mode = NOTE_TYPES[line[0]];
-		const labelSplit = line.indexOf(':');
-		if(!mode || labelSplit === -1) {
-			return null;
-		}
-		const type = mode.types[line[1]];
-		if(!type) {
-			return null;
-		}
-		let skip = 2;
-		skip = skipOver(line, skip, type.skip);
-		const agents = parseCommaList(line.slice(skip, labelSplit));
-		if(
-			agents.length < type.min ||
-			(type.max !== null && agents.length > type.max)
-		) {
-			throw new Error('Invalid ' + line[0] + ': ' + line.join(' '));
-		}
-		return {
-			type: type.type,
-			agents,
-			mode: mode.mode,
-			label: line.slice(labelSplit + 1).join(' '),
-		};
-	}
-
-	function parseConnection(line) {
-		let labelSplit = line.indexOf(':');
-		if(labelSplit === -1) {
-			labelSplit = line.length;
-		}
-		let typeSplit = -1;
-		let options = null;
-		for(let j = 0; j < line.length; ++ j) {
-			const opts = CONNECTION_TYPES[line[j]];
-			if(opts) {
-				typeSplit = j;
-				options = opts;
-				break;
+	const PARSERS = [
+		(line, meta) => { // title
+			if(line[0] !== 'title') {
+				return null;
 			}
-		}
-		if(typeSplit <= 0 || typeSplit >= labelSplit - 1) {
-			return null;
-		}
-		return Object.assign({
-			type: 'connection',
-			agents: [
-				line.slice(0, typeSplit).join(' '),
-				line.slice(typeSplit + 1, labelSplit).join(' '),
-			],
-			label: line.slice(labelSplit + 1).join(' '),
-		}, options);
-	}
 
-	function parseMeta(line, meta) {
-		if(line[0] === 'title') {
 			meta.title = line.slice(1).join(' ');
 			return true;
-		}
-		if(line[0] === 'terminators') {
+		},
+
+		(line, meta) => { // terminators
+			if(line[0] !== 'terminators') {
+				return null;
+			}
+
 			if(TERMINATOR_TYPES.indexOf(line[1]) === -1) {
-				throw new Error('Unrecognised termination: ' + line.join(' '));
+				throw new Error('Unknown termination: ' + line.join(' '));
 			}
 			meta.terminators = line[1];
 			return true;
-		}
-		return false;
-	}
+		},
+
+		(line) => { // block
+			if(line[0] === 'end' && line.length === 1) {
+				return {type: 'block end'};
+			}
+
+			const type = BLOCK_TYPES[line[0]];
+			if(!type) {
+				return null;
+			}
+			let skip = 1;
+			if(line.length > skip) {
+				skip = skipOver(line, skip, type.skip, 'Invalid block command');
+			}
+			skip = skipOver(line, skip, [':']);
+			return {
+				type: type.type,
+				mode: type.mode,
+				label: line.slice(skip).join(' '),
+			};
+		},
+
+		(line) => { // agent
+			const type = AGENT_MANIPULATION_TYPES[line[0]];
+			if(!type) {
+				return null;
+			}
+			if(line.length <= 1) {
+				return null;
+			}
+			return Object.assign({
+				agents: parseCommaList(line.slice(1)),
+			}, type);
+		},
+
+		(line) => { // async
+			if(line[0] !== 'simultaneously') {
+				return null;
+			}
+			if(array.last(line) !== ':') {
+				return null;
+			}
+			let target = '';
+			if(line.length > 2) {
+				if(line[1] !== 'with') {
+					return null;
+				}
+				target = line.slice(2, line.length - 1).join(' ');
+			}
+			return {
+				type: 'async',
+				target,
+			};
+		},
+
+		(line) => { // note
+			const mode = NOTE_TYPES[line[0]];
+			const labelSplit = line.indexOf(':');
+			if(!mode || labelSplit === -1) {
+				return null;
+			}
+			const type = mode.types[line[1]];
+			if(!type) {
+				return null;
+			}
+			let skip = 2;
+			skip = skipOver(line, skip, type.skip);
+			const agents = parseCommaList(line.slice(skip, labelSplit));
+			if(
+				agents.length < type.min ||
+				(type.max !== null && agents.length > type.max)
+			) {
+				throw new Error('Invalid ' + line[0] + ': ' + line.join(' '));
+			}
+			return {
+				type: type.type,
+				agents,
+				mode: mode.mode,
+				label: line.slice(labelSplit + 1).join(' '),
+			};
+		},
+
+		(line) => { // connection
+			let labelSplit = line.indexOf(':');
+			if(labelSplit === -1) {
+				labelSplit = line.length;
+			}
+			let typeSplit = -1;
+			let options = null;
+			for(let j = 0; j < line.length; ++ j) {
+				const opts = CONNECTION_TYPES[line[j]];
+				if(opts) {
+					typeSplit = j;
+					options = opts;
+					break;
+				}
+			}
+			if(typeSplit <= 0 || typeSplit >= labelSplit - 1) {
+				return null;
+			}
+			return Object.assign({
+				type: 'connection',
+				agents: [
+					line.slice(0, typeSplit).join(' '),
+					line.slice(typeSplit + 1, labelSplit).join(' '),
+				],
+				label: line.slice(labelSplit + 1).join(' '),
+			}, options);
+		},
+
+		(line) => { // marker
+			if(line.length < 2 || array.last(line) !== ':') {
+				return null;
+			}
+			return {
+				type: 'mark',
+				name: line.slice(0, line.length - 1).join(' '),
+			};
+		},
+	];
 
 	function parseLine(line, {meta, stages}) {
-		if(parseMeta(line, meta)) {
-			return;
+		let stage = null;
+		for(let i = 0; i < PARSERS.length; ++ i) {
+			stage = PARSERS[i](line, meta);
+			if(stage) {
+				break;
+			}
 		}
-		const stage = (
-			parseBlockCommand(line) ||
-			parseAgentCommand(line) ||
-			parseNote(line) ||
-			parseConnection(line)
-		);
 		if(!stage) {
 			throw new Error('Unrecognised command: ' + line.join(' '));
 		}
-		stages.push(stage);
+		if(typeof stage === 'object') {
+			stages.push(stage);
+		}
 	}
 
 	return class Parser {

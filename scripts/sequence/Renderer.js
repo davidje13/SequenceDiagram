@@ -61,12 +61,14 @@ define([
 			};
 
 			this.separationAction = {
+				'mark': this.separationMark.bind(this),
+				'async': this.separationAsync.bind(this),
 				'agent begin': this.separationAgent.bind(this),
 				'agent end': this.separationAgent.bind(this),
 				'connection': this.separationConnection.bind(this),
 				'note over': this.separationNoteOver.bind(this),
-				'note left': this.separationNoteLeft.bind(this),
-				'note right': this.separationNoteRight.bind(this),
+				'note left': this.separationNoteSide.bind(this, false),
+				'note right': this.separationNoteSide.bind(this, true),
 				'note between': this.separationNoteBetween.bind(this),
 			};
 
@@ -78,6 +80,8 @@ define([
 			};
 
 			this.renderAction = {
+				'mark': this.renderMark.bind(this),
+				'async': this.renderAsync.bind(this),
 				'agent begin': this.renderAgentBegin.bind(this),
 				'agent end': this.renderAgentEnd.bind(this),
 				'connection': this.renderConnection.bind(this),
@@ -104,6 +108,7 @@ define([
 
 			this.width = 0;
 			this.height = 0;
+			this.marks = new Map();
 			this.theme = theme;
 			this.currentSequence = null;
 			this.buildStaticElements();
@@ -178,6 +183,12 @@ define([
 					);
 				});
 			});
+		}
+
+		separationMark() {
+		}
+
+		separationAsync() {
 		}
 
 		separationAgentCapBox({label}) {
@@ -300,39 +311,23 @@ define([
 			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteLeft({agents, mode, label}) {
+		separationNoteSide(isRight, {agents, mode, label}) {
 			const config = this.theme.note[mode];
-			const {left} = this.findExtremes(agents);
+			const {left, right} = this.findExtremes(agents);
+			const width = (
+				this.sizer.measure(config.labelAttrs, label).width +
+				config.padding.left +
+				config.padding.right +
+				config.margin.left +
+				config.margin.right
+			);
 
 			const agentSpaces = new Map();
-			agentSpaces.set(left, {
-				left: (
-					this.sizer.measure(config.labelAttrs, label).width +
-					config.padding.left +
-					config.padding.right +
-					config.margin.left +
-					config.margin.right
-				),
-				right: 0,
-			});
-			this.addSeparations(this.visibleAgents, agentSpaces);
-		}
-
-		separationNoteRight({agents, mode, label}) {
-			const config = this.theme.note[mode];
-			const {right} = this.findExtremes(agents);
-
-			const agentSpaces = new Map();
-			agentSpaces.set(right, {
-				left: 0,
-				right: (
-					this.sizer.measure(config.labelAttrs, label).width +
-					config.padding.left +
-					config.padding.right +
-					config.margin.left +
-					config.margin.right
-				),
-			});
+			if(isRight) {
+				agentSpaces.set(right, {left: 0, right: width});
+			} else {
+				agentSpaces.set(left, {left: width, right: 0});
+			}
 			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
@@ -376,6 +371,18 @@ define([
 
 		checkSeparation(stage) {
 			this.separationAction[stage.type](stage);
+		}
+
+		renderMark({name}) {
+			this.marks.set(name, this.currentY);
+		}
+
+		renderAsync({target}) {
+			if(target) {
+				this.currentY = this.marks.get(target) || 0;
+			} else {
+				this.currentY = 0;
+			}
 		}
 
 		renderAgentCapBox({x, label}) {
@@ -449,7 +456,30 @@ define([
 			};
 		}
 
+		checkAgentRange(agents) {
+			const {left, right} = this.findExtremes(agents);
+			const leftX = this.agentInfos.get(left).x;
+			const rightX = this.agentInfos.get(right).x;
+			this.agentInfos.forEach((agentInfo) => {
+				if(agentInfo.x >= leftX && agentInfo.x <= rightX) {
+					this.currentY = Math.max(this.currentY, agentInfo.latestY);
+				}
+			});
+		}
+
+		markAgentRange(agents) {
+			const {left, right} = this.findExtremes(agents);
+			const leftX = this.agentInfos.get(left).x;
+			const rightX = this.agentInfos.get(right).x;
+			this.agentInfos.forEach((agentInfo) => {
+				if(agentInfo.x >= leftX && agentInfo.x <= rightX) {
+					agentInfo.latestY = this.currentY;
+				}
+			});
+		}
+
 		renderAgentBegin({mode, agents}) {
+			this.checkAgentRange(agents);
 			let maxHeight = 0;
 			agents.forEach((agent) => {
 				const agentInfo = this.agentInfos.get(agent);
@@ -458,9 +488,11 @@ define([
 				agentInfo.latestYStart = this.currentY + shifts.lineBottom;
 			});
 			this.currentY += maxHeight + this.theme.actionMargin;
+			this.markAgentRange(agents);
 		}
 
 		renderAgentEnd({mode, agents}) {
+			this.checkAgentRange(agents);
 			let maxHeight = 0;
 			agents.forEach((agent) => {
 				const agentInfo = this.agentInfos.get(agent);
@@ -477,6 +509,7 @@ define([
 				agentInfo.latestYStart = null;
 			});
 			this.currentY += maxHeight + this.theme.actionMargin;
+			this.markAgentRange(agents);
 		}
 
 		renderSelfConnection({label, agents, line, left, right}) {
@@ -609,11 +642,13 @@ define([
 		}
 
 		renderConnection(stage) {
+			this.checkAgentRange(stage.agents);
 			if(stage.agents[0] === stage.agents[1]) {
 				this.renderSelfConnection(stage);
 			} else {
 				this.renderSimpleConnection(stage);
 			}
+			this.markAgentRange(stage.agents);
 		}
 
 		renderNote({xMid = null, x0 = null, x1 = null}, anchor, mode, label) {
@@ -679,6 +714,7 @@ define([
 		}
 
 		renderNoteOver({agents, mode, label}) {
+			this.checkAgentRange(agents);
 			const config = this.theme.note[mode];
 
 			if(agents.length > 1) {
@@ -691,25 +727,31 @@ define([
 				const xMid = this.agentInfos.get(agents[0]).x;
 				this.renderNote({xMid}, 'middle', mode, label);
 			}
+			this.markAgentRange(agents);
 		}
 
 		renderNoteLeft({agents, mode, label}) {
+			this.checkAgentRange(agents);
 			const config = this.theme.note[mode];
 
 			const {left} = this.findExtremes(agents);
 			const x1 = this.agentInfos.get(left).x - config.margin.right;
 			this.renderNote({x1}, 'end', mode, label);
+			this.markAgentRange(agents);
 		}
 
 		renderNoteRight({agents, mode, label}) {
+			this.checkAgentRange(agents);
 			const config = this.theme.note[mode];
 
 			const {right} = this.findExtremes(agents);
 			const x0 = this.agentInfos.get(right).x + config.margin.left;
 			this.renderNote({x0}, 'start', mode, label);
+			this.markAgentRange(agents);
 		}
 
 		renderNoteBetween({agents, mode, label}) {
+			this.checkAgentRange(agents);
 			const {left, right} = this.findExtremes(agents);
 			const xMid = (
 				this.agentInfos.get(left).x +
@@ -717,16 +759,20 @@ define([
 			) / 2;
 
 			this.renderNote({xMid}, 'middle', mode, label);
+			this.markAgentRange(agents);
 		}
 
-		renderBlockBegin(scope) {
+		renderBlockBegin(scope, {left, right}) {
+			this.checkAgentRange([left, right]);
 			this.currentY += this.theme.block.margin.top;
 
 			scope.y = this.currentY;
 			scope.first = true;
+			this.markAgentRange([left, right]);
 		}
 
 		renderSectionBegin(scope, {left, right}, {mode, label}) {
+			this.checkAgentRange([left, right]);
 			const config = this.theme.block;
 			const agentInfoL = this.agentInfos.get(left);
 			const agentInfoR = this.agentInfos.get(right);
@@ -767,12 +813,14 @@ define([
 				Math.max(modeRender.height, labelRender.height) +
 				config.section.padding.top
 			);
+			this.markAgentRange([left, right]);
 		}
 
 		renderSectionEnd(/*scope, block, section*/) {
 		}
 
 		renderBlockEnd(scope, {left, right}) {
+			this.checkAgentRange([left, right]);
 			const config = this.theme.block;
 			this.currentY += config.section.padding.bottom;
 
@@ -786,6 +834,7 @@ define([
 			}, config.boxAttrs)));
 
 			this.currentY += config.margin.bottom + this.theme.actionMargin;
+			this.markAgentRange([left, right]);
 		}
 
 		addAction(stage) {
@@ -835,6 +884,7 @@ define([
 					index,
 					x: null,
 					latestYStart: null,
+					latestY: 0,
 					separations: new Map(),
 				});
 			});
@@ -884,6 +934,7 @@ define([
 			svg.empty(this.sections);
 			svg.empty(this.actionShapes);
 			svg.empty(this.actionLabels);
+			this.marks.clear();
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,
@@ -896,6 +947,7 @@ define([
 
 			this.currentY = 0;
 			traverse(sequence.stages, this.renderTraversalFns);
+			this.checkAgentRange(['[', ']']);
 
 			const stagesHeight = Math.max(
 				this.currentY - this.theme.actionMargin,

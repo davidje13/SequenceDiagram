@@ -17,10 +17,13 @@ define(['core/ArrayUtilities'], (array) => {
 			this.agents = [];
 			this.blockCount = 0;
 			this.nesting = [];
+			this.markers = new Set();
 			this.currentSection = null;
 			this.currentNest = null;
 
 			this.stageHandlers = {
+				'mark': this.handleMark.bind(this),
+				'async': this.handleAsync.bind(this),
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
@@ -83,6 +86,7 @@ define(['core/ArrayUtilities'], (array) => {
 					agents: filteredAgents,
 					mode,
 				});
+				this.currentNest.hasContent = true;
 			}
 			array.mergeSets(this.currentNest.agents, filteredAgents);
 			array.mergeSets(this.agents, filteredAgents);
@@ -100,6 +104,7 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 			this.currentNest = {
 				agents,
+				hasContent: false,
 				stage: {
 					type: 'block',
 					sections: [this.currentSection],
@@ -112,6 +117,18 @@ define(['core/ArrayUtilities'], (array) => {
 			this.nesting.push(this.currentNest);
 
 			return {agents, stages};
+		}
+
+		handleMark(stage) {
+			this.markers.add(stage.name);
+			this.currentSection.stages.push(stage);
+		}
+
+		handleAsync(stage) {
+			if(stage.target !== '' && !this.markers.has(stage.target)) {
+				throw new Error('Unknown marker: ' + stage.target);
+			}
+			this.currentSection.stages.push(stage);
 		}
 
 		handleAgentDefine({agents}) {
@@ -149,10 +166,10 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting');
 			}
-			const {stage, agents} = this.nesting.pop();
+			const {hasContent, stage, agents} = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
 			this.currentSection = array.last(this.currentNest.stage.sections);
-			if(stage.sections.some((section) => section.stages.length > 0)) {
+			if(hasContent) {
 				array.mergeSets(this.currentNest.agents, agents);
 				array.mergeSets(this.agents, agents);
 				this.addBounds(
@@ -162,14 +179,18 @@ define(['core/ArrayUtilities'], (array) => {
 					agents
 				);
 				this.currentSection.stages.push(stage);
+				this.currentNest.hasContent = true;
 			}
 		}
 
 		handleUnknownStage(stage) {
-			this.setAgentVis(stage.agents, true, 'box');
+			if(stage.agents) {
+				this.setAgentVis(stage.agents, true, 'box');
+				array.mergeSets(this.currentNest.agents, stage.agents);
+				array.mergeSets(this.agents, stage.agents);
+			}
 			this.currentSection.stages.push(stage);
-			array.mergeSets(this.currentNest.agents, stage.agents);
-			array.mergeSets(this.agents, stage.agents);
+			this.currentNest.hasContent = true;
 		}
 
 		handleStage(stage) {
@@ -183,6 +204,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 		generate({stages, meta = {}}) {
 			this.agentStates.clear();
+			this.markers.clear();
 			this.agents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;

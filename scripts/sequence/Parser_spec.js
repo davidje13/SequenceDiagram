@@ -355,6 +355,30 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('converts markers', () => {
+			const parsed = parser.parse('abc:');
+			expect(parsed.stages).toEqual([{
+				type: 'mark',
+				name: 'abc',
+			}]);
+		});
+
+		it('converts "simultaneously" flow commands', () => {
+			const parsed = parser.parse('simultaneously:');
+			expect(parsed.stages).toEqual([{
+				type: 'async',
+				target: '',
+			}]);
+		});
+
+		it('converts named "simultaneously" flow commands', () => {
+			const parsed = parser.parse('simultaneously with abc:');
+			expect(parsed.stages).toEqual([{
+				type: 'async',
+				target: 'abc',
+			}]);
+		});
+
 		it('converts conditional blocks', () => {
 			const parsed = parser.parse(
 				'if something happens\n' +

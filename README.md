@@ -150,6 +150,39 @@ Foo -> Bar
 Bar -> Baz
 ```
 
+### Simultaneous Actions (Beta!)
+
+<img src="screenshots/SimultaneousActions.png" alt="Simultaneous Actions preview" width="200" align="right" />
+
+This is a work-in-progress feature. There are situations where this can
+lead to [ugly / unreadable overlapping content](https://github.com/davidje13/SequenceDiagram/issues/13).
+
+```
+begin A, B, C, D
+A -> C
+
+# Define a marker which can be returned to later
+
+some primary process:
+A -> B
+B -> A
+A -> B
+B -> A
+
+# Return to the defined marker
+# (should be interpreted as no-higher-then the marker; may still be
+# pushed down to keep relative action ordering consistent)
+
+simultaneously with some primary process:
+C -> D
+D -> C
+end D
+C -> A
+
+# The marker name is optional; using "simultaneously:" with no marker
+# will jump to the top of the entire sequence.
+```
+
 ## DSL Basics
 
 Comments begin with a `#` and end at the next newline:
