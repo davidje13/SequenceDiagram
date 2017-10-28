@@ -3,16 +3,19 @@
 
 	requirejs.config(window.getRequirejsCDN());
 
+	/* jshint -W072 */
 	requirejs([
 		'interface/Interface',
 		'sequence/Parser',
 		'sequence/Generator',
 		'sequence/Renderer',
+		'sequence/themes/Basic',
 	], (
 		Interface,
 		Parser,
 		Generator,
-		Renderer
+		Renderer,
+		Theme
 	) => {
 		const defaultCode = (
 			'title Labyrinth\n' +
@@ -36,7 +39,7 @@
 			defaultCode,
 			parser: new Parser(),
 			generator: new Generator(),
-			renderer: new Renderer(),
+			renderer: new Renderer(new Theme()),
 		});
 		ui.build(document.body);
 	});

@@ -14,7 +14,7 @@ defineDescribe('SVGTextBlock', [
 	beforeEach(() => {
 		hold = svg.makeContainer();
 		document.body.appendChild(hold);
-		block = new SVGTextBlock(hold, attrs);
+		block = new SVGTextBlock(hold, {attrs});
 	});
 
 	afterEach(() => {
@@ -23,52 +23,60 @@ defineDescribe('SVGTextBlock', [
 
 	describe('constructor', () => {
 		it('defaults to blank text at 0, 0', () => {
-			expect(block.text).toEqual('');
-			expect(block.x).toEqual(0);
-			expect(block.y).toEqual(0);
+			expect(block.state.text).toEqual('');
+			expect(block.state.x).toEqual(0);
+			expect(block.state.y).toEqual(0);
+			expect(hold.children.length).toEqual(0);
+		});
+
+		it('does not explode if given no setup', () => {
+			block = new SVGTextBlock(hold);
+			expect(block.state.text).toEqual('');
+			expect(block.state.x).toEqual(0);
+			expect(block.state.y).toEqual(0);
 			expect(hold.children.length).toEqual(0);
 		});
 
 		it('adds the given text if specified', () => {
-			block = new SVGTextBlock(hold, attrs, {text: 'abc'});
-			expect(block.text).toEqual('abc');
+			block = new SVGTextBlock(hold, {attrs, text: 'abc'});
+			expect(block.state.text).toEqual('abc');
 			expect(hold.children.length).toEqual(1);
 		});
 
 		it('uses the given coordinates if specified', () => {
-			block = new SVGTextBlock(hold, attrs, {x: 5, y: 7});
-			expect(block.x).toEqual(5);
-			expect(block.y).toEqual(7);
+			block = new SVGTextBlock(hold, {attrs, x: 5, y: 7});
+			expect(block.state.x).toEqual(5);
+			expect(block.state.y).toEqual(7);
 		});
 	});
 
-	describe('.setText', () => {
+	describe('.set', () => {
 		it('sets the text to the given content', () => {
-			block.setText('foo');
-			expect(block.text).toEqual('foo');
+			block.set({text: 'foo'});
+			expect(block.state.text).toEqual('foo');
 			expect(hold.children.length).toEqual(1);
 			expect(hold.children[0].innerHTML).toEqual('foo');
 		});
 
 		it('renders multiline text', () => {
-			block.setText('foo\nbar');
+			block.set({text: 'foo\nbar'});
 			expect(hold.children.length).toEqual(2);
 			expect(hold.children[0].innerHTML).toEqual('foo');
 			expect(hold.children[1].innerHTML).toEqual('bar');
 		});
 
 		it('populates width and height with the size of the text', () => {
-			block.setText('foo\nbar');
+			block.set({text: 'foo\nbar'});
 			expect(block.width).toBeGreaterThan(0);
 			expect(block.height).toEqual(30);
 		});
 
 		it('re-uses text nodes when possible, adding more if needed', () => {
-			block.setText('foo\nbar');
+			block.set({text: 'foo\nbar'});
 			const line0 = hold.children[0];
 			const line1 = hold.children[1];
 
-			block.setText('zig\nzag\nbaz');
+			block.set({text: 'zig\nzag\nbaz'});
 
 			expect(hold.children.length).toEqual(3);
 			expect(hold.children[0]).toEqual(line0);
@@ -79,10 +87,10 @@ defineDescribe('SVGTextBlock', [
 		});
 
 		it('re-uses text nodes when possible, removing extra if needed', () => {
-			block.setText('foo\nbar');
+			block.set({text: 'foo\nbar'});
 			const line0 = hold.children[0];
 
-			block.setText('zig');
+			block.set({text: 'zig'});
 
 			expect(hold.children.length).toEqual(1);
 			expect(hold.children[0]).toEqual(line0);
@@ -90,7 +98,7 @@ defineDescribe('SVGTextBlock', [
 		});
 
 		it('positions text nodes and applies attributes', () => {
-			block.setText('foo\nbar');
+			block.set({text: 'foo\nbar'});
 			expect(hold.children.length).toEqual(2);
 			expect(hold.children[0].getAttribute('x')).toEqual('0');
 			expect(hold.children[0].getAttribute('y')).toEqual('10');
@@ -99,25 +107,21 @@ defineDescribe('SVGTextBlock', [
 			expect(hold.children[1].getAttribute('y')).toEqual('25');
 			expect(hold.children[1].getAttribute('font-size')).toEqual('10');
 		});
-	});
 
-	describe('.reanchor', () => {
 		it('moves all nodes', () => {
-			block.setText('foo\nbaz');
-			block.reanchor(5, 7);
+			block.set({text: 'foo\nbaz'});
+			block.set({x: 5, y: 7});
 			expect(hold.children[0].getAttribute('x')).toEqual('5');
 			expect(hold.children[0].getAttribute('y')).toEqual('17');
 			expect(hold.children[1].getAttribute('x')).toEqual('5');
 			expect(hold.children[1].getAttribute('y')).toEqual('32');
 		});
-	});
 
-	describe('.clear', () => {
-		it('resets the text empty', () => {
-			block.setText('foo\nbaz');
-			block.setText('');
+		it('clears if the text is empty', () => {
+			block.set({text: 'foo\nbaz'});
+			block.set({text: ''});
 			expect(hold.children.length).toEqual(0);
-			expect(block.text).toEqual('');
+			expect(block.state.text).toEqual('');
 			expect(block.width).toEqual(0);
 			expect(block.height).toEqual(0);
 		});

@@ -65,7 +65,8 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 			break;
 		}
 
-		const label = new SVGTextBlock(labelLayer, labelAttrs, {
+		const label = new SVGTextBlock(labelLayer, {
+			attrs: labelAttrs,
 			text,
 			x: anchorX,
 			y: y + padding.top,

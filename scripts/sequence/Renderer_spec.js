@@ -1,10 +1,16 @@
-defineDescribe('Sequence Renderer', ['./Renderer'], (Renderer) => {
+defineDescribe('Sequence Renderer', [
+	'./Renderer',
+	'./themes/Basic',
+], (
+	Renderer,
+	Theme
+) => {
 	'use strict';
 
 	let renderer = null;
 
 	beforeEach(() => {
-		renderer = new Renderer();
+		renderer = new Renderer(new Theme());
 		document.body.appendChild(renderer.svg());
 	});
 

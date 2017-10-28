@@ -10,37 +10,37 @@ define(['./SVGUtilities'], (svg) => {
 		};
 	}
 
+	function merge(state, newState) {
+		for(let k in state) {
+			if(state.hasOwnProperty(k)) {
+				if(newState[k] !== null && newState[k] !== undefined) {
+					state[k] = newState[k];
+				}
+			}
+		}
+	}
+
 	class SVGTextBlock {
-		constructor(
-			container,
-			attrs,
-			{text = '', x = 0, y = 0} = {}
-		) {
+		constructor(container, initialState = {}) {
 			this.container = container;
-			this.attrs = attrs;
-			this.text = '';
-			this.x = x;
-			this.y = y;
+			this.state = {
+				attrs: {},
+				text: '',
+				x: 0,
+				y: 0,
+			};
 			this.width = 0;
 			this.height = 0;
 			this.nodes = [];
-			this.setText(text);
-		}
-
-		_updateY() {
-			const {size, lineHeight} = fontDetails(this.attrs);
-			this.nodes.forEach(({element}, i) => {
-				element.setAttribute('y', this.y + i * lineHeight + size);
-			});
-			this.height = lineHeight * this.nodes.length;
+			this.set(initialState);
 		}
 
 		_rebuildNodes(count) {
-			if(count === this.nodes.length) {
-				return;
-			}
 			if(count > this.nodes.length) {
-				const attrs = Object.assign({'x': this.x}, this.attrs);
+				const attrs = Object.assign({
+					'x': this.state.x,
+				}, this.state.attrs);
+
 				while(this.nodes.length < count) {
 					const element = svg.make('text', attrs);
 					const text = svg.makeText();
@@ -54,29 +54,23 @@ define(['./SVGUtilities'], (svg) => {
 					this.container.removeChild(element);
 				}
 			}
-			this._updateY();
 		}
 
-		firstLine() {
-			if(this.nodes.length > 0) {
-				return this.nodes[0].element;
-			} else {
-				return null;
-			}
+		_reset() {
+			this._rebuildNodes(0);
+			this.width = 0;
+			this.height = 0;
 		}
 
-		setText(newText) {
-			if(newText === this.text) {
+		_renderText() {
+			if(!this.state.text) {
+				this._reset();
 				return;
 			}
-			if(!newText) {
-				this.clear();
-				return;
-			}
-			this.text = newText;
-			const lines = this.text.split('\n');
 
+			const lines = this.state.text.split('\n');
 			this._rebuildNodes(lines.length);
+
 			let maxWidth = 0;
 			this.nodes.forEach(({text, element}, i) => {
 				if(text.nodeValue !== lines[i]) {
@@ -87,25 +81,50 @@ define(['./SVGUtilities'], (svg) => {
 			this.width = maxWidth;
 		}
 
-		reanchor(newX, newY) {
-			if(newX !== this.x) {
-				this.x = newX;
-				this.nodes.forEach(({element}) => {
-					element.setAttribute('x', this.x);
-				});
-			}
+		_updateX() {
+			this.nodes.forEach(({element}) => {
+				element.setAttribute('x', this.state.x);
+			});
+		}
 
-			if(newY !== this.y) {
-				this.y = newY;
-				this._updateY();
+		_updateY() {
+			const {size, lineHeight} = fontDetails(this.state.attrs);
+			this.nodes.forEach(({element}, i) => {
+				element.setAttribute('y', this.state.y + i * lineHeight + size);
+			});
+			this.height = lineHeight * this.nodes.length;
+		}
+
+		firstLine() {
+			if(this.nodes.length > 0) {
+				return this.nodes[0].element;
+			} else {
+				return null;
 			}
 		}
 
-		clear() {
-			this._rebuildNodes(0);
-			this.text = '';
-			this.width = 0;
-			this.height = 0;
+		set(newState) {
+			const oldState = Object.assign({}, this.state);
+			merge(this.state, newState);
+
+			if(this.state.attrs !== oldState.attrs) {
+				this._reset();
+				oldState.text = '';
+			}
+
+			const oldNodes = this.nodes.length;
+
+			if(this.state.text !== oldState.text) {
+				this._renderText();
+			}
+
+			if(this.state.x !== oldState.x) {
+				this._updateX();
+			}
+
+			if(this.state.y !== oldState.y || this.nodes.length !== oldNodes) {
+				this._updateY();
+			}
 		}
 	}
 

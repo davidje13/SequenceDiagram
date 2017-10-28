@@ -1,4 +1,4 @@
-define(['./ArrayUtilities'], (array) => {
+define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
 	class AgentState {

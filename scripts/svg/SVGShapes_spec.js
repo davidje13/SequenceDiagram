@@ -65,9 +65,9 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 				boxLayer: o,
 				labelLayer: o,
 			});
-			expect(rendered.label.text).toEqual('foo');
-			expect(rendered.label.x).toEqual(5);
-			expect(rendered.label.y).toEqual(10);
+			expect(rendered.label.state.text).toEqual('foo');
+			expect(rendered.label.state.x).toEqual(5);
+			expect(rendered.label.state.y).toEqual(10);
 			expect(rendered.label.firstLine().parentNode).toEqual(o);
 		});
 

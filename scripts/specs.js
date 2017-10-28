@@ -1,10 +1,11 @@
 define([
+	'core/ArrayUtilities_spec',
+	'svg/SVGUtilities_spec',
+	'svg/SVGTextBlock_spec',
+	'svg/SVGShapes_spec',
 	'interface/Interface_spec',
 	'sequence/Parser_spec',
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
-	'sequence/ArrayUtilities_spec',
-	'sequence/SVGUtilities_spec',
-	'sequence/SVGTextBlock_spec',
-	'sequence/SVGShapes_spec',
+	'sequence/themes/Basic_spec',
 ]);
