@@ -29,6 +29,7 @@ define(['codemirror'], (CodeMirror) => {
 			generator,
 			renderer,
 			defaultCode = '',
+			localStorage = '',
 		}) {
 			window.devicePixelRatio = 1;
 			this.canvas = makeNode('canvas');
@@ -38,6 +39,7 @@ define(['codemirror'], (CodeMirror) => {
 			this.generator = generator;
 			this.renderer = renderer;
 			this.defaultCode = defaultCode;
+			this.localStorage = localStorage;
 			this.minScale = 1.5;
 
 			this.debounced = null;
@@ -92,8 +94,9 @@ define(['codemirror'], (CodeMirror) => {
 			container.appendChild(this.codePane);
 			container.appendChild(this.viewPane);
 
+			const code = this.loadCode() || this.defaultCode;
 			this.code = new CodeMirror(this.codePane, {
-				value: this.defaultCode,
+				value: code,
 				mode: '',
 			});
 			this.viewPaneInner.appendChild(this.renderer.svg());
@@ -118,8 +121,31 @@ define(['codemirror'], (CodeMirror) => {
 			this.updateMinSize(this.renderer.width, this.renderer.height);
 		}
 
+		saveCode(src) {
+			if(!this.localStorage) {
+				return;
+			}
+			try {
+				window.localStorage.setItem(this.localStorage, src);
+			} catch(e) {
+				// ignore
+			}
+		}
+
+		loadCode() {
+			if(!this.localStorage) {
+				return '';
+			}
+			try {
+				return window.localStorage.getItem(this.localStorage) || '';
+			} catch(e) {
+				return '';
+			}
+		}
+
 		update(immediate = true) {
 			const src = this.code.getDoc().getValue();
+			this.saveCode(src);
 			let sequence = null;
 			try {
 				const parsed = this.parser.parse(src);

@@ -40,6 +40,7 @@
 			parser: new Parser(),
 			generator: new Generator(),
 			renderer: new Renderer(new Theme()),
+			localStorage: 'src',
 		});
 		ui.build(document.body);
 	});
