@@ -95,9 +95,13 @@ define(['codemirror'], (CodeMirror) => {
 			container.appendChild(this.viewPane);
 
 			const code = this.loadCode() || this.defaultCode;
+			CodeMirror.defineMode(
+				'sequence',
+				() => this.parser.getCodeMirrorMode()
+			);
 			this.code = new CodeMirror(this.codePane, {
 				value: code,
-				mode: '',
+				mode: 'sequence',
 			});
 			this.viewPaneInner.appendChild(this.renderer.svg());
 

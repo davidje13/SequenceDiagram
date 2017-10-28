@@ -1,4 +1,4 @@
-define(['core/ArrayUtilities'], (array) => {
+define(['core/ArrayUtilities', './CodeMirrorMode'], (array, CMMode) => {
 	'use strict';
 
 	function execAt(str, reg, i) {
@@ -349,6 +349,10 @@ define(['core/ArrayUtilities'], (array) => {
 				throw new Error('Unterminated block');
 			}
 			return tokens;
+		}
+
+		getCodeMirrorMode() {
+			return new CMMode(TOKENS);
 		}
 
 		splitLines(tokens) {

@@ -63,7 +63,7 @@ Foo <- ]: From the right
 
 ### Notes & State
 
-<img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="150" align="right" />
+<img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="200" align="right" />
 
 ```
 title Note Placements

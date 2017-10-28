@@ -1,7 +1,7 @@
 define([], () => {
 	'use strict';
 
-	return function(container, options) {
+	function CodeMirror(container, options) {
 		const spy = jasmine.createSpyObj('CodeMirror', ['on']);
 		spy.constructor = {
 			container,
@@ -10,5 +10,9 @@ define([], () => {
 		spy.doc = jasmine.createSpyObj('CodeMirror document', ['getValue']);
 		spy.getDoc = () => spy.doc;
 		return spy;
-	};
+	}
+
+	CodeMirror.defineMode = () => null;
+
+	return CodeMirror;
 });
