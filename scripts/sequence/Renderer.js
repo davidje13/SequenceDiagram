@@ -696,11 +696,46 @@ define([
 			this.renderAction[stage.type](stage);
 		}
 
+		positionAgents() {
+			// Map guarantees insertion-order iteration
+			const orderedInfos = [];
+			this.agentInfos.forEach((agentInfo) => {
+				let currentX = 0;
+				agentInfo.separations.forEach((dist, otherAgent) => {
+					const otherAgentInfo = this.agentInfos.get(otherAgent);
+					if(otherAgentInfo.index < agentInfo.index) {
+						currentX = Math.max(currentX, otherAgentInfo.x + dist);
+					}
+				});
+				agentInfo.x = currentX;
+				this.minX = Math.min(this.minX, currentX);
+				this.maxX = Math.max(this.maxX, currentX);
+				orderedInfos.push(agentInfo);
+			});
+
+			let previousInfo = {x: 0};
+			orderedInfos.reverse().forEach((agentInfo) => {
+				let currentX = previousInfo.x;
+				previousInfo = agentInfo;
+				if(!agentInfo.anchorRight) {
+					return;
+				}
+				agentInfo.separations.forEach((dist, otherAgent) => {
+					const otherAgentInfo = this.agentInfos.get(otherAgent);
+					if(otherAgentInfo.index > agentInfo.index) {
+						currentX = Math.min(currentX, otherAgentInfo.x - dist);
+					}
+				});
+				agentInfo.x = currentX;
+			});
+		}
+
 		buildAgentInfos(agents, stages) {
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
 				this.agentInfos.set(agent, {
 					label: agent,
+					anchorRight: agent.endsWith('['),
 					index,
 					x: null,
 					latestYStart: null,
@@ -711,19 +746,7 @@ define([
 			this.visibleAgents = ['[', ']'];
 			traverse(stages, this.separationTraversalFns);
 
-			agents.forEach((agent) => {
-				const agentInfo = this.agentInfos.get(agent);
-				let currentX = 0;
-				agentInfo.separations.forEach((dist, otherAgent) => {
-					const otherAgentInfo = this.agentInfos.get(otherAgent);
-					if(otherAgentInfo.x !== null) {
-						currentX = Math.max(currentX, otherAgentInfo.x + dist);
-					}
-				});
-				agentInfo.x = currentX;
-				this.minX = Math.min(this.minX, currentX);
-				this.maxX = Math.max(this.maxX, currentX);
-			});
+			this.positionAgents();
 		}
 
 		updateBounds(stagesHeight) {
