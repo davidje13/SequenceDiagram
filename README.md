@@ -50,6 +50,8 @@ Foo <--> Bar: Double dashed arrow
 # An arrow with no label:
 Foo -> Bar
 
+Foo -> Foo: Foo talks to itself
+
 # Arrows leaving on the left and right of the diagram
 [ -> Foo: From the left
 [ <- Foo: To the left

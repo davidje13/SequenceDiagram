@@ -241,15 +241,31 @@ define([
 		separationConnection({agents, label}) {
 			const config = this.theme.connect;
 
-			this.addSeparation(
-				agents[0],
-				agents[1],
-
+			const labelWidth = (
 				this.sizer.measure(config.label.attrs, label).width +
-				config.arrow.width * 2 +
-				config.label.padding * 2 +
-				this.theme.agentLineAttrs['stroke-width']
+				config.label.padding * 2
 			);
+			const strokeWidth = this.theme.agentLineAttrs['stroke-width'];
+
+			if(agents[0] === agents[1]) {
+				const agentSpaces = new Map();
+				agentSpaces.set(agents[0], {
+					left: 0,
+					right: (
+						labelWidth +
+						config.arrow.width +
+						strokeWidth +
+						config.loopbackRadius
+					),
+				});
+				this.addSeparations(this.visibleAgents, agentSpaces);
+			} else {
+				this.addSeparation(
+					agents[0],
+					agents[1],
+					labelWidth + config.arrow.width * 2 + strokeWidth
+				);
+			}
 		}
 
 		separationNoteOver({agents, mode, label}) {
@@ -463,7 +479,79 @@ define([
 			this.currentY += maxHeight + this.theme.actionMargin;
 		}
 
-		renderConnection({label, agents, line, left, right}) {
+		renderSelfConnection({label, agents, line, left, right}) {
+			const config = this.theme.connect;
+			const from = this.agentInfos.get(agents[0]);
+
+			const dy = config.arrow.height / 2;
+			const short = this.theme.agentLineAttrs['stroke-width'];
+
+			const height = (
+				this.sizer.measureHeight(config.label.attrs, label) +
+				config.label.margin.top +
+				config.label.margin.bottom
+			);
+
+			const y0 = this.currentY + Math.max(dy, height);
+			const x0 = (
+				from.x +
+				short +
+				config.arrow.width +
+				config.label.padding
+			);
+
+			const renderedText = SVGShapes.renderBoxedText(label, {
+				x: x0 - config.mask.padding.left,
+				y: y0 - height + config.label.margin.top,
+				padding: config.mask.padding,
+				boxAttrs: config.mask.maskAttrs,
+				labelAttrs: config.label.loopbackAttrs,
+				boxLayer: this.mask,
+				labelLayer: this.actionLabels,
+			});
+			const r = config.loopbackRadius;
+			const x1 = (
+				x0 +
+				renderedText.width +
+				config.label.padding -
+				config.mask.padding.left -
+				config.mask.padding.right
+			);
+			const y1 = y0 + r * 2;
+
+			this.actionShapes.appendChild(svg.make('path', Object.assign({
+				'd': (
+					'M ' + (from.x + (left ? short : 0)) + ' ' + y0 +
+					' L ' + x1 + ' ' + y0 +
+					' A ' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + y1 +
+					' L ' + (from.x + (right ? short : 0)) + ' ' + y1
+				),
+			}, config.lineAttrs[line])));
+
+			if(left) {
+				drawHorizontalArrowHead(this.actionShapes, {
+					x: from.x + short,
+					y: y0,
+					dx: config.arrow.width,
+					dy,
+					attrs: config.arrow.attrs,
+				});
+			}
+
+			if(right) {
+				drawHorizontalArrowHead(this.actionShapes, {
+					x: from.x + short,
+					y: y1,
+					dx: config.arrow.width,
+					dy,
+					attrs: config.arrow.attrs,
+				});
+			}
+
+			this.currentY = y1 + dy + this.theme.actionMargin;
+		}
+
+		renderSimpleConnection({label, agents, line, left, right}) {
 			const config = this.theme.connect;
 			const from = this.agentInfos.get(agents[0]);
 			const to = this.agentInfos.get(agents[1]);
@@ -518,6 +606,14 @@ define([
 			}
 
 			this.currentY = y + dy + this.theme.actionMargin;
+		}
+
+		renderConnection(stage) {
+			if(stage.agents[0] === stage.agents[1]) {
+				this.renderSelfConnection(stage);
+			} else {
+				this.renderSimpleConnection(stage);
+			}
 		}
 
 		renderNote({xMid = null, x0 = null, x1 = null}, anchor, mode, label) {

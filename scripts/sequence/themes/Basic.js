@@ -59,6 +59,7 @@ define([
 		},
 
 		connect: {
+			loopbackRadius: 6,
 			lineAttrs: {
 				'solid': {
 					'fill': 'none',
@@ -90,6 +91,11 @@ define([
 					'font-size': 8,
 					'line-height': LINE_HEIGHT,
 					'text-anchor': 'middle',
+				},
+				loopbackAttrs: {
+					'font-family': 'sans-serif',
+					'font-size': 8,
+					'line-height': LINE_HEIGHT,
 				},
 			},
 			mask: {
