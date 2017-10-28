@@ -54,11 +54,7 @@ define(['codemirror'], (CodeMirror) => {
 			this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
 		}
 
-		build(container) {
-			this.codePane = makeNode('div', {'class': 'pane-code'});
-			this.viewPane = makeNode('div', {'class': 'pane-view'});
-			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
-
+		buildOptions() {
 			this.downloadPNG = makeNode('a', {
 				'href': '#',
 				'download': 'SequenceDiagram.png',
@@ -78,11 +74,20 @@ define(['codemirror'], (CodeMirror) => {
 			this.downloadSVG.appendChild(makeText('SVG'));
 			on(this.downloadSVG, ['click'], this._downloadSVGClick);
 
-			this.options = makeNode('div', {'class': 'options'});
-			this.options.appendChild(this.downloadPNG);
-			this.options.appendChild(this.downloadSVG);
-			this.viewPane.appendChild(this.options);
+			const options = makeNode('div', {'class': 'options'});
+			options.appendChild(this.downloadPNG);
+			options.appendChild(this.downloadSVG);
+			return options;
+		}
+
+		build(container) {
+			this.codePane = makeNode('div', {'class': 'pane-code'});
+			this.viewPane = makeNode('div', {'class': 'pane-view'});
+			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
+
+			const options = this.buildOptions();
 			this.viewPane.appendChild(this.viewPaneInner);
+			this.viewPane.appendChild(options);
 
 			container.appendChild(this.codePane);
 			container.appendChild(this.viewPane);
