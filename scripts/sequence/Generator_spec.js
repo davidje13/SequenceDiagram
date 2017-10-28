@@ -481,6 +481,21 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]})).toThrow();
 		});
 
+		it('defaults to showing notes around the entire diagram', () => {
+			const sequence = generator.generate({stages: [
+				{type: 'note right', agents: [], foo: 'bar'},
+				{type: 'note left', agents: [], foo: 'bar'},
+				{type: 'note over', agents: [], foo: 'bar'},
+				{type: 'note right', agents: ['[']},
+			]});
+			expect(sequence.stages).toEqual([
+				{type: 'note right', agents: [']'], foo: 'bar'},
+				{type: 'note left', agents: ['['], foo: 'bar'},
+				{type: 'note over', agents: ['[', ']'], foo: 'bar'},
+				{type: 'note right', agents: ['[']},
+			]);
+		});
+
 		it('rejects attempts to change implicit agents', () => {
 			expect(() => generator.generate({stages: [
 				{type: AGENT_BEGIN, agents: ['['], mode: 'box'},

@@ -11,6 +11,12 @@ define(['core/ArrayUtilities'], (array) => {
 	const LOCKED_AGENT = new AgentState(false, true);
 	const DEFAULT_AGENT = new AgentState(false);
 
+	const NOTE_DEFAULT_AGENTS = {
+		'note over': ['[', ']'],
+		'note left': ['['],
+		'note right': [']'],
+	};
+
 	return class Generator {
 		constructor() {
 			this.agentStates = new Map();
@@ -24,6 +30,9 @@ define(['core/ArrayUtilities'], (array) => {
 			this.stageHandlers = {
 				'mark': this.handleMark.bind(this),
 				'async': this.handleAsync.bind(this),
+				'note over': this.handleNote.bind(this),
+				'note left': this.handleNote.bind(this),
+				'note right': this.handleNote.bind(this),
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
@@ -129,6 +138,16 @@ define(['core/ArrayUtilities'], (array) => {
 				throw new Error('Unknown marker: ' + stage.target);
 			}
 			this.currentSection.stages.push(stage);
+		}
+
+		handleNote(stage) {
+			if(stage.agents.length === 0) {
+				this.handleUnknownStage(Object.assign({}, stage, {
+					agents: NOTE_DEFAULT_AGENTS[stage.type] || [],
+				}));
+			} else {
+				this.handleUnknownStage(stage);
+			}
 		}
 
 		handleAgentDefine({agents}) {

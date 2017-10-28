@@ -170,6 +170,8 @@ define([
 			agents.forEach((agentR) => {
 				const infoR = this.agentInfos.get(agentR);
 				const sepR = agentSpaces.get(agentR) || SEP_ZERO;
+				infoR.maxRPad = Math.max(infoR.maxRPad, sepR.right);
+				infoR.maxLPad = Math.max(infoR.maxLPad, sepR.left);
 				agents.forEach((agentL) => {
 					const infoL = this.agentInfos.get(agentL);
 					if(infoL.index >= infoR.index) {
@@ -853,8 +855,6 @@ define([
 					}
 				});
 				agentInfo.x = currentX;
-				this.minX = Math.min(this.minX, currentX);
-				this.maxX = Math.max(this.maxX, currentX);
 				orderedInfos.push(agentInfo);
 			});
 
@@ -873,6 +873,11 @@ define([
 				});
 				agentInfo.x = currentX;
 			});
+
+			this.agentInfos.forEach(({label, x, maxRPad, maxLPad}) => {
+				this.minX = Math.min(this.minX, x - maxLPad);
+				this.maxX = Math.max(this.maxX, x + maxRPad);
+			});
 		}
 
 		buildAgentInfos(agents, stages) {
@@ -885,6 +890,8 @@ define([
 					x: null,
 					latestYStart: null,
 					latestY: 0,
+					maxRPad: 0,
+					maxLPad: 0,
 					separations: new Map(),
 				});
 			});

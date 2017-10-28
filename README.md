@@ -75,6 +75,8 @@ note over Foo, Bar: "Foo and Bar
 on multiple lines"
 note between Foo, Bar: Link
 
+text right: 'Comments\nOver here!'
+
 state over Foo: Foo is ponderous
 ```
 

@@ -178,6 +178,19 @@ define([
 		},
 
 		note: {
+			'text': {
+				margin: {top: 0, left: 2, right: 2, bottom: 0},
+				padding: {top: 2, left: 2, right: 2, bottom: 2},
+				overlap: {left: 10, right: 10},
+				boxRenderer: SVGShapes.renderBox.bind(null, {
+					'fill': '#FFFFFF',
+				}),
+				labelAttrs: {
+					'font-family': 'sans-serif',
+					'font-size': 8,
+					'line-height': LINE_HEIGHT,
+				},
+			},
 			'note': {
 				margin: {top: 0, left: 5, right: 5, bottom: 0},
 				padding: {top: 5, left: 5, right: 10, bottom: 5},

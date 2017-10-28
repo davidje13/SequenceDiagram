@@ -49,12 +49,19 @@ define(['core/ArrayUtilities'], (array) => {
 	];
 
 	const NOTE_TYPES = {
+		'text': {
+			mode: 'text',
+			types: {
+				'left': {type: 'note left', skip: ['of'], min: 0, max: null},
+				'right': {type: 'note right', skip: ['of'], min: 0, max: null},
+			},
+		},
 		'note': {
 			mode: 'note',
 			types: {
-				'over': {type: 'note over', skip: [], min: 1, max: null},
-				'left': {type: 'note left', skip: ['of'], min: 1, max: null},
-				'right': {type: 'note right', skip: ['of'], min: 1, max: null},
+				'over': {type: 'note over', skip: [], min: 0, max: null},
+				'left': {type: 'note left', skip: ['of'], min: 0, max: null},
+				'right': {type: 'note right', skip: ['of'], min: 0, max: null},
 				'between': {type: 'note between', skip: [], min: 2, max: null},
 			},
 		},
