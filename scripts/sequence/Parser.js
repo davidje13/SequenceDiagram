@@ -24,13 +24,26 @@ define([
 
 	const TOKENS = [
 		{start: /#/y, end: /(?=\n)|$/y, omit: true},
-		{start: /"/y, end: /"/y, escape: /\\(.)/y, escapeWith: unescape},
-		{start: /'/y, end: /'/y, escape: /\\(.)/y, escapeWith: unescape},
+		{
+			start: /"/y,
+			end: /"/y,
+			escape: /\\(.)/y,
+			escapeWith: unescape,
+			baseToken: {q: true},
+		},
+		{
+			start: /'/y,
+			end: /'/y,
+			escape: /\\(.)/y,
+			escapeWith:
+			unescape,
+			baseToken: {q: true},
+		},
 		{start: /(?=[^ \t\r\n:+\-<>,])/y, end: /(?=[ \t\r\n:+\-<>,])|$/y},
 		{start: /(?=[+\-<>])/y, end: /(?=[^+\-<>])|$/y},
-		{start: /,/y, prefix: ','},
-		{start: /:/y, prefix: ':'},
-		{start: /\n/y, prefix: '\n'},
+		{start: /,/y, baseToken: {v: ','}},
+		{start: /:/y, baseToken: {v: ':'}},
+		{start: /\n/y, baseToken: {v: '\n'}},
 	];
 
 	const BLOCK_TYPES = {
@@ -95,7 +108,8 @@ define([
 				return {
 					newBlock: block,
 					end: !block.end,
-					append: (block.prefix || ''),
+					appendSpace: '',
+					appendValue: '',
 					skip: match[0].length,
 				};
 			}
@@ -103,7 +117,8 @@ define([
 		return {
 			newBlock: null,
 			end: false,
-			append: '',
+			appendSpace: src[i],
+			appendValue: '',
 			skip: 1,
 		};
 	}
@@ -115,7 +130,8 @@ define([
 				return {
 					newBlock: null,
 					end: false,
-					append: block.escapeWith(match),
+					appendSpace: '',
+					appendValue: block.escapeWith(match),
 					skip: match[0].length,
 				};
 			}
@@ -125,14 +141,16 @@ define([
 			return {
 				newBlock: null,
 				end: true,
-				append: '',
+				appendSpace: '',
+				appendValue: '',
 				skip: match[0].length,
 			};
 		}
 		return {
 			newBlock: null,
 			end: false,
-			append: src[i],
+			appendSpace: '',
+			appendValue: src[i],
 			skip: 1,
 		};
 	}
@@ -145,10 +163,28 @@ define([
 		}
 	}
 
+	function joinLabel(line, begin, end) {
+		if(end <= begin) {
+			return '';
+		}
+		let result = line[begin].v;
+		for(let i = begin + 1; i < end; ++ i) {
+			result += line[i].s + line[i].v;
+		}
+		return result;
+	}
+
+	function debugLine(line) {
+		return joinLabel(line, 0, line.length);
+	}
+
 	function skipOver(line, start, skip, error = null) {
-		if(skip.some((token, i) => (line[start + i] !== token))) {
+		if(skip.some((token, i) => (
+			!line[start + i] ||
+			line[start + i].v !== token
+		))) {
 			if(error) {
-				throw new Error(error + ': ' + line.join(' '));
+				throw new Error(error + ': ' + debugLine(line));
 			} else {
 				return start;
 			}
@@ -156,53 +192,83 @@ define([
 		return start + skip.length;
 	}
 
-	function parseCommaList(tokens) {
+	function findToken(line, token, start = 0) {
+		for(let i = start; i < line.length; ++ i) {
+			if(line[i].v === token) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	function parseAgentList(line, start, end) {
 		const list = [];
 		let current = '';
-		tokens.forEach((token) => {
-			if(token === ',') {
+		let first = true;
+		for(let i = start; i < end; ++ i) {
+			if(line[i].v === ',') {
 				if(current) {
-					list.push(current);
+					list.push({name: current});
 					current = '';
+					first = true;
 				}
 			} else {
-				current += (current ? ' ' : '') + token;
+				if(!first) {
+					current += line[i].s;
+				} else {
+					first = false;
+				}
+				current += line[i].v;
 			}
-		});
+		}
 		if(current) {
-			list.push(current);
+			list.push({name: current});
 		}
 		return list;
 	}
 
+	function readAgent(line, begin, end) {
+		if(line[begin].v === '+' || line[begin].v === '-') {
+			return {
+				opt: line[begin].v,
+				name: joinLabel(line, begin + 1, end),
+			};
+		} else {
+			return {
+				opt: '',
+				name: joinLabel(line, begin, end),
+			};
+		}
+	}
+
 	const PARSERS = [
 		(line, meta) => { // title
-			if(line[0] !== 'title') {
+			if(line[0].v !== 'title') {
 				return null;
 			}
 
-			meta.title = line.slice(1).join(' ');
+			meta.title = joinLabel(line, 1, line.length);
 			return true;
 		},
 
 		(line, meta) => { // terminators
-			if(line[0] !== 'terminators') {
+			if(line[0].v !== 'terminators') {
 				return null;
 			}
 
-			if(TERMINATOR_TYPES.indexOf(line[1]) === -1) {
-				throw new Error('Unknown termination: ' + line.join(' '));
+			if(TERMINATOR_TYPES.indexOf(line[1].v) === -1) {
+				throw new Error('Unknown termination: ' + debugLine(line));
 			}
-			meta.terminators = line[1];
+			meta.terminators = line[1].v;
 			return true;
 		},
 
 		(line) => { // block
-			if(line[0] === 'end' && line.length === 1) {
+			if(line[0].v === 'end' && line.length === 1) {
 				return {type: 'block end'};
 			}
 
-			const type = BLOCK_TYPES[line[0]];
+			const type = BLOCK_TYPES[line[0].v];
 			if(!type) {
 				return null;
 			}
@@ -214,36 +280,33 @@ define([
 			return {
 				type: type.type,
 				mode: type.mode,
-				label: line.slice(skip).join(' '),
+				label: joinLabel(line, skip, line.length),
 			};
 		},
 
 		(line) => { // agent
-			const type = AGENT_MANIPULATION_TYPES[line[0]];
-			if(!type) {
-				return null;
-			}
-			if(line.length <= 1) {
+			const type = AGENT_MANIPULATION_TYPES[line[0].v];
+			if(!type || line.length <= 1) {
 				return null;
 			}
 			return Object.assign({
-				agents: parseCommaList(line.slice(1)),
+				agents: parseAgentList(line, 1, line.length),
 			}, type);
 		},
 
 		(line) => { // async
-			if(line[0] !== 'simultaneously') {
+			if(line[0].v !== 'simultaneously') {
 				return null;
 			}
-			if(array.last(line) !== ':') {
+			if(array.last(line).v !== ':') {
 				return null;
 			}
 			let target = '';
 			if(line.length > 2) {
-				if(line[1] !== 'with') {
+				if(line[1].v !== 'with') {
 					return null;
 				}
-				target = line.slice(2, line.length - 1).join(' ');
+				target = joinLabel(line, 2, line.length - 1);
 			}
 			return {
 				type: 'async',
@@ -252,41 +315,44 @@ define([
 		},
 
 		(line) => { // note
-			const mode = NOTE_TYPES[line[0]];
-			const labelSplit = line.indexOf(':');
+			const mode = NOTE_TYPES[line[0].v];
+			const labelSplit = findToken(line, ':');
 			if(!mode || labelSplit === -1) {
 				return null;
 			}
-			const type = mode.types[line[1]];
+			const type = mode.types[line[1].v];
 			if(!type) {
 				return null;
 			}
 			let skip = 2;
 			skip = skipOver(line, skip, type.skip);
-			const agents = parseCommaList(line.slice(skip, labelSplit));
+			const agents = parseAgentList(line, skip, labelSplit);
 			if(
 				agents.length < type.min ||
 				(type.max !== null && agents.length > type.max)
 			) {
-				throw new Error('Invalid ' + line[0] + ': ' + line.join(' '));
+				throw new Error(
+					'Invalid ' + mode.mode +
+					': ' + debugLine(line)
+				);
 			}
 			return {
 				type: type.type,
 				agents,
 				mode: mode.mode,
-				label: line.slice(labelSplit + 1).join(' '),
+				label: joinLabel(line, labelSplit + 1, line.length),
 			};
 		},
 
 		(line) => { // connection
-			let labelSplit = line.indexOf(':');
+			let labelSplit = findToken(line, ':');
 			if(labelSplit === -1) {
 				labelSplit = line.length;
 			}
 			let typeSplit = -1;
 			let options = null;
 			for(let j = 0; j < line.length; ++ j) {
-				const opts = CONNECTION_TYPES[line[j]];
+				const opts = CONNECTION_TYPES[line[j].v];
 				if(opts) {
 					typeSplit = j;
 					options = opts;
@@ -299,20 +365,20 @@ define([
 			return Object.assign({
 				type: 'connection',
 				agents: [
-					line.slice(0, typeSplit).join(' '),
-					line.slice(typeSplit + 1, labelSplit).join(' '),
+					readAgent(line, 0, typeSplit),
+					readAgent(line, typeSplit + 1, labelSplit),
 				],
-				label: line.slice(labelSplit + 1).join(' '),
+				label: joinLabel(line, labelSplit + 1, line.length),
 			}, options);
 		},
 
 		(line) => { // marker
-			if(line.length < 2 || array.last(line) !== ':') {
+			if(line.length < 2 || array.last(line).v !== ':') {
 				return null;
 			}
 			return {
 				type: 'mark',
-				name: line.slice(0, line.length - 1).join(' '),
+				name: joinLabel(line, 0, line.length - 1),
 			};
 		},
 	];
@@ -326,7 +392,7 @@ define([
 			}
 		}
 		if(!stage) {
-			throw new Error('Unrecognised command: ' + line.join(' '));
+			throw new Error('Unrecognised command: ' + debugLine(line));
 		}
 		if(typeof stage === 'object') {
 			stages.push(stage);
@@ -337,19 +403,21 @@ define([
 		tokenise(src) {
 			const tokens = [];
 			let block = null;
-			let current = '';
+			let current = {s: '', v: '', q: false};
 			for(let i = 0; i <= src.length;) {
-				const {newBlock, end, append, skip} = tokAdvance(src, i, block);
-				if(newBlock) {
-					block = newBlock;
-					current = '';
+				const advance = tokAdvance(src, i, block);
+				if(advance.newBlock) {
+					block = advance.newBlock;
+					Object.assign(current, block.baseToken);
 				}
-				current += append;
-				i += skip;
-				if(end) {
+				current.s += advance.appendSpace;
+				current.v += advance.appendValue;
+				i += advance.skip;
+				if(advance.end) {
 					if(!block.omit) {
 						tokens.push(current);
 					}
+					current = {s: '', v: '', q: false};
 					block = null;
 				}
 			}
@@ -371,7 +439,7 @@ define([
 			const lines = [];
 			let line = [];
 			tokens.forEach((token) => {
-				if(token === '\n') {
+				if(token.v === '\n' && !token.q) {
 					if(line.length > 0) {
 						lines.push(line);
 						line = [];

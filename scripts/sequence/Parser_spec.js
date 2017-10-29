@@ -7,55 +7,103 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('converts the source into atomic tokens', () => {
 			const input = 'foo bar -> baz';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'bar', '->', 'baz']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: 'bar', q: false},
+				{s: ' ', v: '->', q: false},
+				{s: ' ', v: 'baz', q: false},
+			]);
 		});
 
 		it('splits tokens at flexible boundaries', () => {
 			const input = 'foo bar->baz';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'bar', '->', 'baz']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: 'bar', q: false},
+				{s: '', v: '->', q: false},
+				{s: '', v: 'baz', q: false},
+			]);
 		});
 
 		it('parses newlines as tokens', () => {
 			const input = 'foo bar\nbaz';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'bar', '\n', 'baz']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: 'bar', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'baz', q: false},
+			]);
+		});
+
+		it('parses quoted newlines as quoted tokens', () => {
+			const input = 'foo "\n" baz';
+			const tokens = parser.tokenise(input);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: '\n', q: true},
+				{s: ' ', v: 'baz', q: false},
+			]);
 		});
 
 		it('removes leading and trailing whitespace', () => {
 			const input = '  foo \t bar\t\n baz';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'bar', '\n', 'baz']);
+			expect(tokens).toEqual([
+				{s: '  ', v: 'foo', q: false},
+				{s: ' \t ', v: 'bar', q: false},
+				{s: '\t', v: '\n', q: false},
+				{s: ' ', v: 'baz', q: false},
+			]);
 		});
 
 		it('parses quoted strings as single tokens', () => {
 			const input = 'foo "zig zag" \'abc def\'';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'zig zag', 'abc def']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: 'zig zag', q: true},
+				{s: ' ', v: 'abc def', q: true},
+			]);
 		});
 
 		it('ignores comments', () => {
 			const input = 'foo # bar baz\nzig';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', '\n', 'zig']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'zig', q: false},
+			]);
 		});
 
 		it('ignores quotes within comments', () => {
 			const input = 'foo # bar "\'baz\nzig';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', '\n', 'zig']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'zig', q: false},
+			]);
 		});
 
 		it('interprets special characters within quoted strings', () => {
 			const input = 'foo "zig\\" zag\\n"';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', 'zig" zag\n']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: 'zig" zag\n', q: true},
+			]);
 		});
 
 		it('maintains whitespace and newlines within quoted strings', () => {
 			const input = 'foo " zig\n  zag  "';
 			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual(['foo', ' zig\n  zag  ']);
+			expect(tokens).toEqual([
+				{s: '', v: 'foo', q: false},
+				{s: ' ', v: ' zig\n  zag  ', q: true},
+			]);
 		});
 
 		it('rejects unterminated quoted values', () => {
@@ -65,33 +113,70 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 	describe('.splitLines', () => {
 		it('combines tokens', () => {
-			const lines = parser.splitLines(['abc', 'd']);
+			const lines = parser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+			]);
 			expect(lines).toEqual([
-				['abc', 'd'],
+				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
 			]);
 		});
 
 		it('splits at newlines', () => {
-			const lines = parser.splitLines(['abc', 'd', '\n', 'e']);
+			const lines = parser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'e', q: false},
+			]);
 			expect(lines).toEqual([
-				['abc', 'd'],
-				['e'],
+				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
+				[{s: '', v: 'e', q: false}],
 			]);
 		});
 
 		it('ignores multiple newlines', () => {
-			const lines = parser.splitLines(['abc', 'd', '\n', '\n', 'e']);
+			const lines = parser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'e', q: false},
+			]);
 			expect(lines).toEqual([
-				['abc', 'd'],
-				['e'],
+				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
+				[{s: '', v: 'e', q: false}],
 			]);
 		});
 
 		it('ignores trailing newlines', () => {
-			const lines = parser.splitLines(['abc', 'd', '\n', 'e', '\n']);
+			const lines = parser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+				{s: '', v: '\n', q: false},
+				{s: '', v: 'e', q: false},
+				{s: '', v: '\n', q: false},
+			]);
 			expect(lines).toEqual([
-				['abc', 'd'],
-				['e'],
+				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
+				[{s: '', v: 'e', q: false}],
+			]);
+		});
+
+		it('handles quoted newlines as regular tokens', () => {
+			const lines = parser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+				{s: '', v: '\n', q: true},
+				{s: '', v: 'e', q: false},
+			]);
+			expect(lines).toEqual([
+				[
+					{s: '', v: 'abc', q: false},
+					{s: '', v: 'd', q: false},
+					{s: '', v: '\n', q: true},
+					{s: '', v: 'e', q: false},
+				],
 			]);
 		});
 
@@ -101,13 +186,13 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		});
 	});
 
-	function connectionStage(agents, label = '') {
+	function connectionStage(agentNames, label = '') {
 		return {
 			type: 'connection',
 			line: 'solid',
 			left: false,
 			right: true,
-			agents,
+			agents: agentNames.map((agent) => ({opt: '', name: agent})),
 			label,
 		};
 	}
@@ -153,6 +238,13 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('respects spacing within agent names', () => {
+			const parsed = parser.parse('A+B -> C  D');
+			expect(parsed.stages).toEqual([
+				connectionStage(['A+B', 'C  D']),
+			]);
+		});
+
 		it('parses optional labels', () => {
 			const parsed = parser.parse('A B -> C D: foo bar');
 			expect(parsed.stages).toEqual([
@@ -191,7 +283,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'solid',
 					left: false,
 					right: true,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 				{
@@ -199,7 +291,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'solid',
 					left: true,
 					right: false,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 				{
@@ -207,7 +299,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'solid',
 					left: true,
 					right: true,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 				{
@@ -215,7 +307,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'dash',
 					left: false,
 					right: true,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 				{
@@ -223,7 +315,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'dash',
 					left: true,
 					right: false,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 				{
@@ -231,7 +323,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'dash',
 					left: true,
 					right: true,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
 				},
 			]);
@@ -248,7 +340,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'solid',
 					left: true,
 					right: false,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: 'B -> A',
 				},
 				{
@@ -256,7 +348,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					line: 'solid',
 					left: false,
 					right: true,
-					agents: ['A', 'B'],
+					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: 'B <- A',
 				},
 			]);
@@ -266,7 +358,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('note over A: hello there');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: ['A'],
+				agents: [{name: 'A'}],
 				mode: 'note',
 				label: 'hello there',
 			}]);
@@ -283,31 +375,31 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed.stages).toEqual([
 				{
 					type: 'note left',
-					agents: ['A'],
+					agents: [{name: 'A'}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note left',
-					agents: ['A'],
+					agents: [{name: 'A'}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note right',
-					agents: ['A'],
+					agents: [{name: 'A'}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note right',
-					agents: ['A'],
+					agents: [{name: 'A'}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note between',
-					agents: ['A', 'B'],
+					agents: [{name: 'A'}, {name: 'B'}],
 					mode: 'note',
 					label: 'hi',
 				},
@@ -318,7 +410,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('note over A B, C D: hi');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: ['A B', 'C D'],
+				agents: [{name: 'A B'}, {name: 'C D'}],
 				mode: 'note',
 				label: 'hi',
 			}]);
@@ -332,7 +424,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('state over A: doing stuff');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: ['A'],
+				agents: [{name: 'A'}],
 				mode: 'state',
 				label: 'doing stuff',
 			}]);
@@ -346,7 +438,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('text right of A: doing stuff');
 			expect(parsed.stages).toEqual([{
 				type: 'note right',
-				agents: ['A'],
+				agents: [{name: 'A'}],
 				mode: 'text',
 				label: 'doing stuff',
 			}]);
@@ -359,9 +451,20 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'end A, B\n'
 			);
 			expect(parsed.stages).toEqual([
-				{type: 'agent define', agents: ['A', 'B']},
-				{type: 'agent begin', agents: ['A', 'B'], mode: 'box'},
-				{type: 'agent end', agents: ['A', 'B'], mode: 'cross'},
+				{
+					type: 'agent define',
+					agents: [{name: 'A'}, {name: 'B'}],
+				},
+				{
+					type: 'agent begin',
+					agents: [{name: 'A'}, {name: 'B'}],
+					mode: 'box',
+				},
+				{
+					type: 'agent end',
+					agents: [{name: 'A'}, {name: 'B'}],
+					mode: 'cross',
+				},
 			]);
 		});
 

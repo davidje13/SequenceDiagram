@@ -103,7 +103,7 @@ define([
 					top: 0,
 					left: 3,
 					right: 3,
-					bottom: 0,
+					bottom: 1,
 				},
 				maskAttrs: {
 					'fill': '#FFFFFF',

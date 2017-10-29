@@ -3,7 +3,7 @@
 
 	requirejs.config(window.getRequirejsCDN());
 
-	/* jshint -W072 */
+	/* jshint -W072 */ // Allow several required modules
 	requirejs([
 		'interface/Interface',
 		'sequence/Parser',

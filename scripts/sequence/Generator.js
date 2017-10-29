@@ -12,9 +12,9 @@ define(['core/ArrayUtilities'], (array) => {
 	const DEFAULT_AGENT = new AgentState(false);
 
 	const NOTE_DEFAULT_AGENTS = {
-		'note over': ['[', ']'],
-		'note left': ['['],
-		'note right': [']'],
+		'note over': [{name: '['}, {name: ']'}],
+		'note left': [{name: '['}],
+		'note right': [{name: ']'}],
 	};
 
 	return class Generator {
@@ -151,16 +151,19 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleAgentDefine({agents}) {
-			array.mergeSets(this.currentNest.agents, agents);
-			array.mergeSets(this.agents, agents);
+			const agentNames = agents.map((agent) => agent.name);
+			array.mergeSets(this.currentNest.agents, agentNames);
+			array.mergeSets(this.agents, agentNames);
 		}
 
 		handleAgentBegin({agents, mode}) {
-			this.setAgentVis(agents, true, mode, true);
+			const agentNames = agents.map((agent) => agent.name);
+			this.setAgentVis(agentNames, true, mode, true);
 		}
 
 		handleAgentEnd({agents, mode}) {
-			this.setAgentVis(agents, false, mode, true);
+			const agentNames = agents.map((agent) => agent.name);
+			this.setAgentVis(agentNames, false, mode, true);
 		}
 
 		handleBlockBegin({mode, label}) {
@@ -204,11 +207,16 @@ define(['core/ArrayUtilities'], (array) => {
 
 		handleUnknownStage(stage) {
 			if(stage.agents) {
-				this.setAgentVis(stage.agents, true, 'box');
-				array.mergeSets(this.currentNest.agents, stage.agents);
-				array.mergeSets(this.agents, stage.agents);
+				const agentNames = stage.agents.map((agent) => agent.name);
+				this.setAgentVis(agentNames, true, 'box');
+				array.mergeSets(this.currentNest.agents, agentNames);
+				array.mergeSets(this.agents, agentNames);
+				this.currentSection.stages.push(Object.assign({}, stage, {
+					agents: agentNames,
+				}));
+			} else {
+				this.currentSection.stages.push(stage);
 			}
-			this.currentSection.stages.push(stage);
 			this.currentNest.hasContent = true;
 		}
 

@@ -20,10 +20,11 @@ define(['core/ArrayUtilities'], (array) => {
 	const CM_AGENT_LIST_TO_TEXT = makeCMCommaBlock('variable', 'Agent', {
 		':': {type: 'operator', suggest: true, then: {'': CM_TEXT_TO_END}},
 	});
-	const CM_AGENT_LIST_TO_OPTTEXT = makeCMCommaBlock('variable', 'Agent', {
+	const CM_AGENT_TO_OPTTEXT = {type: 'variable', suggest: 'Agent', then: {
+		'': 0,
 		':': {type: 'operator', suggest: true, then: {'': CM_TEXT_TO_END}},
 		'\n': CM_END,
-	});
+	}};
 
 	const CM_NOTE_SIDE_THEN = {
 		'of': {type: 'keyword', suggest: true, then: {
@@ -35,20 +36,29 @@ define(['core/ArrayUtilities'], (array) => {
 		'': CM_AGENT_LIST_TO_TEXT,
 	};
 
-	const CM_NOTE_LSIDE = {
-		type: 'keyword',
-		suggest: ['left of ', 'left: '],
-		then: CM_NOTE_SIDE_THEN,
-	};
-
-	const CM_NOTE_RSIDE = {
-		type: 'keyword',
-		suggest: ['right of ', 'right: '],
-		then: CM_NOTE_SIDE_THEN,
-	};
+	function makeCMSideNote(side) {
+		return {
+			type: 'keyword',
+			suggest: [side + ' of ', side + ': '],
+			then: CM_NOTE_SIDE_THEN,
+		};
+	}
 
 	const CM_CONNECT = {type: 'keyword', suggest: true, then: {
-		'': CM_AGENT_LIST_TO_OPTTEXT,
+		'+': {type: 'operator', suggest: true, then: {'': CM_AGENT_TO_OPTTEXT}},
+		'-': {type: 'operator', suggest: true, then: {'': CM_AGENT_TO_OPTTEXT}},
+		'': CM_AGENT_TO_OPTTEXT,
+	}};
+
+	const CM_CONNECT_FULL = {type: 'variable', suggest: 'Agent', then: {
+		'->': CM_CONNECT,
+		'-->': CM_CONNECT,
+		'<-': CM_CONNECT,
+		'<--': CM_CONNECT,
+		'<->': CM_CONNECT,
+		'<-->': CM_CONNECT,
+		':': {type: 'operator', suggest: true, override: 'Label', then: {}},
+		'': 0,
 	}};
 
 	const CM_COMMANDS = {type: 'error', then: {
@@ -98,8 +108,8 @@ define(['core/ArrayUtilities'], (array) => {
 			'over': {type: 'keyword', suggest: true, then: {
 				'': CM_AGENT_LIST_TO_TEXT,
 			}},
-			'left': CM_NOTE_LSIDE,
-			'right': CM_NOTE_RSIDE,
+			'left': makeCMSideNote('left'),
+			'right': makeCMSideNote('right'),
 			'between': {type: 'keyword', suggest: true, then: {
 				'': CM_AGENT_LIST_TO_TEXT,
 			}},
@@ -110,8 +120,8 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 		}},
 		'text': {type: 'keyword', suggest: true, then: {
-			'left': CM_NOTE_LSIDE,
-			'right': CM_NOTE_RSIDE,
+			'left': makeCMSideNote('left'),
+			'right': makeCMSideNote('right'),
 		}},
 		'simultaneously': {type: 'keyword', suggest: true, then: {
 			':': {type: 'operator', suggest: true, then: {}},
@@ -122,31 +132,38 @@ define(['core/ArrayUtilities'], (array) => {
 				}},
 			}},
 		}},
-		'': {type: 'variable', suggest: 'Agent', then: {
-			'->': CM_CONNECT,
-			'-->': CM_CONNECT,
-			'<-': CM_CONNECT,
-			'<--': CM_CONNECT,
-			'<->': CM_CONNECT,
-			'<-->': CM_CONNECT,
-			':': {type: 'operator', suggest: true, override: 'Label', then: {}},
-			'': 0,
-		}},
+		'+': {type: 'operator', suggest: true, then: {'': CM_CONNECT_FULL}},
+		'-': {type: 'operator', suggest: true, then: {'': CM_CONNECT_FULL}},
+		'': CM_CONNECT_FULL,
 	}};
 
-	function cmGetSuggestions(state, token, {suggest, then}) {
+	function cmCappedToken(token, current) {
+		if(Object.keys(current.then).length > 0) {
+			return token + ' ';
+		} else {
+			return token + '\n';
+		}
+	}
+
+	function cmGetVarSuggestions(state, previous, current) {
+		if(
+			typeof current.suggest !== 'string' ||
+			previous.suggest === current.suggest
+		) {
+			return null;
+		}
+		return state['known' + current.suggest];
+	}
+
+	function cmGetSuggestions(state, token, previous, current) {
 		if(token === '') {
-			return state['known' + suggest];
-		} else if(suggest === true) {
-			if(Object.keys(then).length > 0) {
-				return [token + ' '];
-			} else {
-				return [token + '\n'];
-			}
-		} else if(Array.isArray(suggest)) {
-			return suggest;
-		} else if(suggest) {
-			return [suggest];
+			return cmGetVarSuggestions(state, previous, current);
+		} else if(current.suggest === true) {
+			return [cmCappedToken(token, current)];
+		} else if(Array.isArray(current.suggest)) {
+			return current.suggest;
+		} else if(current.suggest) {
+			return [current.suggest];
 		} else {
 			return null;
 		}
@@ -154,13 +171,16 @@ define(['core/ArrayUtilities'], (array) => {
 
 	function cmMakeCompletions(state, path) {
 		const comp = [];
-		const {then} = array.last(path);
-		Object.keys(then).forEach((token) => {
-			let next = then[token];
+		const current = array.last(path);
+		Object.keys(current.then).forEach((token) => {
+			let next = current.then[token];
 			if(typeof next === 'number') {
 				next = path[path.length - next - 1];
 			}
-			array.mergeSets(comp, cmGetSuggestions(state, token, next));
+			array.mergeSets(
+				comp,
+				cmGetSuggestions(state, token, current, next)
+			);
 		});
 		return comp;
 	}
@@ -213,6 +233,10 @@ define(['core/ArrayUtilities'], (array) => {
 		return current.type;
 	}
 
+	function getInitialValue(block) {
+		return (block.baseToken || {}).v || '';
+	}
+
 	return class Mode {
 		constructor(tokenDefinitions) {
 			this.tokenDefinitions = tokenDefinitions;
@@ -250,7 +274,7 @@ define(['core/ArrayUtilities'], (array) => {
 					const block = this.tokenDefinitions[i];
 					if(this._matchPattern(stream, block.start, true)) {
 						state.currentType = i;
-						state.current = block.prefix || '';
+						state.current = getInitialValue(block);
 						return true;
 					}
 				}
@@ -271,12 +295,6 @@ define(['core/ArrayUtilities'], (array) => {
 				return 'comment';
 			}
 			state.line.push(state.current);
-			if(state.current === '\n') {
-				// quoted newline is interpreted as a command separator;
-				// probably not what the writer expected, so highlight it
-				state.line.length = 0;
-				return 'warning';
-			}
 			return cmCheckToken(state, stream.eol());
 		}
 
