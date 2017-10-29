@@ -1,4 +1,9 @@
-define(['codemirror'], (CodeMirror) => {
+define([
+	'cm/lib/codemirror',
+	'cm/addon/hint/show-hint',
+	'cm/addon/edit/trailingspace',
+	'cm/addon/comment/comment',
+], (CodeMirror) => {
 	'use strict';
 
 	const DELAY_AGENTCHANGE = 500;
@@ -82,27 +87,68 @@ define(['codemirror'], (CodeMirror) => {
 			return options;
 		}
 
-		build(container) {
-			this.codePane = makeNode('div', {'class': 'pane-code'});
-			this.viewPane = makeNode('div', {'class': 'pane-view'});
-			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
-
-			const options = this.buildOptions();
-			this.viewPane.appendChild(this.viewPaneInner);
-			this.viewPane.appendChild(options);
-
-			container.appendChild(this.codePane);
-			container.appendChild(this.viewPane);
-
-			const code = this.loadCode() || this.defaultCode;
+		buildEditor(container) {
+			const value = this.loadCode() || this.defaultCode;
 			CodeMirror.defineMode(
 				'sequence',
 				() => this.parser.getCodeMirrorMode()
 			);
-			this.code = new CodeMirror(this.codePane, {
-				value: code,
+			CodeMirror.registerHelper(
+				'hint',
+				'sequence',
+				this.parser.getCodeMirrorHints()
+			);
+			const code = new CodeMirror(container, {
+				value,
 				mode: 'sequence',
+				lineNumbers: true,
+				showTrailingSpace: true,
+				extraKeys: {
+					'Tab': (cm) => cm.execCommand('indentMore'),
+					'Shift-Tab': (cm) => cm.execCommand('indentLess'),
+					'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
+					'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
+					'Ctrl-Space': 'autocomplete',
+					'Ctrl-Enter': 'autocomplete',
+					'Cmd-Enter': 'autocomplete',
+				},
 			});
+			let lastKey = 0;
+			code.on('keydown', (cm, event) => {
+				lastKey = event.keyCode;
+			});
+			code.on('endCompletion', () => {
+				lastKey = 0;
+			});
+			code.on('change', (cm) => {
+				if(cm.state.completionActive) {
+					return;
+				}
+				if(lastKey === 13 || lastKey === 8) {
+					return;
+				}
+				lastKey = 0;
+				CodeMirror.commands.autocomplete(cm, null, {
+					completeSingle: false,
+				});
+			});
+
+			return code;
+		}
+
+		build(container) {
+			const codePane = makeNode('div', {'class': 'pane-code'});
+			const viewPane = makeNode('div', {'class': 'pane-view'});
+			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
+
+			const options = this.buildOptions();
+			viewPane.appendChild(this.viewPaneInner);
+			viewPane.appendChild(options);
+
+			container.appendChild(codePane);
+			container.appendChild(viewPane);
+
+			this.code = this.buildEditor(codePane);
 			this.viewPaneInner.appendChild(this.renderer.svg());
 
 			this.code.on('change', () => this.update(false));

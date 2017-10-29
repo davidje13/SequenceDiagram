@@ -1,4 +1,12 @@
-define(['core/ArrayUtilities', './CodeMirrorMode'], (array, CMMode) => {
+define([
+	'core/ArrayUtilities',
+	'./CodeMirrorMode',
+	'./CodeMirrorHints',
+], (
+	array,
+	CMMode,
+	CMHints
+) => {
 	'use strict';
 
 	function execAt(str, reg, i) {
@@ -353,6 +361,10 @@ define(['core/ArrayUtilities', './CodeMirrorMode'], (array, CMMode) => {
 
 		getCodeMirrorMode() {
 			return new CMMode(TOKENS);
+		}
+
+		getCodeMirrorHints() {
+			return CMHints.getHints;
 		}
 
 		splitLines(tokens) {

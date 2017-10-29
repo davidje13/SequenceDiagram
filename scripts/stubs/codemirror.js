@@ -13,6 +13,7 @@ define([], () => {
 	}
 
 	CodeMirror.defineMode = () => null;
+	CodeMirror.registerHelper = () => null;
 
 	return CodeMirror;
 });

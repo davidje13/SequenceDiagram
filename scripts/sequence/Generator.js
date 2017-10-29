@@ -247,7 +247,7 @@ define(['core/ArrayUtilities'], (array) => {
 				meta: {
 					title: meta.title,
 				},
-				agents: this.agents,
+				agents: this.agents.slice(),
 				stages: globals.stages,
 			};
 		}

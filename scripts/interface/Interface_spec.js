@@ -8,7 +8,11 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 	let ui = null;
 
 	beforeEach(() => {
-		parser = jasmine.createSpyObj('parser', ['parse']);
+		parser = jasmine.createSpyObj('parser', [
+			'parse',
+			'getCodeMirrorMode',
+			'getCodeMirrorHints',
+		]);
 		parser.parse.and.returnValue({
 			meta: {},
 			stages: [],
