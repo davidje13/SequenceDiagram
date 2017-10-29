@@ -522,6 +522,10 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('rejects quoted keywords', () => {
+			expect(() => parser.parse('"repeat" until something')).toThrow();
+		});
+
 		it('rejects invalid inputs', () => {
 			expect(() => parser.parse('huh')).toThrow();
 		});

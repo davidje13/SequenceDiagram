@@ -217,14 +217,15 @@ define(['core/ArrayUtilities'], (array) => {
 			if(i === state.line.length - 1) {
 				state.completions = cmMakeCompletions(state, path);
 			}
-			const found = current.then[token] || current.then[''];
+			const keywordToken = token.q ? '' : token.v;
+			const found = current.then[keywordToken] || current.then[''];
 			if(typeof found === 'number') {
 				path.length -= found;
 			} else {
 				path.push(found || CM_ERROR);
 			}
 			current = array.last(path);
-			updateSuggestion(state, suggestions, token, current);
+			updateSuggestion(state, suggestions, token.v, current);
 		});
 		if(eol) {
 			updateSuggestion(state, suggestions, '', {});
@@ -233,8 +234,12 @@ define(['core/ArrayUtilities'], (array) => {
 		return current.type;
 	}
 
-	function getInitialValue(block) {
-		return (block.baseToken || {}).v || '';
+	function getInitialToken(block) {
+		const baseToken = (block.baseToken || {});
+		return {
+			value: baseToken.v || '',
+			quoted: baseToken.q || false,
+		};
 	}
 
 	return class Mode {
@@ -247,6 +252,7 @@ define(['core/ArrayUtilities'], (array) => {
 			return {
 				currentType: -1,
 				current: '',
+				currentQuoted: false,
 				knownAgent: [],
 				knownLabel: [],
 				beginCompletions: cmMakeCompletions({}, [CM_COMMANDS]),
@@ -274,7 +280,9 @@ define(['core/ArrayUtilities'], (array) => {
 					const block = this.tokenDefinitions[i];
 					if(this._matchPattern(stream, block.start, true)) {
 						state.currentType = i;
-						state.current = getInitialValue(block);
+						const {value, quoted} = getInitialToken(block);
+						state.current = value;
+						state.currentQuoted = quoted;
 						return true;
 					}
 				}
@@ -294,7 +302,7 @@ define(['core/ArrayUtilities'], (array) => {
 			if(block.omit) {
 				return 'comment';
 			}
-			state.line.push(state.current);
+			state.line.push({v: state.current, q: state.currentQuoted});
 			return cmCheckToken(state, stream.eol());
 		}
 
@@ -303,7 +311,7 @@ define(['core/ArrayUtilities'], (array) => {
 			if(block.omit) {
 				return 'comment';
 			}
-			state.line.push(state.current);
+			state.line.push(({v: state.current, q: state.currentQuoted}));
 			const type = cmCheckToken(state, false);
 			state.line.pop();
 			return type;
