@@ -96,7 +96,8 @@ if fraud detected
   end Police
 else if sufficient funds
   ATM -> Bank: Withdraw funds
-  repeat until all requested money handed over
+  repeat until "all requested money
+                has been handed over"
     ATM -> Person: Dispense note
   end
 else
@@ -172,7 +173,7 @@ A -> B
 B -> A
 
 # Return to the defined marker
-# (should be interpreted as no-higher-then the marker; may still be
+# (should be interpreted as no-higher-then the marker; may be
 # pushed down to keep relative action ordering consistent)
 
 simultaneously with some primary process:
@@ -181,8 +182,8 @@ D -> C
 end D
 C -> A
 
-# The marker name is optional; using "simultaneously:" with no marker
-# will jump to the top of the entire sequence.
+# The marker name is optional; using "simultaneously:" with no
+# marker will jump to the top of the entire sequence.
 ```
 
 ## DSL Basics

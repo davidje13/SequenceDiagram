@@ -43,6 +43,7 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 		boxLayer,
 		labelLayer,
 		boxRenderer = null,
+		SVGTextBlockClass = SVGTextBlock,
 	}) {
 		if(!text) {
 			return {width: 0, height: 0, label: null, box: null};
@@ -65,7 +66,7 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 			break;
 		}
 
-		const label = new SVGTextBlock(labelLayer, {
+		const label = new SVGTextBlockClass(labelLayer, {
 			attrs: labelAttrs,
 			text,
 			x: anchorX,

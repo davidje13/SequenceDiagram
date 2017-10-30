@@ -8,4 +8,5 @@ define([
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
 	'sequence/themes/Basic_spec',
+	'sequence/sequence_integration_spec',
 ]);

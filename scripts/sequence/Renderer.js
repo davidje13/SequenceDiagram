@@ -52,7 +52,9 @@ define([
 	}
 
 	return class Renderer {
-		constructor(theme) {
+		constructor(theme, {
+			SVGTextBlockClass = SVGTextBlock,
+		} = {}) {
 			this.separationAgentCap = {
 				'box': this.separationAgentCapBox.bind(this),
 				'cross': this.separationAgentCapCross.bind(this),
@@ -110,6 +112,7 @@ define([
 			this.height = 0;
 			this.marks = new Map();
 			this.theme = theme;
+			this.SVGTextBlockClass = SVGTextBlockClass;
 			this.currentSequence = null;
 			this.buildStaticElements();
 		}
@@ -132,9 +135,9 @@ define([
 			this.base.appendChild(this.sections);
 			this.base.appendChild(this.actionShapes);
 			this.base.appendChild(this.actionLabels);
-			this.title = new SVGTextBlock(this.base);
+			this.title = new this.SVGTextBlockClass(this.base);
 
-			this.sizer = new SVGTextBlock.SizeTester(this.base);
+			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
 		}
 
 		findExtremes(agents) {
@@ -397,6 +400,7 @@ define([
 				labelAttrs: config.labelAttrs,
 				boxLayer: this.actionShapes,
 				labelLayer: this.actionLabels,
+				SVGTextBlockClass: this.SVGTextBlockClass,
 			});
 
 			return {
@@ -543,6 +547,7 @@ define([
 				labelAttrs: config.label.loopbackAttrs,
 				boxLayer: this.mask,
 				labelLayer: this.actionLabels,
+				SVGTextBlockClass: this.SVGTextBlockClass,
 			});
 			const r = config.loopbackRadius;
 			const x1 = (
@@ -611,6 +616,7 @@ define([
 				labelAttrs: config.label.attrs,
 				boxLayer: this.mask,
 				labelLayer: this.actionLabels,
+				SVGTextBlockClass: this.SVGTextBlockClass,
 			});
 
 			this.actionShapes.appendChild(svg.make('line', Object.assign({
@@ -659,7 +665,7 @@ define([
 			this.currentY += config.margin.top;
 
 			const y = this.currentY + config.padding.top;
-			const labelNode = new SVGTextBlock(this.actionLabels, {
+			const labelNode = new this.SVGTextBlockClass(this.actionLabels, {
 				attrs: config.labelAttrs,
 				text: label,
 				y,
@@ -799,6 +805,7 @@ define([
 				labelAttrs: config.section.mode.labelAttrs,
 				boxLayer: this.blocks,
 				labelLayer: this.actionLabels,
+				SVGTextBlockClass: this.SVGTextBlockClass,
 			});
 
 			const labelRender = SVGShapes.renderBoxedText(label, {
@@ -809,6 +816,7 @@ define([
 				labelAttrs: config.section.label.labelAttrs,
 				boxLayer: this.mask,
 				labelLayer: this.actionLabels,
+				SVGTextBlockClass: this.SVGTextBlockClass,
 			});
 
 			this.currentY += (
