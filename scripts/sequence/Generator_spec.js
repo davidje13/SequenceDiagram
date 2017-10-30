@@ -84,10 +84,21 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
 				{type: AGENT_BEGIN, agents: ['C'], mode: 'box'},
-				{type: '->', agents: ['B', 'C']},
-				{type: AGENT_END, agents: ['A', 'B', 'C'], mode: 'none'},
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('passes connections through', () => {
+			const sequence = generator.generate({stages: [
+				{type: '->', agents: [{name: 'A'}, {name: 'B'}]},
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
 			]);
 		});
 
@@ -101,8 +112,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				],
 			});
 			expect(sequence.stages).toEqual([
-				{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
+				jasmine.anything(),
 				{type: AGENT_END, agents: ['A', 'B'], mode: 'foo'},
 			]);
 		});
@@ -119,8 +130,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				{type: AGENT_BEGIN, agents: ['A', 'B', 'C'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
-				{type: '->', agents: ['B', 'C']},
+				{type: '->', agents: jasmine.anything()},
+				{type: '->', agents: jasmine.anything()},
 				{type: AGENT_END, agents: ['A', 'B', 'C'], mode: 'none'},
 			]);
 		});
@@ -137,10 +148,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
 				{type: AGENT_END, agents: ['B'], mode: 'cross'},
 				{type: AGENT_BEGIN, agents: ['B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
 				{type: AGENT_END, agents: ['A', 'B'], mode: 'none'},
 			]);
 		});
@@ -154,11 +165,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				{type: '->', agents: jasmine.anything()},
 				{type: AGENT_BEGIN, agents: ['D', 'C'], mode: 'box'},
-				{type: '->', agents: ['B', 'C']},
-				{type: '->', agents: ['C', 'D']},
-				{type: AGENT_END, agents: ['A', 'B', 'D', 'C'], mode: 'none'},
+				{type: '->', agents: jasmine.anything()},
+				{type: '->', agents: jasmine.anything()},
+				jasmine.anything(),
 			]);
 		});
 
@@ -177,11 +188,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				{type: '->', agents: jasmine.anything()},
 				{type: AGENT_BEGIN, agents: ['C', 'D', 'E'], mode: 'box'},
-				{type: AGENT_END, agents: [
-					'A', 'B', 'C', 'D', 'E',
-				], mode: 'none'},
+				jasmine.anything(),
 			]);
 		});
 
@@ -205,8 +214,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				], mode: 'cross'},
 			]});
 			expect(sequence.stages).toEqual([
-				{type: AGENT_BEGIN, agents: ['C', 'D', 'A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
+				{type: '->', agents: jasmine.anything()},
 				{type: AGENT_END, agents: ['A', 'B', 'C', 'D'], mode: 'cross'},
 			]);
 		});
@@ -228,8 +237,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				], mode: 'cross'},
 			]});
 			expect(sequence.stages).toEqual([
-				{type: AGENT_BEGIN, agents: ['C', 'D', 'A', 'B'], mode: 'box'},
-				{type: '->', agents: ['A', 'B']},
+				jasmine.anything(),
+				{type: '->', agents: jasmine.anything()},
 				{type: AGENT_END, agents: ['A', 'B', 'C'], mode: 'cross'},
 				{type: AGENT_END, agents: ['D'], mode: 'none'},
 			]);
@@ -312,7 +321,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
-		it('records all involved agents in nested blocks', () => {
+		it('records virtual block agents in nested blocks', () => {
 			const sequence = generator.generate({stages: [
 				{type: BLOCK_BEGIN, mode: 'if', label: 'abc'},
 				{type: '->', agents: [{name: 'A'}, {name: 'B'}]},
@@ -387,8 +396,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
 				{mode: 'if', label: 'abc', stages: [
-					{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-					{type: '->', agents: ['A', 'B']},
+					jasmine.anything(),
+					jasmine.anything(),
 				]},
 				{mode: 'else', label: 'xyz', stages: []},
 			]);
@@ -406,8 +415,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(block0.sections).toEqual([
 				{mode: 'if', label: 'abc', stages: []},
 				{mode: 'else', label: 'xyz', stages: [
-					{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-					{type: '->', agents: ['A', 'B']},
+					jasmine.anything(),
+					jasmine.anything(),
 				]},
 			]);
 		});
@@ -460,8 +469,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
 				{mode: 'if', label: 'abc', stages: [
-					{type: AGENT_BEGIN, agents: ['A', 'B'], mode: 'box'},
-					{type: '->', agents: ['A', 'B']},
+					jasmine.anything(),
+					jasmine.anything(),
 				]},
 				{mode: 'else', label: 'xyz', stages: []},
 			]);
@@ -521,13 +530,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{type: 'note right', agents: [], foo: 'bar'},
 				{type: 'note left', agents: [], foo: 'bar'},
 				{type: 'note over', agents: [], foo: 'bar'},
-				{type: 'note right', agents: [{name: '['}]},
+				{type: 'note right', agents: [{name: '['}], foo: 'bar'},
 			]});
 			expect(sequence.stages).toEqual([
 				{type: 'note right', agents: [']'], foo: 'bar'},
 				{type: 'note left', agents: ['['], foo: 'bar'},
 				{type: 'note over', agents: ['[', ']'], foo: 'bar'},
-				{type: 'note right', agents: ['[']},
+				{type: 'note right', agents: ['['], foo: 'bar'},
 			]);
 		});
 
