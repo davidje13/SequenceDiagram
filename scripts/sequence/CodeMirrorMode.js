@@ -2,7 +2,8 @@ define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
 	const CM_END = {type: '', suggest: '\n', then: {}};
-	const CM_ERROR = {type: 'error', then: {'': 0}};
+	const CM_HIDDEN_END = {type: '', then: {}};
+	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
 
 	function makeCMCommaBlock(type, suggest, exits = {}) {
 		return {type, suggest, then: Object.assign({
@@ -22,25 +23,26 @@ define(['core/ArrayUtilities'], (array) => {
 	});
 	const CM_AGENT_TO_OPTTEXT = {type: 'variable', suggest: 'Agent', then: {
 		'': 0,
-		':': {type: 'operator', suggest: true, then: {'': CM_TEXT_TO_END}},
-		'\n': CM_END,
-	}};
-
-	const CM_NOTE_SIDE_THEN = {
-		'of': {type: 'keyword', suggest: true, then: {
-			'': CM_AGENT_LIST_TO_TEXT,
-		}},
 		':': {type: 'operator', suggest: true, then: {
 			'': CM_TEXT_TO_END,
+			'\n': CM_HIDDEN_END,
 		}},
-		'': CM_AGENT_LIST_TO_TEXT,
-	};
+		'\n': CM_END,
+	}};
 
 	function makeCMSideNote(side) {
 		return {
 			type: 'keyword',
 			suggest: [side + ' of ', side + ': '],
-			then: CM_NOTE_SIDE_THEN,
+			then: {
+				'of': {type: 'keyword', suggest: true, then: {
+					'': CM_AGENT_LIST_TO_TEXT,
+				}},
+				':': {type: 'operator', suggest: true, then: {
+					'': CM_TEXT_TO_END,
+				}},
+				'': CM_AGENT_LIST_TO_TEXT,
+			},
 		};
 	}
 
@@ -61,7 +63,7 @@ define(['core/ArrayUtilities'], (array) => {
 		'': 0,
 	}};
 
-	const CM_COMMANDS = {type: 'error', then: {
+	const CM_COMMANDS = {type: 'error line-error', then: {
 		'title': {type: 'keyword', suggest: true, then: {
 			'': CM_TEXT_TO_END,
 		}},
@@ -231,6 +233,10 @@ define(['core/ArrayUtilities'], (array) => {
 			updateSuggestion(state, suggestions, '', {});
 		}
 		state.nextCompletions = cmMakeCompletions(state, path);
+		state.valid = (
+			Boolean(current.then['\n']) ||
+			Object.keys(current.then).length === 0
+		);
 		return current.type;
 	}
 
@@ -258,6 +264,7 @@ define(['core/ArrayUtilities'], (array) => {
 				beginCompletions: cmMakeCompletions({}, [CM_COMMANDS]),
 				completions: [],
 				nextCompletions: [],
+				valid: true,
 				line: [],
 				indent: 0,
 			};
@@ -336,10 +343,14 @@ define(['core/ArrayUtilities'], (array) => {
 			if(stream.sol() && state.currentType === -1) {
 				state.line.length = 0;
 			}
+			let type = '';
 			if(state.currentType !== -1 || this._tokenBegin(stream, state)) {
-				return this._tokenEnd(stream, state);
+				type = this._tokenEnd(stream, state);
+			}
+			if(state.currentType === -1 && stream.eol() && !state.valid) {
+				return 'line-error ' + type;
 			} else {
-				return null;
+				return type;
 			}
 		}
 
