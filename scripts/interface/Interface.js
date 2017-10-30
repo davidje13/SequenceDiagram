@@ -139,6 +139,9 @@ define([
 		build(container) {
 			const codePane = makeNode('div', {'class': 'pane-code'});
 			const viewPane = makeNode('div', {'class': 'pane-view'});
+			this.errorPane = makeNode('div', {'class': 'pane-error'});
+			this.errorText = makeText();
+			this.errorPane.appendChild(this.errorText);
 			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
 
 			const options = this.buildOptions();
@@ -146,6 +149,7 @@ define([
 			viewPane.appendChild(options);
 
 			container.appendChild(codePane);
+			container.appendChild(this.errorPane);
 			container.appendChild(viewPane);
 
 			this.code = this.buildEditor(codePane);
@@ -193,6 +197,20 @@ define([
 			}
 		}
 
+		markError(error) {
+			if(typeof error === 'object' && error.message) {
+				this.errorText.nodeValue = error.message;
+			} else {
+				this.errorText.nodeValue = error;
+			}
+			this.errorPane.setAttribute('class', 'pane-error error');
+		}
+
+		markOK() {
+			this.errorText.nodeValue = 'All OK';
+			this.errorPane.setAttribute('class', 'pane-error ok');
+		}
+
 		update(immediate = true) {
 			const src = this.code.getDoc().getValue();
 			this.saveCode(src);
@@ -201,10 +219,10 @@ define([
 				const parsed = this.parser.parse(src);
 				sequence = this.generator.generate(parsed);
 			} catch(e) {
-				// TODO
-				// console.log(e);
+				this.markError(e);
 				return;
 			}
+			this.markOK();
 
 			let delay = 0;
 			if(!immediate && this.renderedSeq) {

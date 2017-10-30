@@ -7,8 +7,10 @@ html, body {
 	position: absolute;
 	left: 0;
 	top: 0;
-	bottom: 0;
+	bottom: 100px;
 	width: 30%;
+	box-sizing: border-box;
+	border-right: 1px solid #808080;
 }
 
 .pane-code .CodeMirror {
@@ -46,6 +48,31 @@ html, body {
 }
 
 .pane-view-inner {
+}
+
+.pane-error {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 30%;
+	height: 100px;
+	overflow: auto;
+	box-sizing: border-box;
+	padding: 5px 10px;
+	font-family: monospace;
+	background: #DDDDDD;
+	border-top: 1px solid #808080;
+	border-right: 1px solid #808080;
+}
+
+.pane-error.ok {
+	color: #007700;
+	background: #E8EEE8;
+}
+
+.pane-error.error {
+	color: #770000;
+	background: #EEE8E8;
 }
 
 .options {

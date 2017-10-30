@@ -67,7 +67,7 @@ define(['core/ArrayUtilities'], (array) => {
 				const state = this.agentStates.get(agent) || DEFAULT_AGENT;
 				if(state.locked) {
 					if(checked) {
-						throw new Error('Cannot modify agent ' + agent);
+						throw new Error('Cannot begin/end agent: ' + agent);
 					} else {
 						return false;
 					}
@@ -173,8 +173,12 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleBlockSplit({mode, label}) {
-			if(this.currentNest.stage.sections[0].mode !== 'if') {
-				throw new Error('Invalid block nesting');
+			const containerMode = this.currentNest.stage.sections[0].mode;
+			if(containerMode !== 'if') {
+				throw new Error(
+					'Invalid block nesting ("else" inside ' +
+					containerMode + ')'
+				);
 			}
 			this.currentSection = {
 				mode,
@@ -186,7 +190,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 		handleBlockEnd() {
 			if(this.nesting.length <= 1) {
-				throw new Error('Invalid block nesting');
+				throw new Error('Invalid block nesting (too many "end"s)');
 			}
 			const {hasContent, stage, agents} = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
@@ -240,7 +244,10 @@ define(['core/ArrayUtilities'], (array) => {
 			stages.forEach(this.handleStage);
 
 			if(this.nesting.length !== 1) {
-				throw new Error('Invalid block nesting');
+				throw new Error(
+					'Invalid block nesting (' +
+					(this.nesting.length - 1) + ' unclosed)'
+				);
 			}
 
 			this.setAgentVis(this.agents, false, meta.terminators || 'none');
