@@ -1,5 +1,5 @@
 /* jshint -W072 */
-defineDescribe('Sequence Renderer', [
+defineDescribe('Sequence Integration', [
 	'./Parser',
 	'./Generator',
 	'./Renderer',

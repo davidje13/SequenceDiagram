@@ -8,6 +8,22 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	}
 
+	function agentEqCheck(a, b) {
+		return a.name === b.name;
+	}
+
+	function makeAgent(name, {anchorRight = false} = {}) {
+		return {name, anchorRight};
+	}
+
+	function convertAgent(agent) {
+		return makeAgent(agent.name);
+	}
+
+	function getAgentName(agent) {
+		return agent.name;
+	}
+
 	const LOCKED_AGENT = new AgentState(false, true);
 	const DEFAULT_AGENT = new AgentState(false);
 
@@ -30,12 +46,14 @@ define(['core/ArrayUtilities'], (array) => {
 			this.stageHandlers = {
 				'mark': this.handleMark.bind(this),
 				'async': this.handleAsync.bind(this),
-				'note over': this.handleNote.bind(this),
-				'note left': this.handleNote.bind(this),
-				'note right': this.handleNote.bind(this),
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
+				'connection': this.handleConnection.bind(this),
+				'note over': this.handleNote.bind(this),
+				'note left': this.handleNote.bind(this),
+				'note right': this.handleNote.bind(this),
+				'note between': this.handleNote.bind(this),
 				'block begin': this.handleBlockBegin.bind(this),
 				'block split': this.handleBlockSplit.bind(this),
 				'block end': this.handleBlockEnd.bind(this),
@@ -44,14 +62,14 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		addBounds(target, agentL, agentR, involvedAgents = null) {
-			array.remove(target, agentL);
-			array.remove(target, agentR);
+			array.remove(target, agentL, agentEqCheck);
+			array.remove(target, agentR, agentEqCheck);
 
 			let indexL = 0;
 			let indexR = target.length;
 			if(involvedAgents) {
 				const found = (involvedAgents
-					.map((agent) => target.indexOf(agent))
+					.map((agent) => array.indexOf(target, agent, agentEqCheck))
 					.filter((p) => (p !== -1))
 				);
 				indexL = found.reduce((a, b) => Math.min(a, b), target.length);
@@ -62,9 +80,21 @@ define(['core/ArrayUtilities'], (array) => {
 			target.splice(indexR + 1, 0, agentR);
 		}
 
+		addStage(stage, isVisible = true) {
+			this.currentSection.stages.push(stage);
+			if(isVisible) {
+				this.currentNest.hasContent = true;
+			}
+		}
+
+		defineAgents(agents) {
+			array.mergeSets(this.currentNest.agents, agents, agentEqCheck);
+			array.mergeSets(this.agents, agents, agentEqCheck);
+		}
+
 		setAgentVis(agents, visible, mode, checked = false) {
 			const filteredAgents = agents.filter((agent) => {
-				const state = this.agentStates.get(agent) || DEFAULT_AGENT;
+				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
 				if(state.locked) {
 					if(checked) {
 						throw new Error('Cannot begin/end agent: ' + agent);
@@ -78,33 +108,32 @@ define(['core/ArrayUtilities'], (array) => {
 				return;
 			}
 			filteredAgents.forEach((agent) => {
-				const state = this.agentStates.get(agent);
+				const state = this.agentStates.get(agent.name);
 				if(state) {
 					state.visible = visible;
 				} else {
-					this.agentStates.set(agent, new AgentState(visible));
+					this.agentStates.set(agent.name, new AgentState(visible));
 				}
 			});
 			const type = (visible ? 'agent begin' : 'agent end');
 			const existing = array.last(this.currentSection.stages) || {};
+			const agentNames = filteredAgents.map(getAgentName);
 			if(existing.type === type && existing.mode === mode) {
-				array.mergeSets(existing.agents, filteredAgents);
+				array.mergeSets(existing.agentNames, agentNames);
 			} else {
-				this.currentSection.stages.push({
+				this.addStage({
 					type,
-					agents: filteredAgents,
+					agentNames,
 					mode,
 				});
-				this.currentNest.hasContent = true;
 			}
-			array.mergeSets(this.currentNest.agents, filteredAgents);
-			array.mergeSets(this.agents, filteredAgents);
+			this.defineAgents(filteredAgents);
 		}
 
 		beginNested(mode, label, name) {
-			const nameL = name + '[';
-			const nameR = name + ']';
-			const agents = [nameL, nameR];
+			const leftAgent = makeAgent(name + '[', {anchorRight: true});
+			const rightAgent = makeAgent(name + ']');
+			const agents = [leftAgent, rightAgent];
 			const stages = [];
 			this.currentSection = {
 				mode,
@@ -113,57 +142,80 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 			this.currentNest = {
 				agents,
+				leftAgent,
+				rightAgent,
 				hasContent: false,
 				stage: {
 					type: 'block',
 					sections: [this.currentSection],
-					left: nameL,
-					right: nameR,
+					left: leftAgent.name,
+					right: rightAgent.name,
 				},
 			};
-			this.agentStates.set(nameL, LOCKED_AGENT);
-			this.agentStates.set(nameR, LOCKED_AGENT);
+			this.agentStates.set(leftAgent.name, LOCKED_AGENT);
+			this.agentStates.set(rightAgent.name, LOCKED_AGENT);
 			this.nesting.push(this.currentNest);
 
 			return {agents, stages};
 		}
 
-		handleMark(stage) {
-			this.markers.add(stage.name);
-			this.currentSection.stages.push(stage);
+		handleMark({name}) {
+			this.markers.add(name);
+			this.addStage({type: 'mark', name}, false);
 		}
 
-		handleAsync(stage) {
-			if(stage.target !== '' && !this.markers.has(stage.target)) {
-				throw new Error('Unknown marker: ' + stage.target);
+		handleAsync({target}) {
+			if(target !== '' && !this.markers.has(target)) {
+				throw new Error('Unknown marker: ' + target);
 			}
-			this.currentSection.stages.push(stage);
+			this.addStage({type: 'async', target}, false);
 		}
 
-		handleNote(stage) {
-			if(stage.agents.length === 0) {
-				this.handleUnknownStage(Object.assign({}, stage, {
-					agents: NOTE_DEFAULT_AGENTS[stage.type] || [],
-				}));
+		handleConnection({agents, label, line, left, right}) {
+			const colAgents = agents.map(convertAgent);
+			this.setAgentVis(colAgents, true, 'box');
+			this.defineAgents(colAgents);
+
+			this.addStage({
+				type: 'connection',
+				agentNames: agents.map(getAgentName),
+				label,
+				line,
+				left,
+				right,
+			});
+		}
+
+		handleNote({type, agents, mode, label}) {
+			let colAgents = null;
+			if(agents.length === 0) {
+				colAgents = NOTE_DEFAULT_AGENTS[type] || [];
 			} else {
-				this.handleUnknownStage(stage);
+				colAgents = agents.map(convertAgent);
 			}
+
+			this.setAgentVis(colAgents, true, 'box');
+			this.defineAgents(colAgents);
+
+			this.addStage({
+				type,
+				agentNames: colAgents.map(getAgentName),
+				mode,
+				label,
+			});
 		}
 
 		handleAgentDefine({agents}) {
-			const agentNames = agents.map((agent) => agent.name);
-			array.mergeSets(this.currentNest.agents, agentNames);
-			array.mergeSets(this.agents, agentNames);
+			const colAgents = agents.map(convertAgent);
+			this.defineAgents(colAgents);
 		}
 
 		handleAgentBegin({agents, mode}) {
-			const agentNames = agents.map((agent) => agent.name);
-			this.setAgentVis(agentNames, true, mode, true);
+			this.setAgentVis(agents.map(convertAgent), true, mode, true);
 		}
 
 		handleAgentEnd({agents, mode}) {
-			const agentNames = agents.map((agent) => agent.name);
-			this.setAgentVis(agentNames, false, mode, true);
+			this.setAgentVis(agents.map(convertAgent), false, mode, true);
 		}
 
 		handleBlockBegin({mode, label}) {
@@ -192,45 +244,23 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting (too many "end"s)');
 			}
-			const {hasContent, stage, agents} = this.nesting.pop();
+			const nested = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
 			this.currentSection = array.last(this.currentNest.stage.sections);
-			if(hasContent) {
-				array.mergeSets(this.currentNest.agents, agents);
-				array.mergeSets(this.agents, agents);
+			if(nested.hasContent) {
+				this.defineAgents(nested.agents);
 				this.addBounds(
 					this.agents,
-					stage.left,
-					stage.right,
-					agents
+					nested.leftAgent,
+					nested.rightAgent,
+					nested.agents
 				);
-				this.currentSection.stages.push(stage);
-				this.currentNest.hasContent = true;
+				this.addStage(nested.stage);
 			}
-		}
-
-		handleUnknownStage(stage) {
-			if(stage.agents) {
-				const agentNames = stage.agents.map((agent) => agent.name);
-				this.setAgentVis(agentNames, true, 'box');
-				array.mergeSets(this.currentNest.agents, agentNames);
-				array.mergeSets(this.agents, agentNames);
-				this.currentSection.stages.push(Object.assign({}, stage, {
-					agents: agentNames,
-				}));
-			} else {
-				this.currentSection.stages.push(stage);
-			}
-			this.currentNest.hasContent = true;
 		}
 
 		handleStage(stage) {
-			const handler = this.stageHandlers[stage.type];
-			if(handler) {
-				handler(stage);
-			} else {
-				this.handleUnknownStage(stage);
-			}
+			this.stageHandlers[stage.type](stage);
 		}
 
 		generate({stages, meta = {}}) {
@@ -254,8 +284,8 @@ define(['core/ArrayUtilities'], (array) => {
 
 			this.addBounds(
 				this.agents,
-				this.currentNest.stage.left,
-				this.currentNest.stage.right
+				this.currentNest.leftAgent,
+				this.currentNest.rightAgent
 			);
 
 			return {

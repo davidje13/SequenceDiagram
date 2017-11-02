@@ -140,11 +140,11 @@ define([
 			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
 		}
 
-		findExtremes(agents) {
+		findExtremes(agentNames) {
 			let min = null;
 			let max = null;
-			agents.forEach((agent) => {
-				const info = this.agentInfos.get(agent);
+			agentNames.forEach((name) => {
+				const info = this.agentInfos.get(name);
 				if(min === null || info.index < min.index) {
 					min = info;
 				}
@@ -158,32 +158,32 @@ define([
 			};
 		}
 
-		addSeparation(agent1, agent2, dist) {
-			const info1 = this.agentInfos.get(agent1);
-			const info2 = this.agentInfos.get(agent2);
+		addSeparation(agentName1, agentName2, dist) {
+			const info1 = this.agentInfos.get(agentName1);
+			const info2 = this.agentInfos.get(agentName2);
 
-			const d1 = info1.separations.get(agent2) || 0;
-			info1.separations.set(agent2, Math.max(d1, dist));
+			const d1 = info1.separations.get(agentName2) || 0;
+			info1.separations.set(agentName2, Math.max(d1, dist));
 
-			const d2 = info2.separations.get(agent1) || 0;
-			info2.separations.set(agent1, Math.max(d2, dist));
+			const d2 = info2.separations.get(agentName1) || 0;
+			info2.separations.set(agentName1, Math.max(d2, dist));
 		}
 
-		addSeparations(agents, agentSpaces) {
-			agents.forEach((agentR) => {
-				const infoR = this.agentInfos.get(agentR);
-				const sepR = agentSpaces.get(agentR) || SEP_ZERO;
+		addSeparations(agentNames, agentSpaces) {
+			agentNames.forEach((agentNameR) => {
+				const infoR = this.agentInfos.get(agentNameR);
+				const sepR = agentSpaces.get(agentNameR) || SEP_ZERO;
 				infoR.maxRPad = Math.max(infoR.maxRPad, sepR.right);
 				infoR.maxLPad = Math.max(infoR.maxLPad, sepR.left);
-				agents.forEach((agentL) => {
-					const infoL = this.agentInfos.get(agentL);
+				agentNames.forEach((agentNameL) => {
+					const infoL = this.agentInfos.get(agentNameL);
 					if(infoL.index >= infoR.index) {
 						return;
 					}
-					const sepL = agentSpaces.get(agentL) || SEP_ZERO;
+					const sepL = agentSpaces.get(agentNameL) || SEP_ZERO;
 					this.addSeparation(
-						agentR,
-						agentL,
+						agentNameR,
+						agentNameL,
 						sepR.left + sepL.right + this.theme.agentMargin
 					);
 				});
@@ -236,25 +236,25 @@ define([
 			return {left: 0, right: 0};
 		}
 
-		separationAgent({type, mode, agents}) {
+		separationAgent({type, mode, agentNames}) {
 			if(type === 'agent begin') {
-				array.mergeSets(this.visibleAgents, agents);
+				array.mergeSets(this.visibleAgents, agentNames);
 			}
 
 			const agentSpaces = new Map();
-			agents.forEach((agent) => {
-				const info = this.agentInfos.get(agent);
+			agentNames.forEach((name) => {
+				const info = this.agentInfos.get(name);
 				const separationFn = this.separationAgentCap[mode];
-				agentSpaces.set(agent, separationFn(info));
+				agentSpaces.set(name, separationFn(info));
 			});
 			this.addSeparations(this.visibleAgents, agentSpaces);
 
 			if(type === 'agent end') {
-				array.removeAll(this.visibleAgents, agents);
+				array.removeAll(this.visibleAgents, agentNames);
 			}
 		}
 
-		separationConnection({agents, label}) {
+		separationConnection({agentNames, label}) {
 			const config = this.theme.connect;
 
 			const labelWidth = (
@@ -263,9 +263,9 @@ define([
 			);
 			const strokeWidth = this.theme.agentLineAttrs['stroke-width'];
 
-			if(agents[0] === agents[1]) {
+			if(agentNames[0] === agentNames[1]) {
 				const agentSpaces = new Map();
-				agentSpaces.set(agents[0], {
+				agentSpaces.set(agentNames[0], {
 					left: 0,
 					right: (
 						labelWidth +
@@ -277,14 +277,14 @@ define([
 				this.addSeparations(this.visibleAgents, agentSpaces);
 			} else {
 				this.addSeparation(
-					agents[0],
-					agents[1],
+					agentNames[0],
+					agentNames[1],
 					labelWidth + config.arrow.width * 2 + strokeWidth
 				);
 			}
 		}
 
-		separationNoteOver({agents, mode, label}) {
+		separationNoteOver({agentNames, mode, label}) {
 			const config = this.theme.note[mode];
 			const width = (
 				this.sizer.measure(config.labelAttrs, label).width +
@@ -293,8 +293,8 @@ define([
 			);
 
 			const agentSpaces = new Map();
-			if(agents.length > 1) {
-				const {left, right} = this.findExtremes(agents);
+			if(agentNames.length > 1) {
+				const {left, right} = this.findExtremes(agentNames);
 
 				this.addSeparation(
 					left,
@@ -308,7 +308,7 @@ define([
 				agentSpaces.set(left, {left: config.overlap.left, right: 0});
 				agentSpaces.set(right, {left: 0, right: config.overlap.right});
 			} else {
-				agentSpaces.set(agents[0], {
+				agentSpaces.set(agentNames[0], {
 					left: width / 2,
 					right: width / 2,
 				});
@@ -316,9 +316,9 @@ define([
 			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteSide(isRight, {agents, mode, label}) {
+		separationNoteSide(isRight, {agentNames, mode, label}) {
 			const config = this.theme.note[mode];
-			const {left, right} = this.findExtremes(agents);
+			const {left, right} = this.findExtremes(agentNames);
 			const width = (
 				this.sizer.measure(config.labelAttrs, label).width +
 				config.padding.left +
@@ -336,9 +336,9 @@ define([
 			this.addSeparations(this.visibleAgents, agentSpaces);
 		}
 
-		separationNoteBetween({agents, mode, label}) {
+		separationNoteBetween({agentNames, mode, label}) {
 			const config = this.theme.note[mode];
-			const {left, right} = this.findExtremes(agents);
+			const {left, right} = this.findExtremes(agentNames);
 
 			this.addSeparation(
 				left,
@@ -462,8 +462,8 @@ define([
 			};
 		}
 
-		checkAgentRange(agents) {
-			const {left, right} = this.findExtremes(agents);
+		checkAgentRange(agentNames) {
+			const {left, right} = this.findExtremes(agentNames);
 			const leftX = this.agentInfos.get(left).x;
 			const rightX = this.agentInfos.get(right).x;
 			this.agentInfos.forEach((agentInfo) => {
@@ -473,8 +473,8 @@ define([
 			});
 		}
 
-		markAgentRange(agents) {
-			const {left, right} = this.findExtremes(agents);
+		markAgentRange(agentNames) {
+			const {left, right} = this.findExtremes(agentNames);
 			const leftX = this.agentInfos.get(left).x;
 			const rightX = this.agentInfos.get(right).x;
 			this.agentInfos.forEach((agentInfo) => {
@@ -484,24 +484,24 @@ define([
 			});
 		}
 
-		renderAgentBegin({mode, agents}) {
-			this.checkAgentRange(agents);
+		renderAgentBegin({mode, agentNames}) {
+			this.checkAgentRange(agentNames);
 			let maxHeight = 0;
-			agents.forEach((agent) => {
-				const agentInfo = this.agentInfos.get(agent);
+			agentNames.forEach((name) => {
+				const agentInfo = this.agentInfos.get(name);
 				const shifts = this.renderAgentCap[mode](agentInfo);
 				maxHeight = Math.max(maxHeight, shifts.height);
 				agentInfo.latestYStart = this.currentY + shifts.lineBottom;
 			});
 			this.currentY += maxHeight + this.theme.actionMargin;
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
-		renderAgentEnd({mode, agents}) {
-			this.checkAgentRange(agents);
+		renderAgentEnd({mode, agentNames}) {
+			this.checkAgentRange(agentNames);
 			let maxHeight = 0;
-			agents.forEach((agent) => {
-				const agentInfo = this.agentInfos.get(agent);
+			agentNames.forEach((name) => {
+				const agentInfo = this.agentInfos.get(name);
 				const x = agentInfo.x;
 				const shifts = this.renderAgentCap[mode](agentInfo);
 				maxHeight = Math.max(maxHeight, shifts.height);
@@ -515,12 +515,12 @@ define([
 				agentInfo.latestYStart = null;
 			});
 			this.currentY += maxHeight + this.theme.actionMargin;
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
-		renderSelfConnection({label, agents, line, left, right}) {
+		renderSelfConnection({label, agentNames, line, left, right}) {
 			const config = this.theme.connect;
-			const from = this.agentInfos.get(agents[0]);
+			const from = this.agentInfos.get(agentNames[0]);
 
 			const dy = config.arrow.height / 2;
 			const short = this.theme.agentLineAttrs['stroke-width'];
@@ -591,10 +591,10 @@ define([
 			this.currentY = y1 + dy + this.theme.actionMargin;
 		}
 
-		renderSimpleConnection({label, agents, line, left, right}) {
+		renderSimpleConnection({label, agentNames, line, left, right}) {
 			const config = this.theme.connect;
-			const from = this.agentInfos.get(agents[0]);
-			const to = this.agentInfos.get(agents[1]);
+			const from = this.agentInfos.get(agentNames[0]);
+			const to = this.agentInfos.get(agentNames[1]);
 
 			const dy = config.arrow.height / 2;
 			const dir = (from.x < to.x) ? 1 : -1;
@@ -650,13 +650,13 @@ define([
 		}
 
 		renderConnection(stage) {
-			this.checkAgentRange(stage.agents);
-			if(stage.agents[0] === stage.agents[1]) {
+			this.checkAgentRange(stage.agentNames);
+			if(stage.agentNames[0] === stage.agentNames[1]) {
 				this.renderSelfConnection(stage);
 			} else {
 				this.renderSimpleConnection(stage);
 			}
-			this.markAgentRange(stage.agents);
+			this.markAgentRange(stage.agentNames);
 		}
 
 		renderNote({xMid = null, x0 = null, x1 = null}, anchor, mode, label) {
@@ -721,53 +721,53 @@ define([
 			);
 		}
 
-		renderNoteOver({agents, mode, label}) {
-			this.checkAgentRange(agents);
+		renderNoteOver({agentNames, mode, label}) {
+			this.checkAgentRange(agentNames);
 			const config = this.theme.note[mode];
 
-			if(agents.length > 1) {
-				const {left, right} = this.findExtremes(agents);
+			if(agentNames.length > 1) {
+				const {left, right} = this.findExtremes(agentNames);
 				this.renderNote({
 					x0: this.agentInfos.get(left).x - config.overlap.left,
 					x1: this.agentInfos.get(right).x + config.overlap.right,
 				}, 'middle', mode, label);
 			} else {
-				const xMid = this.agentInfos.get(agents[0]).x;
+				const xMid = this.agentInfos.get(agentNames[0]).x;
 				this.renderNote({xMid}, 'middle', mode, label);
 			}
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
-		renderNoteLeft({agents, mode, label}) {
-			this.checkAgentRange(agents);
+		renderNoteLeft({agentNames, mode, label}) {
+			this.checkAgentRange(agentNames);
 			const config = this.theme.note[mode];
 
-			const {left} = this.findExtremes(agents);
+			const {left} = this.findExtremes(agentNames);
 			const x1 = this.agentInfos.get(left).x - config.margin.right;
 			this.renderNote({x1}, 'end', mode, label);
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
-		renderNoteRight({agents, mode, label}) {
-			this.checkAgentRange(agents);
+		renderNoteRight({agentNames, mode, label}) {
+			this.checkAgentRange(agentNames);
 			const config = this.theme.note[mode];
 
-			const {right} = this.findExtremes(agents);
+			const {right} = this.findExtremes(agentNames);
 			const x0 = this.agentInfos.get(right).x + config.margin.left;
 			this.renderNote({x0}, 'start', mode, label);
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
-		renderNoteBetween({agents, mode, label}) {
-			this.checkAgentRange(agents);
-			const {left, right} = this.findExtremes(agents);
+		renderNoteBetween({agentNames, mode, label}) {
+			this.checkAgentRange(agentNames);
+			const {left, right} = this.findExtremes(agentNames);
 			const xMid = (
 				this.agentInfos.get(left).x +
 				this.agentInfos.get(right).x
 			) / 2;
 
 			this.renderNote({xMid}, 'middle', mode, label);
-			this.markAgentRange(agents);
+			this.markAgentRange(agentNames);
 		}
 
 		renderBlockBegin(scope, {left, right}) {
@@ -891,9 +891,9 @@ define([
 		buildAgentInfos(agents, stages) {
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
-				this.agentInfos.set(agent, {
-					label: agent,
-					anchorRight: agent.endsWith('['),
+				this.agentInfos.set(agent.name, {
+					label: agent.name,
+					anchorRight: agent.anchorRight,
 					index,
 					x: null,
 					latestYStart: null,

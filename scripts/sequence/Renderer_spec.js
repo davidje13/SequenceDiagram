@@ -25,13 +25,13 @@ defineDescribe('Sequence Renderer', [
 		});
 	});
 
-	function connectionStage(agents, label = '') {
+	function connectionStage(agentNames, label = '') {
 		return {
 			type: 'connection',
 			line: 'solid',
 			left: false,
 			right: true,
-			agents,
+			agentNames,
 			label,
 		};
 	}
@@ -40,7 +40,12 @@ defineDescribe('Sequence Renderer', [
 		it('populates the SVG with content', () => {
 			renderer.render({
 				meta: {title: 'Title'},
-				agents: ['[', 'Col 1', 'Col 2', ']'],
+				agents: [
+					{name: '[', anchorRight: true},
+					{name: 'Col 1', anchorRight: false},
+					{name: 'Col 2', anchorRight: false},
+					{name: ']', anchorRight: false},
+				],
 				stages: [],
 			});
 			const element = renderer.svg();
@@ -55,11 +60,16 @@ defineDescribe('Sequence Renderer', [
 
 			renderer.render({
 				meta: {title: ''},
-				agents: ['[', 'A', 'B', ']'],
+				agents: [
+					{name: '[', anchorRight: true},
+					{name: 'A', anchorRight: false},
+					{name: 'B', anchorRight: false},
+					{name: ']', anchorRight: false},
+				],
 				stages: [
-					{type: 'agent begin', agents: ['A', 'B'], mode: 'box'},
+					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
 					connectionStage(['A', 'B']),
-					{type: 'agent end', agents: ['A', 'B'], mode: 'none'},
+					{type: 'agent end', agentNames: ['A', 'B'], mode: 'none'},
 				],
 			});
 
@@ -80,14 +90,28 @@ defineDescribe('Sequence Renderer', [
 
 			renderer.render({
 				meta: {title: ''},
-				agents: ['[', 'A', 'B', 'C', ']'],
+				agents: [
+					{name: '[', anchorRight: true},
+					{name: 'A', anchorRight: false},
+					{name: 'B', anchorRight: false},
+					{name: 'C', anchorRight: false},
+					{name: ']', anchorRight: false},
+				],
 				stages: [
-					{type: 'agent begin', agents: ['A', 'B', 'C'], mode: 'box'},
+					{
+						type: 'agent begin',
+						agentNames: ['A', 'B', 'C'],
+						mode: 'box',
+					},
 					connectionStage(['[', 'A']),
 					connectionStage(['A', 'B']),
 					connectionStage(['B', 'C']),
 					connectionStage(['C', ']']),
-					{type: 'agent end', agents: ['A', 'B', 'C'], mode: 'none'},
+					{
+						type: 'agent end',
+						agentNames: ['A', 'B', 'C'],
+						mode: 'none',
+					},
 				],
 			});
 
@@ -115,17 +139,24 @@ defineDescribe('Sequence Renderer', [
 
 			renderer.render({
 				meta: {title: ''},
-				agents: ['[', 'A', 'B', 'C', 'D', ']'],
+				agents: [
+					{name: '[', anchorRight: true},
+					{name: 'A', anchorRight: false},
+					{name: 'B', anchorRight: false},
+					{name: 'C', anchorRight: false},
+					{name: 'D', anchorRight: false},
+					{name: ']', anchorRight: false},
+				],
 				stages: [
-					{type: 'agent begin', agents: ['A', 'B'], mode: 'box'},
+					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
 					connectionStage(['A', 'B'], 'short'),
-					{type: 'agent end', agents: ['B'], mode: 'cross'},
-					{type: 'agent begin', agents: ['C'], mode: 'box'},
+					{type: 'agent end', agentNames: ['B'], mode: 'cross'},
+					{type: 'agent begin', agentNames: ['C'], mode: 'box'},
 					connectionStage(['A', 'C'], 'long description here'),
-					{type: 'agent end', agents: ['C'], mode: 'cross'},
-					{type: 'agent begin', agents: ['D'], mode: 'box'},
+					{type: 'agent end', agentNames: ['C'], mode: 'cross'},
+					{type: 'agent begin', agentNames: ['D'], mode: 'box'},
 					connectionStage(['A', 'D'], 'short again'),
-					{type: 'agent end', agents: ['A', 'D'], mode: 'cross'},
+					{type: 'agent end', agentNames: ['A', 'D'], mode: 'cross'},
 				],
 			});
 
