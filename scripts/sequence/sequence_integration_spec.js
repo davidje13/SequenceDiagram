@@ -101,10 +101,10 @@ defineDescribe('Sequence Integration', [
 
 		// Arrow
 		expect(content).toContain(
-			'<line x1="20.5" y1="20" x2="50.5" y2="20"'
+			'<line x1="20.5" y1="20" x2="50.29'
 		);
 		expect(content).toContain(
-			'<polygon points="46.5 16 50.5 20 46.5 24"'
+			'<polygon points="46.29'
 		);
 	});
 

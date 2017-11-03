@@ -4,6 +4,7 @@ define([
 	'svg/SVGTextBlock_spec',
 	'svg/SVGShapes_spec',
 	'interface/Interface_spec',
+	'sequence/Tokeniser_spec',
 	'sequence/Parser_spec',
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',

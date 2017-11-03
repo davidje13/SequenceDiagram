@@ -171,7 +171,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.addStage({type: 'async', target}, false);
 		}
 
-		handleConnection({agents, label, line, left, right}) {
+		handleConnection({agents, label, options}) {
 			const colAgents = agents.map(convertAgent);
 			this.setAgentVis(colAgents, true, 'box');
 			this.defineAgents(colAgents);
@@ -180,9 +180,7 @@ define(['core/ArrayUtilities'], (array) => {
 				type: 'connection',
 				agentNames: agents.map(getAgentName),
 				label,
-				line,
-				left,
-				right,
+				options,
 			});
 		}
 

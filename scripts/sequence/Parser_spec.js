@@ -3,199 +3,25 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 	const parser = new Parser();
 
-	describe('.tokenise', () => {
-		it('converts the source into atomic tokens', () => {
-			const input = 'foo bar -> baz';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: ' ', v: '->', q: false},
-				{s: ' ', v: 'baz', q: false},
-			]);
-		});
-
-		it('splits tokens at flexible boundaries', () => {
-			const input = 'foo bar->baz';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: '', v: '->', q: false},
-				{s: '', v: 'baz', q: false},
-			]);
-		});
-
-		it('parses newlines as tokens', () => {
-			const input = 'foo bar\nbaz';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'baz', q: false},
-			]);
-		});
-
-		it('parses quoted newlines as quoted tokens', () => {
-			const input = 'foo "\n" baz';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: '\n', q: true},
-				{s: ' ', v: 'baz', q: false},
-			]);
-		});
-
-		it('removes leading and trailing whitespace', () => {
-			const input = '  foo \t bar\t\n baz';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '  ', v: 'foo', q: false},
-				{s: ' \t ', v: 'bar', q: false},
-				{s: '\t', v: '\n', q: false},
-				{s: ' ', v: 'baz', q: false},
-			]);
-		});
-
-		it('parses quoted strings as single tokens', () => {
-			const input = 'foo "zig zag" \'abc def\'';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'zig zag', q: true},
-				{s: ' ', v: 'abc def', q: true},
-			]);
-		});
-
-		it('ignores comments', () => {
-			const input = 'foo # bar baz\nzig';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'zig', q: false},
-			]);
-		});
-
-		it('ignores quotes within comments', () => {
-			const input = 'foo # bar "\'baz\nzig';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'zig', q: false},
-			]);
-		});
-
-		it('interprets special characters within quoted strings', () => {
-			const input = 'foo "zig\\" zag\\n"';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'zig" zag\n', q: true},
-			]);
-		});
-
-		it('maintains whitespace and newlines within quoted strings', () => {
-			const input = 'foo " zig\n  zag  "';
-			const tokens = parser.tokenise(input);
-			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: ' zig\n  zag  ', q: true},
-			]);
-		});
-
-		it('rejects unterminated quoted values', () => {
-			expect(() => parser.tokenise('"nope')).toThrow();
-		});
-	});
-
-	describe('.splitLines', () => {
-		it('combines tokens', () => {
-			const lines = parser.splitLines([
-				{s: '', v: 'abc', q: false},
-				{s: '', v: 'd', q: false},
-			]);
-			expect(lines).toEqual([
-				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
-			]);
-		});
-
-		it('splits at newlines', () => {
-			const lines = parser.splitLines([
-				{s: '', v: 'abc', q: false},
-				{s: '', v: 'd', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'e', q: false},
-			]);
-			expect(lines).toEqual([
-				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
-				[{s: '', v: 'e', q: false}],
-			]);
-		});
-
-		it('ignores multiple newlines', () => {
-			const lines = parser.splitLines([
-				{s: '', v: 'abc', q: false},
-				{s: '', v: 'd', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'e', q: false},
-			]);
-			expect(lines).toEqual([
-				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
-				[{s: '', v: 'e', q: false}],
-			]);
-		});
-
-		it('ignores trailing newlines', () => {
-			const lines = parser.splitLines([
-				{s: '', v: 'abc', q: false},
-				{s: '', v: 'd', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'e', q: false},
-				{s: '', v: '\n', q: false},
-			]);
-			expect(lines).toEqual([
-				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
-				[{s: '', v: 'e', q: false}],
-			]);
-		});
-
-		it('handles quoted newlines as regular tokens', () => {
-			const lines = parser.splitLines([
-				{s: '', v: 'abc', q: false},
-				{s: '', v: 'd', q: false},
-				{s: '', v: '\n', q: true},
-				{s: '', v: 'e', q: false},
-			]);
-			expect(lines).toEqual([
-				[
-					{s: '', v: 'abc', q: false},
-					{s: '', v: 'd', q: false},
-					{s: '', v: '\n', q: true},
-					{s: '', v: 'e', q: false},
-				],
-			]);
-		});
-
-		it('handles empty input', () => {
-			const lines = parser.splitLines([]);
-			expect(lines).toEqual([]);
-		});
-	});
-
-	function connectionStage(agentNames, label = '') {
-		return {
-			type: 'connection',
-			line: 'solid',
-			left: false,
-			right: true,
-			agents: agentNames.map((agent) => ({opt: '', name: agent})),
-			label,
-		};
-	}
+	const PARSED = {
+		connection: (agentNames, {
+			line = jasmine.anything(),
+			left = jasmine.anything(),
+			right = jasmine.anything(),
+			label = jasmine.anything(),
+		} = {}) => {
+			return {
+				type: 'connection',
+				agents: agentNames.map((name) => ({name})),
+				label,
+				options: {
+					line,
+					left,
+					right,
+				},
+			};
+		},
+	};
 
 	describe('.parse', () => {
 		it('returns an empty sequence for blank input', () => {
@@ -227,44 +53,44 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('converts entries into abstract form', () => {
 			const parsed = parser.parse('A -> B');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A', 'B']),
+				PARSED.connection(['A', 'B']),
 			]);
 		});
 
 		it('combines multiple tokens into single entries', () => {
 			const parsed = parser.parse('A B -> C D');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A B', 'C D']),
+				PARSED.connection(['A B', 'C D']),
 			]);
 		});
 
 		it('respects spacing within agent names', () => {
 			const parsed = parser.parse('A+B -> C  D');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A+B', 'C  D']),
+				PARSED.connection(['A+B', 'C  D']),
 			]);
 		});
 
 		it('parses optional labels', () => {
 			const parsed = parser.parse('A B -> C D: foo bar');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A B', 'C D'], 'foo bar'),
+				PARSED.connection(['A B', 'C D'], {label: 'foo bar'}),
 			]);
 		});
 
 		it('converts multiple entries', () => {
 			const parsed = parser.parse('A -> B\nB -> A');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A', 'B']),
-				connectionStage(['B', 'A']),
+				PARSED.connection(['A', 'B']),
+				PARSED.connection(['B', 'A']),
 			]);
 		});
 
 		it('ignores blank lines', () => {
 			const parsed = parser.parse('A -> B\n\nB -> A\n');
 			expect(parsed.stages).toEqual([
-				connectionStage(['A', 'B']),
-				connectionStage(['B', 'A']),
+				PARSED.connection(['A', 'B']),
+				PARSED.connection(['B', 'A']),
 			]);
 		});
 
@@ -278,54 +104,42 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A <--> B\n'
 			);
 			expect(parsed.stages).toEqual([
-				{
-					type: 'connection',
+				PARSED.connection(['A', 'B'], {
 					line: 'solid',
 					left: false,
 					right: true,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'solid',
 					left: true,
 					right: false,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'solid',
 					left: true,
 					right: true,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'dash',
 					left: false,
 					right: true,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'dash',
 					left: true,
 					right: false,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'dash',
 					left: true,
 					right: true,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: '',
-				},
+				}),
 			]);
 		});
 
@@ -335,22 +149,18 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A -> B: B <- A\n'
 			);
 			expect(parsed.stages).toEqual([
-				{
-					type: 'connection',
+				PARSED.connection(['A', 'B'], {
 					line: 'solid',
 					left: true,
 					right: false,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: 'B -> A',
-				},
-				{
-					type: 'connection',
+				}),
+				PARSED.connection(['A', 'B'], {
 					line: 'solid',
 					left: false,
 					right: true,
-					agents: [{opt: '', name: 'A'}, {opt: '', name: 'B'}],
 					label: 'B <- A',
-				},
+				}),
 			]);
 		});
 
@@ -505,12 +315,12 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			);
 			expect(parsed.stages).toEqual([
 				{type: 'block begin', mode: 'if', label: 'something happens'},
-				connectionStage(['A', 'B']),
+				PARSED.connection(['A', 'B']),
 				{type: 'block split', mode: 'else', label: 'something else'},
-				connectionStage(['A', 'C']),
-				connectionStage(['C', 'B']),
+				PARSED.connection(['A', 'C']),
+				PARSED.connection(['C', 'B']),
 				{type: 'block split', mode: 'else', label: ''},
-				connectionStage(['A', 'D']),
+				PARSED.connection(['A', 'D']),
 				{type: 'block end'},
 			]);
 		});

@@ -28,11 +28,13 @@ defineDescribe('Sequence Renderer', [
 	function connectionStage(agentNames, label = '') {
 		return {
 			type: 'connection',
-			line: 'solid',
-			left: false,
-			right: true,
 			agentNames,
 			label,
+			options: {
+				line: 'solid',
+				left: false,
+				right: true,
+			},
 		};
 	}
 

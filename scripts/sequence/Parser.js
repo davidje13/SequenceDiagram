@@ -1,50 +1,13 @@
 define([
 	'core/ArrayUtilities',
-	'./CodeMirrorMode',
+	'./Tokeniser',
 	'./CodeMirrorHints',
 ], (
 	array,
-	CMMode,
+	Tokeniser,
 	CMHints
 ) => {
 	'use strict';
-
-	function execAt(str, reg, i) {
-		reg.lastIndex = i;
-		return reg.exec(str);
-	}
-
-	function unescape(match) {
-		const c = match[1];
-		if(c === 'n') {
-			return '\n';
-		}
-		return match[1];
-	}
-
-	const TOKENS = [
-		{start: /#/y, end: /(?=\n)|$/y, omit: true},
-		{
-			start: /"/y,
-			end: /"/y,
-			escape: /\\(.)/y,
-			escapeWith: unescape,
-			baseToken: {q: true},
-		},
-		{
-			start: /'/y,
-			end: /'/y,
-			escape: /\\(.)/y,
-			escapeWith:
-			unescape,
-			baseToken: {q: true},
-		},
-		{start: /(?=[^ \t\r\n:+\-<>,])/y, end: /(?=[ \t\r\n:+\-<>,])|$/y},
-		{start: /(?=[+\-<>])/y, end: /(?=[^+\-<>])|$/y},
-		{start: /,/y, baseToken: {v: ','}},
-		{start: /:/y, baseToken: {v: ':'}},
-		{start: /\n/y, baseToken: {v: '\n'}},
-	];
 
 	const BLOCK_TYPES = {
 		'if': {type: 'block begin', mode: 'if', skip: []},
@@ -60,6 +23,11 @@ define([
 		'-->': {line: 'dash', left: false, right: true},
 		'<--': {line: 'dash', left: true, right: false},
 		'<-->': {line: 'dash', left: true, right: true},
+	};
+
+	const AGENT_OPTIONS = {
+		'+': 'start',
+		'-': 'stop',
 	};
 
 	const TERMINATOR_TYPES = [
@@ -99,69 +67,6 @@ define([
 		'begin': {type: 'agent begin', mode: 'box'},
 		'end': {type: 'agent end', mode: 'cross'},
 	};
-
-	function tokFindBegin(src, i) {
-		for(let j = 0; j < TOKENS.length; ++ j) {
-			const block = TOKENS[j];
-			const match = execAt(src, block.start, i);
-			if(match) {
-				return {
-					newBlock: block,
-					end: !block.end,
-					appendSpace: '',
-					appendValue: '',
-					skip: match[0].length,
-				};
-			}
-		}
-		return {
-			newBlock: null,
-			end: false,
-			appendSpace: src[i],
-			appendValue: '',
-			skip: 1,
-		};
-	}
-
-	function tokContinuePart(src, i, block) {
-		if(block.escape) {
-			const match = execAt(src, block.escape, i);
-			if(match) {
-				return {
-					newBlock: null,
-					end: false,
-					appendSpace: '',
-					appendValue: block.escapeWith(match),
-					skip: match[0].length,
-				};
-			}
-		}
-		const match = execAt(src, block.end, i);
-		if(match) {
-			return {
-				newBlock: null,
-				end: true,
-				appendSpace: '',
-				appendValue: '',
-				skip: match[0].length,
-			};
-		}
-		return {
-			newBlock: null,
-			end: false,
-			appendSpace: '',
-			appendValue: src[i],
-			skip: 1,
-		};
-	}
-
-	function tokAdvance(src, i, block) {
-		if(block) {
-			return tokContinuePart(src, i, block);
-		} else {
-			return tokFindBegin(src, i);
-		}
-	}
 
 	function joinLabel(line, begin = 0, end = null) {
 		if(end === null) {
@@ -234,19 +139,21 @@ define([
 		return list;
 	}
 
-	function readAgent(line, begin, end) {
-		const firstKeyword = tokenKeyword(line[begin]);
-		if(firstKeyword === '+' || firstKeyword === '-') {
-			return {
-				opt: firstKeyword,
-				name: joinLabel(line, begin + 1, end),
-			};
-		} else {
-			return {
-				opt: '',
-				name: joinLabel(line, begin, end),
-			};
+	function readAgentDetails(line, begin, end) {
+		const options = [];
+		let p = begin;
+		for(; p < end; ++ p) {
+			const option = AGENT_OPTIONS[tokenKeyword(line[p])];
+			if(option) {
+				options.push(option);
+			} else {
+				break;
+			}
 		}
+		return {
+			agent: {name: joinLabel(line, p, end)},
+			options,
+		};
 	}
 
 	const PARSERS = [
@@ -371,14 +278,17 @@ define([
 			if(typeSplit <= 0 || typeSplit >= labelSplit - 1) {
 				return null;
 			}
-			return Object.assign({
+			const from = readAgentDetails(line, 0, typeSplit);
+			const to = readAgentDetails(line, typeSplit + 1, labelSplit);
+			return {
 				type: 'connection',
 				agents: [
-					readAgent(line, 0, typeSplit),
-					readAgent(line, typeSplit + 1, labelSplit),
+					from.agent,
+					to.agent,
 				],
 				label: joinLabel(line, labelSplit + 1),
-			}, options);
+				options,
+			};
 		},
 
 		(line) => { // marker
@@ -408,59 +318,15 @@ define([
 		}
 	}
 
-	return class Parser {
-		tokenise(src) {
-			const tokens = [];
-			let block = null;
-			let current = {s: '', v: '', q: false};
-			for(let i = 0; i <= src.length;) {
-				const advance = tokAdvance(src, i, block);
-				if(advance.newBlock) {
-					block = advance.newBlock;
-					Object.assign(current, block.baseToken);
-				}
-				current.s += advance.appendSpace;
-				current.v += advance.appendValue;
-				i += advance.skip;
-				if(advance.end) {
-					if(!block.omit) {
-						tokens.push(current);
-					}
-					current = {s: '', v: '', q: false};
-					block = null;
-				}
-			}
-			if(block) {
-				throw new Error('Unterminated block');
-			}
-			return tokens;
-		}
+	const SHARED_TOKENISER = new Tokeniser();
 
+	return class Parser {
 		getCodeMirrorMode() {
-			return new CMMode(TOKENS);
+			return SHARED_TOKENISER.getCodeMirrorMode();
 		}
 
 		getCodeMirrorHints() {
 			return CMHints.getHints;
-		}
-
-		splitLines(tokens) {
-			const lines = [];
-			let line = [];
-			tokens.forEach((token) => {
-				if(tokenKeyword(token) === '\n') {
-					if(line.length > 0) {
-						lines.push(line);
-						line = [];
-					}
-				} else {
-					line.push(token);
-				}
-			});
-			if(line.length > 0) {
-				lines.push(line);
-			}
-			return lines;
 		}
 
 		parseLines(lines) {
@@ -478,10 +344,9 @@ define([
 		}
 
 		parse(src) {
-			const tokens = this.tokenise(src);
-			const lines = this.splitLines(tokens);
+			const tokens = SHARED_TOKENISER.tokenise(src);
+			const lines = SHARED_TOKENISER.splitLines(tokens);
 			return this.parseLines(lines);
 		}
 	};
 });
-

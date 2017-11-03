@@ -190,6 +190,15 @@ define([
 			});
 		}
 
+		getArrowShort(arrow) {
+			const h = arrow.height / 2;
+			const w = arrow.width;
+			const t = arrow.attrs['stroke-width'] * 0.5;
+			const lineStroke = this.theme.agentLineAttrs['stroke-width'] * 0.5;
+			const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
+			return lineStroke + arrowDistance;
+		}
+
 		separationMark() {
 		}
 
@@ -261,7 +270,8 @@ define([
 				this.sizer.measure(config.label.attrs, label).width +
 				config.label.padding * 2
 			);
-			const strokeWidth = this.theme.agentLineAttrs['stroke-width'];
+
+			const short = this.getArrowShort(config.arrow);
 
 			if(agentNames[0] === agentNames[1]) {
 				const agentSpaces = new Map();
@@ -270,7 +280,7 @@ define([
 					right: (
 						labelWidth +
 						config.arrow.width +
-						strokeWidth +
+						short +
 						config.loopbackRadius
 					),
 				});
@@ -279,7 +289,7 @@ define([
 				this.addSeparation(
 					agentNames[0],
 					agentNames[1],
-					labelWidth + config.arrow.width * 2 + strokeWidth
+					labelWidth + config.arrow.width * 2 + short * 2
 				);
 			}
 		}
@@ -518,12 +528,12 @@ define([
 			this.markAgentRange(agentNames);
 		}
 
-		renderSelfConnection({label, agentNames, line, left, right}) {
+		renderSelfConnection({label, agentNames, options}) {
 			const config = this.theme.connect;
 			const from = this.agentInfos.get(agentNames[0]);
 
 			const dy = config.arrow.height / 2;
-			const short = this.theme.agentLineAttrs['stroke-width'];
+			const short = this.getArrowShort(config.arrow);
 
 			const height = (
 				this.sizer.measureHeight(config.label.attrs, label) +
@@ -561,14 +571,14 @@ define([
 
 			this.actionShapes.appendChild(svg.make('path', Object.assign({
 				'd': (
-					'M ' + (from.x + (left ? short : 0)) + ' ' + y0 +
+					'M ' + (from.x + (options.left ? short : 0)) + ' ' + y0 +
 					' L ' + x1 + ' ' + y0 +
 					' A ' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + y1 +
-					' L ' + (from.x + (right ? short : 0)) + ' ' + y1
+					' L ' + (from.x + (options.right ? short : 0)) + ' ' + y1
 				),
-			}, config.lineAttrs[line])));
+			}, config.lineAttrs[options.line])));
 
-			if(left) {
+			if(options.left) {
 				drawHorizontalArrowHead(this.actionShapes, {
 					x: from.x + short,
 					y: y0,
@@ -578,7 +588,7 @@ define([
 				});
 			}
 
-			if(right) {
+			if(options.right) {
 				drawHorizontalArrowHead(this.actionShapes, {
 					x: from.x + short,
 					y: y1,
@@ -591,14 +601,14 @@ define([
 			this.currentY = y1 + dy + this.theme.actionMargin;
 		}
 
-		renderSimpleConnection({label, agentNames, line, left, right}) {
+		renderSimpleConnection({label, agentNames, options}) {
 			const config = this.theme.connect;
 			const from = this.agentInfos.get(agentNames[0]);
 			const to = this.agentInfos.get(agentNames[1]);
 
 			const dy = config.arrow.height / 2;
 			const dir = (from.x < to.x) ? 1 : -1;
-			const short = this.theme.agentLineAttrs['stroke-width'];
+			const short = this.getArrowShort(config.arrow);
 
 			const height = (
 				this.sizer.measureHeight(config.label.attrs, label) +
@@ -620,13 +630,13 @@ define([
 			});
 
 			this.actionShapes.appendChild(svg.make('line', Object.assign({
-				'x1': from.x + (left ? short : 0) * dir,
+				'x1': from.x + (options.left ? short : 0) * dir,
 				'y1': y,
-				'x2': to.x - (right ? short : 0) * dir,
+				'x2': to.x - (options.right ? short : 0) * dir,
 				'y2': y,
-			}, config.lineAttrs[line])));
+			}, config.lineAttrs[options.line])));
 
-			if(left) {
+			if(options.left) {
 				drawHorizontalArrowHead(this.actionShapes, {
 					x: from.x + short * dir,
 					y,
@@ -636,7 +646,7 @@ define([
 				});
 			}
 
-			if(right) {
+			if(options.right) {
 				drawHorizontalArrowHead(this.actionShapes, {
 					x: to.x - short * dir,
 					y,

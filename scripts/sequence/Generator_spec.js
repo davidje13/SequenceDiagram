@@ -49,9 +49,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				type: 'connection',
 				agents: agentNames.map((name) => ({name})),
 				label,
-				line,
-				left,
-				right,
+				options: {
+					line,
+					left,
+					right,
+				},
 			};
 		},
 
@@ -100,9 +102,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				type: 'connection',
 				agentNames,
 				label,
-				line,
-				left,
-				right,
+				options: {
+					line,
+					left,
+					right,
+				},
 			};
 		},
 
