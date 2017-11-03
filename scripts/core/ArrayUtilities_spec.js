@@ -1,6 +1,27 @@
 defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 	'use strict';
 
+	function ignoreCase(a, b) {
+		return a.toLowerCase() === b.toLowerCase();
+	}
+
+	describe('.indexOf', () => {
+		it('returns the first index of the requested element', () => {
+			const p1 = ['a', 'b'];
+			expect(array.indexOf(p1, 'b')).toEqual(1);
+		});
+
+		it('returns -1 if the element is not found', () => {
+			const p1 = ['a', 'b'];
+			expect(array.indexOf(p1, 'c')).toEqual(-1);
+		});
+
+		it('uses the given equality check function', () => {
+			const p1 = ['a', 'b', 'c', 'd'];
+			expect(array.indexOf(p1, 'B', ignoreCase)).toEqual(1);
+		});
+	});
+
 	describe('.mergeSets', () => {
 		it('adds elements from the second array into the first', () => {
 			const p1 = ['a', 'b'];
@@ -39,11 +60,7 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 		it('uses the given equality check function', () => {
 			const p1 = ['a', 'b', 'c', 'd'];
 			const p2 = ['b', 'B', 'E', 'e'];
-			array.mergeSets(
-				p1,
-				p2,
-				(a, b) => (a.toLowerCase() === b.toLowerCase())
-			);
+			array.mergeSets(p1, p2, ignoreCase);
 			expect(p1).toEqual(['a', 'b', 'c', 'd', 'E']);
 		});
 	});
@@ -86,11 +103,7 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 		it('uses the given equality check function', () => {
 			const p1 = ['a', 'b', 'c', 'd'];
 			const p2 = ['B', 'e'];
-			array.removeAll(
-				p1,
-				p2,
-				(a, b) => (a.toLowerCase() === b.toLowerCase())
-			);
+			array.removeAll(p1, p2, ignoreCase);
 			expect(p1).toEqual(['a', 'c', 'd']);
 		});
 	});
@@ -122,11 +135,7 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 
 		it('uses the given equality check function', () => {
 			const p1 = ['a', 'b', 'c', 'd'];
-			array.remove(
-				p1,
-				'B',
-				(a, b) => (a.toLowerCase() === b.toLowerCase())
-			);
+			array.remove(p1, 'B', ignoreCase);
 			expect(p1).toEqual(['a', 'c', 'd']);
 		});
 	});
