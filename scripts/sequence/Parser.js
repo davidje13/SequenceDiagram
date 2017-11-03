@@ -16,7 +16,7 @@ define([
 		'repeat': {type: 'block begin', mode: 'repeat', skip: []},
 	};
 
-	const CONNECTION_TYPES = {
+	const CONNECT_TYPES = {
 		'->': {line: 'solid', left: false, right: true},
 		'<-': {line: 'solid', left: true, right: false},
 		'<->': {line: 'solid', left: true, right: true},
@@ -25,7 +25,7 @@ define([
 		'<-->': {line: 'dash', left: true, right: true},
 	};
 
-	const AGENT_OPTIONS = {
+	const CONNECT_AGENT_FLAGS = {
 		'+': 'start',
 		'-': 'stop',
 	};
@@ -112,48 +112,41 @@ define([
 		return -1;
 	}
 
-	function parseAgentList(line, start, end) {
-		const list = [];
-		let current = '';
-		let first = true;
-		for(let i = start; i < end; ++ i) {
-			const token = line[i];
-			if(tokenKeyword(token) === ',') {
-				if(current) {
-					list.push({name: current});
-					current = '';
-					first = true;
-				}
-			} else {
-				if(!first) {
-					current += token.s;
-				} else {
-					first = false;
-				}
-				current += token.v;
-			}
-		}
-		if(current) {
-			list.push({name: current});
-		}
-		return list;
-	}
-
-	function readAgentDetails(line, begin, end) {
-		const options = [];
-		let p = begin;
+	function readAgent(line, start, end, flagTypes = {}) {
+		const flags = [];
+		let p = start;
 		for(; p < end; ++ p) {
-			const option = AGENT_OPTIONS[tokenKeyword(line[p])];
-			if(option) {
-				options.push(option);
+			const flag = flagTypes[tokenKeyword(line[p])];
+			if(flag) {
+				flags.push(flag);
 			} else {
 				break;
 			}
 		}
 		return {
-			agent: {name: joinLabel(line, p, end)},
-			options,
+			name: joinLabel(line, p, end),
+			flags,
 		};
+	}
+
+	function readAgentList(line, start, end, flagTypes) {
+		const list = [];
+		let currentStart = -1;
+		for(let i = start; i < end; ++ i) {
+			const token = line[i];
+			if(tokenKeyword(token) === ',') {
+				if(currentStart !== -1) {
+					list.push(readAgent(line, currentStart, i, flagTypes));
+					currentStart = -1;
+				}
+			} else if(currentStart === -1) {
+				currentStart = i;
+			}
+		}
+		if(currentStart !== -1) {
+			list.push(readAgent(line, currentStart, end, flagTypes));
+		}
+		return list;
 	}
 
 	const PARSERS = [
@@ -206,7 +199,7 @@ define([
 				return null;
 			}
 			return Object.assign({
-				agents: parseAgentList(line, 1, line.length),
+				agents: readAgentList(line, 1, line.length),
 			}, type);
 		},
 
@@ -232,8 +225,8 @@ define([
 
 		(line) => { // note
 			const mode = NOTE_TYPES[tokenKeyword(line[0])];
-			const labelSplit = findToken(line, ':');
-			if(!mode || labelSplit === -1) {
+			const labelSep = findToken(line, ':');
+			if(!mode || labelSep === -1) {
 				return null;
 			}
 			const type = mode.types[tokenKeyword(line[1])];
@@ -242,7 +235,7 @@ define([
 			}
 			let skip = 2;
 			skip = skipOver(line, skip, type.skip);
-			const agents = parseAgentList(line, skip, labelSplit);
+			const agents = readAgentList(line, skip, labelSep);
 			if(
 				agents.length < type.min ||
 				(type.max !== null && agents.length > type.max)
@@ -256,37 +249,35 @@ define([
 				type: type.type,
 				agents,
 				mode: mode.mode,
-				label: joinLabel(line, labelSplit + 1),
+				label: joinLabel(line, labelSep + 1),
 			};
 		},
 
-		(line) => { // connection
-			let labelSplit = findToken(line, ':');
-			if(labelSplit === -1) {
-				labelSplit = line.length;
+		(line) => { // connect
+			let labelSep = findToken(line, ':');
+			if(labelSep === -1) {
+				labelSep = line.length;
 			}
-			let typeSplit = -1;
+			let typePos = -1;
 			let options = null;
 			for(let j = 0; j < line.length; ++ j) {
-				const opts = CONNECTION_TYPES[tokenKeyword(line[j])];
+				const opts = CONNECT_TYPES[tokenKeyword(line[j])];
 				if(opts) {
-					typeSplit = j;
+					typePos = j;
 					options = opts;
 					break;
 				}
 			}
-			if(typeSplit <= 0 || typeSplit >= labelSplit - 1) {
+			if(typePos <= 0 || typePos >= labelSep - 1) {
 				return null;
 			}
-			const from = readAgentDetails(line, 0, typeSplit);
-			const to = readAgentDetails(line, typeSplit + 1, labelSplit);
 			return {
-				type: 'connection',
+				type: 'connect',
 				agents: [
-					from.agent,
-					to.agent,
+					readAgent(line, 0, typePos, CONNECT_AGENT_FLAGS),
+					readAgent(line, typePos + 1, labelSep, CONNECT_AGENT_FLAGS),
 				],
-				label: joinLabel(line, labelSplit + 1),
+				label: joinLabel(line, labelSep + 1),
 				options,
 			};
 		},

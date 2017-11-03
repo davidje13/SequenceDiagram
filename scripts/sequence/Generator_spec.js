@@ -3,7 +3,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 	const generator = new Generator();
 
-	const parsed = {
+	const PARSED = {
 		blockBegin: (mode, label) => {
 			return {type: 'block begin', mode, label};
 		},
@@ -19,14 +19,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		defineAgents: (agentNames) => {
 			return {
 				type: 'agent define',
-				agents: agentNames.map((name) => ({name})),
+				agents: agentNames.map((name) => ({name, flags: []})),
 			};
 		},
 
 		beginAgents: (agentNames, {mode = 'box'} = {}) => {
 			return {
 				type: 'agent begin',
-				agents: agentNames.map((name) => ({name})),
+				agents: agentNames.map((name) => ({name, flags: []})),
 				mode,
 			};
 		},
@@ -34,7 +34,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		endAgents: (agentNames, {mode = 'cross'} = {}) => {
 			return {
 				type: 'agent end',
-				agents: agentNames.map((name) => ({name})),
+				agents: agentNames.map((name) => ({name, flags: []})),
 				mode,
 			};
 		},
@@ -46,8 +46,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			right = false,
 		} = {}) => {
 			return {
-				type: 'connection',
-				agents: agentNames.map((name) => ({name})),
+				type: 'connect',
+				agents: agentNames.map((name) => ({name, flags: []})),
 				label,
 				options: {
 					line,
@@ -64,14 +64,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		} = {}) => {
 			return {
 				type,
-				agents: agentNames.map((name) => ({name})),
+				agents: agentNames.map((name) => ({name, flags: []})),
 				mode,
 				label,
 			};
 		},
 	};
 
-	const generated = {
+	const GENERATED = {
 		beginAgents: (agentNames, {
 			mode = jasmine.anything(),
 		} = {}) => {
@@ -99,7 +99,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			right = jasmine.anything(),
 		} = {}) => {
 			return {
-				type: 'connection',
+				type: 'connect',
 				agentNames,
 				label,
 				options: {
@@ -169,9 +169,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('returns aggregated agents', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.connect(['C', 'D']),
-				parsed.beginAgents(['E']),
+				PARSED.connect(['A', 'B']),
+				PARSED.connect(['C', 'D']),
+				PARSED.beginAgents(['E']),
 			]});
 			expect(sequence.agents).toEqual([
 				{name: '[', anchorRight: true},
@@ -186,7 +186,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('always puts the implicit right agent on the right', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect([']', 'B']),
+				PARSED.connect([']', 'B']),
 			]});
 			expect(sequence.agents).toEqual([
 				{name: '[', anchorRight: true},
@@ -197,8 +197,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('accounts for define calls when ordering agents', () => {
 			const sequence = generator.generate({stages: [
-				parsed.defineAgents(['B']),
-				parsed.connect(['A', 'B']),
+				PARSED.defineAgents(['B']),
+				PARSED.connect(['A', 'B']),
 			]});
 			expect(sequence.agents).toEqual([
 				{name: '[', anchorRight: true},
@@ -210,32 +210,32 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('creates implicit begin stages for agents when used', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.connect(['B', 'C']),
+				PARSED.connect(['A', 'B']),
+				PARSED.connect(['B', 'C']),
 			]});
 			expect(sequence.stages).toEqual([
-				generated.beginAgents(['A', 'B']),
+				GENERATED.beginAgents(['A', 'B']),
 				jasmine.anything(),
-				generated.beginAgents(['C']),
+				GENERATED.beginAgents(['C']),
 				jasmine.anything(),
 				jasmine.anything(),
 			]);
 		});
 
-		it('passes connections through', () => {
+		it('passes connects through', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
+				PARSED.connect(['A', 'B']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				generated.connect(['A', 'B']),
+				GENERATED.connect(['A', 'B']),
 				jasmine.anything(),
 			]);
 		});
 
-		it('propagates connection information', () => {
+		it('propagates connect information', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B'], {
+				PARSED.connect(['A', 'B'], {
 					label: 'foo',
 					line: 'bar',
 					left: true,
@@ -244,7 +244,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				generated.connect(['A', 'B'], {
+				GENERATED.connect(['A', 'B'], {
 					label: 'foo',
 					line: 'bar',
 					left: true,
@@ -260,65 +260,65 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					terminators: 'foo',
 				},
 				stages: [
-					parsed.connect(['A', 'B']),
+					PARSED.connect(['A', 'B']),
 				],
 			});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
 				jasmine.anything(),
-				generated.endAgents(['A', 'B'], {mode: 'foo'}),
+				GENERATED.endAgents(['A', 'B'], {mode: 'foo'}),
 			]);
 		});
 
 		it('defaults to mode "none" for implicit end stages', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
+				PARSED.connect(['A', 'B']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
 				jasmine.anything(),
-				generated.endAgents(['A', 'B'], {mode: 'none'}),
+				GENERATED.endAgents(['A', 'B'], {mode: 'none'}),
 			]);
 		});
 
 		it('defaults to mode "cross" for explicit end stages', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.endAgents(['A', 'B']),
+				PARSED.connect(['A', 'B']),
+				PARSED.endAgents(['A', 'B']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
 				jasmine.anything(),
-				generated.endAgents(['A', 'B'], {mode: 'cross'}),
+				GENERATED.endAgents(['A', 'B'], {mode: 'cross'}),
 			]);
 		});
 
 		it('does not create duplicate begin stages', () => {
 			const sequence = generator.generate({stages: [
-				parsed.beginAgents(['A', 'B', 'C']),
-				parsed.connect(['A', 'B']),
-				parsed.connect(['B', 'C']),
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.connect(['A', 'B']),
+				PARSED.connect(['B', 'C']),
 			]});
 			expect(sequence.stages).toEqual([
-				generated.beginAgents(['A', 'B', 'C']),
-				generated.connect(jasmine.anything()),
-				generated.connect(jasmine.anything()),
-				generated.endAgents(['A', 'B', 'C']),
+				GENERATED.beginAgents(['A', 'B', 'C']),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.endAgents(['A', 'B', 'C']),
 			]);
 		});
 
 		it('redisplays agents if they have been hidden', () => {
 			const sequence = generator.generate({stages: [
-				parsed.beginAgents(['A', 'B']),
-				parsed.connect(['A', 'B']),
-				parsed.endAgents(['B']),
-				parsed.connect(['A', 'B']),
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.connect(['A', 'B']),
+				PARSED.endAgents(['B']),
+				PARSED.connect(['A', 'B']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
 				jasmine.anything(),
-				generated.endAgents(['B']),
-				generated.beginAgents(['B']),
+				GENERATED.endAgents(['B']),
+				GENERATED.beginAgents(['B']),
 				jasmine.anything(),
 				jasmine.anything(),
 			]);
@@ -326,69 +326,69 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('collapses adjacent begin statements', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.beginAgents(['D']),
-				parsed.connect(['B', 'C']),
-				parsed.connect(['C', 'D']),
+				PARSED.connect(['A', 'B']),
+				PARSED.beginAgents(['D']),
+				PARSED.connect(['B', 'C']),
+				PARSED.connect(['C', 'D']),
 			]});
 			expect(sequence.stages).toEqual([
-				generated.beginAgents(['A', 'B']),
-				generated.connect(jasmine.anything()),
-				generated.beginAgents(['D', 'C']),
-				generated.connect(jasmine.anything()),
-				generated.connect(jasmine.anything()),
+				GENERATED.beginAgents(['A', 'B']),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.beginAgents(['D', 'C']),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.connect(jasmine.anything()),
 				jasmine.anything(),
 			]);
 		});
 
 		it('removes superfluous begin statements', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.beginAgents(['A', 'C', 'D']),
-				parsed.beginAgents(['C', 'E']),
+				PARSED.connect(['A', 'B']),
+				PARSED.beginAgents(['A', 'C', 'D']),
+				PARSED.beginAgents(['C', 'E']),
 			]});
 			expect(sequence.stages).toEqual([
-				generated.beginAgents(['A', 'B']),
-				generated.connect(jasmine.anything()),
-				generated.beginAgents(['C', 'D', 'E']),
+				GENERATED.beginAgents(['A', 'B']),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.beginAgents(['C', 'D', 'E']),
 				jasmine.anything(),
 			]);
 		});
 
 		it('removes superfluous end statements', () => {
 			const sequence = generator.generate({stages: [
-				parsed.defineAgents(['E']),
-				parsed.beginAgents(['C', 'D']),
-				parsed.connect(['A', 'B']),
-				parsed.endAgents(['A', 'B', 'C']),
-				parsed.endAgents(['A', 'D', 'E']),
+				PARSED.defineAgents(['E']),
+				PARSED.beginAgents(['C', 'D']),
+				PARSED.connect(['A', 'B']),
+				PARSED.endAgents(['A', 'B', 'C']),
+				PARSED.endAgents(['A', 'D', 'E']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				generated.connect(jasmine.anything()),
-				generated.endAgents(['A', 'B', 'C', 'D']),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.endAgents(['A', 'B', 'C', 'D']),
 			]);
 		});
 
 		it('does not merge different modes of end', () => {
 			const sequence = generator.generate({stages: [
-				parsed.beginAgents(['C', 'D']),
-				parsed.connect(['A', 'B']),
-				parsed.endAgents(['A', 'B', 'C']),
+				PARSED.beginAgents(['C', 'D']),
+				PARSED.connect(['A', 'B']),
+				PARSED.endAgents(['A', 'B', 'C']),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				generated.connect(jasmine.anything()),
-				generated.endAgents(['A', 'B', 'C'], {mode: 'cross'}),
-				generated.endAgents(['D'], {mode: 'none'}),
+				GENERATED.connect(jasmine.anything()),
+				GENERATED.endAgents(['A', 'B', 'C'], {mode: 'cross'}),
+				GENERATED.endAgents(['D'], {mode: 'none'}),
 			]);
 		});
 
 		it('creates virtual agents for block statements', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.agents).toEqual([
@@ -403,14 +403,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('positions virtual block agents near involved agents', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['C', 'D']),
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['E', 'F']),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
-				parsed.connect(['G', 'H']),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['C', 'D']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['E', 'F']),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
+				PARSED.connect(['G', 'H']),
 			]});
 
 			expect(sequence.agents).toEqual([
@@ -433,9 +433,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('records virtual block agent names in blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
@@ -446,35 +446,35 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('records all sections within blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.connect(['A', 'C']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.connect(['A', 'C']),
+				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
 				{mode: 'if', label: 'abc', stages: [
-					generated.beginAgents(['A', 'B']),
-					generated.connect(['A', 'B']),
+					GENERATED.beginAgents(['A', 'B']),
+					GENERATED.connect(['A', 'B']),
 				]},
 				{mode: 'else', label: 'xyz', stages: [
-					generated.beginAgents(['C']),
-					generated.connect(['A', 'C']),
+					GENERATED.beginAgents(['C']),
+					GENERATED.connect(['A', 'C']),
 				]},
 			]);
 		});
 
 		it('records virtual block agents in nested blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.blockBegin('if', 'def'),
-				parsed.connect(['A', 'C']),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockBegin('if', 'def'),
+				PARSED.connect(['A', 'C']),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.agents).toEqual([
@@ -501,12 +501,12 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('preserves block boundaries when agents exist outside', () => {
 			const sequence = generator.generate({stages: [
-				parsed.connect(['A', 'B']),
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockBegin('if', 'def'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockBegin('if', 'def'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.agents).toEqual([
@@ -532,10 +532,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('allows empty block parts after split', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
@@ -550,10 +550,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('allows empty block parts before split', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
@@ -568,11 +568,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('removes entirely empty blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.stages).toEqual([]);
@@ -580,10 +580,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('removes blocks containing only define statements / markers', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.defineAgents(['A']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.defineAgents(['A']),
 				{type: 'mark', name: 'foo'},
-				parsed.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.stages).toEqual([]);
@@ -591,11 +591,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('does not create virtual agents for empty blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			expect(sequence.agents).toEqual([
@@ -606,12 +606,12 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('removes entirely empty nested blocks', () => {
 			const sequence = generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
@@ -626,56 +626,56 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('rejects unterminated blocks', () => {
 			expect(() => generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.blockBegin('if', 'def'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockBegin('if', 'def'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
 			]})).toThrow();
 		});
 
 		it('rejects extra block terminations', () => {
 			expect(() => generator.generate({stages: [
-				parsed.blockEnd(),
+				PARSED.blockEnd(),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
-				parsed.blockEnd(),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
 			]})).toThrow();
 		});
 
 		it('rejects block splitting without a block', () => {
 			expect(() => generator.generate({stages: [
-				parsed.blockSplit('else', 'xyz'),
+				PARSED.blockSplit('else', 'xyz'),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.blockBegin('if', 'abc'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
-				parsed.blockSplit('else', 'xyz'),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.blockSplit('else', 'xyz'),
 			]})).toThrow();
 		});
 
 		it('rejects block splitting in non-splittable blocks', () => {
 			expect(() => generator.generate({stages: [
-				parsed.blockBegin('repeat', 'abc'),
-				parsed.blockSplit('else', 'xyz'),
-				parsed.connect(['A', 'B']),
-				parsed.blockEnd(),
+				PARSED.blockBegin('repeat', 'abc'),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
 			]})).toThrow();
 		});
 
 		it('passes notes through', () => {
 			const sequence = generator.generate({stages: [
-				parsed.note(['A', 'B'], {
+				PARSED.note(['A', 'B'], {
 					type: 'note right',
 					mode: 'foo',
 					label: 'bar',
@@ -683,7 +683,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				generated.note(['A', 'B'], {
+				GENERATED.note(['A', 'B'], {
 					type: 'note right',
 					mode: 'foo',
 					label: 'bar',
@@ -694,32 +694,32 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('defaults to showing notes around the entire diagram', () => {
 			const sequence = generator.generate({stages: [
-				parsed.note([], {type: 'note right'}),
-				parsed.note([], {type: 'note left'}),
-				parsed.note([], {type: 'note over'}),
+				PARSED.note([], {type: 'note right'}),
+				PARSED.note([], {type: 'note left'}),
+				PARSED.note([], {type: 'note over'}),
 			]});
 			expect(sequence.stages).toEqual([
-				generated.note([']'], {type: 'note right'}),
-				generated.note(['['], {type: 'note left'}),
-				generated.note(['[', ']'], {type: 'note over'}),
+				GENERATED.note([']'], {type: 'note right'}),
+				GENERATED.note(['['], {type: 'note left'}),
+				GENERATED.note(['[', ']'], {type: 'note over'}),
 			]);
 		});
 
 		it('rejects attempts to change implicit agents', () => {
 			expect(() => generator.generate({stages: [
-				parsed.beginAgents(['[']),
+				PARSED.beginAgents(['[']),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.beginAgents([']']),
+				PARSED.beginAgents([']']),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.endAgents(['[']),
+				PARSED.endAgents(['[']),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				parsed.endAgents([']']),
+				PARSED.endAgents([']']),
 			]})).toThrow();
 		});
 	});

@@ -67,7 +67,7 @@ define([
 				'async': this.separationAsync.bind(this),
 				'agent begin': this.separationAgent.bind(this),
 				'agent end': this.separationAgent.bind(this),
-				'connection': this.separationConnection.bind(this),
+				'connect': this.separationConnect.bind(this),
 				'note over': this.separationNoteOver.bind(this),
 				'note left': this.separationNoteSide.bind(this, false),
 				'note right': this.separationNoteSide.bind(this, true),
@@ -86,7 +86,7 @@ define([
 				'async': this.renderAsync.bind(this),
 				'agent begin': this.renderAgentBegin.bind(this),
 				'agent end': this.renderAgentEnd.bind(this),
-				'connection': this.renderConnection.bind(this),
+				'connect': this.renderConnect.bind(this),
 				'note over': this.renderNoteOver.bind(this),
 				'note left': this.renderNoteLeft.bind(this),
 				'note right': this.renderNoteRight.bind(this),
@@ -263,7 +263,7 @@ define([
 			}
 		}
 
-		separationConnection({agentNames, label}) {
+		separationConnect({agentNames, label}) {
 			const config = this.theme.connect;
 
 			const labelWidth = (
@@ -528,7 +528,7 @@ define([
 			this.markAgentRange(agentNames);
 		}
 
-		renderSelfConnection({label, agentNames, options}) {
+		renderSelfConnect({label, agentNames, options}) {
 			const config = this.theme.connect;
 			const from = this.agentInfos.get(agentNames[0]);
 
@@ -601,7 +601,7 @@ define([
 			this.currentY = y1 + dy + this.theme.actionMargin;
 		}
 
-		renderSimpleConnection({label, agentNames, options}) {
+		renderSimpleConnect({label, agentNames, options}) {
 			const config = this.theme.connect;
 			const from = this.agentInfos.get(agentNames[0]);
 			const to = this.agentInfos.get(agentNames[1]);
@@ -659,12 +659,12 @@ define([
 			this.currentY = y + dy + this.theme.actionMargin;
 		}
 
-		renderConnection(stage) {
+		renderConnect(stage) {
 			this.checkAgentRange(stage.agentNames);
 			if(stage.agentNames[0] === stage.agentNames[1]) {
-				this.renderSelfConnection(stage);
+				this.renderSelfConnect(stage);
 			} else {
-				this.renderSimpleConnection(stage);
+				this.renderSimpleConnect(stage);
 			}
 			this.markAgentRange(stage.agentNames);
 		}

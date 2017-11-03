@@ -49,7 +49,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
-				'connection': this.handleConnection.bind(this),
+				'connect': this.handleConnect.bind(this),
 				'note over': this.handleNote.bind(this),
 				'note left': this.handleNote.bind(this),
 				'note right': this.handleNote.bind(this),
@@ -171,13 +171,13 @@ define(['core/ArrayUtilities'], (array) => {
 			this.addStage({type: 'async', target}, false);
 		}
 
-		handleConnection({agents, label, options}) {
+		handleConnect({agents, label, options}) {
 			const colAgents = agents.map(convertAgent);
 			this.setAgentVis(colAgents, true, 'box');
 			this.defineAgents(colAgents);
 
 			this.addStage({
-				type: 'connection',
+				type: 'connect',
 				agentNames: agents.map(getAgentName),
 				label,
 				options,

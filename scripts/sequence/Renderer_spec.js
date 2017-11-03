@@ -25,18 +25,20 @@ defineDescribe('Sequence Renderer', [
 		});
 	});
 
-	function connectionStage(agentNames, label = '') {
-		return {
-			type: 'connection',
-			agentNames,
-			label,
-			options: {
-				line: 'solid',
-				left: false,
-				right: true,
-			},
-		};
-	}
+	const GENERATED = {
+		connect: (agentNames, label = '') => {
+			return {
+				type: 'connect',
+				agentNames,
+				label,
+				options: {
+					line: 'solid',
+					left: false,
+					right: true,
+				},
+			};
+		},
+	};
 
 	describe('.render', () => {
 		it('populates the SVG with content', () => {
@@ -70,7 +72,7 @@ defineDescribe('Sequence Renderer', [
 				],
 				stages: [
 					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
-					connectionStage(['A', 'B']),
+					GENERATED.connect(['A', 'B']),
 					{type: 'agent end', agentNames: ['A', 'B'], mode: 'none'},
 				],
 			});
@@ -105,10 +107,10 @@ defineDescribe('Sequence Renderer', [
 						agentNames: ['A', 'B', 'C'],
 						mode: 'box',
 					},
-					connectionStage(['[', 'A']),
-					connectionStage(['A', 'B']),
-					connectionStage(['B', 'C']),
-					connectionStage(['C', ']']),
+					GENERATED.connect(['[', 'A']),
+					GENERATED.connect(['A', 'B']),
+					GENERATED.connect(['B', 'C']),
+					GENERATED.connect(['C', ']']),
 					{
 						type: 'agent end',
 						agentNames: ['A', 'B', 'C'],
@@ -151,13 +153,13 @@ defineDescribe('Sequence Renderer', [
 				],
 				stages: [
 					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
-					connectionStage(['A', 'B'], 'short'),
+					GENERATED.connect(['A', 'B'], 'short'),
 					{type: 'agent end', agentNames: ['B'], mode: 'cross'},
 					{type: 'agent begin', agentNames: ['C'], mode: 'box'},
-					connectionStage(['A', 'C'], 'long description here'),
+					GENERATED.connect(['A', 'C'], 'long description here'),
 					{type: 'agent end', agentNames: ['C'], mode: 'cross'},
 					{type: 'agent begin', agentNames: ['D'], mode: 'box'},
-					connectionStage(['A', 'D'], 'short again'),
+					GENERATED.connect(['A', 'D'], 'short again'),
 					{type: 'agent end', agentNames: ['A', 'D'], mode: 'cross'},
 				],
 			});
