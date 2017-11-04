@@ -106,5 +106,6 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 		renderBox,
 		renderNote,
 		renderBoxedText,
+		TextBlock: SVGTextBlock,
 	};
 });

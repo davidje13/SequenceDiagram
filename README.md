@@ -52,6 +52,9 @@ Foo -> Bar
 
 Foo -> Foo: Foo talks to itself
 
+Foo -> +Bar: Foo asks Bar
+-Bar --> Foo: and Bar replies
+
 # Arrows leaving on the left and right of the diagram
 [ -> Foo: From the left
 [ <- Foo: To the left

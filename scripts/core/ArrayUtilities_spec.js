@@ -65,6 +65,26 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 		});
 	});
 
+	describe('.hasIntersection', () => {
+		it('returns true if any elements are shared between the sets', () => {
+			const p1 = ['a', 'b'];
+			const p2 = ['b', 'c'];
+			expect(array.hasIntersection(p1, p2)).toEqual(true);
+		});
+
+		it('returns false if no elements are shared between the sets', () => {
+			const p1 = ['a', 'b'];
+			const p2 = ['c', 'd'];
+			expect(array.hasIntersection(p1, p2)).toEqual(false);
+		});
+
+		it('uses the given equality check function', () => {
+			const p1 = ['a', 'b'];
+			const p2 = ['B', 'c'];
+			expect(array.hasIntersection(p1, p2, ignoreCase)).toEqual(true);
+		});
+	});
+
 	describe('.removeAll', () => {
 		it('removes elements from the first array', () => {
 			const p1 = ['a', 'b', 'c'];

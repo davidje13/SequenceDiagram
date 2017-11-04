@@ -4,6 +4,7 @@ define(['core/ArrayUtilities'], (array) => {
 	class AgentState {
 		constructor(visible, locked = false) {
 			this.visible = visible;
+			this.highlighted = false;
 			this.locked = locked;
 		}
 	}
@@ -24,13 +25,157 @@ define(['core/ArrayUtilities'], (array) => {
 		return agent.name;
 	}
 
+	function agentHasFlag(flag) {
+		return (agent) => agent.flags.includes(flag);
+	}
+
+	const MERGABLE = {
+		'agent begin': {
+			check: ['mode'],
+			merge: ['agentNames'],
+			siblings: new Set(['agent highlight']),
+		},
+		'agent end': {
+			check: ['mode'],
+			merge: ['agentNames'],
+			siblings: new Set(['agent highlight']),
+		},
+		'agent highlight': {
+			check: ['highlighted'],
+			merge: ['agentNames'],
+			siblings: new Set(['agent begin', 'agent end']),
+		},
+	};
+
+	function mergableParallel(target, copy) {
+		const info = MERGABLE[target.type];
+		if(!info || target.type !== copy.type) {
+			return false;
+		}
+		if(info.check.some((c) => target[c] !== copy[c])) {
+			return false;
+		}
+		return true;
+	}
+
+	function performMerge(target, copy) {
+		const info = MERGABLE[target.type];
+		info.merge.forEach((m) => {
+			array.mergeSets(target[m], copy[m]);
+		});
+	}
+
+	function iterateRemoval(list, fn) {
+		for(let i = 0; i < list.length;) {
+			const remove = fn(list[i], i);
+			if(remove) {
+				list.splice(i, 1);
+			} else {
+				++ i;
+			}
+		}
+	}
+
+	function performParallelMergers(stages) {
+		iterateRemoval(stages, (stage, i) => {
+			for(let j = 0; j < i; ++ j) {
+				if(mergableParallel(stages[j], stage)) {
+					performMerge(stages[j], stage);
+					return true;
+				}
+			}
+			return false;
+		});
+	}
+
+	function findViableSequentialMergers(stages) {
+		const mergers = new Set();
+		const types = stages.map(({type}) => type);
+		types.forEach((type) => {
+			const info = MERGABLE[type];
+			if(!info) {
+				return;
+			}
+			if(types.every((sType) =>
+				(type === sType || info.siblings.has(sType))
+			)) {
+				mergers.add(type);
+			}
+		});
+		return mergers;
+	}
+
+	function performSequentialMergers(lastViable, viable, lastStages, stages) {
+		iterateRemoval(stages, (stage) => {
+			if(!lastViable.has(stage.type) || !viable.has(stage.type)) {
+				return false;
+			}
+			for(let j = 0; j < lastStages.length; ++ j) {
+				if(mergableParallel(lastStages[j], stage)) {
+					performMerge(lastStages[j], stage);
+					return true;
+				}
+			}
+			return false;
+		});
+	}
+
+	function optimiseStages(stages) {
+		let lastStages = [];
+		let lastViable = new Set();
+		for(let i = 0; i < stages.length;) {
+			const stage = stages[i];
+			let subStages = null;
+			if(stage.type === 'parallel') {
+				subStages = stage.stages;
+			} else {
+				subStages = [stage];
+			}
+
+			performParallelMergers(subStages);
+			const viable = findViableSequentialMergers(subStages);
+			performSequentialMergers(lastViable, viable, lastStages, subStages);
+
+			lastViable = viable;
+			lastStages = subStages;
+
+			if(subStages.length === 0) {
+				stages.splice(i, 1);
+			} else if(stage.type === 'parallel' && subStages.length === 1) {
+				stages.splice(i, 1, subStages[0]);
+				++ i;
+			} else {
+				++ i;
+			}
+		}
+	}
+
+	function addBounds(target, agentL, agentR, involvedAgents = null) {
+		array.remove(target, agentL, agentEqCheck);
+		array.remove(target, agentR, agentEqCheck);
+
+		let indexL = 0;
+		let indexR = target.length;
+		if(involvedAgents) {
+			const found = (involvedAgents
+				.map((agent) => array.indexOf(target, agent, agentEqCheck))
+				.filter((p) => (p !== -1))
+			);
+			indexL = found.reduce((a, b) => Math.min(a, b), target.length);
+			indexR = found.reduce((a, b) => Math.max(a, b), indexL) + 1;
+		}
+
+		target.splice(indexL, 0, agentL);
+		target.splice(indexR + 1, 0, agentR);
+	}
+
 	const LOCKED_AGENT = new AgentState(false, true);
 	const DEFAULT_AGENT = new AgentState(false);
 
 	const NOTE_DEFAULT_AGENTS = {
-		'note over': [{name: '['}, {name: ']'}],
-		'note left': [{name: '['}],
-		'note right': [{name: ']'}],
+		'note over': [{name: '[', flags: []}, {name: ']', flags: []}],
+		'note left': [{name: '[', flags: []}],
+		'note right': [{name: ']', flags: []}],
 	};
 
 	return class Generator {
@@ -61,30 +206,28 @@ define(['core/ArrayUtilities'], (array) => {
 			this.handleStage = this.handleStage.bind(this);
 		}
 
-		addBounds(target, agentL, agentR, involvedAgents = null) {
-			array.remove(target, agentL, agentEqCheck);
-			array.remove(target, agentR, agentEqCheck);
-
-			let indexL = 0;
-			let indexR = target.length;
-			if(involvedAgents) {
-				const found = (involvedAgents
-					.map((agent) => array.indexOf(target, agent, agentEqCheck))
-					.filter((p) => (p !== -1))
-				);
-				indexL = found.reduce((a, b) => Math.min(a, b), target.length);
-				indexR = found.reduce((a, b) => Math.max(a, b), indexL) + 1;
-			}
-
-			target.splice(indexL, 0, agentL);
-			target.splice(indexR + 1, 0, agentR);
-		}
-
 		addStage(stage, isVisible = true) {
+			if(!stage) {
+				return;
+			}
 			this.currentSection.stages.push(stage);
 			if(isVisible) {
 				this.currentNest.hasContent = true;
 			}
+		}
+
+		addParallelStages(stages) {
+			const viableStages = stages.filter((stage) => Boolean(stage));
+			if(viableStages.length === 0) {
+				return;
+			}
+			if(viableStages.length === 1) {
+				return this.addStage(viableStages[0]);
+			}
+			return this.addStage({
+				type: 'parallel',
+				stages: viableStages,
+			});
 		}
 
 		defineAgents(agents) {
@@ -97,7 +240,9 @@ define(['core/ArrayUtilities'], (array) => {
 				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
 				if(state.locked) {
 					if(checked) {
-						throw new Error('Cannot begin/end agent: ' + agent);
+						throw new Error(
+							'Cannot begin/end agent: ' + agent.name
+						);
 					} else {
 						return false;
 					}
@@ -105,7 +250,7 @@ define(['core/ArrayUtilities'], (array) => {
 				return state.visible !== visible;
 			});
 			if(filteredAgents.length === 0) {
-				return;
+				return null;
 			}
 			filteredAgents.forEach((agent) => {
 				const state = this.agentStates.get(agent.name);
@@ -115,19 +260,42 @@ define(['core/ArrayUtilities'], (array) => {
 					this.agentStates.set(agent.name, new AgentState(visible));
 				}
 			});
-			const type = (visible ? 'agent begin' : 'agent end');
-			const existing = array.last(this.currentSection.stages) || {};
-			const agentNames = filteredAgents.map(getAgentName);
-			if(existing.type === type && existing.mode === mode) {
-				array.mergeSets(existing.agentNames, agentNames);
-			} else {
-				this.addStage({
-					type,
-					agentNames,
-					mode,
-				});
-			}
 			this.defineAgents(filteredAgents);
+
+			return {
+				type: (visible ? 'agent begin' : 'agent end'),
+				agentNames: filteredAgents.map(getAgentName),
+				mode,
+			};
+		}
+
+		setAgentHighlight(agents, highlighted, checked = false) {
+			const filteredAgents = agents.filter((agent) => {
+				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
+				if(state.locked) {
+					if(checked) {
+						throw new Error(
+							'Cannot highlight agent: ' + agent.name
+						);
+					} else {
+						return false;
+					}
+				}
+				return state.visible && (state.highlighted !== highlighted);
+			});
+			if(filteredAgents.length === 0) {
+				return null;
+			}
+			filteredAgents.forEach((agent) => {
+				const state = this.agentStates.get(agent.name);
+				state.highlighted = highlighted;
+			});
+
+			return {
+				type: 'agent highlight',
+				agentNames: filteredAgents.map(getAgentName),
+				highlighted,
+			};
 		}
 
 		beginNested(mode, label, name) {
@@ -173,15 +341,26 @@ define(['core/ArrayUtilities'], (array) => {
 
 		handleConnect({agents, label, options}) {
 			const colAgents = agents.map(convertAgent);
-			this.setAgentVis(colAgents, true, 'box');
+			this.addStage(this.setAgentVis(colAgents, true, 'box'));
 			this.defineAgents(colAgents);
 
-			this.addStage({
+			const startAgents = agents.filter(agentHasFlag('start'));
+			const stopAgents = agents.filter(agentHasFlag('stop'));
+			if(array.hasIntersection(startAgents, stopAgents, agentEqCheck)) {
+				throw new Error('Cannot set agent highlighting multiple times');
+			}
+			const connectStage = {
 				type: 'connect',
 				agentNames: agents.map(getAgentName),
 				label,
 				options,
-			});
+			};
+
+			this.addParallelStages([
+				this.setAgentHighlight(startAgents, true, true),
+				connectStage,
+				this.setAgentHighlight(stopAgents, false, true),
+			]);
 		}
 
 		handleNote({type, agents, mode, label}) {
@@ -192,7 +371,7 @@ define(['core/ArrayUtilities'], (array) => {
 				colAgents = agents.map(convertAgent);
 			}
 
-			this.setAgentVis(colAgents, true, 'box');
+			this.addStage(this.setAgentVis(colAgents, true, 'box'));
 			this.defineAgents(colAgents);
 
 			this.addStage({
@@ -209,11 +388,19 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleAgentBegin({agents, mode}) {
-			this.setAgentVis(agents.map(convertAgent), true, mode, true);
+			this.addStage(this.setAgentVis(
+				agents.map(convertAgent),
+				true,
+				mode,
+				true
+			));
 		}
 
 		handleAgentEnd({agents, mode}) {
-			this.setAgentVis(agents.map(convertAgent), false, mode, true);
+			this.addParallelStages([
+				this.setAgentHighlight(agents, false),
+				this.setAgentVis(agents.map(convertAgent), false, mode, true),
+			]);
 		}
 
 		handleBlockBegin({mode, label}) {
@@ -230,6 +417,7 @@ define(['core/ArrayUtilities'], (array) => {
 					containerMode + ')'
 				);
 			}
+			optimiseStages(this.currentSection.stages);
 			this.currentSection = {
 				mode,
 				label,
@@ -242,12 +430,13 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting (too many "end"s)');
 			}
+			optimiseStages(this.currentSection.stages);
 			const nested = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
 			this.currentSection = array.last(this.currentNest.stage.sections);
 			if(nested.hasContent) {
 				this.defineAgents(nested.agents);
-				this.addBounds(
+				addBounds(
 					this.agents,
 					nested.leftAgent,
 					nested.rightAgent,
@@ -278,13 +467,19 @@ define(['core/ArrayUtilities'], (array) => {
 				);
 			}
 
-			this.setAgentVis(this.agents, false, meta.terminators || 'none');
+			const terminators = meta.terminators || 'none';
 
-			this.addBounds(
+			this.addParallelStages([
+				this.setAgentHighlight(this.agents, false),
+				this.setAgentVis(this.agents, false, terminators),
+			]);
+
+			addBounds(
 				this.agents,
 				this.currentNest.leftAgent,
 				this.currentNest.rightAgent
 			);
+			optimiseStages(globals.stages);
 
 			return {
 				meta: {
@@ -296,4 +491,3 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	};
 });
-

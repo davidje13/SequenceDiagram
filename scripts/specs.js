@@ -9,5 +9,10 @@ define([
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
 	'sequence/themes/Basic_spec',
+	'sequence/components/AgentCap_spec',
+	'sequence/components/AgentHighlight_spec',
+	'sequence/components/Connect_spec',
+	'sequence/components/Marker_spec',
+	'sequence/components/Note_spec',
 	'sequence/sequence_integration_spec',
 ]);

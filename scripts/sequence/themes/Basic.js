@@ -1,14 +1,4 @@
-define([
-	'core/ArrayUtilities',
-	'svg/SVGUtilities',
-	'svg/SVGTextBlock',
-	'svg/SVGShapes',
-], (
-	array,
-	svg,
-	SVGTextBlock,
-	SVGShapes
-) => {
+define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 	'use strict';
 
 	const LINE_HEIGHT = 1.3;
@@ -18,6 +8,7 @@ define([
 		outerMargin: 5,
 		agentMargin: 10,
 		actionMargin: 5,
+		agentLineHighlightRadius: 4,
 
 		agentCap: {
 			box: {

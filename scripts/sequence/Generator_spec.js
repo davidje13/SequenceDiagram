@@ -3,6 +3,16 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 	const generator = new Generator();
 
+	function makeParsedAgents(source) {
+		return source.map((item) => {
+			if(typeof item === 'object') {
+				return item;
+			} else {
+				return {name: item, flags: []};
+			}
+		});
+	}
+
 	const PARSED = {
 		blockBegin: (mode, label) => {
 			return {type: 'block begin', mode, label};
@@ -19,14 +29,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		defineAgents: (agentNames) => {
 			return {
 				type: 'agent define',
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: makeParsedAgents(agentNames),
 			};
 		},
 
 		beginAgents: (agentNames, {mode = 'box'} = {}) => {
 			return {
 				type: 'agent begin',
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: makeParsedAgents(agentNames),
 				mode,
 			};
 		},
@@ -34,7 +44,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		endAgents: (agentNames, {mode = 'cross'} = {}) => {
 			return {
 				type: 'agent end',
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: makeParsedAgents(agentNames),
 				mode,
 			};
 		},
@@ -47,7 +57,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		} = {}) => {
 			return {
 				type: 'connect',
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: makeParsedAgents(agentNames),
 				label,
 				options: {
 					line,
@@ -57,14 +67,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			};
 		},
 
-		note: (agentNames, {
-			type = 'note over',
+		note: (type, agentNames, {
 			mode = '',
 			label = '',
 		} = {}) => {
 			return {
 				type,
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: makeParsedAgents(agentNames),
 				mode,
 				label,
 			};
@@ -110,8 +119,15 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			};
 		},
 
-		note: (agentNames, {
-			type = jasmine.anything(),
+		highlight: (agentNames, highlighted) => {
+			return {
+				type: 'agent highlight',
+				agentNames,
+				highlighted,
+			};
+		},
+
+		note: (type, agentNames, {
 			mode = jasmine.anything(),
 			label = jasmine.anything(),
 		} = {}) => {
@@ -120,6 +136,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				agentNames,
 				mode,
 				label,
+			};
+		},
+
+		parallel: (stages) => {
+			return {
+				type: 'parallel',
+				stages,
 			};
 		},
 	};
@@ -372,7 +395,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('does not merge different modes of end', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.beginAgents(['C', 'D']),
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
 				PARSED.connect(['A', 'B']),
 				PARSED.endAgents(['A', 'B', 'C']),
 			]});
@@ -381,6 +404,86 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.connect(jasmine.anything()),
 				GENERATED.endAgents(['A', 'B', 'C'], {mode: 'cross'}),
 				GENERATED.endAgents(['D'], {mode: 'none'}),
+			]);
+		});
+
+		it('adds parallel highlighting stages', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+				PARSED.connect(['A', {name: 'B', flags: ['stop']}]),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.parallel([
+					GENERATED.highlight(['B'], true),
+					GENERATED.connect(['A', 'B']),
+				]),
+				GENERATED.parallel([
+					GENERATED.connect(['A', 'B']),
+					GENERATED.highlight(['B'], false),
+				]),
+				jasmine.anything(),
+			]);
+		});
+
+		it('rejects conflicting flags', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['start', 'stop']}]),
+			]})).toThrow();
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect([
+					{name: 'A', flags: ['start']},
+					{name: 'A', flags: ['stop']},
+				]),
+			]})).toThrow();
+		});
+
+		it('adds implicit highlight end with implicit terminator', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.parallel([
+					GENERATED.highlight(['B'], false),
+					GENERATED.endAgents(['A', 'B']),
+				]),
+			]);
+		});
+
+		it('adds implicit highlight end with explicit terminator', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+				PARSED.endAgents(['A', 'B']),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.parallel([
+					GENERATED.highlight(['B'], false),
+					GENERATED.endAgents(['A', 'B']),
+				]),
+			]);
+		});
+
+		it('collapses adjacent end statements containing highlighting', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect([
+					{name: 'A', flags: ['start']},
+					{name: 'B', flags: ['start']},
+				]),
+				PARSED.endAgents(['A']),
+				PARSED.endAgents(['B']),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.parallel([
+					GENERATED.highlight(['A', 'B'], false),
+					GENERATED.endAgents(['A', 'B']),
+				]),
 			]);
 		});
 
@@ -675,16 +778,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('passes notes through', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.note(['A', 'B'], {
-					type: 'note right',
+				PARSED.note('note right', ['A', 'B'], {
 					mode: 'foo',
 					label: 'bar',
 				}),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
-				GENERATED.note(['A', 'B'], {
-					type: 'note right',
+				GENERATED.note('note right', ['A', 'B'], {
 					mode: 'foo',
 					label: 'bar',
 				}),
@@ -694,14 +795,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('defaults to showing notes around the entire diagram', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.note([], {type: 'note right'}),
-				PARSED.note([], {type: 'note left'}),
-				PARSED.note([], {type: 'note over'}),
+				PARSED.note('note right', []),
+				PARSED.note('note left', []),
+				PARSED.note('note over', []),
 			]});
 			expect(sequence.stages).toEqual([
-				GENERATED.note([']'], {type: 'note right'}),
-				GENERATED.note(['['], {type: 'note left'}),
-				GENERATED.note(['[', ']'], {type: 'note over'}),
+				GENERATED.note('note right', [']']),
+				GENERATED.note('note left', ['[']),
+				GENERATED.note('note over', ['[', ']']),
 			]);
 		});
 

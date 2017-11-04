@@ -1,30 +1,20 @@
 define([
 	'core/ArrayUtilities',
 	'svg/SVGUtilities',
-	'svg/SVGTextBlock',
 	'svg/SVGShapes',
+	'./components/BaseComponent',
+	'./components/Marker',
+	'./components/AgentCap',
+	'./components/AgentHighlight',
+	'./components/Connect',
+	'./components/Note',
 ], (
 	array,
 	svg,
-	SVGTextBlock,
-	SVGShapes
+	SVGShapes,
+	BaseComponent
 ) => {
 	'use strict';
-
-	const SEP_ZERO = {left: 0, right: 0};
-
-	function drawHorizontalArrowHead(container, {x, y, dx, dy, attrs}) {
-		container.appendChild(svg.make(
-			attrs.fill === 'none' ? 'polyline' : 'polygon',
-			Object.assign({
-				'points': (
-					(x + dx) + ' ' + (y - dy) + ' ' +
-					x + ' ' + y + ' ' +
-					(x + dx) + ' ' + (y + dy)
-				),
-			}, attrs)
-		));
-	}
 
 	function traverse(stages, callbacks) {
 		stages.forEach((stage) => {
@@ -45,76 +35,71 @@ define([
 				if(callbacks.blockEndFn) {
 					callbacks.blockEndFn(scope, stage);
 				}
-			} else if(callbacks.stageFn) {
-				callbacks.stageFn(stage);
+			} else if(callbacks.stagesFn) {
+				if(stage.type === 'parallel') {
+					callbacks.stagesFn(stage.stages);
+				} else {
+					callbacks.stagesFn([stage]);
+				}
 			}
 		});
 	}
 
+	function findExtremes(agentInfos, agentNames) {
+		let min = null;
+		let max = null;
+		agentNames.forEach((name) => {
+			const info = agentInfos.get(name);
+			if(min === null || info.index < min.index) {
+				min = info;
+			}
+			if(max === null || info.index > max.index) {
+				max = info;
+			}
+		});
+		return {
+			left: min.label,
+			right: max.label,
+		};
+	}
+
 	return class Renderer {
 		constructor(theme, {
-			SVGTextBlockClass = SVGTextBlock,
+			components = null,
+			SVGTextBlockClass = SVGShapes.TextBlock,
 		} = {}) {
-			this.separationAgentCap = {
-				'box': this.separationAgentCapBox.bind(this),
-				'cross': this.separationAgentCapCross.bind(this),
-				'bar': this.separationAgentCapBar.bind(this),
-				'none': this.separationAgentCapNone.bind(this),
-			};
-
-			this.separationAction = {
-				'mark': this.separationMark.bind(this),
-				'async': this.separationAsync.bind(this),
-				'agent begin': this.separationAgent.bind(this),
-				'agent end': this.separationAgent.bind(this),
-				'connect': this.separationConnect.bind(this),
-				'note over': this.separationNoteOver.bind(this),
-				'note left': this.separationNoteSide.bind(this, false),
-				'note right': this.separationNoteSide.bind(this, true),
-				'note between': this.separationNoteBetween.bind(this),
-			};
-
-			this.renderAgentCap = {
-				'box': this.renderAgentCapBox.bind(this),
-				'cross': this.renderAgentCapCross.bind(this),
-				'bar': this.renderAgentCapBar.bind(this),
-				'none': this.renderAgentCapNone.bind(this),
-			};
-
-			this.renderAction = {
-				'mark': this.renderMark.bind(this),
-				'async': this.renderAsync.bind(this),
-				'agent begin': this.renderAgentBegin.bind(this),
-				'agent end': this.renderAgentEnd.bind(this),
-				'connect': this.renderConnect.bind(this),
-				'note over': this.renderNoteOver.bind(this),
-				'note left': this.renderNoteLeft.bind(this),
-				'note right': this.renderNoteRight.bind(this),
-				'note between': this.renderNoteBetween.bind(this),
-			};
+			if(components === null) {
+				components = BaseComponent.getComponents();
+			}
 
 			this.separationTraversalFns = {
-				stageFn: this.checkSeparation.bind(this),
+				stagesFn: this.separationStages.bind(this),
 				blockBeginFn: this.separationBlockBegin.bind(this),
 				sectionBeginFn: this.separationSectionBegin.bind(this),
 				blockEndFn: this.separationBlockEnd.bind(this),
 			};
 
 			this.renderTraversalFns = {
-				stageFn: this.addAction.bind(this),
+				stagesFn: this.renderStages.bind(this),
 				blockBeginFn: this.renderBlockBegin.bind(this),
 				sectionBeginFn: this.renderSectionBegin.bind(this),
 				sectionEndFn: this.renderSectionEnd.bind(this),
 				blockEndFn: this.renderBlockEnd.bind(this),
 			};
 
+			this.addSeparation = this.addSeparation.bind(this);
+
+			this.state = {};
 			this.width = 0;
 			this.height = 0;
-			this.marks = new Map();
 			this.theme = theme;
+			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
 			this.currentSequence = null;
 			this.buildStaticElements();
+			this.components.forEach((component) => {
+				component.makeState(this.state);
+			});
 		}
 
 		buildStaticElements() {
@@ -140,24 +125,6 @@ define([
 			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
 		}
 
-		findExtremes(agentNames) {
-			let min = null;
-			let max = null;
-			agentNames.forEach((name) => {
-				const info = this.agentInfos.get(name);
-				if(min === null || info.index < min.index) {
-					min = info;
-				}
-				if(max === null || info.index > max.index) {
-					max = info;
-				}
-			});
-			return {
-				left: min.label,
-				right: max.label,
-			};
-		}
-
 		addSeparation(agentName1, agentName2, dist) {
 			const info1 = this.agentInfos.get(agentName1);
 			const info2 = this.agentInfos.get(agentName2);
@@ -169,202 +136,8 @@ define([
 			info2.separations.set(agentName1, Math.max(d2, dist));
 		}
 
-		addSeparations(agentNames, agentSpaces) {
-			agentNames.forEach((agentNameR) => {
-				const infoR = this.agentInfos.get(agentNameR);
-				const sepR = agentSpaces.get(agentNameR) || SEP_ZERO;
-				infoR.maxRPad = Math.max(infoR.maxRPad, sepR.right);
-				infoR.maxLPad = Math.max(infoR.maxLPad, sepR.left);
-				agentNames.forEach((agentNameL) => {
-					const infoL = this.agentInfos.get(agentNameL);
-					if(infoL.index >= infoR.index) {
-						return;
-					}
-					const sepL = agentSpaces.get(agentNameL) || SEP_ZERO;
-					this.addSeparation(
-						agentNameR,
-						agentNameL,
-						sepR.left + sepL.right + this.theme.agentMargin
-					);
-				});
-			});
-		}
-
-		getArrowShort(arrow) {
-			const h = arrow.height / 2;
-			const w = arrow.width;
-			const t = arrow.attrs['stroke-width'] * 0.5;
-			const lineStroke = this.theme.agentLineAttrs['stroke-width'] * 0.5;
-			const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
-			return lineStroke + arrowDistance;
-		}
-
-		separationMark() {
-		}
-
-		separationAsync() {
-		}
-
-		separationAgentCapBox({label}) {
-			const config = this.theme.agentCap.box;
-			const width = (
-				this.sizer.measure(config.labelAttrs, label).width +
-				config.padding.left +
-				config.padding.right
-			);
-
-			return {
-				left: width / 2,
-				right: width / 2,
-			};
-		}
-
-		separationAgentCapCross() {
-			const config = this.theme.agentCap.cross;
-			return {
-				left: config.size / 2,
-				right: config.size / 2,
-			};
-		}
-
-		separationAgentCapBar({label}) {
-			const config = this.theme.agentCap.box;
-			const width = (
-				this.sizer.measure(config.labelAttrs, label).width +
-				config.padding.left +
-				config.padding.right
-			);
-
-			return {
-				left: width / 2,
-				right: width / 2,
-			};
-		}
-
-		separationAgentCapNone() {
-			return {left: 0, right: 0};
-		}
-
-		separationAgent({type, mode, agentNames}) {
-			if(type === 'agent begin') {
-				array.mergeSets(this.visibleAgents, agentNames);
-			}
-
-			const agentSpaces = new Map();
-			agentNames.forEach((name) => {
-				const info = this.agentInfos.get(name);
-				const separationFn = this.separationAgentCap[mode];
-				agentSpaces.set(name, separationFn(info));
-			});
-			this.addSeparations(this.visibleAgents, agentSpaces);
-
-			if(type === 'agent end') {
-				array.removeAll(this.visibleAgents, agentNames);
-			}
-		}
-
-		separationConnect({agentNames, label}) {
-			const config = this.theme.connect;
-
-			const labelWidth = (
-				this.sizer.measure(config.label.attrs, label).width +
-				config.label.padding * 2
-			);
-
-			const short = this.getArrowShort(config.arrow);
-
-			if(agentNames[0] === agentNames[1]) {
-				const agentSpaces = new Map();
-				agentSpaces.set(agentNames[0], {
-					left: 0,
-					right: (
-						labelWidth +
-						config.arrow.width +
-						short +
-						config.loopbackRadius
-					),
-				});
-				this.addSeparations(this.visibleAgents, agentSpaces);
-			} else {
-				this.addSeparation(
-					agentNames[0],
-					agentNames[1],
-					labelWidth + config.arrow.width * 2 + short * 2
-				);
-			}
-		}
-
-		separationNoteOver({agentNames, mode, label}) {
-			const config = this.theme.note[mode];
-			const width = (
-				this.sizer.measure(config.labelAttrs, label).width +
-				config.padding.left +
-				config.padding.right
-			);
-
-			const agentSpaces = new Map();
-			if(agentNames.length > 1) {
-				const {left, right} = this.findExtremes(agentNames);
-
-				this.addSeparation(
-					left,
-					right,
-
-					width -
-					config.overlap.left -
-					config.overlap.right
-				);
-
-				agentSpaces.set(left, {left: config.overlap.left, right: 0});
-				agentSpaces.set(right, {left: 0, right: config.overlap.right});
-			} else {
-				agentSpaces.set(agentNames[0], {
-					left: width / 2,
-					right: width / 2,
-				});
-			}
-			this.addSeparations(this.visibleAgents, agentSpaces);
-		}
-
-		separationNoteSide(isRight, {agentNames, mode, label}) {
-			const config = this.theme.note[mode];
-			const {left, right} = this.findExtremes(agentNames);
-			const width = (
-				this.sizer.measure(config.labelAttrs, label).width +
-				config.padding.left +
-				config.padding.right +
-				config.margin.left +
-				config.margin.right
-			);
-
-			const agentSpaces = new Map();
-			if(isRight) {
-				agentSpaces.set(right, {left: 0, right: width});
-			} else {
-				agentSpaces.set(left, {left: width, right: 0});
-			}
-			this.addSeparations(this.visibleAgents, agentSpaces);
-		}
-
-		separationNoteBetween({agentNames, mode, label}) {
-			const config = this.theme.note[mode];
-			const {left, right} = this.findExtremes(agentNames);
-
-			this.addSeparation(
-				left,
-				right,
-
-				this.sizer.measure(config.labelAttrs, label).width +
-				config.padding.left +
-				config.padding.right +
-				config.margin.left +
-				config.margin.right
-			);
-		}
-
 		separationBlockBegin(scope, {left, right}) {
 			array.mergeSets(this.visibleAgents, [left, right]);
-			this.addSeparations(this.visibleAgents, new Map());
 		}
 
 		separationSectionBegin(scope, {left, right}, {mode, label}) {
@@ -384,413 +157,129 @@ define([
 			array.removeAll(this.visibleAgents, [left, right]);
 		}
 
-		checkSeparation(stage) {
-			this.separationAction[stage.type](stage);
+		separationStages(stages) {
+			const agentSpaces = new Map();
+			const agentNames = this.visibleAgents.slice();
+
+			const addSpacing = (agentName, spacing) => {
+				const current = agentSpaces.get(agentName);
+				current.left = Math.max(current.left, spacing.left);
+				current.right = Math.max(current.right, spacing.right);
+			};
+
+			this.agentInfos.forEach((agentInfo) => {
+				const rad = agentInfo.currentRad;
+				agentInfo.currentMaxRad = rad;
+				agentSpaces.set(agentInfo.label, {left: rad, right: rad});
+			});
+			const env = {
+				theme: this.theme,
+				agentInfos: this.agentInfos,
+				visibleAgents: this.visibleAgents,
+				textSizer: this.sizer,
+				addSpacing,
+				addSeparation: this.addSeparation,
+			};
+			stages.forEach((stage) => {
+				this.components.get(stage.type).separationPre(stage, env);
+			});
+			stages.forEach((stage) => {
+				this.components.get(stage.type).separation(stage, env);
+			});
+			array.mergeSets(agentNames, this.visibleAgents);
+
+			agentNames.forEach((agentNameR) => {
+				const infoR = this.agentInfos.get(agentNameR);
+				const sepR = agentSpaces.get(agentNameR);
+				infoR.maxRPad = Math.max(infoR.maxRPad, sepR.right);
+				infoR.maxLPad = Math.max(infoR.maxLPad, sepR.left);
+				agentNames.forEach((agentNameL) => {
+					const infoL = this.agentInfos.get(agentNameL);
+					if(infoL.index >= infoR.index) {
+						return;
+					}
+					const sepL = agentSpaces.get(agentNameL);
+					this.addSeparation(
+						agentNameR,
+						agentNameL,
+						sepR.left + sepL.right + this.theme.agentMargin
+					);
+				});
+			});
 		}
 
-		renderMark({name}) {
-			this.marks.set(name, this.currentY);
-		}
-
-		renderAsync({target}) {
-			if(target) {
-				this.currentY = this.marks.get(target) || 0;
-			} else {
-				this.currentY = 0;
+		checkAgentRange(agentNames, topY = 0) {
+			if(agentNames.length === 0) {
+				return topY;
 			}
-		}
-
-		renderAgentCapBox({x, label}) {
-			const config = this.theme.agentCap.box;
-			const {height} = SVGShapes.renderBoxedText(label, {
-				x,
-				y: this.currentY,
-				padding: config.padding,
-				boxAttrs: config.boxAttrs,
-				labelAttrs: config.labelAttrs,
-				boxLayer: this.actionShapes,
-				labelLayer: this.actionLabels,
-				SVGTextBlockClass: this.SVGTextBlockClass,
+			const {left, right} = findExtremes(this.agentInfos, agentNames);
+			const leftX = this.agentInfos.get(left).x;
+			const rightX = this.agentInfos.get(right).x;
+			let baseY = topY;
+			this.agentInfos.forEach((agentInfo) => {
+				if(agentInfo.x >= leftX && agentInfo.x <= rightX) {
+					baseY = Math.max(baseY, agentInfo.latestY);
+				}
 			});
-
-			return {
-				lineTop: 0,
-				lineBottom: height,
-				height,
-			};
+			return baseY;
 		}
 
-		renderAgentCapCross({x}) {
-			const config = this.theme.agentCap.cross;
-			const y = this.currentY;
-			const d = config.size / 2;
-
-			this.actionShapes.appendChild(svg.make('path', Object.assign({
-				'd': (
-					'M ' + (x - d) + ' ' + y +
-					' L ' + (x + d) + ' ' + (y + d * 2) +
-					' M ' + (x + d) + ' ' + y +
-					' L ' + (x - d) + ' ' + (y + d * 2)
-				),
-			}, config.attrs)));
-
-			return {
-				lineTop: d,
-				lineBottom: d,
-				height: d * 2,
-			};
-		}
-
-		renderAgentCapBar({x, label}) {
-			const configB = this.theme.agentCap.box;
-			const config = this.theme.agentCap.bar;
-			const width = (
-				this.sizer.measure(configB.labelAttrs, label).width +
-				configB.padding.left +
-				configB.padding.right
-			);
-
-			this.actionShapes.appendChild(svg.make('rect', Object.assign({
-				'x': x - width / 2,
-				'y': this.currentY,
-				'width': width,
-			}, config.attrs)));
-
-			return {
-				lineTop: 0,
-				lineBottom: config.attrs.height,
-				height: config.attrs.height,
-			};
-		}
-
-		renderAgentCapNone() {
-			const config = this.theme.agentCap.none;
-			return {
-				lineTop: config.height,
-				lineBottom: 0,
-				height: config.height,
-			};
-		}
-
-		checkAgentRange(agentNames) {
-			const {left, right} = this.findExtremes(agentNames);
+		markAgentRange(agentNames, y) {
+			if(agentNames.length === 0) {
+				return;
+			}
+			const {left, right} = findExtremes(this.agentInfos, agentNames);
 			const leftX = this.agentInfos.get(left).x;
 			const rightX = this.agentInfos.get(right).x;
 			this.agentInfos.forEach((agentInfo) => {
 				if(agentInfo.x >= leftX && agentInfo.x <= rightX) {
-					this.currentY = Math.max(this.currentY, agentInfo.latestY);
+					agentInfo.latestY = y;
 				}
 			});
 		}
 
-		markAgentRange(agentNames) {
-			const {left, right} = this.findExtremes(agentNames);
-			const leftX = this.agentInfos.get(left).x;
-			const rightX = this.agentInfos.get(right).x;
-			this.agentInfos.forEach((agentInfo) => {
-				if(agentInfo.x >= leftX && agentInfo.x <= rightX) {
-					agentInfo.latestY = this.currentY;
-				}
-			});
-		}
+		drawAgentLine(agentInfo, toY) {
+			if(
+				agentInfo.latestYStart === null ||
+				toY <= agentInfo.latestYStart
+			) {
+				return;
+			}
 
-		renderAgentBegin({mode, agentNames}) {
-			this.checkAgentRange(agentNames);
-			let maxHeight = 0;
-			agentNames.forEach((name) => {
-				const agentInfo = this.agentInfos.get(name);
-				const shifts = this.renderAgentCap[mode](agentInfo);
-				maxHeight = Math.max(maxHeight, shifts.height);
-				agentInfo.latestYStart = this.currentY + shifts.lineBottom;
-			});
-			this.currentY += maxHeight + this.theme.actionMargin;
-			this.markAgentRange(agentNames);
-		}
+			const r = agentInfo.currentRad;
 
-		renderAgentEnd({mode, agentNames}) {
-			this.checkAgentRange(agentNames);
-			let maxHeight = 0;
-			agentNames.forEach((name) => {
-				const agentInfo = this.agentInfos.get(name);
-				const x = agentInfo.x;
-				const shifts = this.renderAgentCap[mode](agentInfo);
-				maxHeight = Math.max(maxHeight, shifts.height);
-				this.agentLines.appendChild(svg.make('line', Object.assign({
-					'x1': x,
-					'y1': agentInfo.latestYStart,
-					'x2': x,
-					'y2': this.currentY + shifts.lineTop,
+			if(r > 0) {
+				this.agentLines.appendChild(svg.make('rect', Object.assign({
+					'x': agentInfo.x - r,
+					'y': agentInfo.latestYStart,
+					'width': r * 2,
+					'height': toY - agentInfo.latestYStart,
 					'class': 'agent-' + agentInfo.index + '-line',
 				}, this.theme.agentLineAttrs)));
-				agentInfo.latestYStart = null;
-			});
-			this.currentY += maxHeight + this.theme.actionMargin;
-			this.markAgentRange(agentNames);
-		}
-
-		renderSelfConnect({label, agentNames, options}) {
-			const config = this.theme.connect;
-			const from = this.agentInfos.get(agentNames[0]);
-
-			const dy = config.arrow.height / 2;
-			const short = this.getArrowShort(config.arrow);
-
-			const height = (
-				this.sizer.measureHeight(config.label.attrs, label) +
-				config.label.margin.top +
-				config.label.margin.bottom
-			);
-
-			const y0 = this.currentY + Math.max(dy, height);
-			const x0 = (
-				from.x +
-				short +
-				config.arrow.width +
-				config.label.padding
-			);
-
-			const renderedText = SVGShapes.renderBoxedText(label, {
-				x: x0 - config.mask.padding.left,
-				y: y0 - height + config.label.margin.top,
-				padding: config.mask.padding,
-				boxAttrs: config.mask.maskAttrs,
-				labelAttrs: config.label.loopbackAttrs,
-				boxLayer: this.mask,
-				labelLayer: this.actionLabels,
-				SVGTextBlockClass: this.SVGTextBlockClass,
-			});
-			const r = config.loopbackRadius;
-			const x1 = (
-				x0 +
-				renderedText.width +
-				config.label.padding -
-				config.mask.padding.left -
-				config.mask.padding.right
-			);
-			const y1 = y0 + r * 2;
-
-			this.actionShapes.appendChild(svg.make('path', Object.assign({
-				'd': (
-					'M ' + (from.x + (options.left ? short : 0)) + ' ' + y0 +
-					' L ' + x1 + ' ' + y0 +
-					' A ' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + y1 +
-					' L ' + (from.x + (options.right ? short : 0)) + ' ' + y1
-				),
-			}, config.lineAttrs[options.line])));
-
-			if(options.left) {
-				drawHorizontalArrowHead(this.actionShapes, {
-					x: from.x + short,
-					y: y0,
-					dx: config.arrow.width,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			if(options.right) {
-				drawHorizontalArrowHead(this.actionShapes, {
-					x: from.x + short,
-					y: y1,
-					dx: config.arrow.width,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			this.currentY = y1 + dy + this.theme.actionMargin;
-		}
-
-		renderSimpleConnect({label, agentNames, options}) {
-			const config = this.theme.connect;
-			const from = this.agentInfos.get(agentNames[0]);
-			const to = this.agentInfos.get(agentNames[1]);
-
-			const dy = config.arrow.height / 2;
-			const dir = (from.x < to.x) ? 1 : -1;
-			const short = this.getArrowShort(config.arrow);
-
-			const height = (
-				this.sizer.measureHeight(config.label.attrs, label) +
-				config.label.margin.top +
-				config.label.margin.bottom
-			);
-
-			let y = this.currentY + Math.max(dy, height);
-
-			SVGShapes.renderBoxedText(label, {
-				x: (from.x + to.x) / 2,
-				y: y - height + config.label.margin.top,
-				padding: config.mask.padding,
-				boxAttrs: config.mask.maskAttrs,
-				labelAttrs: config.label.attrs,
-				boxLayer: this.mask,
-				labelLayer: this.actionLabels,
-				SVGTextBlockClass: this.SVGTextBlockClass,
-			});
-
-			this.actionShapes.appendChild(svg.make('line', Object.assign({
-				'x1': from.x + (options.left ? short : 0) * dir,
-				'y1': y,
-				'x2': to.x - (options.right ? short : 0) * dir,
-				'y2': y,
-			}, config.lineAttrs[options.line])));
-
-			if(options.left) {
-				drawHorizontalArrowHead(this.actionShapes, {
-					x: from.x + short * dir,
-					y,
-					dx: config.arrow.width * dir,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			if(options.right) {
-				drawHorizontalArrowHead(this.actionShapes, {
-					x: to.x - short * dir,
-					y,
-					dx: -config.arrow.width * dir,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			this.currentY = y + dy + this.theme.actionMargin;
-		}
-
-		renderConnect(stage) {
-			this.checkAgentRange(stage.agentNames);
-			if(stage.agentNames[0] === stage.agentNames[1]) {
-				this.renderSelfConnect(stage);
 			} else {
-				this.renderSimpleConnect(stage);
+				this.agentLines.appendChild(svg.make('line', Object.assign({
+					'x1': agentInfo.x,
+					'y1': agentInfo.latestYStart,
+					'x2': agentInfo.x,
+					'y2': toY,
+					'class': 'agent-' + agentInfo.index + '-line',
+				}, this.theme.agentLineAttrs)));
 			}
-			this.markAgentRange(stage.agentNames);
-		}
-
-		renderNote({xMid = null, x0 = null, x1 = null}, anchor, mode, label) {
-			const config = this.theme.note[mode];
-
-			this.currentY += config.margin.top;
-
-			const y = this.currentY + config.padding.top;
-			const labelNode = new this.SVGTextBlockClass(this.actionLabels, {
-				attrs: config.labelAttrs,
-				text: label,
-				y,
-			});
-
-			const fullW = (
-				labelNode.width +
-				config.padding.left +
-				config.padding.right
-			);
-			const fullH = (
-				config.padding.top +
-				labelNode.height +
-				config.padding.bottom
-			);
-			if(x0 === null && xMid !== null) {
-				x0 = xMid - fullW / 2;
-			}
-			if(x1 === null && x0 !== null) {
-				x1 = x0 + fullW;
-			} else if(x0 === null) {
-				x0 = x1 - fullW;
-			}
-			switch(config.labelAttrs['text-anchor']) {
-			case 'middle':
-				labelNode.set({
-					x: (
-						x0 + config.padding.left +
-						x1 - config.padding.right
-					) / 2,
-					y,
-				});
-				break;
-			case 'end':
-				labelNode.set({x: x1 - config.padding.right, y});
-				break;
-			default:
-				labelNode.set({x: x0 + config.padding.left, y});
-				break;
-			}
-
-			this.actionShapes.appendChild(config.boxRenderer({
-				x: x0,
-				y: this.currentY,
-				width: x1 - x0,
-				height: fullH,
-			}));
-
-			this.currentY += (
-				fullH +
-				config.margin.bottom +
-				this.theme.actionMargin
-			);
-		}
-
-		renderNoteOver({agentNames, mode, label}) {
-			this.checkAgentRange(agentNames);
-			const config = this.theme.note[mode];
-
-			if(agentNames.length > 1) {
-				const {left, right} = this.findExtremes(agentNames);
-				this.renderNote({
-					x0: this.agentInfos.get(left).x - config.overlap.left,
-					x1: this.agentInfos.get(right).x + config.overlap.right,
-				}, 'middle', mode, label);
-			} else {
-				const xMid = this.agentInfos.get(agentNames[0]).x;
-				this.renderNote({xMid}, 'middle', mode, label);
-			}
-			this.markAgentRange(agentNames);
-		}
-
-		renderNoteLeft({agentNames, mode, label}) {
-			this.checkAgentRange(agentNames);
-			const config = this.theme.note[mode];
-
-			const {left} = this.findExtremes(agentNames);
-			const x1 = this.agentInfos.get(left).x - config.margin.right;
-			this.renderNote({x1}, 'end', mode, label);
-			this.markAgentRange(agentNames);
-		}
-
-		renderNoteRight({agentNames, mode, label}) {
-			this.checkAgentRange(agentNames);
-			const config = this.theme.note[mode];
-
-			const {right} = this.findExtremes(agentNames);
-			const x0 = this.agentInfos.get(right).x + config.margin.left;
-			this.renderNote({x0}, 'start', mode, label);
-			this.markAgentRange(agentNames);
-		}
-
-		renderNoteBetween({agentNames, mode, label}) {
-			this.checkAgentRange(agentNames);
-			const {left, right} = this.findExtremes(agentNames);
-			const xMid = (
-				this.agentInfos.get(left).x +
-				this.agentInfos.get(right).x
-			) / 2;
-
-			this.renderNote({xMid}, 'middle', mode, label);
-			this.markAgentRange(agentNames);
 		}
 
 		renderBlockBegin(scope, {left, right}) {
-			this.checkAgentRange([left, right]);
-			this.currentY += this.theme.block.margin.top;
+			this.currentY = (
+				this.checkAgentRange([left, right], this.currentY) +
+				this.theme.block.margin.top
+			);
 
 			scope.y = this.currentY;
 			scope.first = true;
-			this.markAgentRange([left, right]);
+			this.markAgentRange([left, right], this.currentY);
 		}
 
 		renderSectionBegin(scope, {left, right}, {mode, label}) {
-			this.checkAgentRange([left, right]);
+			this.currentY = this.checkAgentRange([left, right], this.currentY);
 			const config = this.theme.block;
 			const agentInfoL = this.agentInfos.get(left);
 			const agentInfoR = this.agentInfos.get(right);
@@ -833,16 +322,18 @@ define([
 				Math.max(modeRender.height, labelRender.height) +
 				config.section.padding.top
 			);
-			this.markAgentRange([left, right]);
+			this.markAgentRange([left, right], this.currentY);
 		}
 
 		renderSectionEnd(/*scope, block, section*/) {
 		}
 
 		renderBlockEnd(scope, {left, right}) {
-			this.checkAgentRange([left, right]);
 			const config = this.theme.block;
-			this.currentY += config.section.padding.bottom;
+			this.currentY = (
+				this.checkAgentRange([left, right], this.currentY) +
+				config.section.padding.bottom
+			);
 
 			const agentInfoL = this.agentInfos.get(left);
 			const agentInfoR = this.agentInfos.get(right);
@@ -854,11 +345,72 @@ define([
 			}, config.boxAttrs)));
 
 			this.currentY += config.margin.bottom + this.theme.actionMargin;
-			this.markAgentRange([left, right]);
+			this.markAgentRange([left, right], this.currentY);
 		}
 
-		addAction(stage) {
-			this.renderAction[stage.type](stage);
+		renderStages(stages) {
+			this.agentInfos.forEach((agentInfo) => {
+				const rad = agentInfo.currentRad;
+				agentInfo.currentMaxRad = rad;
+			});
+
+			let topY = 0;
+			let maxTopShift = 0;
+			let sequential = true;
+			const envPre = {
+				theme: this.theme,
+				agentInfos: this.agentInfos,
+				textSizer: this.sizer,
+				state: this.state,
+			};
+			const touchedAgentNames = [];
+			stages.forEach((stage) => {
+				const component = this.components.get(stage.type);
+				const r = component.renderPre(stage, envPre);
+				if(r.topShift !== undefined) {
+					maxTopShift = Math.max(maxTopShift, r.topShift);
+				}
+				if(r.agentNames) {
+					array.mergeSets(touchedAgentNames, r.agentNames);
+				}
+				if(r.asynchronousY !== undefined) {
+					topY = Math.max(topY, r.asynchronousY);
+					sequential = false;
+				}
+			});
+			topY = this.checkAgentRange(touchedAgentNames, topY);
+			if(sequential) {
+				topY = Math.max(topY, this.currentY);
+			}
+
+			const env = {
+				topY,
+				primaryY: topY + maxTopShift,
+				shapeLayer: this.actionShapes,
+				labelLayer: this.actionLabels,
+				maskLayer: this.mask,
+				theme: this.theme,
+				agentInfos: this.agentInfos,
+				textSizer: this.sizer,
+				SVGTextBlockClass: this.SVGTextBlockClass,
+				state: this.state,
+				drawAgentLine: (agentName, toY, andStop = false) => {
+					const agentInfo = this.agentInfos.get(agentName);
+					this.drawAgentLine(agentInfo, toY);
+					agentInfo.latestYStart = andStop ? null : toY;
+				},
+			};
+			let bottomY = topY;
+			stages.forEach((stage) => {
+				const component = this.components.get(stage.type);
+				const baseY = component.render(stage, env);
+				if(baseY !== undefined) {
+					bottomY = Math.max(bottomY, baseY);
+				}
+			});
+			this.markAgentRange(touchedAgentNames, bottomY);
+
+			this.currentY = bottomY;
 		}
 
 		positionAgents() {
@@ -907,6 +459,7 @@ define([
 					index,
 					x: null,
 					latestYStart: null,
+					currentRad: 0,
 					latestY: 0,
 					maxRPad: 0,
 					maxLPad: 0,
@@ -959,7 +512,9 @@ define([
 			svg.empty(this.sections);
 			svg.empty(this.actionShapes);
 			svg.empty(this.actionLabels);
-			this.marks.clear();
+			this.components.forEach((component) => {
+				component.resetState(this.state);
+			});
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,
@@ -972,12 +527,9 @@ define([
 
 			this.currentY = 0;
 			traverse(sequence.stages, this.renderTraversalFns);
-			this.checkAgentRange(['[', ']']);
+			const bottomY = this.checkAgentRange(['[', ']'], this.currentY);
 
-			const stagesHeight = Math.max(
-				this.currentY - this.theme.actionMargin,
-				0
-			);
+			const stagesHeight = Math.max(bottomY - this.theme.actionMargin, 0);
 			this.updateBounds(stagesHeight);
 
 			this.sizer.resetCache();

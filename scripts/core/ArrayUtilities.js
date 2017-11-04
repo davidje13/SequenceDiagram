@@ -24,6 +24,15 @@ define(() => {
 		}
 	}
 
+	function hasIntersection(a, b, equalityCheck = null) {
+		for(let i = 0; i < b.length; ++ i) {
+			if(indexOf(a, b[i], equalityCheck) !== -1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	function removeAll(target, b = null, equalityCheck = null) {
 		if(!b) {
 			return;
@@ -50,6 +59,7 @@ define(() => {
 	return {
 		indexOf,
 		mergeSets,
+		hasIntersection,
 		removeAll,
 		remove,
 		last,
