@@ -74,6 +74,7 @@ define([
 			const config = env.theme.connect;
 			const from = env.agentInfos.get(agentNames[0]);
 
+			const dx = config.arrow.width;
 			const dy = config.arrow.height / 2;
 			const short = getArrowShort(env.theme);
 
@@ -88,7 +89,7 @@ define([
 			const x0 = (
 				lineX +
 				short +
-				config.arrow.width +
+				dx +
 				config.label.padding
 			);
 
@@ -112,12 +113,14 @@ define([
 			);
 			const y1 = y0 + r * 2;
 
+			const space = short + dx / 2;
+
 			env.shapeLayer.appendChild(svg.make('path', Object.assign({
 				'd': (
-					'M ' + (lineX + (options.left ? short : 0)) + ' ' + y0 +
+					'M ' + (lineX + (options.left ? space : 0)) + ' ' + y0 +
 					' L ' + x1 + ' ' + y0 +
 					' A ' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + y1 +
-					' L ' + (lineX + (options.right ? short : 0)) + ' ' + y1
+					' L ' + (lineX + (options.right ? space : 0)) + ' ' + y1
 				),
 			}, config.lineAttrs[options.line])));
 
@@ -125,7 +128,7 @@ define([
 				drawHorizontalArrowHead(env.shapeLayer, {
 					x: lineX + short,
 					y: y0,
-					dx: config.arrow.width,
+					dx,
 					dy,
 					attrs: config.arrow.attrs,
 				});
@@ -135,7 +138,7 @@ define([
 				drawHorizontalArrowHead(env.shapeLayer, {
 					x: lineX + short,
 					y: y1,
-					dx: config.arrow.width,
+					dx,
 					dy,
 					attrs: config.arrow.attrs,
 				});
@@ -149,6 +152,7 @@ define([
 			const from = env.agentInfos.get(agentNames[0]);
 			const to = env.agentInfos.get(agentNames[1]);
 
+			const dx = config.arrow.width;
 			const dy = config.arrow.height / 2;
 			const dir = (from.x < to.x) ? 1 : -1;
 			const short = getArrowShort(env.theme);
@@ -174,10 +178,12 @@ define([
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
+			const space = short + dx / 2;
+
 			env.shapeLayer.appendChild(svg.make('line', Object.assign({
-				'x1': x0 + (options.left ? short : 0) * dir,
+				'x1': x0 + (options.left ? space : 0) * dir,
 				'y1': y,
-				'x2': x1 - (options.right ? short : 0) * dir,
+				'x2': x1 - (options.right ? space : 0) * dir,
 				'y2': y,
 			}, config.lineAttrs[options.line])));
 
@@ -185,7 +191,7 @@ define([
 				drawHorizontalArrowHead(env.shapeLayer, {
 					x: x0 + short * dir,
 					y,
-					dx: config.arrow.width * dir,
+					dx: dx * dir,
 					dy,
 					attrs: config.arrow.attrs,
 				});
@@ -195,7 +201,7 @@ define([
 				drawHorizontalArrowHead(env.shapeLayer, {
 					x: x1 - short * dir,
 					y,
-					dx: -config.arrow.width * dir,
+					dx: -dx * dir,
 					dy,
 					attrs: config.arrow.attrs,
 				});

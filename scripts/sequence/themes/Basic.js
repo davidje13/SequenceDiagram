@@ -7,7 +7,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 		titleMargin: 10,
 		outerMargin: 5,
 		agentMargin: 10,
-		actionMargin: 5,
+		actionMargin: 3,
 		agentLineHighlightRadius: 4,
 
 		agentCap: {
@@ -42,7 +42,9 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			bar: {
 				attrs: {
 					'fill': '#000000',
-					'height': 5,
+					'stroke': '#000000',
+					'stroke-width': 1,
+					'height': 4,
 				},
 			},
 			none: {
@@ -66,12 +68,12 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				},
 			},
 			arrow: {
-				width: 4,
-				height: 8,
+				width: 5,
+				height: 10,
 				attrs: {
 					'fill': '#000000',
-					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke': 'none',
+					'stroke-width': 0,
 					'stroke-linejoin': 'miter',
 				},
 			},

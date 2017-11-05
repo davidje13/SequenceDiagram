@@ -175,10 +175,10 @@ Bar -> Baz
 
 ### Simultaneous Actions (Beta!)
 
-<img src="screenshots/SimultaneousActions.png" alt="Simultaneous Actions preview" width="200" align="right" />
-
 This is a work-in-progress feature. There are situations where this can
 lead to [ugly / unreadable overlapping content](https://github.com/davidje13/SequenceDiagram/issues/13).
+
+<img src="screenshots/SimultaneousActions.png" alt="Simultaneous Actions preview" width="200" align="right" />
 
 ```
 begin A, B, C, D
