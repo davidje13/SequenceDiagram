@@ -44,6 +44,14 @@ html, body {
 	top: 0;
 	bottom: 0;
 	right: 0;
+}
+
+.pane-view-scroller {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	overflow: auto;
 }
 
@@ -76,16 +84,26 @@ html, body {
 }
 
 .options {
-	display: inline-block;
-	position: fixed;
+	position: absolute;
+	background: #FFFFFF;
+	font-family: sans-serif;
+	overflow: hidden;
+}
+
+.options.links {
+	top: 0;
+	right: 0;
+	border-bottom-left-radius: 5px;
+	border-bottom: 1px solid #EEEEEE;
+	border-left: 1px solid #EEEEEE;
+}
+
+.options.downloads {
 	bottom: 0;
 	right: 0;
-	background: #FFFFFF;
 	border-top-left-radius: 5px;
 	border-top: 1px solid #EEEEEE;
 	border-left: 1px solid #EEEEEE;
-	font-family: sans-serif;
-	overflow: hidden;
 }
 
 .options a {

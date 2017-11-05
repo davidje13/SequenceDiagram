@@ -54,25 +54,35 @@ define(['core/ArrayUtilities'], (array) => {
 			'!': CM_ERROR,
 			'': exit,
 		}};
-		const pm = {type: 'operator', suggest: true, then: {
-			'+': CM_ERROR,
-			'-': CM_ERROR,
-			'*': op,
-			'!': op,
-			'': exit,
-		}};
-		const se = {type: 'operator', suggest: true, then: {
-			'+': op,
-			'-': op,
-			'*': CM_ERROR,
-			'!': CM_ERROR,
-			'': exit,
-		}};
 		return {
-			'+': pm,
-			'-': pm,
-			'*': se,
-			'!': se,
+			'+': {type: 'operator', suggest: true, then: {
+				'+': CM_ERROR,
+				'-': CM_ERROR,
+				'*': op,
+				'!': CM_ERROR,
+				'': exit,
+			}},
+			'-': {type: 'operator', suggest: true, then: {
+				'+': CM_ERROR,
+				'-': CM_ERROR,
+				'*': op,
+				'!': {type: 'operator', then: {
+					'+': CM_ERROR,
+					'-': CM_ERROR,
+					'*': CM_ERROR,
+					'!': CM_ERROR,
+					'': exit,
+				}},
+				'': exit,
+			}},
+			'*': {type: 'operator', suggest: true, then: {
+				'+': op,
+				'-': op,
+				'*': CM_ERROR,
+				'!': CM_ERROR,
+				'': exit,
+			}},
+			'!': op,
 			'': exit,
 		};
 	}

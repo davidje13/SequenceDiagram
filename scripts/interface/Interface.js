@@ -56,7 +56,20 @@ define([
 			this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
 		}
 
-		buildOptions() {
+		buildOptionsLinks() {
+			const githubLink = makeNode('a', {
+				'class': 'github',
+				'href': 'https://github.com/davidje13/SequenceDiagram',
+				'target': '_blank',
+			});
+			githubLink.appendChild(makeText('GitHub'));
+
+			const options = makeNode('div', {'class': 'options links'});
+			options.appendChild(githubLink);
+			return options;
+		}
+
+		buildOptionsDownloads() {
 			this.downloadPNG = makeNode('a', {
 				'href': '#',
 				'download': 'SequenceDiagram.png',
@@ -76,7 +89,7 @@ define([
 			this.downloadSVG.appendChild(makeText('SVG'));
 			on(this.downloadSVG, ['click'], this._downloadSVGClick);
 
-			const options = makeNode('div', {'class': 'options'});
+			const options = makeNode('div', {'class': 'options downloads'});
 			options.appendChild(this.downloadPNG);
 			options.appendChild(this.downloadSVG);
 			return options;
@@ -137,11 +150,17 @@ define([
 			this.errorPane = makeNode('div', {'class': 'pane-error'});
 			this.errorText = makeText();
 			this.errorPane.appendChild(this.errorText);
-			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
+			const viewPaneScroller = makeNode('div', {
+				'class': 'pane-view-scroller',
+			});
+			this.viewPaneInner = makeNode('div', {
+				'class': 'pane-view-inner',
+			});
 
-			const options = this.buildOptions();
-			viewPane.appendChild(this.viewPaneInner);
-			viewPane.appendChild(options);
+			viewPane.appendChild(viewPaneScroller);
+			viewPaneScroller.appendChild(this.viewPaneInner);
+			viewPane.appendChild(this.buildOptionsLinks());
+			viewPane.appendChild(this.buildOptionsDownloads());
 
 			container.appendChild(codePane);
 			container.appendChild(this.errorPane);
