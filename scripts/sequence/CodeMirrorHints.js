@@ -3,8 +3,36 @@ define(() => {
 
 	const TRIMMER = /^([ \t]*)(.*)$/;
 	const SQUASH_START = /^[ \t\r\n:,]/;
+	const SQUASH_END = /[ \t\r\n]$/;
 
-	function getHints(cm) {
+	function makeRanges(cm, line, chFrom, chTo) {
+		const ln = cm.getLine(line);
+		const ranges = {
+			wordFrom: {line: line, ch: chFrom},
+			squashFrom: {line: line, ch: chFrom},
+			wordTo: {line: line, ch: chTo},
+			squashTo: {line: line, ch: chTo},
+		};
+		if(chFrom > 0 && ln[chFrom - 1] === ' ') {
+			ranges.squashFrom.ch --;
+		}
+		if(ln[chTo] === ' ') {
+			ranges.squashTo.ch ++;
+		}
+		return ranges;
+	}
+
+	function makeHintItem(text, ranges) {
+		return {
+			text: text,
+			displayText: (text === '\n') ? '<END>' : text.trim(),
+			className: (text === '\n') ? 'pick-virtual' : null,
+			from: SQUASH_START.test(text) ? ranges.squashFrom : ranges.wordFrom,
+			to: SQUASH_END.test(text) ? ranges.squashTo : ranges.wordTo,
+		};
+	}
+
+	function getHints(cm, options) {
 		const cur = cm.getCursor();
 		const token = cm.getTokenAt(cur);
 		let partial = token.string;
@@ -24,30 +52,27 @@ define(() => {
 			comp = comp.concat(token.state.knownAgent);
 		}
 
-		const ln = cm.getLine(cur.line);
-		const wordFrom = {line: cur.line, ch: from};
-		const squashFrom = {line: cur.line, ch: from};
-		if(from > 0 && ln[from - 1] === ' ') {
-			squashFrom.ch --;
-		}
-		const wordTo = {line: cur.line, ch: token.end};
+		const ranges = makeRanges(cm, cur.line, from, token.end);
+		let selfValid = false;
 		const list = (comp
 			.filter((opt) => opt.startsWith(partial))
 			.map((opt) => {
-				return {
-					text: opt,
-					displayText: (opt === '\n') ? '<END>' : opt.trim(),
-					className: (opt === '\n') ? 'pick-virtual' : null,
-					from: SQUASH_START.test(opt) ? squashFrom : wordFrom,
-					to: wordTo,
-				};
+				if(opt === partial + ' ' && !options.completeSingle) {
+					selfValid = true;
+					return null;
+				}
+				return makeHintItem(opt, ranges);
 			})
+			.filter((opt) => (opt !== null))
 		);
+		if(selfValid && list.length > 0) {
+			list.unshift(makeHintItem(partial + ' ', ranges));
+		}
 
 		return {
 			list,
-			from: wordFrom,
-			to: wordTo,
+			from: ranges.wordFrom,
+			to: ranges.wordTo,
 		};
 	}
 
