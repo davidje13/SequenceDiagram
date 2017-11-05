@@ -108,176 +108,32 @@ defineDescribe('Sequence Integration', [
 		);
 	});
 
-	it('Renders the "Simple Usage" example without error', () => {
-		const parsed = parser.parse(
-			'title Labyrinth\n' +
-			'\n' +
-			'Bowie -> Gremlin: You remind me of the babe\n' +
-			'Gremlin -> Bowie: What babe?\n' +
-			'Bowie -> Gremlin: The babe with the power\n' +
-			'Gremlin -> Bowie: What power?\n' +
-			'note right of Bowie, Gremlin: Most people get muddled here!\n' +
-			'Bowie -> Gremlin: \'The power of voodoo\'\n' +
-			'Gremlin -> Bowie: "Who-do?"\n' +
-			'Bowie -> Gremlin: You do!\n' +
-			'Gremlin -> Bowie: Do what?\n' +
-			'Bowie -> Gremlin: Remind me of the babe!\n' +
-			'\n' +
-			'Bowie -> Audience: Sings\n' +
-			'\n' +
-			'terminators box\n'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
+	const SAMPLE_REGEX = new RegExp(
+		/```(?!shell).*\n([^]+?)```/g
+	);
 
-	it('Renders the "Connection Types" example without error', () => {
-		const parsed = parser.parse(
-			'title Connection Types\n' +
-			'\n' +
-			'Foo -> Bar: Simple arrow\n' +
-			'Foo --> Bar: Dashed arrow\n' +
-			'Foo <- Bar: Reversed arrow\n' +
-			'Foo <-- Bar: Reversed dashed arrow\n' +
-			'Foo <-> Bar: Double arrow\n' +
-			'Foo <--> Bar: Double dashed arrow\n' +
-			'\n' +
-			'# An arrow with no label:\n' +
-			'Foo -> Bar\n' +
-			'\n' +
-			'Foo -> Foo: Foo talks to itself\n' +
-			'\n' +
-			'# Arrows leaving on the left and right of the diagram\n' +
-			'[ -> Foo: From the left\n' +
-			'[ <- Foo: To the left\n' +
-			'Foo -> ]: To the right\n' +
-			'Foo <- ]: From the right\n' +
-			'[ -> ]: Left to right!\n' +
-			'# (etc.)\n'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
+	function findSamples(content) {
+		SAMPLE_REGEX.lastIndex = 0;
+		const results = [];
+		while(true) {
+			const match = SAMPLE_REGEX.exec(content);
+			if(!match) {
+				break;
+			}
+			results.push(match[1]);
+		}
+		return results;
+	}
 
-	it('Renders the "Notes & State" example without error', () => {
-		const parsed = parser.parse(
-			'title Note Placements\n' +
-			'\n' +
-			'note over Foo: Foo says something\n' +
-			'note left of Foo: Stuff\n' +
-			'note right of Bar: More stuff\n' +
-			'note over Foo, Bar: "Foo and Bar\n' +
-			'on multiple lines"\n' +
-			'note between Foo, Bar: Link\n' +
-			'\n' +
-			'text right: \'Comments\\nOver here\!\'\n' +
-			'\n' +
-			'state over Foo: Foo is ponderous'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
-
-	it('Renders the "Logic" example without error', () => {
-		const parsed = parser.parse(
-			'title At the Bank\n' +
-			'\n' +
-			'begin Person, ATM, Bank\n' +
-			'Person -> ATM: Request money\n' +
-			'ATM -> Bank: Check funds\n' +
-			'if fraud detected\n' +
-			'  Bank -> Police: "Get \'em!"\n' +
-			'  Police -> Person: "You\'re nicked"\n' +
-			'  end Police\n' +
-			'else if sufficient funds\n' +
-			'  ATM -> Bank: Withdraw funds\n' +
-			'  repeat until "all requested money\n' +
-			'                has been handed over"\n' +
-			'    ATM -> Person: Dispense note\n' +
-			'  end\n' +
-			'else\n' +
-			'  ATM -> Person: Error\n' +
-			'end'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
-
-	it('Renders the "Multiline Text" example without error', () => {
-		const parsed = parser.parse(
-			'title \'My Multiline\n' +
-			'Title\'\n' +
-			'\n' +
-			'note over Foo: \'Also possible\\nwith escapes\'\n' +
-			'\n' +
-			'Foo -> Bar: \'Lines of text\\non this arrow\'\n' +
-			'\n' +
-			'if \'Even multiline\\ninside conditions like this\'\n' +
-			'  Foo -> \'Multiline\\nagent\'\n' +
-			'end\n' +
-			'\n' +
-			'state over Foo: \'Newlines here,\\ntoo!\''
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
-
-	it('Renders the "Short-Lived Agents" example without error', () => {
-		const parsed = parser.parse(
-			'title "Baz doesn\'t live long"\n' +
-			'\n' +
-			'Foo -> Bar\n' +
-			'begin Baz\n' +
-			'Bar -> Baz\n' +
-			'Baz -> Foo\n' +
-			'end Baz\n' +
-			'Foo -> Bar\n' +
-			'\n' +
-			'# Foo and Bar end with black bars\n' +
-			'terminators bar\n' +
-			'# (options are: box, bar, cross, none)'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
-
-	it('Renders the "Alternative Agent Ordering" example without error', () => {
-		const parsed = parser.parse(
-			'define Baz, Foo\n' +
-			'Foo -> Bar\n' +
-			'Bar -> Baz\n'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
-
-	it('Renders the "Simultaneous Actions" example without error', () => {
-		const parsed = parser.parse(
-			'begin A, B, C, D\n' +
-			'A -> C\n' +
-			'\n' +
-			'# Define a marker which can be returned to later\n' +
-			'\n' +
-			'some primary process:\n' +
-			'A -> B\n' +
-			'B -> A\n' +
-			'A -> B\n' +
-			'B -> A\n' +
-			'\n' +
-			'# Return to the defined marker\n' +
-			'# (should be interpreted as no-higher-then the marker; may be\n' +
-			'# pushed down to keep relative action ordering consistent)\n' +
-			'\n' +
-			'simultaneously with some primary process:\n' +
-			'C -> D\n' +
-			'D -> C\n' +
-			'end D\n' +
-			'C -> A\n' +
-			'\n' +
-			'# The marker name is optional; using "simultaneously:" with no\n' +
-			'# marker will jump to the top of the entire sequence.'
-		);
-		const sequence = generator.generate(parsed);
-		expect(() => renderer.render(sequence)).not.toThrow();
-	});
+	return (fetch('README.md')
+		.then((response) => response.text())
+		.then(findSamples)
+		.then((samples) => samples.forEach((code, i) => {
+			it('Renders readme example #' + (i + 1) + ' without error', () => {
+				const parsed = parser.parse(code);
+				const sequence = generator.generate(parsed);
+				expect(() => renderer.render(sequence)).not.toThrow();
+			});
+		}))
+	);
 });

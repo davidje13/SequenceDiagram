@@ -55,6 +55,10 @@ Foo -> Foo: Foo talks to itself
 Foo -> +Bar: Foo asks Bar
 -Bar --> Foo: and Bar replies
 
+# * and ! cause agents to be created and destroyed inline
+Bar -> *Baz
+Bar <- !Baz
+
 # Arrows leaving on the left and right of the diagram
 [ -> Foo: From the left
 [ <- Foo: To the left
@@ -258,7 +262,7 @@ Note: the linter can't run from the local filesystem, so you'll need to
 run a local HTTP server to ensure linting is successful. One option if
 you have NPM installed is:
 
-```
+```shell
 # Setup
 npm install http-server -g;
 

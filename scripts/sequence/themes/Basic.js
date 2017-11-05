@@ -18,6 +18,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					right: 10,
 					bottom: 5,
 				},
+				arrowBottom: 5 + 12 * 1.3 / 2,
 				boxAttrs: {
 					'fill': '#FFFFFF',
 					'stroke': '#000000',

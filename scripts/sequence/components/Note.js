@@ -131,8 +131,8 @@ define(['./BaseComponent'], (BaseComponent) => {
 				const infoL = env.agentInfos.get(left);
 				const infoR = env.agentInfos.get(right);
 				return this.renderNote({
-					x0: infoL.x - infoL.currentRad - config.overlap.left,
-					x1: infoR.x + infoR.currentRad + config.overlap.right,
+					x0: infoL.x - infoL.currentMaxRad - config.overlap.left,
+					x1: infoR.x + infoR.currentMaxRad + config.overlap.right,
 					anchor: 'middle',
 					mode,
 					label,
@@ -186,7 +186,7 @@ define(['./BaseComponent'], (BaseComponent) => {
 			const {left, right} = findExtremes(env.agentInfos, agentNames);
 			if(this.isRight) {
 				const info = env.agentInfos.get(right);
-				const x0 = info.x + info.currentRad + config.margin.left;
+				const x0 = info.x + info.currentMaxRad + config.margin.left;
 				return this.renderNote({
 					x0,
 					anchor: 'start',
@@ -195,7 +195,7 @@ define(['./BaseComponent'], (BaseComponent) => {
 				}, env);
 			} else {
 				const info = env.agentInfos.get(left);
-				const x1 = info.x - info.currentRad - config.margin.right;
+				const x1 = info.x - info.currentMaxRad - config.margin.right;
 				return this.renderNote({
 					x1,
 					anchor: 'end',
@@ -232,8 +232,8 @@ define(['./BaseComponent'], (BaseComponent) => {
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);
 			const xMid = (
-				infoL.x + infoL.currentRad +
-				infoR.x - infoR.currentRad
+				infoL.x + infoL.currentMaxRad +
+				infoR.x - infoR.currentMaxRad
 			) / 2;
 
 			return this.renderNote({

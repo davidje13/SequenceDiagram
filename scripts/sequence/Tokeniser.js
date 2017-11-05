@@ -31,10 +31,13 @@ define(['./CodeMirrorMode'], (CMMode) => {
 			unescape,
 			baseToken: {q: true},
 		},
-		{start: /(?=[^ \t\r\n:+\-<>,])/y, end: /(?=[ \t\r\n:+\-<>,])|$/y},
-		{start: /(?=[+\-<>])/y, end: /(?=[^+\-<>])|$/y},
+		{start: /(?=[^ \t\r\n:+\-*!<>,])/y, end: /(?=[ \t\r\n:+\-*!<>,])|$/y},
+		{start: /(?=[\-<>])/y, end: /(?=[^\-<>])|$/y},
 		{start: /,/y, baseToken: {v: ','}},
 		{start: /:/y, baseToken: {v: ':'}},
+		{start: /!/y, baseToken: {v: '!'}},
+		{start: /\+/y, baseToken: {v: '+'}},
+		{start: /\*/y, baseToken: {v: '*'}},
 		{start: /\n/y, baseToken: {v: '\n'}},
 	];
 

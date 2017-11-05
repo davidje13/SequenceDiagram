@@ -79,18 +79,27 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		});
 
 		it('parses optional flags', () => {
-			const parsed = parser.parse('+A -> -B');
+			const parsed = parser.parse('+A -> -*!B');
 			expect(parsed.stages).toEqual([
 				{
 					type: 'connect',
 					agents: [
 						{name: 'A', flags: ['start']},
-						{name: 'B', flags: ['stop']},
+						{name: 'B', flags: ['stop', 'begin', 'end']},
 					],
 					label: jasmine.anything(),
 					options: jasmine.anything(),
 				},
 			]);
+		});
+
+		it('rejects duplicate flags', () => {
+			expect(() => parser.parse('A -> +*+B')).toThrow();
+			expect(() => parser.parse('A -> **B')).toThrow();
+		});
+
+		it('rejects missing agent names', () => {
+			expect(() => parser.parse('A -> +')).toThrow();
 		});
 
 		it('converts multiple entries', () => {

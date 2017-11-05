@@ -26,8 +26,10 @@ define([
 	};
 
 	const CONNECT_AGENT_FLAGS = {
+		'*': 'begin',
 		'+': 'start',
 		'-': 'stop',
+		'!': 'end',
 	};
 
 	const TERMINATOR_TYPES = [
@@ -116,12 +118,19 @@ define([
 		const flags = [];
 		let p = start;
 		for(; p < end; ++ p) {
-			const flag = flagTypes[tokenKeyword(line[p])];
+			const rawFlag = tokenKeyword(line[p]);
+			const flag = flagTypes[rawFlag];
 			if(flag) {
+				if(flags.includes(flag)) {
+					throw new Error('Duplicate agent flag: ' + rawFlag);
+				}
 				flags.push(flag);
 			} else {
 				break;
 			}
+		}
+		if(p >= end) {
+			throw new Error('Missing agent name');
 		}
 		return {
 			name: joinLabel(line, p, end),

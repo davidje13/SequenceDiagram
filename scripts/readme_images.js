@@ -18,7 +18,7 @@
 	}
 
 	const SAMPLE_REGEX = new RegExp(
-		/<img src="screenshots\/([^"]*)"[^>]*>[\s]*```([^]+?)```/g
+		/<img src="screenshots\/([^"]*)"[^>]*>[\s]*```(?!shell).*\n([^]+?)```/g
 	);
 
 	function findSamples(content) {

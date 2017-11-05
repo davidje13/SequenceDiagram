@@ -35,7 +35,6 @@ define(() => {
 			textSizer,
 			state,
 		}*/) {
-			return {};
 		}
 
 		render(/*stage, {
@@ -49,7 +48,6 @@ define(() => {
 			SVGTextBlockClass,
 			state,
 		}*/) {
-			return 0;
 		}
 	}
 

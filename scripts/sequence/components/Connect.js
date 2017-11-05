@@ -83,7 +83,7 @@ define([
 				config.label.margin.bottom
 			);
 
-			const lineX = from.x + from.currentRad;
+			const lineX = from.x + from.currentMaxRad;
 			const y0 = env.primaryY;
 			const x0 = (
 				lineX +
@@ -159,8 +159,8 @@ define([
 				config.label.margin.bottom
 			);
 
-			const x0 = from.x + from.currentRad * dir;
-			const x1 = to.x - to.currentRad * dir;
+			const x0 = from.x + from.currentMaxRad * dir;
+			const x1 = to.x - to.currentMaxRad * dir;
 			let y = env.primaryY;
 
 			SVGShapes.renderBoxedText(label, {

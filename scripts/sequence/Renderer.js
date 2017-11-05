@@ -161,10 +161,10 @@ define([
 			const agentSpaces = new Map();
 			const agentNames = this.visibleAgents.slice();
 
-			const addSpacing = (agentName, spacing) => {
+			const addSpacing = (agentName, {left, right}) => {
 				const current = agentSpaces.get(agentName);
-				current.left = Math.max(current.left, spacing.left);
-				current.right = Math.max(current.right, spacing.right);
+				current.left = Math.max(current.left, left);
+				current.right = Math.max(current.right, right);
 			};
 
 			this.agentInfos.forEach((agentInfo) => {
@@ -366,7 +366,7 @@ define([
 			const touchedAgentNames = [];
 			stages.forEach((stage) => {
 				const component = this.components.get(stage.type);
-				const r = component.renderPre(stage, envPre);
+				const r = component.renderPre(stage, envPre) || {};
 				if(r.topShift !== undefined) {
 					maxTopShift = Math.max(maxTopShift, r.topShift);
 				}
@@ -460,6 +460,7 @@ define([
 					x: null,
 					latestYStart: null,
 					currentRad: 0,
+					currentMaxRad: 0,
 					latestY: 0,
 					maxRPad: 0,
 					maxLPad: 0,

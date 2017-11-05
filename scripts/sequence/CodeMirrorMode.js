@@ -46,24 +46,57 @@ define(['core/ArrayUtilities'], (array) => {
 		};
 	}
 
-	const CM_CONNECT = {type: 'keyword', suggest: true, then: {
-		'+': {type: 'operator', suggest: true, then: {'': CM_AGENT_TO_OPTTEXT}},
-		'-': {type: 'operator', suggest: true, then: {'': CM_AGENT_TO_OPTTEXT}},
-		'': CM_AGENT_TO_OPTTEXT,
-	}};
+	function makeCMOperatorBlock(exit) {
+		const op = {type: 'operator', suggest: true, then: {
+			'+': CM_ERROR,
+			'-': CM_ERROR,
+			'*': CM_ERROR,
+			'!': CM_ERROR,
+			'': exit,
+		}};
+		const pm = {type: 'operator', suggest: true, then: {
+			'+': CM_ERROR,
+			'-': CM_ERROR,
+			'*': op,
+			'!': op,
+			'': exit,
+		}};
+		const se = {type: 'operator', suggest: true, then: {
+			'+': op,
+			'-': op,
+			'*': CM_ERROR,
+			'!': CM_ERROR,
+			'': exit,
+		}};
+		return {
+			'+': pm,
+			'-': pm,
+			'*': se,
+			'!': se,
+			'': exit,
+		};
+	}
 
-	const CM_CONNECT_FULL = {type: 'variable', suggest: 'Agent', then: {
-		'->': CM_CONNECT,
-		'-->': CM_CONNECT,
-		'<-': CM_CONNECT,
-		'<--': CM_CONNECT,
-		'<->': CM_CONNECT,
-		'<-->': CM_CONNECT,
-		':': {type: 'operator', suggest: true, override: 'Label', then: {}},
-		'': 0,
-	}};
+	function makeCMConnect() {
+		const connect = {
+			type: 'keyword',
+			suggest: true,
+			then: makeCMOperatorBlock(CM_AGENT_TO_OPTTEXT),
+		};
 
-	const CM_COMMANDS = {type: 'error line-error', then: {
+		return makeCMOperatorBlock({type: 'variable', suggest: 'Agent', then: {
+			'->': connect,
+			'-->': connect,
+			'<-': connect,
+			'<--': connect,
+			'<->': connect,
+			'<-->': connect,
+			':': {type: 'operator', suggest: true, override: 'Label', then: {}},
+			'': 0,
+		}});
+	}
+
+	const CM_COMMANDS = {type: 'error line-error', then: Object.assign({
 		'title': {type: 'keyword', suggest: true, then: {
 			'': CM_TEXT_TO_END,
 		}},
@@ -134,10 +167,7 @@ define(['core/ArrayUtilities'], (array) => {
 				}},
 			}},
 		}},
-		'+': {type: 'operator', suggest: true, then: {'': CM_CONNECT_FULL}},
-		'-': {type: 'operator', suggest: true, then: {'': CM_CONNECT_FULL}},
-		'': CM_CONNECT_FULL,
-	}};
+	}, makeCMConnect())};
 
 	function cmCappedToken(token, current) {
 		if(Object.keys(current.then).length > 0) {

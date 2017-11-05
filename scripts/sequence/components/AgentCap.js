@@ -23,11 +23,18 @@ define([
 			return {
 				left: width / 2,
 				right: width / 2,
+				radius: width / 2,
 			};
 		}
 
-		topShift() {
-			return 0;
+		topShift({label}, env) {
+			const config = env.theme.agentCap.box;
+			const height = (
+				env.textSizer.measureHeight(config.labelAttrs, label) +
+				config.padding.top +
+				config.padding.bottom
+			);
+			return Math.max(0, height - config.arrowBottom);
 		}
 
 		render(y, {x, label}, env) {
@@ -57,6 +64,7 @@ define([
 			return {
 				left: config.size / 2,
 				right: config.size / 2,
+				radius: 0,
 			};
 		}
 
@@ -98,6 +106,7 @@ define([
 			return {
 				left: width / 2,
 				right: width / 2,
+				radius: width / 2,
 			};
 		}
 
@@ -131,7 +140,11 @@ define([
 
 	class CapNone {
 		separation({currentRad}) {
-			return {left: currentRad, right: currentRad};
+			return {
+				left: currentRad,
+				right: currentRad,
+				radius: currentRad,
+			};
 		}
 
 		topShift(agentInfo, env) {
@@ -162,18 +175,24 @@ define([
 			this.begin = begin;
 		}
 
+		separationPre({mode, agentNames}, env) {
+			agentNames.forEach((name) => {
+				const agentInfo = env.agentInfos.get(name);
+				const sep = AGENT_CAPS[mode].separation(agentInfo, env);
+				env.addSpacing(name, sep);
+				agentInfo.currentMaxRad = Math.max(
+					agentInfo.currentMaxRad,
+					sep.radius
+				);
+			});
+		}
+
 		separation({mode, agentNames}, env) {
 			if(this.begin) {
 				array.mergeSets(env.visibleAgents, agentNames);
 			} else {
 				array.removeAll(env.visibleAgents, agentNames);
 			}
-
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
-				const separationFn = AGENT_CAPS[mode].separation;
-				env.addSpacing(name, separationFn(agentInfo, env));
-			});
 		}
 
 		renderPre({mode, agentNames}, env) {
@@ -182,6 +201,9 @@ define([
 				const agentInfo = env.agentInfos.get(name);
 				const topShift = AGENT_CAPS[mode].topShift(agentInfo, env);
 				maxTopShift = Math.max(maxTopShift, topShift);
+
+				const r = AGENT_CAPS[mode].separation(agentInfo, env).radius;
+				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 			});
 			return {
 				agentNames,

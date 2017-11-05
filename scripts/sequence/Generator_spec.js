@@ -426,6 +426,51 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('adds parallel begin stages', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['begin']}]),
+			]});
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				GENERATED.parallel([
+					GENERATED.beginAgents(['B']),
+					GENERATED.connect(['A', 'B']),
+				]),
+				GENERATED.endAgents(['A', 'B']),
+			]);
+		});
+
+		it('adds parallel end stages', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['end']}]),
+			]});
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B']),
+				GENERATED.parallel([
+					GENERATED.connect(['A', 'B']),
+					GENERATED.endAgents(['B']),
+				]),
+				GENERATED.endAgents(['A']),
+			]);
+		});
+
+		it('implicitly ends highlighting when ending a stage', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+				PARSED.connect(['A', {name: 'B', flags: ['end']}]),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.parallel([
+					GENERATED.connect(['A', 'B']),
+					GENERATED.highlight(['B'], false),
+					GENERATED.endAgents(['B']),
+				]),
+				GENERATED.endAgents(['A']),
+			]);
+		});
+
 		it('rejects conflicting flags', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.connect(['A', {name: 'B', flags: ['start', 'stop']}]),
@@ -435,6 +480,17 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect([
 					{name: 'A', flags: ['start']},
 					{name: 'A', flags: ['stop']},
+				]),
+			]})).toThrow();
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect(['A', {name: 'B', flags: ['begin', 'end']}]),
+			]})).toThrow();
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect([
+					{name: 'A', flags: ['begin']},
+					{name: 'A', flags: ['end']},
 				]),
 			]})).toThrow();
 		});

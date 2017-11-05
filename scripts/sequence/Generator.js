@@ -25,8 +25,8 @@ define(['core/ArrayUtilities'], (array) => {
 		return agent.name;
 	}
 
-	function agentHasFlag(flag) {
-		return (agent) => agent.flags.includes(flag);
+	function agentHasFlag(flag, has = true) {
+		return (agent) => (agent.flags.includes(flag) === has);
 	}
 
 	const MERGABLE = {
@@ -235,7 +235,7 @@ define(['core/ArrayUtilities'], (array) => {
 			array.mergeSets(this.agents, agents, agentEqCheck);
 		}
 
-		setAgentVis(agents, visible, mode, checked = false) {
+		setAgentVisRaw(agents, visible, mode, checked = false) {
 			const filteredAgents = agents.filter((agent) => {
 				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
 				if(state.locked) {
@@ -267,6 +267,15 @@ define(['core/ArrayUtilities'], (array) => {
 				agentNames: filteredAgents.map(getAgentName),
 				mode,
 			};
+		}
+
+		setAgentVis(agents, visible, mode, checked = false) {
+			return this.setAgentVisRaw(
+				agents.map(convertAgent),
+				visible,
+				mode,
+				checked
+			);
 		}
 
 		setAgentHighlight(agents, highlighted, checked = false) {
@@ -340,15 +349,24 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleConnect({agents, label, options}) {
-			const colAgents = agents.map(convertAgent);
-			this.addStage(this.setAgentVis(colAgents, true, 'box'));
-			this.defineAgents(colAgents);
+			const beginAgents = agents.filter(agentHasFlag('begin'));
+			const endAgents = agents.filter(agentHasFlag('end'));
+			if(array.hasIntersection(beginAgents, endAgents, agentEqCheck)) {
+				throw new Error('Cannot set agent visibility multiple times');
+			}
 
 			const startAgents = agents.filter(agentHasFlag('start'));
 			const stopAgents = agents.filter(agentHasFlag('stop'));
+			array.mergeSets(stopAgents, endAgents);
 			if(array.hasIntersection(startAgents, stopAgents, agentEqCheck)) {
 				throw new Error('Cannot set agent highlighting multiple times');
 			}
+
+			this.defineAgents(agents.map(convertAgent));
+
+			const implicitBegin = agents.filter(agentHasFlag('begin', false));
+			this.addStage(this.setAgentVis(implicitBegin, true, 'box'));
+
 			const connectStage = {
 				type: 'connect',
 				agentNames: agents.map(getAgentName),
@@ -357,9 +375,11 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 
 			this.addParallelStages([
+				this.setAgentVis(beginAgents, true, 'box', true),
 				this.setAgentHighlight(startAgents, true, true),
 				connectStage,
 				this.setAgentHighlight(stopAgents, false, true),
+				this.setAgentVis(endAgents, false, 'cross', true),
 			]);
 		}
 
@@ -371,7 +391,7 @@ define(['core/ArrayUtilities'], (array) => {
 				colAgents = agents.map(convertAgent);
 			}
 
-			this.addStage(this.setAgentVis(colAgents, true, 'box'));
+			this.addStage(this.setAgentVisRaw(colAgents, true, 'box'));
 			this.defineAgents(colAgents);
 
 			this.addStage({
@@ -383,23 +403,17 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleAgentDefine({agents}) {
-			const colAgents = agents.map(convertAgent);
-			this.defineAgents(colAgents);
+			this.defineAgents(agents.map(convertAgent));
 		}
 
 		handleAgentBegin({agents, mode}) {
-			this.addStage(this.setAgentVis(
-				agents.map(convertAgent),
-				true,
-				mode,
-				true
-			));
+			this.addStage(this.setAgentVis(agents, true, mode, true));
 		}
 
 		handleAgentEnd({agents, mode}) {
 			this.addParallelStages([
 				this.setAgentHighlight(agents, false),
-				this.setAgentVis(agents.map(convertAgent), false, mode, true),
+				this.setAgentVis(agents, false, mode, true),
 			]);
 		}
 
@@ -471,7 +485,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 			this.addParallelStages([
 				this.setAgentHighlight(this.agents, false),
-				this.setAgentVis(this.agents, false, terminators),
+				this.setAgentVisRaw(this.agents, false, terminators),
 			]);
 
 			addBounds(
