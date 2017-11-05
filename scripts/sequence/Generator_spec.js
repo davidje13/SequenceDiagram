@@ -8,7 +8,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			if(typeof item === 'object') {
 				return item;
 			} else {
-				return {name: item, flags: []};
+				return {name: item, alias: '', flags: []};
 			}
 		});
 	}
@@ -231,6 +231,33 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('converts aliases', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.defineAgents([{name: 'Baz', alias: 'B', flags: []}]),
+				PARSED.connect(['A', 'B']),
+			]});
+			expect(sequence.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: 'Baz', anchorRight: false},
+				{name: 'A', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+		});
+
+		it('rejects duplicate aliases', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.defineAgents([{name: 'Foo', alias: 'B', flags: []}]),
+				PARSED.defineAgents([{name: 'Bar', alias: 'B', flags: []}]),
+			]})).toThrow();
+		});
+
+		it('rejects using agent names as aliases', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.defineAgents([{name: 'Foo', alias: 'B', flags: []}]),
+				PARSED.defineAgents([{name: 'Bar', alias: 'Foo', flags: []}]),
+			]})).toThrow();
+		});
+
 		it('creates implicit begin stages for agents when used', () => {
 			const sequence = generator.generate({stages: [
 				PARSED.connect(['A', 'B']),
@@ -347,6 +374,16 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('removes duplicate begin agents', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'A']),
+			]});
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				jasmine.anything(),
+			]);
+		});
+
 		it('collapses adjacent begin statements', () => {
 			const sequence = generator.generate({stages: [
 				PARSED.connect(['A', 'B']),
@@ -375,6 +412,17 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.connect(jasmine.anything()),
 				GENERATED.beginAgents(['C', 'D', 'E']),
 				jasmine.anything(),
+			]);
+		});
+
+		it('removes duplicate end agents', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A']),
+				PARSED.endAgents(['A', 'A']),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.endAgents(['A']),
 			]);
 		});
 
@@ -409,8 +457,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('adds parallel highlighting stages', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
-				PARSED.connect(['A', {name: 'B', flags: ['stop']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['stop']}]),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
@@ -428,7 +476,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('adds parallel begin stages', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['begin']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['begin']}]),
 			]});
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
@@ -442,7 +490,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('adds parallel end stages', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['end']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['end']}]),
 			]});
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B']),
@@ -456,8 +504,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('implicitly ends highlighting when ending a stage', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
-				PARSED.connect(['A', {name: 'B', flags: ['end']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['end']}]),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
@@ -473,31 +521,40 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('rejects conflicting flags', () => {
 			expect(() => generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['start', 'stop']}]),
-			]})).toThrow();
-
-			expect(() => generator.generate({stages: [
 				PARSED.connect([
-					{name: 'A', flags: ['start']},
-					{name: 'A', flags: ['stop']},
+					'A',
+					{name: 'B', alias: '', flags: ['start', 'stop']},
 				]),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['begin', 'end']}]),
+				PARSED.connect([
+					{name: 'A', alias: '', flags: ['start']},
+					{name: 'A', alias: '', flags: ['stop']},
+				]),
 			]})).toThrow();
 
 			expect(() => generator.generate({stages: [
 				PARSED.connect([
-					{name: 'A', flags: ['begin']},
-					{name: 'A', flags: ['end']},
+					'A',
+					{name: 'B', alias: '', flags: ['begin', 'end']},
+				]),
+			]})).toThrow();
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect([
+					{name: 'A', alias: '', flags: ['begin']},
+					{name: 'A', alias: '', flags: ['end']},
 				]),
 			]})).toThrow();
 		});
 
 		it('adds implicit highlight end with implicit terminator', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+				PARSED.connect([
+					'A',
+					{name: 'B', alias: '', flags: ['start']},
+				]),
 			]});
 			expect(sequence.stages).toEqual([
 				jasmine.anything(),
@@ -511,7 +568,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('adds implicit highlight end with explicit terminator', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.connect(['A', {name: 'B', flags: ['start']}]),
+				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
 				PARSED.endAgents(['A', 'B']),
 			]});
 			expect(sequence.stages).toEqual([
@@ -527,8 +584,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		it('collapses adjacent end statements containing highlighting', () => {
 			const sequence = generator.generate({stages: [
 				PARSED.connect([
-					{name: 'A', flags: ['start']},
-					{name: 'B', flags: ['start']},
+					{name: 'A', alias: '', flags: ['start']},
+					{name: 'B', alias: '', flags: ['start']},
 				]),
 				PARSED.endAgents(['A']),
 				PARSED.endAgents(['B']),
@@ -847,6 +904,15 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				}),
 				jasmine.anything(),
 			]);
+		});
+
+		it('rejects note between with a repeated agent', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.note('note between', ['A', 'A'], {
+					mode: 'foo',
+					label: 'bar',
+				}),
+			]})).toThrow();
 		});
 
 		it('defaults to showing notes around the entire diagram', () => {

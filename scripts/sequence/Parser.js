@@ -114,7 +114,27 @@ define([
 		return -1;
 	}
 
-	function readAgent(line, start, end, flagTypes = {}) {
+	function readAgentAlias(line, start, end, enableAlias) {
+		let aliasSep = -1;
+		if(enableAlias) {
+			aliasSep = findToken(line, 'as', start);
+		}
+		if(aliasSep === -1 || aliasSep >= end) {
+			aliasSep = end;
+		}
+		if(start >= aliasSep) {
+			throw new Error('Missing agent name');
+		}
+		return {
+			name: joinLabel(line, start, aliasSep),
+			alias: joinLabel(line, aliasSep + 1, end),
+		};
+	}
+
+	function readAgent(line, start, end, {
+		flagTypes = {},
+		aliases = false,
+	} = {}) {
 		const flags = [];
 		let p = start;
 		for(; p < end; ++ p) {
@@ -129,23 +149,22 @@ define([
 				break;
 			}
 		}
-		if(p >= end) {
-			throw new Error('Missing agent name');
-		}
+		const {name, alias} = readAgentAlias(line, p, end, aliases);
 		return {
-			name: joinLabel(line, p, end),
+			name,
+			alias,
 			flags,
 		};
 	}
 
-	function readAgentList(line, start, end, flagTypes) {
+	function readAgentList(line, start, end, readAgentOpts) {
 		const list = [];
 		let currentStart = -1;
 		for(let i = start; i < end; ++ i) {
 			const token = line[i];
 			if(tokenKeyword(token) === ',') {
 				if(currentStart !== -1) {
-					list.push(readAgent(line, currentStart, i, flagTypes));
+					list.push(readAgent(line, currentStart, i, readAgentOpts));
 					currentStart = -1;
 				}
 			} else if(currentStart === -1) {
@@ -153,7 +172,7 @@ define([
 			}
 		}
 		if(currentStart !== -1) {
-			list.push(readAgent(line, currentStart, end, flagTypes));
+			list.push(readAgent(line, currentStart, end, readAgentOpts));
 		}
 		return list;
 	}
@@ -208,7 +227,7 @@ define([
 				return null;
 			}
 			return Object.assign({
-				agents: readAgentList(line, 1, line.length),
+				agents: readAgentList(line, 1, line.length, {aliases: true}),
 			}, type);
 		},
 
@@ -280,11 +299,14 @@ define([
 			if(typePos <= 0 || typePos >= labelSep - 1) {
 				return null;
 			}
+			const readAgentOpts = {
+				flagTypes: CONNECT_AGENT_FLAGS,
+			};
 			return {
 				type: 'connect',
 				agents: [
-					readAgent(line, 0, typePos, CONNECT_AGENT_FLAGS),
-					readAgent(line, typePos + 1, labelSep, CONNECT_AGENT_FLAGS),
+					readAgent(line, 0, typePos, readAgentOpts),
+					readAgent(line, typePos + 1, labelSep, readAgentOpts),
 				],
 				label: joinLabel(line, labelSep + 1),
 				options,

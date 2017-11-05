@@ -12,7 +12,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		} = {}) => {
 			return {
 				type: 'connect',
-				agents: agentNames.map((name) => ({name, flags: []})),
+				agents: agentNames.map((name) => ({
+					name,
+					alias: '',
+					flags: [],
+				})),
 				label,
 				options: {
 					line,
@@ -64,6 +68,15 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('propagates aliases', () => {
+			const parsed = parser.parse('define Foo Bar as A B');
+			expect(parsed.stages).toEqual([
+				{type: 'agent define', agents: [
+					{name: 'Foo Bar', alias: 'A B', flags: []},
+				]},
+			]);
+		});
+
 		it('respects spacing within agent names', () => {
 			const parsed = parser.parse('A+B -> C  D');
 			expect(parsed.stages).toEqual([
@@ -84,8 +97,12 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				{
 					type: 'connect',
 					agents: [
-						{name: 'A', flags: ['start']},
-						{name: 'B', flags: ['stop', 'begin', 'end']},
+						{name: 'A', alias: '', flags: ['start']},
+						{name: 'B', alias: '', flags: [
+							'stop',
+							'begin',
+							'end',
+						]},
 					],
 					label: jasmine.anything(),
 					options: jasmine.anything(),
@@ -192,7 +209,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('note over A: hello there');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: [{name: 'A', flags: []}],
+				agents: [{name: 'A', alias: '', flags: []}],
 				mode: 'note',
 				label: 'hello there',
 			}]);
@@ -209,31 +226,34 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed.stages).toEqual([
 				{
 					type: 'note left',
-					agents: [{name: 'A', flags: []}],
+					agents: [{name: 'A', alias: '', flags: []}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note left',
-					agents: [{name: 'A', flags: []}],
+					agents: [{name: 'A', alias: '', flags: []}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note right',
-					agents: [{name: 'A', flags: []}],
+					agents: [{name: 'A', alias: '', flags: []}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note right',
-					agents: [{name: 'A', flags: []}],
+					agents: [{name: 'A', alias: '', flags: []}],
 					mode: 'note',
 					label: 'hello there',
 				},
 				{
 					type: 'note between',
-					agents: [{name: 'A', flags: []}, {name: 'B', flags: []}],
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: 'B', alias: '', flags: []},
+					],
 					mode: 'note',
 					label: 'hi',
 				},
@@ -244,7 +264,10 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('note over A B, C D: hi');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: [{name: 'A B', flags: []}, {name: 'C D', flags: []}],
+				agents: [
+					{name: 'A B', alias: '', flags: []},
+					{name: 'C D', alias: '', flags: []},
+				],
 				mode: 'note',
 				label: 'hi',
 			}]);
@@ -258,7 +281,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('state over A: doing stuff');
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
-				agents: [{name: 'A', flags: []}],
+				agents: [{name: 'A', alias: '', flags: []}],
 				mode: 'state',
 				label: 'doing stuff',
 			}]);
@@ -272,7 +295,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			const parsed = parser.parse('text right of A: doing stuff');
 			expect(parsed.stages).toEqual([{
 				type: 'note right',
-				agents: [{name: 'A', flags: []}],
+				agents: [{name: 'A', alias: '', flags: []}],
 				mode: 'text',
 				label: 'doing stuff',
 			}]);
@@ -287,16 +310,25 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed.stages).toEqual([
 				{
 					type: 'agent define',
-					agents: [{name: 'A', flags: []}, {name: 'B', flags: []}],
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: 'B', alias: '', flags: []},
+					],
 				},
 				{
 					type: 'agent begin',
-					agents: [{name: 'A', flags: []}, {name: 'B', flags: []}],
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: 'B', alias: '', flags: []},
+					],
 					mode: 'box',
 				},
 				{
 					type: 'agent end',
-					agents: [{name: 'A', flags: []}, {name: 'B', flags: []}],
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: 'B', alias: '', flags: []},
+					],
 					mode: 'cross',
 				},
 			]);

@@ -103,11 +103,10 @@ define(['./BaseComponent'], (BaseComponent) => {
 				config.padding.right
 			);
 
-			if(agentNames.length > 1) {
-				const {left, right} = findExtremes(env.agentInfos, agentNames);
-				const infoL = env.agentInfos.get(left);
-				const infoR = env.agentInfos.get(right);
-
+			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const infoL = env.agentInfos.get(left);
+			const infoR = env.agentInfos.get(right);
+			if(infoL !== infoR) {
 				const hangL = infoL.currentMaxRad + config.overlap.left;
 				const hangR = infoR.currentMaxRad + config.overlap.right;
 
@@ -116,7 +115,7 @@ define(['./BaseComponent'], (BaseComponent) => {
 				env.addSpacing(left, {left: hangL, right: 0});
 				env.addSpacing(right, {left: 0, right: hangR});
 			} else {
-				env.addSpacing(agentNames[0], {
+				env.addSpacing(left, {
 					left: width / 2,
 					right: width / 2,
 				});
@@ -126,10 +125,10 @@ define(['./BaseComponent'], (BaseComponent) => {
 		render({agentNames, mode, label}, env) {
 			const config = env.theme.note[mode];
 
-			if(agentNames.length > 1) {
-				const {left, right} = findExtremes(env.agentInfos, agentNames);
-				const infoL = env.agentInfos.get(left);
-				const infoR = env.agentInfos.get(right);
+			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const infoL = env.agentInfos.get(left);
+			const infoR = env.agentInfos.get(right);
+			if(infoL !== infoR) {
 				return this.renderNote({
 					x0: infoL.x - infoL.currentMaxRad - config.overlap.left,
 					x1: infoR.x + infoR.currentMaxRad + config.overlap.right,
@@ -138,7 +137,7 @@ define(['./BaseComponent'], (BaseComponent) => {
 					label,
 				}, env);
 			} else {
-				const xMid = env.agentInfos.get(agentNames[0]).x;
+				const xMid = infoL.x;
 				return this.renderNote({
 					xMid,
 					anchor: 'middle',

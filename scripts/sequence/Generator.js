@@ -17,10 +17,6 @@ define(['core/ArrayUtilities'], (array) => {
 		return {name, anchorRight};
 	}
 
-	function convertAgent(agent) {
-		return makeAgent(agent.name);
-	}
-
 	function getAgentName(agent) {
 		return agent.name;
 	}
@@ -181,6 +177,7 @@ define(['core/ArrayUtilities'], (array) => {
 	return class Generator {
 		constructor() {
 			this.agentStates = new Map();
+			this.agentAliases = new Map();
 			this.agents = [];
 			this.blockCount = 0;
 			this.nesting = [];
@@ -204,6 +201,29 @@ define(['core/ArrayUtilities'], (array) => {
 				'block end': this.handleBlockEnd.bind(this),
 			};
 			this.handleStage = this.handleStage.bind(this);
+			this.convertAgent = this.convertAgent.bind(this);
+		}
+
+		convertAgent({alias, name}) {
+			if(alias) {
+				if(this.agentAliases.has(name)) {
+					throw new Error(
+						'Cannot alias ' + name + '; it is already an alias'
+					);
+				}
+				const old = this.agentAliases.get(alias);
+				if(
+					(old && old !== alias) ||
+					this.agents.some((agent) => (agent.name === alias))
+				) {
+					throw new Error(
+						'Cannot use ' + alias +
+						' as an alias; it is already in use'
+					);
+				}
+				this.agentAliases.set(alias, name);
+			}
+			return makeAgent(this.agentAliases.get(name) || name);
 		}
 
 		addStage(stage, isVisible = true) {
@@ -230,13 +250,18 @@ define(['core/ArrayUtilities'], (array) => {
 			});
 		}
 
-		defineAgents(agents) {
-			array.mergeSets(this.currentNest.agents, agents, agentEqCheck);
-			array.mergeSets(this.agents, agents, agentEqCheck);
+		defineAgents(colAgents) {
+			array.mergeSets(this.currentNest.agents, colAgents, agentEqCheck);
+			array.mergeSets(this.agents, colAgents, agentEqCheck);
 		}
 
-		setAgentVisRaw(agents, visible, mode, checked = false) {
-			const filteredAgents = agents.filter((agent) => {
+		setAgentVis(colAgents, visible, mode, checked = false) {
+			const seen = new Set();
+			const filteredAgents = colAgents.filter((agent) => {
+				if(seen.has(agent.name)) {
+					return false;
+				}
+				seen.add(agent.name);
 				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
 				if(state.locked) {
 					if(checked) {
@@ -269,17 +294,8 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
-		setAgentVis(agents, visible, mode, checked = false) {
-			return this.setAgentVisRaw(
-				agents.map(convertAgent),
-				visible,
-				mode,
-				checked
-			);
-		}
-
-		setAgentHighlight(agents, highlighted, checked = false) {
-			const filteredAgents = agents.filter((agent) => {
+		setAgentHighlight(colAgents, highlighted, checked = false) {
+			const filteredAgents = colAgents.filter((agent) => {
 				const state = this.agentStates.get(agent.name) || DEFAULT_AGENT;
 				if(state.locked) {
 					if(checked) {
@@ -349,27 +365,44 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleConnect({agents, label, options}) {
-			const beginAgents = agents.filter(agentHasFlag('begin'));
-			const endAgents = agents.filter(agentHasFlag('end'));
+			const beginAgents = (agents
+				.filter(agentHasFlag('begin'))
+				.map(this.convertAgent)
+			);
+			const endAgents = (agents
+				.filter(agentHasFlag('end'))
+				.map(this.convertAgent)
+			);
 			if(array.hasIntersection(beginAgents, endAgents, agentEqCheck)) {
 				throw new Error('Cannot set agent visibility multiple times');
 			}
 
-			const startAgents = agents.filter(agentHasFlag('start'));
-			const stopAgents = agents.filter(agentHasFlag('stop'));
+			const startAgents = (agents
+				.filter(agentHasFlag('start'))
+				.map(this.convertAgent)
+			);
+			const stopAgents = (agents
+				.filter(agentHasFlag('stop'))
+				.map(this.convertAgent)
+			);
 			array.mergeSets(stopAgents, endAgents);
 			if(array.hasIntersection(startAgents, stopAgents, agentEqCheck)) {
 				throw new Error('Cannot set agent highlighting multiple times');
 			}
 
-			this.defineAgents(agents.map(convertAgent));
+			const colAgents = agents.map(this.convertAgent);
+			const agentNames = colAgents.map(getAgentName);
+			this.defineAgents(colAgents);
 
-			const implicitBegin = agents.filter(agentHasFlag('begin', false));
+			const implicitBegin = (agents
+				.filter(agentHasFlag('begin', false))
+				.map(this.convertAgent)
+			);
 			this.addStage(this.setAgentVis(implicitBegin, true, 'box'));
 
 			const connectStage = {
 				type: 'connect',
-				agentNames: agents.map(getAgentName),
+				agentNames,
 				label,
 				options,
 			};
@@ -388,32 +421,39 @@ define(['core/ArrayUtilities'], (array) => {
 			if(agents.length === 0) {
 				colAgents = NOTE_DEFAULT_AGENTS[type] || [];
 			} else {
-				colAgents = agents.map(convertAgent);
+				colAgents = agents.map(this.convertAgent);
+			}
+			const agentNames = colAgents.map(getAgentName);
+			const uniqueAgents = new Set(agentNames).size;
+			if(type === 'note between' && uniqueAgents < 2) {
+				throw new Error('note between requires at least 2 agents');
 			}
 
-			this.addStage(this.setAgentVisRaw(colAgents, true, 'box'));
+			this.addStage(this.setAgentVis(colAgents, true, 'box'));
 			this.defineAgents(colAgents);
 
 			this.addStage({
 				type,
-				agentNames: colAgents.map(getAgentName),
+				agentNames,
 				mode,
 				label,
 			});
 		}
 
 		handleAgentDefine({agents}) {
-			this.defineAgents(agents.map(convertAgent));
+			this.defineAgents(agents.map(this.convertAgent));
 		}
 
 		handleAgentBegin({agents, mode}) {
-			this.addStage(this.setAgentVis(agents, true, mode, true));
+			const colAgents = agents.map(this.convertAgent);
+			this.addStage(this.setAgentVis(colAgents, true, mode, true));
 		}
 
 		handleAgentEnd({agents, mode}) {
+			const colAgents = agents.map(this.convertAgent);
 			this.addParallelStages([
-				this.setAgentHighlight(agents, false),
-				this.setAgentVis(agents, false, mode, true),
+				this.setAgentHighlight(colAgents, false),
+				this.setAgentVis(colAgents, false, mode, true),
 			]);
 		}
 
@@ -467,6 +507,7 @@ define(['core/ArrayUtilities'], (array) => {
 		generate({stages, meta = {}}) {
 			this.agentStates.clear();
 			this.markers.clear();
+			this.agentAliases.clear();
 			this.agents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;
@@ -485,7 +526,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 			this.addParallelStages([
 				this.setAgentHighlight(this.agents, false),
-				this.setAgentVisRaw(this.agents, false, terminators),
+				this.setAgentVis(this.agents, false, terminators),
 			]);
 
 			addBounds(

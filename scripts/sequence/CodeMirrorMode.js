@@ -1,183 +1,195 @@
 define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
-	const CM_END = {type: '', suggest: '\n', then: {}};
-	const CM_HIDDEN_END = {type: '', then: {}};
 	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
 
-	function makeCMCommaBlock(type, suggest, exits = {}) {
-		return {type, suggest, then: Object.assign({
+	const CM_COMMANDS = ((() => {
+		const end = {type: '', suggest: '\n', then: {}};
+		const hiddenEnd = {type: '', then: {}};
+
+		const ARROWS = [
+			'->', '-->',
+			'<-', '<--',
+			'<->', '<-->',
+		];
+
+		const textToEnd = {type: 'string', then: {'': 0, '\n': end}};
+		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
-			',': {type: 'operator', suggest: true, then: {
-				'': 1,
+			'as': {type: 'keyword', suggest: true, then: {
+				'': {type: 'variable', suggest: 'Agent', then: {
+					'': 0,
+					',': {type: 'operator', suggest: true, then: {'': 3}},
+					'\n': end,
+				}},
 			}},
-		}, exits)};
-	}
-
-	const CM_TEXT_TO_END = {type: 'string', then: {'': 0, '\n': CM_END}};
-	const CM_AGENT_LIST_TO_END = makeCMCommaBlock('variable', 'Agent', {
-		'\n': CM_END,
-	});
-	const CM_AGENT_LIST_TO_TEXT = makeCMCommaBlock('variable', 'Agent', {
-		':': {type: 'operator', suggest: true, then: {'': CM_TEXT_TO_END}},
-	});
-	const CM_AGENT_TO_OPTTEXT = {type: 'variable', suggest: 'Agent', then: {
-		'': 0,
-		':': {type: 'operator', suggest: true, then: {
-			'': CM_TEXT_TO_END,
-			'\n': CM_HIDDEN_END,
-		}},
-		'\n': CM_END,
-	}};
-
-	function makeCMSideNote(side) {
-		return {
-			type: 'keyword',
-			suggest: [side + ' of ', side + ': '],
-			then: {
-				'of': {type: 'keyword', suggest: true, then: {
-					'': CM_AGENT_LIST_TO_TEXT,
-				}},
-				':': {type: 'operator', suggest: true, then: {
-					'': CM_TEXT_TO_END,
-				}},
-				'': CM_AGENT_LIST_TO_TEXT,
-			},
-		};
-	}
-
-	function makeCMOperatorBlock(exit) {
-		const op = {type: 'operator', suggest: true, then: {
-			'+': CM_ERROR,
-			'-': CM_ERROR,
-			'*': CM_ERROR,
-			'!': CM_ERROR,
-			'': exit,
+			',': {type: 'operator', suggest: true, then: {'': 1}},
+			'\n': end,
 		}};
-		return {
-			'+': {type: 'operator', suggest: true, then: {
+		const agentListToEnd = {type: 'variable', suggest: 'Agent', then: {
+			'': 0,
+			',': {type: 'operator', suggest: true, then: {'': 1}},
+			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
+		}};
+		const agentToOptText = {type: 'variable', suggest: 'Agent', then: {
+			'': 0,
+			':': {type: 'operator', suggest: true, then: {
+				'': textToEnd,
+				'\n': hiddenEnd,
+			}},
+			'\n': end,
+		}};
+
+		function makeSideNote(side) {
+			return {
+				type: 'keyword',
+				suggest: [side + ' of ', side + ': '],
+				then: {
+					'of': {type: 'keyword', suggest: true, then: {
+						'': agentListToEnd,
+					}},
+					':': {type: 'operator', suggest: true, then: {
+						'': textToEnd,
+					}},
+					'': agentListToEnd,
+				},
+			};
+		}
+
+		function makeOpBlock(exit) {
+			const op = {type: 'operator', suggest: true, then: {
 				'+': CM_ERROR,
 				'-': CM_ERROR,
-				'*': op,
+				'*': CM_ERROR,
 				'!': CM_ERROR,
 				'': exit,
-			}},
-			'-': {type: 'operator', suggest: true, then: {
-				'+': CM_ERROR,
-				'-': CM_ERROR,
-				'*': op,
-				'!': {type: 'operator', then: {
+			}};
+			return {
+				'+': {type: 'operator', suggest: true, then: {
 					'+': CM_ERROR,
 					'-': CM_ERROR,
+					'*': op,
+					'!': CM_ERROR,
+					'': exit,
+				}},
+				'-': {type: 'operator', suggest: true, then: {
+					'+': CM_ERROR,
+					'-': CM_ERROR,
+					'*': op,
+					'!': {type: 'operator', then: {
+						'+': CM_ERROR,
+						'-': CM_ERROR,
+						'*': CM_ERROR,
+						'!': CM_ERROR,
+						'': exit,
+					}},
+					'': exit,
+				}},
+				'*': {type: 'operator', suggest: true, then: {
+					'+': op,
+					'-': op,
 					'*': CM_ERROR,
 					'!': CM_ERROR,
 					'': exit,
 				}},
+				'!': op,
 				'': exit,
-			}},
-			'*': {type: 'operator', suggest: true, then: {
-				'+': op,
-				'-': op,
-				'*': CM_ERROR,
-				'!': CM_ERROR,
-				'': exit,
-			}},
-			'!': op,
-			'': exit,
-		};
-	}
+			};
+		}
 
-	function makeCMConnect() {
-		const connect = {
-			type: 'keyword',
-			suggest: true,
-			then: makeCMOperatorBlock(CM_AGENT_TO_OPTTEXT),
-		};
+		function makeCMConnect() {
+			const connect = {
+				type: 'keyword',
+				suggest: true,
+				then: makeOpBlock(agentToOptText),
+			};
 
-		return makeCMOperatorBlock({type: 'variable', suggest: 'Agent', then: {
-			'->': connect,
-			'-->': connect,
-			'<-': connect,
-			'<--': connect,
-			'<->': connect,
-			'<-->': connect,
-			':': {type: 'operator', suggest: true, override: 'Label', then: {}},
-			'': 0,
-		}});
-	}
+			const then = {
+				':': {
+					type: 'operator',
+					suggest: true,
+					override: 'Label',
+					then: {},
+				},
+				'': 0,
+			};
+			ARROWS.forEach((arrow) => (then[arrow] = connect));
+			return makeOpBlock({type: 'variable', suggest: 'Agent', then});
+		}
 
-	const CM_COMMANDS = {type: 'error line-error', then: Object.assign({
-		'title': {type: 'keyword', suggest: true, then: {
-			'': CM_TEXT_TO_END,
-		}},
-		'terminators': {type: 'keyword', suggest: true, then: {
-			'none': {type: 'keyword', suggest: true, then: {}},
-			'cross': {type: 'keyword', suggest: true, then: {}},
-			'box': {type: 'keyword', suggest: true, then: {}},
-			'bar': {type: 'keyword', suggest: true, then: {}},
-		}},
-		'define': {type: 'keyword', suggest: true, then: {
-			'': CM_AGENT_LIST_TO_END,
-		}},
-		'begin': {type: 'keyword', suggest: true, then: {
-			'': CM_AGENT_LIST_TO_END,
-		}},
-		'end': {type: 'keyword', suggest: true, then: {
-			'': CM_AGENT_LIST_TO_END,
-			'\n': CM_END,
-		}},
-		'if': {type: 'keyword', suggest: true, then: {
-			'': CM_TEXT_TO_END,
-			':': {type: 'operator', suggest: true, then: {
-				'': CM_TEXT_TO_END,
+		return {type: 'error line-error', then: Object.assign({
+			'title': {type: 'keyword', suggest: true, then: {
+				'': textToEnd,
 			}},
-			'\n': CM_END,
-		}},
-		'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
-			'if': {type: 'keyword', suggest: 'if: ', then: {
-				'': CM_TEXT_TO_END,
+			'terminators': {type: 'keyword', suggest: true, then: {
+				'none': {type: 'keyword', suggest: true, then: {}},
+				'cross': {type: 'keyword', suggest: true, then: {}},
+				'box': {type: 'keyword', suggest: true, then: {}},
+				'bar': {type: 'keyword', suggest: true, then: {}},
+			}},
+			'define': {type: 'keyword', suggest: true, then: {
+				'': aliasListToEnd,
+			}},
+			'begin': {type: 'keyword', suggest: true, then: {
+				'': aliasListToEnd,
+			}},
+			'end': {type: 'keyword', suggest: true, then: {
+				'': aliasListToEnd,
+				'\n': end,
+			}},
+			'if': {type: 'keyword', suggest: true, then: {
+				'': textToEnd,
 				':': {type: 'operator', suggest: true, then: {
-					'': CM_TEXT_TO_END,
+					'': textToEnd,
+				}},
+				'\n': end,
+			}},
+			'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
+				'if': {type: 'keyword', suggest: 'if: ', then: {
+					'': textToEnd,
+					':': {type: 'operator', suggest: true, then: {
+						'': textToEnd,
+					}},
+				}},
+				'\n': end,
+			}},
+			'repeat': {type: 'keyword', suggest: true, then: {
+				'': textToEnd,
+				':': {type: 'operator', suggest: true, then: {
+					'': textToEnd,
+				}},
+				'\n': end,
+			}},
+			'note': {type: 'keyword', suggest: true, then: {
+				'over': {type: 'keyword', suggest: true, then: {
+					'': agentListToEnd,
+				}},
+				'left': makeSideNote('left'),
+				'right': makeSideNote('right'),
+				'between': {type: 'keyword', suggest: true, then: {
+					'': agentListToEnd,
 				}},
 			}},
-			'\n': CM_END,
-		}},
-		'repeat': {type: 'keyword', suggest: true, then: {
-			'': CM_TEXT_TO_END,
-			':': {type: 'operator', suggest: true, then: {
-				'': CM_TEXT_TO_END,
-			}},
-			'\n': CM_END,
-		}},
-		'note': {type: 'keyword', suggest: true, then: {
-			'over': {type: 'keyword', suggest: true, then: {
-				'': CM_AGENT_LIST_TO_TEXT,
-			}},
-			'left': makeCMSideNote('left'),
-			'right': makeCMSideNote('right'),
-			'between': {type: 'keyword', suggest: true, then: {
-				'': CM_AGENT_LIST_TO_TEXT,
-			}},
-		}},
-		'state': {type: 'keyword', suggest: 'state over ', then: {
-			'over': {type: 'keyword', suggest: true, then: {
-				'': CM_AGENT_LIST_TO_TEXT,
-			}},
-		}},
-		'text': {type: 'keyword', suggest: true, then: {
-			'left': makeCMSideNote('left'),
-			'right': makeCMSideNote('right'),
-		}},
-		'simultaneously': {type: 'keyword', suggest: true, then: {
-			':': {type: 'operator', suggest: true, then: {}},
-			'with': {type: 'keyword', suggest: true, then: {
-				'': {type: 'variable', suggest: 'Label', then: {
-					'': 0,
-					':': {type: 'operator', suggest: true, then: {}},
+			'state': {type: 'keyword', suggest: 'state over ', then: {
+				'over': {type: 'keyword', suggest: true, then: {
+					'': agentListToEnd,
 				}},
 			}},
-		}},
-	}, makeCMConnect())};
+			'text': {type: 'keyword', suggest: true, then: {
+				'left': makeSideNote('left'),
+				'right': makeSideNote('right'),
+			}},
+			'simultaneously': {type: 'keyword', suggest: true, then: {
+				':': {type: 'operator', suggest: true, then: {}},
+				'with': {type: 'keyword', suggest: true, then: {
+					'': {type: 'variable', suggest: 'Label', then: {
+						'': 0,
+						':': {type: 'operator', suggest: true, then: {}},
+					}},
+				}},
+			}},
+		}, makeCMConnect())};
+	})());
 
 	function cmCappedToken(token, current) {
 		if(Object.keys(current.then).length > 0) {

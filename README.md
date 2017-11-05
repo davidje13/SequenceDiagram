@@ -150,6 +150,19 @@ terminators bar
 # (options are: box, bar, cross, none)
 ```
 
+### Agent Aliases
+
+<img src="screenshots/AgentAliases.png" alt="Agent Aliases preview" width="200" align="right" />
+
+```
+define My complicated agent name as A
+define "Another agent name,
+and this one's multi-line!" as B
+
+A -> B: this is much easier
+A <- B: than writing the whole name
+```
+
 ### Alternative Agent Ordering
 
 <img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="150" align="right" />
