@@ -33,16 +33,14 @@ define([
 			parser,
 			generator,
 			renderer,
+			exporter,
 			defaultCode = '',
 			localStorage = '',
 		}) {
-			window.devicePixelRatio = 1;
-			this.canvas = makeNode('canvas');
-			this.context = this.canvas.getContext('2d');
-
 			this.parser = parser;
 			this.generator = generator;
 			this.renderer = renderer;
+			this.exporter = exporter;
 			this.defaultCode = defaultCode;
 			this.localStorage = localStorage;
 			this.minScale = 1.5;
@@ -50,11 +48,8 @@ define([
 			this.debounced = null;
 			this.latestSeq = null;
 			this.renderedSeq = null;
-			this.canvasDirty = true;
-			this.svgDirty = true;
-			this.latestPNG = null;
-			this.latestSVG = null;
-			this.updatingPNG = null;
+			this.pngDirty = true;
+			this.updatingPNG = false;
 
 			this._downloadSVGClick = this._downloadSVGClick.bind(this);
 			this._downloadPNGClick = this._downloadPNGClick.bind(this);
@@ -168,8 +163,7 @@ define([
 		redraw(sequence) {
 			clearTimeout(this.debounced);
 			this.debounced = null;
-			this.canvasDirty = true;
-			this.svgDirty = true;
+			this.pngDirty = true;
 			this.renderedSeq = sequence;
 			this.renderer.render(sequence);
 			this.updateMinSize(this.renderer.width, this.renderer.height);
@@ -250,76 +244,42 @@ define([
 			}
 		}
 
-		getSVGData() {
-			this.forceRender();
-			if(!this.svgDirty) {
-				return this.latestSVG;
-			}
-			this.svgDirty = false;
-			const src = this.renderer.svg().outerHTML;
-			const blob = new Blob([src], {type: 'image/svg+xml'});
-			if(this.latestSVG) {
-				URL.revokeObjectURL(this.latestSVG);
-			}
-			this.latestSVG = URL.createObjectURL(blob);
-			return this.latestSVG;
-		}
-
-		getPNGData(callback) {
-			this.forceRender();
-			if(!this.canvasDirty) {
-				// TODO: this could cause issues if getPNGData is called
-				// while another update is ongoing. Needs a more robust fix
-				callback(this.latestPNG);
-				return;
-			}
-			this.canvasDirty = false;
-			const width = this.renderer.width * PNG_RESOLUTION;
-			const height = this.renderer.height * PNG_RESOLUTION;
-			this.canvas.width = width;
-			this.canvas.height = height;
-			const img = new Image(width, height);
-			img.addEventListener('load', () => {
-				this.context.drawImage(img, 0, 0);
-				this.canvas.toBlob((blob) => {
-					if(this.latestPNG) {
-						URL.revokeObjectURL(this.latestPNG);
-					}
-					this.latestPNG = URL.createObjectURL(blob);
-					callback(this.latestPNG);
-				}, 'image/png');
-			}, {once: true});
-			img.src = this.getSVGData();
-		}
-
 		updatePNGLink() {
-			const nonce = this.updatingPNG = {};
-			this.getPNGData((data) => {
-				if(this.updatingPNG === nonce) {
-					this.downloadPNG.setAttribute('href', data);
-					this.updatingPNG = null;
+			this.forceRender();
+			if(this.updatingPNG || !this.pngDirty) {
+				return false;
+			}
+			this.pngDirty = false;
+			this.updatingPNG = true;
+			this.exporter.getPNGURL(
+				this.renderer,
+				PNG_RESOLUTION,
+				(url, latest) => {
+					if(latest) {
+						this.downloadPNG.setAttribute('href', url);
+						this.updatingPNG = false;
+					}
 				}
-			});
+			);
+			return true;
 		}
 
 		_downloadPNGFocus() {
-			this.forceRender();
-			if(this.canvasDirty) {
-				this.updatePNGLink();
-			}
+			this.updatePNGLink();
 		}
 
 		_downloadPNGClick(e) {
 			if(this.updatingPNG) {
 				e.preventDefault();
-			} else if(this.canvasDirty) {
+			} else if(this.updatePNGLink()) {
 				e.preventDefault();
-				this.updatePNGLink();
 			}
 		}
 
 		_downloadSVGClick() {
-			this.downloadSVG.setAttribute('href', this.getSVGData());
+			this.forceRender();
+			const url = this.exporter.getSVGURL(this.renderer);
+			this.downloadSVG.setAttribute('href', url);
 		}
 	};
 });

@@ -1,0 +1,60 @@
+html, body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	margin-bottom: 50px;
+	background: #EEEEEE;
+}
+
+.status {
+	text-align: center;
+	font-size: 2em;
+	margin: 10px;
+}
+
+.hold {
+	display: block;
+	width: 920px;
+	background: #FFFFFF;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+	padding: 5px;
+	margin: 10px auto;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.hold > svg {
+	width: 300px;
+	height: auto;
+	margin-right: 10px;
+}
+
+.hold > .raster {
+	width: 300px;
+	margin-right: 10px;
+}
+
+.hold > .original {
+	width: 300px;
+	background: #F8F8F8;
+}
+
+.hold a {
+	display: block;
+	text-align: center;
+	font-family: sans-serif;
+	padding: 15px;
+	margin: 5px -5px -5px;
+}
+
+.hold a:link, .hold a:visited {
+	color: #666699;
+	text-decoration: none;
+	cursor: pointer;
+}
+.hold a:active, .hold a:hover {
+	background: #EEEEEE;
+	color: #6666CC;
+}

@@ -4,6 +4,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 	let parser = null;
 	let generator = null;
 	let renderer = null;
+	let exporter = null;
 	let container = null;
 	let ui = null;
 
@@ -26,10 +27,13 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 		renderer = jasmine.createSpyObj('renderer', ['render', 'svg']);
 		renderer.svg.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', ['appendChild']);
+		exporter = jasmine.createSpyObj('exporter', ['getSVGURL']);
+
 		ui = new Interface({
 			parser,
 			generator,
 			renderer,
+			exporter,
 			defaultCode: 'my default code',
 		});
 	});
@@ -49,10 +53,12 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 
 	describe('download SVG', () => {
 		it('triggers a download of the current image in SVG format', () => {
+			exporter.getSVGURL.and.returnValue('mySVGURL');
 			ui.build(container);
+
 			expect(ui.downloadSVG.getAttribute('href')).toEqual('#');
 			ui.downloadSVG.dispatchEvent(new Event('click'));
-			expect(ui.downloadSVG.getAttribute('href')).not.toEqual('#');
+			expect(ui.downloadSVG.getAttribute('href')).toEqual('mySVGURL');
 		});
 	});
 });

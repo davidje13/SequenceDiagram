@@ -6,12 +6,14 @@
 	/* jshint -W072 */ // Allow several required modules
 	requirejs([
 		'interface/Interface',
+		'interface/Exporter',
 		'sequence/Parser',
 		'sequence/Generator',
 		'sequence/Renderer',
 		'sequence/themes/Basic',
 	], (
 		Interface,
+		Exporter,
 		Parser,
 		Generator,
 		Renderer,
@@ -40,6 +42,7 @@
 			parser: new Parser(),
 			generator: new Generator(),
 			renderer: new Renderer(new Theme()),
+			exporter: new Exporter(),
 			localStorage: 'src',
 		});
 		ui.build(document.body);
