@@ -6,27 +6,30 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 	const SETTINGS = {
 		titleMargin: 10,
 		outerMargin: 5,
-		agentMargin: 10,
-		actionMargin: 3,
+		agentMargin: 8,
+		actionMargin: 5,
 		agentLineHighlightRadius: 4,
 
 		agentCap: {
 			box: {
 				padding: {
-					top: 5,
-					left: 10,
-					right: 10,
-					bottom: 5,
+					top: 1,
+					left: 3,
+					right: 3,
+					bottom: 1,
 				},
-				arrowBottom: 5 + 12 * 1.3 / 2,
+				arrowBottom: 2 + 14 * 1.3 / 2,
 				boxAttrs: {
 					'fill': '#FFFFFF',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
+					'rx': 4,
+					'ry': 4,
 				},
 				labelAttrs: {
 					'font-family': 'sans-serif',
-					'font-size': 12,
+					'font-weight': 'bold',
+					'font-size': 14,
 					'line-height': LINE_HEIGHT,
 					'text-anchor': 'middle',
 				},
@@ -36,20 +39,20 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				attrs: {
 					'fill': 'none',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
 				},
 			},
 			bar: {
 				attrs: {
 					'fill': '#000000',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
 					'height': 4,
 				},
 			},
 			fade: {
 				width: 5,
-				height: 6,
+				height: 10,
 			},
 			none: {
 				height: 10,
@@ -62,18 +65,18 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				'solid': {
 					'fill': 'none',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
 				},
 				'dash': {
 					'fill': 'none',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
 					'stroke-dasharray': '4, 2',
 				},
 			},
 			arrow: {
-				width: 5,
-				height: 10,
+				width: 10,
+				height: 12,
 				attrs: {
 					'fill': '#000000',
 					'stroke-width': 0,
@@ -132,7 +135,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					boxAttrs: {
 						'fill': '#FFFFFF',
 						'stroke': '#000000',
-						'stroke-width': 1,
+						'stroke-width': 3,
 						'rx': 2,
 						'ry': 2,
 					},
@@ -231,13 +234,13 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 		agentLineAttrs: {
 			'fill': 'none',
 			'stroke': '#000000',
-			'stroke-width': 1,
+			'stroke-width': 3,
 		},
 	};
 
-	return class BasicTheme {
+	return class ChunkyTheme {
 		constructor() {
-			this.name = 'basic';
+			this.name = 'chunky';
 			Object.assign(this, SETTINGS);
 		}
 	};

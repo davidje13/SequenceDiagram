@@ -3,14 +3,14 @@ defineDescribe('Sequence Renderer', [
 	'./themes/Basic',
 ], (
 	Renderer,
-	Theme
+	BasicTheme
 ) => {
 	'use strict';
 
 	let renderer = null;
 
 	beforeEach(() => {
-		renderer = new Renderer(new Theme());
+		renderer = new Renderer({themes: [new BasicTheme()]});
 		document.body.appendChild(renderer.svg());
 	});
 

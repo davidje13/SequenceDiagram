@@ -539,6 +539,7 @@ define(['core/ArrayUtilities'], (array) => {
 			return {
 				meta: {
 					title: meta.title,
+					theme: meta.theme,
 				},
 				agents: this.agents.slice(),
 				stages: globals.stages,

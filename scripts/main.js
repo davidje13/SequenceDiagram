@@ -11,13 +11,15 @@
 		'sequence/Generator',
 		'sequence/Renderer',
 		'sequence/themes/Basic',
+		'sequence/themes/Chunky',
 	], (
 		Interface,
 		Exporter,
 		Parser,
 		Generator,
 		Renderer,
-		Theme
+		BasicTheme,
+		ChunkyTheme
 	) => {
 		const defaultCode = (
 			'title Labyrinth\n' +
@@ -41,7 +43,10 @@
 			defaultCode,
 			parser: new Parser(),
 			generator: new Generator(),
-			renderer: new Renderer(new Theme()),
+			renderer: new Renderer({themes: [
+				new BasicTheme(),
+				new ChunkyTheme(),
+			]}),
 			exporter: new Exporter(),
 			localStorage: 'src',
 		});

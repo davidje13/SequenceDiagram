@@ -155,11 +155,8 @@ define([
 		render(y, {x, label}, env, isBegin) {
 			const config = env.theme.agentCap.fade;
 
-			const gradID = isBegin ? 'fadeIn' : 'fadeOut';
-
-			env.addDef(gradID, () => {
+			const gradID = env.addDef(isBegin ? 'FadeIn' : 'FadeOut', () => {
 				const grad = svg.make('linearGradient', {
-					'id': gradID,
 					'x1': '0%',
 					'y1': isBegin ? '100%' : '0%',
 					'x2': '0%',

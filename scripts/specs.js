@@ -9,6 +9,7 @@ define([
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
 	'sequence/themes/Basic_spec',
+	'sequence/themes/Chunky_spec',
 	'sequence/components/AgentCap_spec',
 	'sequence/components/AgentHighlight_spec',
 	'sequence/components/Connect_spec',

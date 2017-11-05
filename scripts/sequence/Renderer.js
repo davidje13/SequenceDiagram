@@ -63,8 +63,24 @@ define([
 		};
 	}
 
+	function makeThemes(themes) {
+		if(themes.length === 0) {
+			throw new Error('Cannot render without a theme');
+		}
+		const themeMap = new Map();
+		themes.forEach((theme) => {
+			themeMap.set(theme.name, theme);
+		});
+		themeMap.set('', themes[0]);
+		return themeMap;
+	}
+
+	let globalNamespace = 0;
+
 	return class Renderer {
-		constructor(theme, {
+		constructor({
+			themes = [],
+			namespace = null,
 			components = null,
 			SVGTextBlockClass = SVGShapes.TextBlock,
 		} = {}) {
@@ -93,11 +109,16 @@ define([
 			this.state = {};
 			this.width = 0;
 			this.height = 0;
-			this.theme = theme;
+			this.themes = makeThemes(themes);
+			this.theme = null;
+			this.namespace = namespace;
+			if(namespace === null) {
+				this.namespace = 'R' + globalNamespace;
+				++ globalNamespace;
+			}
 			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
 			this.knownDefs = new Set();
-			this.currentSequence = null;
 			this.buildStaticElements();
 			this.components.forEach((component) => {
 				component.makeState(this.state);
@@ -112,11 +133,13 @@ define([
 
 			this.defs = svg.make('defs');
 			this.mask = svg.make('mask', {
-				'id': 'lineMask',
+				'id': this.namespace + 'LineMask',
 				'maskUnits': 'userSpaceOnUse',
 			});
 			this.maskReveal = svg.make('rect', {'fill': '#FFFFFF'});
-			this.agentLines = svg.make('g', {'mask': 'url(#lineMask)'});
+			this.agentLines = svg.make('g', {
+				'mask': 'url(#' + this.namespace + 'LineMask)',
+			});
 			this.blocks = svg.make('g');
 			this.sections = svg.make('g');
 			this.actionShapes = svg.make('g');
@@ -133,11 +156,15 @@ define([
 		}
 
 		addDef(name, generator) {
+			const namespacedName = this.namespace + name;
 			if(this.knownDefs.has(name)) {
-				return;
+				return namespacedName;
 			}
 			this.knownDefs.add(name);
-			this.defs.appendChild(generator());
+			const def = generator();
+			def.setAttribute('id', namespacedName);
+			this.defs.appendChild(def);
+			return namespacedName;
 		}
 
 		addSeparation(agentName1, agentName2, dist) {
@@ -517,16 +544,6 @@ define([
 			this.height = (y1 - y0);
 		}
 
-		setTheme(theme) {
-			if(this.theme === theme) {
-				return;
-			}
-			this.theme = theme;
-			if(this.currentSequence) {
-				this.render(this.currentSequence);
-			}
-		}
-
 		_reset() {
 			this.knownDefs.clear();
 			svg.empty(this.defs);
@@ -546,6 +563,12 @@ define([
 		render(sequence) {
 			this._reset();
 
+			const themeName = sequence.meta.theme;
+			this.theme = this.themes.get(themeName);
+			if(!this.theme) {
+				this.theme = this.themes.get('');
+			}
+
 			this.title.set({
 				attrs: this.theme.titleAttrs,
 				text: sequence.meta.title,
@@ -564,7 +587,6 @@ define([
 
 			this.sizer.resetCache();
 			this.sizer.detach();
-			this.currentSequence = sequence;
 		}
 
 		getAgentX(name) {

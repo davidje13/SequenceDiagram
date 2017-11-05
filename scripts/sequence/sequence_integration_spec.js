@@ -9,7 +9,7 @@ defineDescribe('Sequence Integration', [
 	Parser,
 	Generator,
 	Renderer,
-	Theme,
+	BasicTheme,
 	SVGTextBlock
 ) => {
 	'use strict';
@@ -20,10 +20,14 @@ defineDescribe('Sequence Integration', [
 	let theme = null;
 
 	beforeEach(() => {
-		theme = new Theme();
+		theme = new BasicTheme();
 		parser = new Parser();
 		generator = new Generator();
-		renderer = new Renderer(theme, {SVGTextBlockClass: SVGTextBlock});
+		renderer = new Renderer({
+			themes: [new BasicTheme()],
+			namespace: '',
+			SVGTextBlockClass: SVGTextBlock,
+		});
 		document.body.appendChild(renderer.svg());
 	});
 
@@ -45,12 +49,12 @@ defineDescribe('Sequence Integration', [
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-5 -5 10 10">' +
 			'<defs>' +
-			'<mask id="lineMask" maskUnits="userSpaceOnUse">' +
+			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
 			'</rect>' +
 			'</mask>' +
 			'</defs>' +
-			'<g mask="url(#lineMask)"></g>' +
+			'<g mask="url(#LineMask)"></g>' +
 			'</svg>'
 		);
 	});
@@ -63,12 +67,12 @@ defineDescribe('Sequence Integration', [
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-11.5 -16 23 21">' +
 			'<defs>' +
-			'<mask id="lineMask" maskUnits="userSpaceOnUse">' +
+			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
 			'</rect>' +
 			'</mask>' +
 			'</defs>' +
-			'<g mask="url(#lineMask)"></g>' +
+			'<g mask="url(#LineMask)"></g>' +
 			'<text' +
 			' x="0"' +
 			' font-family="sans-serif"' +

@@ -33,6 +33,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed).toEqual({
 				meta: {
 					title: '',
+					theme: '',
 					terminators: 'none',
 				},
 				stages: [],
@@ -42,6 +43,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('reads title metadata', () => {
 			const parsed = parser.parse('title foo');
 			expect(parsed.meta.title).toEqual('foo');
+		});
+
+		it('reads theme metadata', () => {
+			const parsed = parser.parse('theme foo');
+			expect(parsed.meta.theme).toEqual('foo');
 		});
 
 		it('reads terminators metadata', () => {

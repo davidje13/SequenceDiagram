@@ -17,8 +17,18 @@
 		return o;
 	}
 
+	const FAVICON_SRC = (
+		'theme chunky\n' +
+		'define ABC as A, DEF as B\n' +
+		'A -> B\n' +
+		'B -> ]\n' +
+		'] -> B\n' +
+		'B -> A\n' +
+		'terminators fade'
+	);
+
 	const SAMPLE_REGEX = new RegExp(
-		/<img src="screenshots\/([^"]*)"[^>]*>[\s]*```(?!shell).*\n([^]+?)```/g
+		/<img src="([^"]*)"[^>]*>[\s]*```(?!shell).*\n([^]+?)```/g
 	);
 
 	function findSamples(content) {
@@ -34,7 +44,21 @@
 				code: match[2],
 			});
 		}
+		results.push({
+			file: 'favicon.png',
+			code: FAVICON_SRC,
+			height: 64,
+		});
 		return results;
+	}
+
+	function filename(path) {
+		const p = path.lastIndexOf('/');
+		if(p !== -1) {
+			return path.substr(p + 1);
+		} else {
+			return path;
+		}
 	}
 
 	const PNG_RESOLUTION = 4;
@@ -45,25 +69,30 @@
 		'sequence/Generator',
 		'sequence/Renderer',
 		'sequence/themes/Basic',
+		'sequence/themes/Chunky',
 		'interface/Exporter',
 	], (
 		Parser,
 		Generator,
 		Renderer,
-		Theme,
+		BasicTheme,
+		ChunkyTheme,
 		Exporter
 	) => {
 		const parser = new Parser();
 		const generator = new Generator();
-		const theme = new Theme();
+		const themes = [
+			new BasicTheme(),
+			new ChunkyTheme(),
+		];
 
 		const status = makeNode('div', {'class': 'status'});
 		const statusText = makeText('Loading\u2026');
 		status.appendChild(statusText);
 		document.body.appendChild(status);
 
-		function renderSample({file, code}) {
-			const renderer = new Renderer(theme);
+		function renderSample({file, code, height}) {
+			const renderer = new Renderer({themes});
 			const exporter = new Exporter();
 
 			const hold = makeNode('div', {'class': 'hold'});
@@ -78,12 +107,15 @@
 			hold.appendChild(raster);
 
 			hold.appendChild(makeNode('img', {
-				'src': 'screenshots/' + file,
+				'src': file,
 				'class': 'original',
 				'title': 'original',
 			}));
 
-			const downloadPNG = makeNode('a', {'href': '#', 'download': file});
+			const downloadPNG = makeNode('a', {
+				'href': '#',
+				'download': filename(file),
+			});
 			downloadPNG.appendChild(makeText('Download PNG'));
 			hold.appendChild(downloadPNG);
 
@@ -92,7 +124,11 @@
 			const parsed = parser.parse(code);
 			const sequence = generator.generate(parsed);
 			renderer.render(sequence);
-			exporter.getPNGURL(renderer, PNG_RESOLUTION, (url) => {
+			let resolution = PNG_RESOLUTION;
+			if(height) {
+				resolution = height / renderer.height;
+			}
+			exporter.getPNGURL(renderer, resolution, (url) => {
 				raster.setAttribute('src', url);
 				downloadPNG.setAttribute('href', url);
 			});

@@ -1,10 +1,10 @@
-defineDescribe('Basic Theme', ['./Basic'], (BasicTheme) => {
+defineDescribe('Chunky Theme', ['./Chunky'], (ChunkyTheme) => {
 	'use strict';
 
-	const theme = new BasicTheme();
+	const theme = new ChunkyTheme();
 
 	it('has a name', () => {
-		expect(theme.name).toEqual('basic');
+		expect(theme.name).toEqual('chunky');
 	});
 
 	it('contains settings for the theme', () => {

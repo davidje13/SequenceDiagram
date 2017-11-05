@@ -188,6 +188,15 @@ define([
 			return true;
 		},
 
+		(line, meta) => { // theme
+			if(tokenKeyword(line[0]) !== 'theme') {
+				return null;
+			}
+
+			meta.theme = joinLabel(line, 1);
+			return true;
+		},
+
 		(line, meta) => { // terminators
 			if(tokenKeyword(line[0]) !== 'terminators') {
 				return null;
@@ -356,6 +365,7 @@ define([
 			const result = {
 				meta: {
 					title: '',
+					theme: '',
 					terminators: 'none',
 				},
 				stages: [],

@@ -148,13 +148,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	};
 
 	describe('.generate', () => {
-		it('propagates title metadata', () => {
+		it('propagates title and theme metadata', () => {
 			const input = {
-				meta: {title: 'bar'},
+				meta: {title: 'bar', theme: 'zig', nope: 'skip'},
 				stages: [],
 			};
 			const sequence = generator.generate(input);
-			expect(sequence.meta).toEqual({title: 'bar'});
+			expect(sequence.meta).toEqual({title: 'bar', theme: 'zig'});
 		});
 
 		it('returns an empty sequence for blank input', () => {

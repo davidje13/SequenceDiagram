@@ -121,6 +121,9 @@ define(['core/ArrayUtilities'], (array) => {
 			'title': {type: 'keyword', suggest: true, then: {
 				'': textToEnd,
 			}},
+			'theme': {type: 'keyword', suggest: true, then: {
+				'': textToEnd,
+			}},
 			'terminators': {type: 'keyword', suggest: true, then: {
 				'none': {type: 'keyword', suggest: true, then: {}},
 				'cross': {type: 'keyword', suggest: true, then: {}},
