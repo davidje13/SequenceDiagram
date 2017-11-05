@@ -48,14 +48,8 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				},
 			},
 			fade: {
+				width: 5,
 				height: 6,
-				colVisible: '#000000',
-				colHidden: 'rgba(0, 0, 0, 0)',
-				attrs: {
-					'fill': 'none',
-					'stroke-width': 1,
-					'stroke-linecap': 'round',
-				},
 			},
 			none: {
 				height: 10,
@@ -82,7 +76,6 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				height: 10,
 				attrs: {
 					'fill': '#000000',
-					'stroke': 'none',
 					'stroke-width': 0,
 					'stroke-linejoin': 'miter',
 				},
@@ -108,9 +101,6 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					left: 3,
 					right: 3,
 					bottom: 1,
-				},
-				maskAttrs: {
-					'fill': '#FFFFFF',
 				},
 			},
 		},
@@ -160,9 +150,6 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 						left: 5,
 						right: 3,
 						bottom: 0,
-					},
-					maskAttrs: {
-						'fill': '#FFFFFF',
 					},
 					labelAttrs: {
 						'font-family': 'sans-serif',

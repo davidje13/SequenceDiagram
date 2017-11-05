@@ -44,7 +44,13 @@ defineDescribe('Sequence Integration', [
 		renderer.render(sequence);
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-5 -5 10 10">' +
-			'<defs></defs>' +
+			'<defs>' +
+			'<mask id="lineMask" maskUnits="userSpaceOnUse">' +
+			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
+			'</rect>' +
+			'</mask>' +
+			'</defs>' +
+			'<g mask="url(#lineMask)"></g>' +
 			'</svg>'
 		);
 	});
@@ -56,7 +62,13 @@ defineDescribe('Sequence Integration', [
 
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-11.5 -16 23 21">' +
-			'<defs></defs>' +
+			'<defs>' +
+			'<mask id="lineMask" maskUnits="userSpaceOnUse">' +
+			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
+			'</rect>' +
+			'</mask>' +
+			'</defs>' +
+			'<g mask="url(#lineMask)"></g>' +
 			'<text' +
 			' x="0"' +
 			' font-family="sans-serif"' +

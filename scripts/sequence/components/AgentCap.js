@@ -166,27 +166,27 @@ define([
 					'y2': isBegin ? '0%' : '100%',
 				});
 				grad.appendChild(svg.make('stop', {
-					'offset': '0%',
-					'stop-color': config.colVisible,
+					'offset': (100 * 1 / 12) + '%',
+					'stop-color': '#FFFFFF',
 				}));
 				grad.appendChild(svg.make('stop', {
-					'offset': '100%',
-					'stop-color': config.colHidden,
+					'offset': (100 * 11 / 12) + '%',
+					'stop-color': '#000000',
 				}));
 				return grad;
 			});
 
-			env.shapeLayer.appendChild(svg.make('line', Object.assign({
-				'x1': x,
-				'y1': y,
-				'x2': x + 0.0001, // Chrome bug
-				'y2': y + config.height,
-				'stroke': 'url(#' + gradID + ')',
-			}, config.attrs)));
+			env.maskLayer.appendChild(svg.make('rect', {
+				'x': x - config.width / 2,
+				'y': y - config.height * 0.1,
+				'width': config.width,
+				'height': config.height * 1.2,
+				'fill': 'url(#' + gradID + ')',
+			}));
 
 			return {
-				lineTop: 0,
-				lineBottom: config.height,
+				lineTop: config.height,
+				lineBottom: 0,
 				height: config.height,
 			};
 		}

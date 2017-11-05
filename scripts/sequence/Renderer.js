@@ -111,15 +111,18 @@ define([
 			});
 
 			this.defs = svg.make('defs');
-			this.agentLines = svg.make('g');
-			this.mask = svg.make('g');
+			this.mask = svg.make('mask', {
+				'id': 'lineMask',
+				'maskUnits': 'userSpaceOnUse',
+			});
+			this.maskReveal = svg.make('rect', {'fill': '#FFFFFF'});
+			this.agentLines = svg.make('g', {'mask': 'url(#lineMask)'});
 			this.blocks = svg.make('g');
 			this.sections = svg.make('g');
 			this.actionShapes = svg.make('g');
 			this.actionLabels = svg.make('g');
 			this.base.appendChild(this.defs);
 			this.base.appendChild(this.agentLines);
-			this.base.appendChild(this.mask);
 			this.base.appendChild(this.blocks);
 			this.base.appendChild(this.sections);
 			this.base.appendChild(this.actionShapes);
@@ -323,7 +326,7 @@ define([
 				x: agentInfoL.x + modeRender.width,
 				y: this.currentY,
 				padding: config.section.label.padding,
-				boxAttrs: config.section.label.maskAttrs,
+				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.section.label.labelAttrs,
 				boxLayer: this.mask,
 				labelLayer: this.actionLabels,
@@ -501,6 +504,11 @@ define([
 			const y0 = titleY - margin;
 			const y1 = stagesHeight + margin;
 
+			this.maskReveal.setAttribute('x', x0);
+			this.maskReveal.setAttribute('y', y0);
+			this.maskReveal.setAttribute('width', x1 - x0);
+			this.maskReveal.setAttribute('height', y1 - y0);
+
 			this.base.setAttribute('viewBox', (
 				x0 + ' ' + y0 + ' ' +
 				(x1 - x0) + ' ' + (y1 - y0)
@@ -522,12 +530,14 @@ define([
 		_reset() {
 			this.knownDefs.clear();
 			svg.empty(this.defs);
-			svg.empty(this.agentLines);
 			svg.empty(this.mask);
+			svg.empty(this.agentLines);
 			svg.empty(this.blocks);
 			svg.empty(this.sections);
 			svg.empty(this.actionShapes);
 			svg.empty(this.actionLabels);
+			this.mask.appendChild(this.maskReveal);
+			this.defs.appendChild(this.mask);
 			this.components.forEach((component) => {
 				component.resetState(this.state);
 			});
