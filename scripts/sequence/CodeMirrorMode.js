@@ -125,6 +125,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'none': {type: 'keyword', suggest: true, then: {}},
 				'cross': {type: 'keyword', suggest: true, then: {}},
 				'box': {type: 'keyword', suggest: true, then: {}},
+				'fade': {type: 'keyword', suggest: true, then: {}},
 				'bar': {type: 'keyword', suggest: true, then: {}},
 			}},
 			'define': {type: 'keyword', suggest: true, then: {

@@ -47,6 +47,16 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					'height': 4,
 				},
 			},
+			fade: {
+				height: 6,
+				colVisible: '#000000',
+				colHidden: 'rgba(0, 0, 0, 0)',
+				attrs: {
+					'fill': 'none',
+					'stroke-width': 1,
+					'stroke-linecap': 'round',
+				},
+			},
 			none: {
 				height: 10,
 			},

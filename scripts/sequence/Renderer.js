@@ -88,6 +88,7 @@ define([
 			};
 
 			this.addSeparation = this.addSeparation.bind(this);
+			this.addDef = this.addDef.bind(this);
 
 			this.state = {};
 			this.width = 0;
@@ -95,6 +96,7 @@ define([
 			this.theme = theme;
 			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
+			this.knownDefs = new Set();
 			this.currentSequence = null;
 			this.buildStaticElements();
 			this.components.forEach((component) => {
@@ -108,12 +110,14 @@ define([
 				'height': '100%',
 			});
 
+			this.defs = svg.make('defs');
 			this.agentLines = svg.make('g');
 			this.mask = svg.make('g');
 			this.blocks = svg.make('g');
 			this.sections = svg.make('g');
 			this.actionShapes = svg.make('g');
 			this.actionLabels = svg.make('g');
+			this.base.appendChild(this.defs);
 			this.base.appendChild(this.agentLines);
 			this.base.appendChild(this.mask);
 			this.base.appendChild(this.blocks);
@@ -123,6 +127,14 @@ define([
 			this.title = new this.SVGTextBlockClass(this.base);
 
 			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
+		}
+
+		addDef(name, generator) {
+			if(this.knownDefs.has(name)) {
+				return;
+			}
+			this.knownDefs.add(name);
+			this.defs.appendChild(generator());
 		}
 
 		addSeparation(agentName1, agentName2, dist) {
@@ -399,6 +411,7 @@ define([
 					this.drawAgentLine(agentInfo, toY);
 					agentInfo.latestYStart = andStop ? null : toY;
 				},
+				addDef: this.addDef,
 			};
 			let bottomY = topY;
 			stages.forEach((stage) => {
@@ -506,7 +519,9 @@ define([
 			}
 		}
 
-		render(sequence) {
+		_reset() {
+			this.knownDefs.clear();
+			svg.empty(this.defs);
 			svg.empty(this.agentLines);
 			svg.empty(this.mask);
 			svg.empty(this.blocks);
@@ -516,6 +531,10 @@ define([
 			this.components.forEach((component) => {
 				component.resetState(this.state);
 			});
+		}
+
+		render(sequence) {
+			this._reset();
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,

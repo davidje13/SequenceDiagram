@@ -138,6 +138,60 @@ define([
 		}
 	}
 
+	class CapFade {
+		separation({currentRad}) {
+			return {
+				left: currentRad,
+				right: currentRad,
+				radius: currentRad,
+			};
+		}
+
+		topShift(agentInfo, env, isBegin) {
+			const config = env.theme.agentCap.fade;
+			return isBegin ? config.height : 0;
+		}
+
+		render(y, {x, label}, env, isBegin) {
+			const config = env.theme.agentCap.fade;
+
+			const gradID = isBegin ? 'fadeIn' : 'fadeOut';
+
+			env.addDef(gradID, () => {
+				const grad = svg.make('linearGradient', {
+					'id': gradID,
+					'x1': '0%',
+					'y1': isBegin ? '100%' : '0%',
+					'x2': '0%',
+					'y2': isBegin ? '0%' : '100%',
+				});
+				grad.appendChild(svg.make('stop', {
+					'offset': '0%',
+					'stop-color': config.colVisible,
+				}));
+				grad.appendChild(svg.make('stop', {
+					'offset': '100%',
+					'stop-color': config.colHidden,
+				}));
+				return grad;
+			});
+
+			env.shapeLayer.appendChild(svg.make('line', Object.assign({
+				'x1': x,
+				'y1': y,
+				'x2': x + 0.0001, // Chrome bug
+				'y2': y + config.height,
+				'stroke': 'url(#' + gradID + ')',
+			}, config.attrs)));
+
+			return {
+				lineTop: 0,
+				lineBottom: config.height,
+				height: config.height,
+			};
+		}
+	}
+
 	class CapNone {
 		separation({currentRad}) {
 			return {
@@ -166,6 +220,7 @@ define([
 		'box': new CapBox(),
 		'cross': new CapCross(),
 		'bar': new CapBar(),
+		'fade': new CapFade(),
 		'none': new CapNone(),
 	};
 
@@ -178,7 +233,8 @@ define([
 		separationPre({mode, agentNames}, env) {
 			agentNames.forEach((name) => {
 				const agentInfo = env.agentInfos.get(name);
-				const sep = AGENT_CAPS[mode].separation(agentInfo, env);
+				const cap = AGENT_CAPS[mode];
+				const sep = cap.separation(agentInfo, env, this.begin);
 				env.addSpacing(name, sep);
 				agentInfo.currentMaxRad = Math.max(
 					agentInfo.currentMaxRad,
@@ -199,10 +255,11 @@ define([
 			let maxTopShift = 0;
 			agentNames.forEach((name) => {
 				const agentInfo = env.agentInfos.get(name);
-				const topShift = AGENT_CAPS[mode].topShift(agentInfo, env);
+				const cap = AGENT_CAPS[mode];
+				const topShift = cap.topShift(agentInfo, env, this.begin);
 				maxTopShift = Math.max(maxTopShift, topShift);
 
-				const r = AGENT_CAPS[mode].separation(agentInfo, env).radius;
+				const r = cap.separation(agentInfo, env, this.begin).radius;
 				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 			});
 			return {
@@ -215,12 +272,14 @@ define([
 			let maxEnd = 0;
 			agentNames.forEach((name) => {
 				const agentInfo = env.agentInfos.get(name);
-				const topShift = AGENT_CAPS[mode].topShift(agentInfo, env);
+				const cap = AGENT_CAPS[mode];
+				const topShift = cap.topShift(agentInfo, env, this.begin);
 				const y0 = env.primaryY - topShift;
-				const shifts = AGENT_CAPS[mode].render(
+				const shifts = cap.render(
 					y0,
 					agentInfo,
-					env
+					env,
+					this.begin
 				);
 				maxEnd = Math.max(maxEnd, y0 + shifts.height);
 				if(this.begin) {

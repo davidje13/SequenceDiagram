@@ -36,6 +36,7 @@ define([
 		'none',
 		'box',
 		'cross',
+		'fade',
 		'bar',
 	];
 

@@ -114,7 +114,7 @@ end
 
 ### Multiline Text
 
-<img src="screenshots/MultilineText.png" alt="Multiline Text preview" width="150" align="right" />
+<img src="screenshots/MultilineText.png" alt="Multiline Text preview" width="200" align="right" />
 
 ```
 title 'My Multiline
@@ -128,7 +128,8 @@ if 'Even multiline\ninside conditions like this'
   Foo -> 'Multiline\nagent'
 end
 
-state over Foo: 'Newlines here,\ntoo!'
+state over Foo: 'Newlines here,
+too!'
 ```
 
 ### Short-Lived Agents
@@ -147,7 +148,7 @@ Foo -> Bar
 
 # Foo and Bar end with black bars
 terminators bar
-# (options are: box, bar, cross, none)
+# (options are: box, bar, cross, fade, none)
 ```
 
 ### Agent Aliases
@@ -165,10 +166,11 @@ A <- B: than writing the whole name
 
 ### Alternative Agent Ordering
 
-<img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="150" align="right" />
+<img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="200" align="right" />
 
 ```
 define Baz, Foo
+
 Foo -> Bar
 Bar -> Baz
 ```

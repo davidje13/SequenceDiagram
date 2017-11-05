@@ -46,6 +46,7 @@ define(() => {
 			agentInfos,
 			textSizer,
 			SVGTextBlockClass,
+			addDef,
 			state,
 		}*/) {
 		}

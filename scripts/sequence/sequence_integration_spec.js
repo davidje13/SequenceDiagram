@@ -44,6 +44,7 @@ defineDescribe('Sequence Integration', [
 		renderer.render(sequence);
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-5 -5 10 10">' +
+			'<defs></defs>' +
 			'</svg>'
 		);
 	});
@@ -55,6 +56,7 @@ defineDescribe('Sequence Integration', [
 
 		expect(getSimplifiedContent(renderer)).toEqual(
 			'<svg width="100%" height="100%" viewBox="-11.5 -16 23 21">' +
+			'<defs></defs>' +
 			'<text' +
 			' x="0"' +
 			' font-family="sans-serif"' +
