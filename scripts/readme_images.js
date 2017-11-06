@@ -17,6 +17,8 @@
 		return o;
 	}
 
+	const PNG_RESOLUTION = 4;
+
 	const FAVICON_SRC = (
 		'theme chunky\n' +
 		'define ABC as A, DEF as B\n' +
@@ -47,7 +49,7 @@
 		results.push({
 			file: 'favicon.png',
 			code: FAVICON_SRC,
-			height: 64,
+			size: {width: 16, height: 16},
 		});
 		return results;
 	}
@@ -60,8 +62,6 @@
 			return path;
 		}
 	}
-
-	const PNG_RESOLUTION = 4;
 
 	/* jshint -W072 */ // Allow several required modules
 	requirejs([
@@ -91,7 +91,7 @@
 		status.appendChild(statusText);
 		document.body.appendChild(status);
 
-		function renderSample({file, code, height}) {
+		function renderSample({file, code, size}) {
 			const renderer = new Renderer({themes});
 			const exporter = new Exporter();
 
@@ -124,11 +124,11 @@
 			const parsed = parser.parse(code);
 			const sequence = generator.generate(parsed);
 			renderer.render(sequence);
-			let resolution = PNG_RESOLUTION;
-			if(height) {
-				resolution = height / renderer.height;
+			if(size) {
+				renderer.width = size.width;
+				renderer.height = size.height;
 			}
-			exporter.getPNGURL(renderer, resolution, (url) => {
+			exporter.getPNGURL(renderer, PNG_RESOLUTION, (url) => {
 				raster.setAttribute('src', url);
 				downloadPNG.setAttribute('href', url);
 			});

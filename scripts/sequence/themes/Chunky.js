@@ -4,7 +4,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 	const LINE_HEIGHT = 1.3;
 
 	const SETTINGS = {
-		titleMargin: 10,
+		titleMargin: 12,
 		outerMargin: 5,
 		agentMargin: 8,
 		actionMargin: 5,
@@ -40,6 +40,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					'fill': 'none',
 					'stroke': '#000000',
 					'stroke-width': 3,
+					'stroke-linecap': 'round',
 				},
 			},
 			bar: {
@@ -48,6 +49,8 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					'stroke': '#000000',
 					'stroke-width': 3,
 					'height': 4,
+					'rx': 2,
+					'ry': 2,
 				},
 			},
 			fade: {
@@ -60,7 +63,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 		},
 
 		connect: {
-			loopbackRadius: 6,
+			loopbackRadius: 8,
 			lineAttrs: {
 				'solid': {
 					'fill': 'none',
@@ -71,7 +74,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					'fill': 'none',
 					'stroke': '#000000',
 					'stroke-width': 3,
-					'stroke-dasharray': '4, 2',
+					'stroke-dasharray': '10, 4',
 				},
 			},
 			arrow: {
@@ -79,13 +82,14 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				height: 12,
 				attrs: {
 					'fill': '#000000',
-					'stroke-width': 0,
-					'stroke-linejoin': 'miter',
+					'stroke': '#000000',
+					'stroke-width': 3,
+					'stroke-linejoin': 'round',
 				},
 			},
 			label: {
 				padding: 6,
-				margin: {top: 2, bottom: 1},
+				margin: {top: 2, bottom: 3},
 				attrs: {
 					'font-family': 'sans-serif',
 					'font-size': 8,
@@ -100,10 +104,10 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			},
 			mask: {
 				padding: {
-					top: 0,
-					left: 3,
-					right: 3,
-					bottom: 1,
+					top: 1,
+					left: 5,
+					right: 5,
+					bottom: 3,
 				},
 			},
 		},
@@ -116,28 +120,28 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			boxAttrs: {
 				'fill': 'none',
 				'stroke': '#000000',
-				'stroke-width': 1.5,
-				'rx': 2,
-				'ry': 2,
+				'stroke-width': 4,
+				'rx': 5,
+				'ry': 5,
 			},
 			section: {
 				padding: {
 					top: 3,
-					bottom: 2,
+					bottom: 4,
 				},
 				mode: {
 					padding: {
-						top: 1,
-						left: 3,
-						right: 3,
-						bottom: 0,
+						top: 2,
+						left: 5,
+						right: 5,
+						bottom: 1,
 					},
 					boxAttrs: {
 						'fill': '#FFFFFF',
 						'stroke': '#000000',
-						'stroke-width': 3,
-						'rx': 2,
-						'ry': 2,
+						'stroke-width': 2,
+						'rx': 3,
+						'ry': 3,
 					},
 					labelAttrs: {
 						'font-family': 'sans-serif',
@@ -149,7 +153,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				},
 				label: {
 					padding: {
-						top: 1,
+						top: 2,
 						left: 5,
 						right: 3,
 						bottom: 0,
@@ -165,8 +169,8 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			separator: {
 				attrs: {
 					'stroke': '#000000',
-					'stroke-width': 1.5,
-					'stroke-dasharray': '4, 2',
+					'stroke-width': 2,
+					'stroke-dasharray': '5, 3',
 				},
 			},
 		},
@@ -187,12 +191,13 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			},
 			'note': {
 				margin: {top: 0, left: 5, right: 5, bottom: 0},
-				padding: {top: 5, left: 5, right: 10, bottom: 5},
+				padding: {top: 3, left: 3, right: 10, bottom: 3},
 				overlap: {left: 10, right: 10},
 				boxRenderer: SVGShapes.renderNote.bind(null, {
 					'fill': '#FFFFFF',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 2,
+					'stroke-linejoin': 'round',
 				}, {
 					'fill': 'none',
 					'stroke': '#000000',
@@ -206,12 +211,12 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 			},
 			'state': {
 				margin: {top: 0, left: 5, right: 5, bottom: 0},
-				padding: {top: 7, left: 7, right: 7, bottom: 7},
+				padding: {top: 5, left: 7, right: 7, bottom: 5},
 				overlap: {left: 10, right: 10},
 				boxRenderer: SVGShapes.renderBox.bind(null, {
 					'fill': '#FFFFFF',
 					'stroke': '#000000',
-					'stroke-width': 1,
+					'stroke-width': 3,
 					'rx': 10,
 					'ry': 10,
 				}),
@@ -225,6 +230,7 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 
 		titleAttrs: {
 			'font-family': 'sans-serif',
+			'font-weight': 'bolder',
 			'font-size': 20,
 			'line-height': LINE_HEIGHT,
 			'text-anchor': 'middle',

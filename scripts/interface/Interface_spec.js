@@ -24,7 +24,11 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			agents: [],
 			stages: [],
 		});
-		renderer = jasmine.createSpyObj('renderer', ['render', 'svg']);
+		renderer = jasmine.createSpyObj('renderer', [
+			'render',
+			'svg',
+			'getThemeNames',
+		]);
 		renderer.svg.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', ['appendChild']);
 		exporter = jasmine.createSpyObj('exporter', ['getSVGURL']);

@@ -109,6 +109,9 @@ define([
 			const code = new CodeMirror(container, {
 				value,
 				mode: 'sequence',
+				globals: {
+					themes: this.renderer.getThemeNames(),
+				},
 				lineNumbers: true,
 				showTrailingSpace: true,
 				extraKeys: {

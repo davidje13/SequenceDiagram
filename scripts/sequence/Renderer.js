@@ -589,6 +589,12 @@ define([
 			this.sizer.detach();
 		}
 
+		getThemeNames() {
+			return (Array.from(this.themes.keys())
+				.filter((name) => (name !== ''))
+			);
+		}
+
 		getAgentX(name) {
 			return this.agentInfos.get(name).x;
 		}

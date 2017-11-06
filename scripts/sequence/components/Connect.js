@@ -24,12 +24,17 @@ define([
 
 	function getArrowShort(theme) {
 		const arrow = theme.connect.arrow;
-		const h = arrow.height / 2;
-		const w = arrow.width;
+		const join = arrow.attrs['stroke-linejoin'] || 'miter';
 		const t = arrow.attrs['stroke-width'] * 0.5;
 		const lineStroke = theme.agentLineAttrs['stroke-width'] * 0.5;
-		const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
-		return lineStroke + arrowDistance;
+		if(join === 'round') {
+			return lineStroke + t;
+		} else {
+			const h = arrow.height / 2;
+			const w = arrow.width;
+			const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
+			return lineStroke + arrowDistance;
+		}
 	}
 
 	class Connect extends BaseComponent {

@@ -1,4 +1,4 @@
-define(() => {
+define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
 	const TRIMMER = /^([ \t]*)(.*)$/;
@@ -32,6 +32,26 @@ define(() => {
 		};
 	}
 
+	function getGlobals({global, prefix = '', suffix = ''}, globals) {
+		const identified = globals[global];
+		if(!identified) {
+			return [];
+		}
+		return identified.map((item) => (prefix + item + suffix));
+	}
+
+	function populateGlobals(suggestions, globals = {}) {
+		for(let i = 0; i < suggestions.length;) {
+			if(typeof suggestions[i] === 'object') {
+				const identified = getGlobals(suggestions[i], globals);
+				array.mergeSets(suggestions, identified);
+				suggestions.splice(i, 1);
+			} else {
+				++ i;
+			}
+		}
+	}
+
 	function getHints(cm, options) {
 		const cur = cm.getCursor();
 		const token = cm.getTokenAt(cur);
@@ -51,6 +71,8 @@ define(() => {
 		if(!continuation) {
 			comp = comp.concat(token.state.knownAgent);
 		}
+
+		populateGlobals(comp, cm.options.globals);
 
 		const ranges = makeRanges(cm, cur.line, from, token.end);
 		let selfValid = false;

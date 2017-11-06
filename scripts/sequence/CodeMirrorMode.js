@@ -26,9 +26,19 @@ define(['core/ArrayUtilities'], (array) => {
 			',': {type: 'operator', suggest: true, then: {'': 1}},
 			'\n': end,
 		}};
-		const agentListToEnd = {type: 'variable', suggest: 'Agent', then: {
+		const agentListToText = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
 			',': {type: 'operator', suggest: true, then: {'': 1}},
+			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
+		}};
+		const agentList2ToText = {type: 'variable', suggest: 'Agent', then: {
+			'': 0,
+			',': {type: 'operator', suggest: true, then: {'': agentListToText}},
+			':': CM_ERROR,
+		}};
+		const singleAgentToText = {type: 'variable', suggest: 'Agent', then: {
+			'': 0,
+			',': CM_ERROR,
 			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
 		}};
 		const agentToOptText = {type: 'variable', suggest: 'Agent', then: {
@@ -46,12 +56,12 @@ define(['core/ArrayUtilities'], (array) => {
 				suggest: [side + ' of ', side + ': '],
 				then: {
 					'of': {type: 'keyword', suggest: true, then: {
-						'': agentListToEnd,
+						'': agentListToText,
 					}},
 					':': {type: 'operator', suggest: true, then: {
 						'': textToEnd,
 					}},
-					'': agentListToEnd,
+					'': agentListToText,
 				},
 			};
 		}
@@ -122,7 +132,17 @@ define(['core/ArrayUtilities'], (array) => {
 				'': textToEnd,
 			}},
 			'theme': {type: 'keyword', suggest: true, then: {
-				'': textToEnd,
+				'': {
+					type: 'string',
+					suggest: {
+						global: 'themes',
+						suffix: '\n',
+					},
+					then: {
+						'': 0,
+						'\n': end,
+					},
+				},
 			}},
 			'terminators': {type: 'keyword', suggest: true, then: {
 				'none': {type: 'keyword', suggest: true, then: {}},
@@ -166,17 +186,17 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'note': {type: 'keyword', suggest: true, then: {
 				'over': {type: 'keyword', suggest: true, then: {
-					'': agentListToEnd,
+					'': agentListToText,
 				}},
 				'left': makeSideNote('left'),
 				'right': makeSideNote('right'),
 				'between': {type: 'keyword', suggest: true, then: {
-					'': agentListToEnd,
+					'': agentList2ToText,
 				}},
 			}},
 			'state': {type: 'keyword', suggest: 'state over ', then: {
 				'over': {type: 'keyword', suggest: true, then: {
-					'': agentListToEnd,
+					'': singleAgentToText,
 				}},
 			}},
 			'text': {type: 'keyword', suggest: true, then: {
@@ -204,6 +224,9 @@ define(['core/ArrayUtilities'], (array) => {
 	}
 
 	function cmGetVarSuggestions(state, previous, current) {
+		if(typeof current.suggest === 'object' && current.suggest.global) {
+			return [current.suggest];
+		}
 		if(
 			typeof current.suggest !== 'string' ||
 			previous.suggest === current.suggest
