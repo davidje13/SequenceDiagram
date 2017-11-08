@@ -323,7 +323,7 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
-		beginNested(mode, label, name) {
+		beginNested(mode, label, name, ln) {
 			const leftAgent = makeAgent(name + '[', {anchorRight: true});
 			const rightAgent = makeAgent(name + ']');
 			const agents = [leftAgent, rightAgent];
@@ -332,6 +332,7 @@ define(['core/ArrayUtilities'], (array) => {
 				mode,
 				label,
 				stages,
+				ln,
 			};
 			this.currentNest = {
 				agents,
@@ -457,13 +458,13 @@ define(['core/ArrayUtilities'], (array) => {
 			]);
 		}
 
-		handleBlockBegin({mode, label}) {
+		handleBlockBegin({ln, mode, label}) {
 			const name = '__BLOCK' + this.blockCount;
-			this.beginNested(mode, label, name);
+			this.beginNested(mode, label, name, ln);
 			++ this.blockCount;
 		}
 
-		handleBlockSplit({mode, label}) {
+		handleBlockSplit({ln, mode, label}) {
 			const containerMode = this.currentNest.stage.sections[0].mode;
 			if(containerMode !== 'if') {
 				throw new Error(
@@ -476,6 +477,7 @@ define(['core/ArrayUtilities'], (array) => {
 				mode,
 				label,
 				stages: [],
+				ln,
 			};
 			this.currentNest.stage.sections.push(this.currentSection);
 		}
@@ -501,7 +503,13 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleStage(stage) {
-			this.stageHandlers[stage.type](stage);
+			try {
+				this.stageHandlers[stage.type](stage);
+			} catch(e) {
+				if(typeof e === 'object' && e.message) {
+					throw new Error(e.message + ' at line ' + (stage.ln + 1));
+				}
+			}
 		}
 
 		generate({stages, meta = {}}) {
@@ -511,14 +519,14 @@ define(['core/ArrayUtilities'], (array) => {
 			this.agents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;
-			const globals = this.beginNested('global', '', '');
+			const globals = this.beginNested('global', '', '', 0);
 
 			stages.forEach(this.handleStage);
 
 			if(this.nesting.length !== 1) {
 				throw new Error(
-					'Invalid block nesting (' +
-					(this.nesting.length - 1) + ' unclosed)'
+					'Unterminated section at line ' +
+					(this.currentSection.ln + 1)
 				);
 			}
 

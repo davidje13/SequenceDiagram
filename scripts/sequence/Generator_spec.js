@@ -14,12 +14,12 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	}
 
 	const PARSED = {
-		blockBegin: (mode, label) => {
-			return {type: 'block begin', mode, label};
+		blockBegin: (mode, label, {ln = 0} = {}) => {
+			return {type: 'block begin', mode, label, ln};
 		},
 
-		blockSplit: (mode, label) => {
-			return {type: 'block split', mode, label};
+		blockSplit: (mode, label, {ln = 0} = {}) => {
+			return {type: 'block split', mode, label, ln};
 		},
 
 		blockEnd: () => {
@@ -662,20 +662,20 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('records all sections within blocks', () => {
 			const sequence = generator.generate({stages: [
-				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockBegin('if', 'abc', {ln: 10}),
 				PARSED.connect(['A', 'B']),
-				PARSED.blockSplit('else', 'xyz'),
+				PARSED.blockSplit('else', 'xyz', {ln: 20}),
 				PARSED.connect(['A', 'C']),
 				PARSED.blockEnd(),
 			]});
 
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', stages: [
+				{mode: 'if', label: 'abc', ln: 10, stages: [
 					GENERATED.beginAgents(['A', 'B']),
 					GENERATED.connect(['A', 'B']),
 				]},
-				{mode: 'else', label: 'xyz', stages: [
+				{mode: 'else', label: 'xyz', ln: 20, stages: [
 					GENERATED.beginAgents(['C']),
 					GENERATED.connect(['A', 'C']),
 				]},
@@ -756,11 +756,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', stages: [
+				{mode: 'if', label: 'abc', ln: 0, stages: [
 					jasmine.anything(),
 					jasmine.anything(),
 				]},
-				{mode: 'else', label: 'xyz', stages: []},
+				{mode: 'else', label: 'xyz', ln: 0, stages: []},
 			]);
 		});
 
@@ -774,8 +774,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', stages: []},
-				{mode: 'else', label: 'xyz', stages: [
+				{mode: 'if', label: 'abc', ln: 0, stages: []},
+				{mode: 'else', label: 'xyz', ln: 0, stages: [
 					jasmine.anything(),
 					jasmine.anything(),
 				]},
@@ -832,11 +832,11 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 			const block0 = sequence.stages[0];
 			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', stages: [
+				{mode: 'if', label: 'abc', ln: 0, stages: [
 					jasmine.anything(),
 					jasmine.anything(),
 				]},
-				{mode: 'else', label: 'xyz', stages: []},
+				{mode: 'else', label: 'xyz', ln: 0, stages: []},
 			]);
 		});
 

@@ -4,14 +4,24 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 	const tokeniser = new Tokeniser();
 
 	describe('.tokenise', () => {
+		function token({
+			s = jasmine.anything(), // spacing
+			v = jasmine.anything(), // value
+			q = jasmine.anything(), // isQuote?
+			b = jasmine.anything(), // begin position
+			e = jasmine.anything(), // end position
+		}) {
+			return {s, v, q, b, e};
+		}
+
 		it('converts the source into atomic tokens', () => {
 			const input = 'foo bar -> baz';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: ' ', v: '->', q: false},
-				{s: ' ', v: 'baz', q: false},
+				token({s: '', v: 'foo'}),
+				token({s: ' ', v: 'bar'}),
+				token({s: ' ', v: '->'}),
+				token({s: ' ', v: 'baz'}),
 			]);
 		});
 
@@ -19,10 +29,21 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo bar->baz';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: '', v: '->', q: false},
-				{s: '', v: 'baz', q: false},
+				token({s: '', v: 'foo'}),
+				token({s: ' ', v: 'bar'}),
+				token({s: '', v: '->'}),
+				token({s: '', v: 'baz'}),
+			]);
+		});
+
+		it('stores character numbers', () => {
+			const input = 'foo bar -> baz';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({b: {i: 0, ln: 0, ch: 0}, e: {i: 3, ln: 0, ch: 3}}),
+				token({b: {i: 4, ln: 0, ch: 4}, e: {i: 7, ln: 0, ch: 7}}),
+				token({b: {i: 8, ln: 0, ch: 8}, e: {i: 10, ln: 0, ch: 10}}),
+				token({b: {i: 11, ln: 0, ch: 11}, e: {i: 14, ln: 0, ch: 14}}),
 			]);
 		});
 
@@ -30,10 +51,21 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo bar\nbaz';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'bar', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'baz', q: false},
+				token({s: '', v: 'foo'}),
+				token({s: ' ', v: 'bar'}),
+				token({s: '', v: '\n'}),
+				token({s: '', v: 'baz'}),
+			]);
+		});
+
+		it('stores line numbers', () => {
+			const input = 'foo bar\nbaz';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({b: {i: 0, ln: 0, ch: 0}, e: {i: 3, ln: 0, ch: 3}}),
+				token({b: {i: 4, ln: 0, ch: 4}, e: {i: 7, ln: 0, ch: 7}}),
+				token({b: {i: 7, ln: 0, ch: 7}, e: {i: 8, ln: 1, ch: 0}}),
+				token({b: {i: 8, ln: 1, ch: 0}, e: {i: 11, ln: 1, ch: 3}}),
 			]);
 		});
 
@@ -41,9 +73,9 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo "\n" baz';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: '\n', q: true},
-				{s: ' ', v: 'baz', q: false},
+				token({s: '', v: 'foo', q: false}),
+				token({s: ' ', v: '\n', q: true}),
+				token({s: ' ', v: 'baz', q: false}),
 			]);
 		});
 
@@ -51,10 +83,10 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = '  foo \t bar\t\n baz';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '  ', v: 'foo', q: false},
-				{s: ' \t ', v: 'bar', q: false},
-				{s: '\t', v: '\n', q: false},
-				{s: ' ', v: 'baz', q: false},
+				token({s: '  ', v: 'foo'}),
+				token({s: ' \t ', v: 'bar'}),
+				token({s: '\t', v: '\n'}),
+				token({s: ' ', v: 'baz'}),
 			]);
 		});
 
@@ -62,9 +94,17 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo "zig zag" \'abc def\'';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'zig zag', q: true},
-				{s: ' ', v: 'abc def', q: true},
+				token({s: '', v: 'foo', q: false}),
+				token({s: ' ', v: 'zig zag', q: true}),
+				token({s: ' ', v: 'abc def', q: true}),
+			]);
+		});
+
+		it('stores character positions around quoted strings', () => {
+			const input = '"foo bar"';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({b: {i: 0, ln: 0, ch: 0}, e: {i: 9, ln: 0, ch: 9}}),
 			]);
 		});
 
@@ -72,9 +112,9 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo # bar baz\nzig';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'zig', q: false},
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '\n'}),
+				token({s: '', v: 'zig'}),
 			]);
 		});
 
@@ -82,9 +122,9 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo # bar "\'baz\nzig';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: '', v: '\n', q: false},
-				{s: '', v: 'zig', q: false},
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '\n'}),
+				token({s: '', v: 'zig'}),
 			]);
 		});
 
@@ -92,8 +132,8 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo "zig\\" zag\\n"';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: 'zig" zag\n', q: true},
+				token({s: '', v: 'foo', q: false}),
+				token({s: ' ', v: 'zig" zag\n', q: true}),
 			]);
 		});
 
@@ -101,13 +141,27 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			const input = 'foo " zig\n  zag  "';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
-				{s: '', v: 'foo', q: false},
-				{s: ' ', v: ' zig\n  zag  ', q: true},
+				token({s: '', v: 'foo', q: false}),
+				token({s: ' ', v: ' zig\n  zag  ', q: true}),
+			]);
+		});
+
+		it('calculates line numbers consistently within quotes', () => {
+			const input = 'foo\nbar "zig\nzag\na" b';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({b: {i: 0, ln: 0, ch: 0}, e: {i: 3, ln: 0, ch: 3}}),
+				token({b: {i: 3, ln: 0, ch: 3}, e: {i: 4, ln: 1, ch: 0}}),
+				token({b: {i: 4, ln: 1, ch: 0}, e: {i: 7, ln: 1, ch: 3}}),
+				token({b: {i: 8, ln: 1, ch: 4}, e: {i: 19, ln: 3, ch: 2}}),
+				token({b: {i: 20, ln: 3, ch: 3}, e: {i: 21, ln: 3, ch: 4}}),
 			]);
 		});
 
 		it('rejects unterminated quoted values', () => {
-			expect(() => tokeniser.tokenise('"nope')).toThrow();
+			expect(() => tokeniser.tokenise('"nope')).toThrow(new Error(
+				'Unterminated literal (began at line 1, character 0)'
+			));
 		});
 	});
 

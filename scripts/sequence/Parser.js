@@ -71,6 +71,28 @@ define([
 		'end': {type: 'agent end', mode: 'cross'},
 	};
 
+	function makeError(message, token = null) {
+		let suffix = '';
+		if(token) {
+			suffix = (
+				' at line ' + (token.b.ln + 1) +
+				', character ' + token.b.ch
+			);
+		}
+		return new Error(message + suffix);
+	}
+
+	function errToken(line, pos) {
+		if(pos < line.length) {
+			return line[pos];
+		}
+		const last = array.last(line);
+		if(!last) {
+			return null;
+		}
+		return {b: last.e};
+	}
+
 	function joinLabel(line, begin = 0, end = null) {
 		if(end === null) {
 			end = line.length;
@@ -93,14 +115,18 @@ define([
 	}
 
 	function skipOver(line, start, skip, error = null) {
-		const pass = skip.every((expected, i) => (
-			tokenKeyword(line[start + i]) === expected
-		));
-		if(!pass) {
-			if(error) {
-				throw new Error(error + ': ' + joinLabel(line));
-			} else {
-				return start;
+		for(let i = 0; i < skip.length; ++ i) {
+			const expected = skip[i];
+			const token = line[start + i];
+			if(tokenKeyword(token) !== expected) {
+				if(error) {
+					throw makeError(
+						error + '; expected "' + expected + '"',
+						token
+					);
+				} else {
+					return start;
+				}
 			}
 		}
 		return start + skip.length;
@@ -124,7 +150,7 @@ define([
 			aliasSep = end;
 		}
 		if(start >= aliasSep) {
-			throw new Error('Missing agent name');
+			throw makeError('Missing agent name', errToken(line, start));
 		}
 		return {
 			name: joinLabel(line, start, aliasSep),
@@ -139,11 +165,12 @@ define([
 		const flags = [];
 		let p = start;
 		for(; p < end; ++ p) {
-			const rawFlag = tokenKeyword(line[p]);
+			const token = line[p];
+			const rawFlag = tokenKeyword(token);
 			const flag = flagTypes[rawFlag];
 			if(flag) {
 				if(flags.includes(flag)) {
-					throw new Error('Duplicate agent flag: ' + rawFlag);
+					throw makeError('Duplicate agent flag: ' + rawFlag, token);
 				}
 				flags.push(flag);
 			} else {
@@ -204,7 +231,7 @@ define([
 
 			const type = tokenKeyword(line[1]);
 			if(TERMINATOR_TYPES.indexOf(type) === -1) {
-				throw new Error('Unknown termination: ' + joinLabel(line));
+				throw makeError('Unknown termination "' + type + '"', line[1]);
 			}
 			meta.terminators = type;
 			return true;
@@ -274,14 +301,11 @@ define([
 			let skip = 2;
 			skip = skipOver(line, skip, type.skip);
 			const agents = readAgentList(line, skip, labelSep);
-			if(
-				agents.length < type.min ||
-				(type.max !== null && agents.length > type.max)
-			) {
-				throw new Error(
-					'Invalid ' + mode.mode +
-					': ' + joinLabel(line)
-				);
+			if(agents.length < type.min) {
+				throw makeError('Too few agents for ' + mode.mode, line[0]);
+			}
+			if(type.max !== null && agents.length > type.max) {
+				throw makeError('Too many agents for ' + mode.mode, line[0]);
 			}
 			return {
 				type: type.type,
@@ -343,9 +367,13 @@ define([
 			}
 		}
 		if(!stage) {
-			throw new Error('Unrecognised command: ' + joinLabel(line));
+			throw makeError(
+				'Unrecognised command: ' + joinLabel(line),
+				line[0]
+			);
 		}
 		if(typeof stage === 'object') {
+			stage.ln = line[0].b.ln;
 			stages.push(stage);
 		}
 	}

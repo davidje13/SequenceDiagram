@@ -153,12 +153,15 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'define': {type: 'keyword', suggest: true, then: {
 				'': aliasListToEnd,
+				'as': CM_ERROR,
 			}},
 			'begin': {type: 'keyword', suggest: true, then: {
 				'': aliasListToEnd,
+				'as': CM_ERROR,
 			}},
 			'end': {type: 'keyword', suggest: true, then: {
 				'': aliasListToEnd,
+				'as': CM_ERROR,
 				'\n': end,
 			}},
 			'if': {type: 'keyword', suggest: true, then: {
