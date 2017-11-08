@@ -33,8 +33,8 @@ defineDescribe('Sequence Renderer', [
 				label,
 				options: {
 					line: 'solid',
-					left: false,
-					right: true,
+					left: 0,
+					right: 1,
 				},
 			};
 		},

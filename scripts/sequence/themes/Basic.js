@@ -72,12 +72,24 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				},
 			},
 			arrow: {
-				width: 5,
-				height: 10,
-				attrs: {
-					'fill': '#000000',
-					'stroke-width': 0,
-					'stroke-linejoin': 'miter',
+				single: {
+					width: 5,
+					height: 10,
+					attrs: {
+						'fill': '#000000',
+						'stroke-width': 0,
+						'stroke-linejoin': 'miter',
+					},
+				},
+				double: {
+					width: 4,
+					height: 6,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1,
+						'stroke-linejoin': 'miter',
+					},
 				},
 			},
 			label: {

@@ -12,18 +12,28 @@ define([
 	const BLOCK_TYPES = {
 		'if': {type: 'block begin', mode: 'if', skip: []},
 		'else': {type: 'block split', mode: 'else', skip: ['if']},
-		'elif': {type: 'block split', mode: 'else', skip: []},
 		'repeat': {type: 'block begin', mode: 'repeat', skip: []},
 	};
 
-	const CONNECT_TYPES = {
-		'->': {line: 'solid', left: false, right: true},
-		'<-': {line: 'solid', left: true, right: false},
-		'<->': {line: 'solid', left: true, right: true},
-		'-->': {line: 'dash', left: false, right: true},
-		'<--': {line: 'dash', left: true, right: false},
-		'<-->': {line: 'dash', left: true, right: true},
-	};
+	const CONNECT_TYPES = ((() => {
+		const lTypes = ['', '<', '<<'];
+		const mTypes = ['-', '--'];
+		const rTypes = ['', '>', '>>'];
+		const arrows = array.combine([lTypes, mTypes, rTypes]);
+		array.removeAll(arrows, mTypes);
+
+		const types = new Map();
+
+		arrows.forEach((arrow) => {
+			types.set(arrow, {
+				line: arrow.includes('--') ? 'dash' : 'solid',
+				left: lTypes.indexOf(arrow.substr(0, arrow.indexOf('-'))),
+				right: rTypes.indexOf(arrow.substr(arrow.lastIndexOf('-') + 1)),
+			});
+		});
+
+		return types;
+	})());
 
 	const CONNECT_AGENT_FLAGS = {
 		'*': 'begin',
@@ -323,7 +333,7 @@ define([
 			let typePos = -1;
 			let options = null;
 			for(let j = 0; j < line.length; ++ j) {
-				const opts = CONNECT_TYPES[tokenKeyword(line[j])];
+				const opts = CONNECT_TYPES.get(tokenKeyword(line[j]));
 				if(opts) {
 					typePos = j;
 					options = opts;

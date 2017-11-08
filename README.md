@@ -40,24 +40,25 @@ terminators box
 ```
 title Connection Types
 
+begin Foo, Bar, Baz
+
 Foo -> Bar: Simple arrow
-Foo --> Bar: Dashed arrow
+Bar --> Baz: Dashed arrow
 Foo <- Bar: Reversed arrow
-Foo <-- Bar: Reversed dashed arrow
+Bar <-- Baz: Reversed & dashed
 Foo <-> Bar: Double arrow
-Foo <--> Bar: Double dashed arrow
+Bar <--> Baz: Double dashed arrow
 
 # An arrow with no label:
 Foo -> Bar
 
-Foo -> Foo: Foo talks to itself
+Bar ->> Baz: Different arrow
+Foo <<--> Bar: Mix of arrows
+
+Bar -> Bar: Bar talks to itself
 
 Foo -> +Bar: Foo asks Bar
 -Bar --> Foo: and Bar replies
-
-# * and ! cause agents to be created and destroyed inline
-Bar -> *Baz
-Bar <- !Baz
 
 # Arrows leaving on the left and right of the diagram
 [ -> Foo: From the left
@@ -139,12 +140,18 @@ too!'
 ```
 title "Baz doesn't live long"
 
-Foo -> Bar
+note over Foo, Bar: Using begin / end
+
 begin Baz
 Bar -> Baz
 Baz -> Foo
 end Baz
-Foo -> Bar
+
+note over Foo, Bar: Using * / !
+
+# * and ! cause agents to be created and destroyed inline
+Bar -> *Baz: make Baz
+Foo <- !Baz: end Baz
 
 # Foo and Bar end with black bars
 terminators bar

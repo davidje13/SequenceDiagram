@@ -56,6 +56,27 @@ define(() => {
 		return list[list.length - 1];
 	}
 
+	function combineRecur(parts, position, str, target) {
+		if(position >= parts.length) {
+			target.push(str);
+			return;
+		}
+		const choices = parts[position];
+		if(!Array.isArray(choices)) {
+			combineRecur(parts, position + 1, str + choices, target);
+			return;
+		}
+		for(let i = 0; i < choices.length; ++ i) {
+			combineRecur(parts, position + 1, str + choices[i], target);
+		}
+	}
+
+	function combine(parts) {
+		const target = [];
+		combineRecur(parts, 0, '', target);
+		return target;
+	}
+
 	return {
 		indexOf,
 		mergeSets,
@@ -63,5 +84,6 @@ define(() => {
 		removeAll,
 		remove,
 		last,
+		combine,
 	};
 });

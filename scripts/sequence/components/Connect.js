@@ -22,31 +22,87 @@ define([
 		));
 	}
 
-	function getArrowShort(theme) {
-		const arrow = theme.connect.arrow;
-		const join = arrow.attrs['stroke-linejoin'] || 'miter';
-		const t = arrow.attrs['stroke-width'] * 0.5;
-		const lineStroke = theme.agentLineAttrs['stroke-width'] * 0.5;
-		if(join === 'round') {
-			return lineStroke + t;
-		} else {
-			const h = arrow.height / 2;
-			const w = arrow.width;
-			const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
-			return lineStroke + arrowDistance;
+	class Arrowhead {
+		constructor(propName) {
+			this.propName = propName;
+		}
+
+		getConfig(theme) {
+			return theme.connect.arrow[this.propName];
+		}
+
+		short(theme) {
+			const arrow = this.getConfig(theme);
+			const join = arrow.attrs['stroke-linejoin'] || 'miter';
+			const t = arrow.attrs['stroke-width'] * 0.5;
+			const lineStroke = theme.agentLineAttrs['stroke-width'] * 0.5;
+			if(join === 'round') {
+				return lineStroke + t;
+			} else {
+				const h = arrow.height / 2;
+				const w = arrow.width;
+				const arrowDistance = t * Math.sqrt((w * w) / (h * h) + 1);
+				return lineStroke + arrowDistance;
+			}
+		}
+
+		render(layer, theme, {x, y, dir}) {
+			const config = this.getConfig(theme);
+			drawHorizontalArrowHead(layer, {
+				x: x + this.short(theme) * dir,
+				y,
+				dx: config.width * dir,
+				dy: config.height / 2,
+				attrs: config.attrs,
+			});
+		}
+
+		width(theme) {
+			return this.short(theme) + this.getConfig(theme).width;
+		}
+
+		height(theme) {
+			return this.getConfig(theme).height;
+		}
+
+		lineGap(theme, lineAttrs) {
+			const arrow = this.getConfig(theme);
+			const short = this.short(theme);
+			if(arrow.attrs.fill === 'none') {
+				const h = arrow.height / 2;
+				const w = arrow.width;
+				const safe = short + (lineAttrs['stroke-width'] / 2) * (w / h);
+				return (short + safe) / 2;
+			} else {
+				return short + arrow.width / 2;
+			}
 		}
 	}
 
+	const ARROWHEADS = [
+		{
+			render: () => {},
+			width: () => 0,
+			height: () => 0,
+			lineGap: () => 0,
+		},
+		new Arrowhead('single'),
+		new Arrowhead('double'),
+	];
+
 	class Connect extends BaseComponent {
-		separation({agentNames, label}, env) {
+		separation({label, agentNames, options}, env) {
 			const config = env.theme.connect;
 
-			const labelWidth = (
-				env.textSizer.measure(config.label.attrs, label).width +
-				config.label.padding * 2
-			);
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
 
-			const short = getArrowShort(env.theme);
+			let labelWidth = (
+				env.textSizer.measure(config.label.attrs, label).width
+			);
+			if(labelWidth > 0) {
+				labelWidth += config.label.padding * 2;
+			}
 
 			const info1 = env.agentInfos.get(agentNames[0]);
 			if(agentNames[0] === agentNames[1]) {
@@ -54,9 +110,10 @@ define([
 					left: 0,
 					right: (
 						info1.currentMaxRad +
-						labelWidth +
-						config.arrow.width +
-						short +
+						Math.max(
+							labelWidth + lArrow.width(env.theme),
+							rArrow.width(env.theme)
+						) +
 						config.loopbackRadius
 					),
 				});
@@ -69,8 +126,10 @@ define([
 					info1.currentMaxRad +
 					info2.currentMaxRad +
 					labelWidth +
-					config.arrow.width * 2 +
-					short * 2
+					Math.max(
+						lArrow.width(env.theme),
+						rArrow.width(env.theme)
+					) * 2
 				);
 			}
 		}
@@ -79,9 +138,8 @@ define([
 			const config = env.theme.connect;
 			const from = env.agentInfos.get(agentNames[0]);
 
-			const dx = config.arrow.width;
-			const dy = config.arrow.height / 2;
-			const short = getArrowShort(env.theme);
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
 
 			const height = (
 				env.textSizer.measureHeight(config.label.attrs, label) +
@@ -93,9 +151,8 @@ define([
 			const y0 = env.primaryY;
 			const x0 = (
 				lineX +
-				short +
-				dx +
-				config.label.padding
+				lArrow.width(env.theme) +
+				(label ? config.label.padding : 0)
 			);
 
 			const renderedText = SVGShapes.renderBoxedText(label, {
@@ -108,48 +165,32 @@ define([
 				labelLayer: env.labelLayer,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
-			const r = config.loopbackRadius;
-			const x1 = (
-				x0 +
+			const labelW = (label ? (
 				renderedText.width +
 				config.label.padding -
 				config.mask.padding.left -
 				config.mask.padding.right
-			);
+			) : 0);
+			const r = config.loopbackRadius;
+			const x1 = Math.max(lineX + rArrow.width(env.theme), x0 + labelW);
 			const y1 = y0 + r * 2;
 
-			const space = short + dx / 2;
-
+			const lineAttrs = config.lineAttrs[options.line];
 			env.shapeLayer.appendChild(svg.make('path', Object.assign({
 				'd': (
-					'M ' + (lineX + (options.left ? space : 0)) + ' ' + y0 +
+					'M ' + (lineX + lArrow.lineGap(env.theme, lineAttrs)) +
+					' ' + y0 +
 					' L ' + x1 + ' ' + y0 +
 					' A ' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + y1 +
-					' L ' + (lineX + (options.right ? space : 0)) + ' ' + y1
+					' L ' + (lineX + rArrow.lineGap(env.theme, lineAttrs)) +
+					' ' + y1
 				),
-			}, config.lineAttrs[options.line])));
+			}, lineAttrs)));
 
-			if(options.left) {
-				drawHorizontalArrowHead(env.shapeLayer, {
-					x: lineX + short,
-					y: y0,
-					dx,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
+			lArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y0, dir: 1});
+			rArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y1, dir: 1});
 
-			if(options.right) {
-				drawHorizontalArrowHead(env.shapeLayer, {
-					x: lineX + short,
-					y: y1,
-					dx,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			return y1 + dy + env.theme.actionMargin;
+			return y1 + rArrow.height(env.theme) / 2 + env.theme.actionMargin;
 		}
 
 		renderSimpleConnect({label, agentNames, options}, env) {
@@ -157,10 +198,10 @@ define([
 			const from = env.agentInfos.get(agentNames[0]);
 			const to = env.agentInfos.get(agentNames[1]);
 
-			const dx = config.arrow.width;
-			const dy = config.arrow.height / 2;
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
+
 			const dir = (from.x < to.x) ? 1 : -1;
-			const short = getArrowShort(env.theme);
 
 			const height = (
 				env.textSizer.measureHeight(config.label.attrs, label) +
@@ -183,40 +224,32 @@ define([
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
-			const space = short + dx / 2;
-
+			const lineAttrs = config.lineAttrs[options.line];
 			env.shapeLayer.appendChild(svg.make('line', Object.assign({
-				'x1': x0 + (options.left ? space : 0) * dir,
+				'x1': x0 + lArrow.lineGap(env.theme, lineAttrs) * dir,
 				'y1': y,
-				'x2': x1 - (options.right ? space : 0) * dir,
+				'x2': x1 - rArrow.lineGap(env.theme, lineAttrs) * dir,
 				'y2': y,
-			}, config.lineAttrs[options.line])));
+			}, lineAttrs)));
 
-			if(options.left) {
-				drawHorizontalArrowHead(env.shapeLayer, {
-					x: x0 + short * dir,
-					y,
-					dx: dx * dir,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
+			lArrow.render(env.shapeLayer, env.theme, {x: x0, y, dir});
+			rArrow.render(env.shapeLayer, env.theme, {x: x1, y, dir: -dir});
 
-			if(options.right) {
-				drawHorizontalArrowHead(env.shapeLayer, {
-					x: x1 - short * dir,
-					y,
-					dx: -dx * dir,
-					dy,
-					attrs: config.arrow.attrs,
-				});
-			}
-
-			return y + dy + env.theme.actionMargin;
+			return (
+				y +
+				Math.max(
+					lArrow.height(env.theme),
+					rArrow.height(env.theme)
+				) / 2 +
+				env.theme.actionMargin
+			);
 		}
 
-		renderPre({label, agentNames}, env) {
+		renderPre({label, agentNames, options}, env) {
 			const config = env.theme.connect;
+
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
 
 			const height = (
 				env.textSizer.measureHeight(config.label.attrs, label) +
@@ -224,9 +257,14 @@ define([
 				config.label.margin.bottom
 			);
 
+			let arrowH = lArrow.height(env.theme);
+			if(agentNames[0] !== agentNames[1]) {
+				arrowH = Math.max(arrowH, rArrow.height(env.theme));
+			}
+
 			return {
 				agentNames,
-				topShift: Math.max(config.arrow.height / 2, height),
+				topShift: Math.max(arrowH / 2, height),
 			};
 		}
 

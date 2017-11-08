@@ -200,45 +200,40 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A <-> B\n' +
 				'A --> B\n' +
 				'A <-- B\n' +
-				'A <--> B\n'
+				'A <--> B\n' +
+				'A ->> B\n' +
+				'A <<- B\n' +
+				'A <<->> B\n' +
+				'A <->> B\n' +
+				'A <<-> B\n' +
+				'A -->> B\n' +
+				'A <<-- B\n' +
+				'A <<-->> B\n' +
+				'A <-->> B\n' +
+				'A <<--> B\n'
 			);
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
 					line: 'solid',
-					left: false,
-					right: true,
+					left: 0,
+					right: 1,
 					label: '',
 				}),
-				PARSED.connect(['A', 'B'], {
-					line: 'solid',
-					left: true,
-					right: false,
-					label: '',
-				}),
-				PARSED.connect(['A', 'B'], {
-					line: 'solid',
-					left: true,
-					right: true,
-					label: '',
-				}),
-				PARSED.connect(['A', 'B'], {
-					line: 'dash',
-					left: false,
-					right: true,
-					label: '',
-				}),
-				PARSED.connect(['A', 'B'], {
-					line: 'dash',
-					left: true,
-					right: false,
-					label: '',
-				}),
-				PARSED.connect(['A', 'B'], {
-					line: 'dash',
-					left: true,
-					right: true,
-					label: '',
-				}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 0, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 1}),
 			]);
 		});
 
@@ -250,14 +245,14 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
 					line: 'solid',
-					left: true,
-					right: false,
+					left: 1,
+					right: 0,
 					label: 'B -> A',
 				}),
 				PARSED.connect(['A', 'B'], {
 					line: 'solid',
-					left: false,
-					right: true,
+					left: 0,
+					right: 1,
 					label: 'B <- A',
 				}),
 			]);

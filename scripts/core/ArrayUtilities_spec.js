@@ -169,4 +169,21 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 			expect(array.last([])).toEqual(undefined);
 		});
 	});
+
+	describe('.combine', () => {
+		it('returns all combinations of the given arguments', () => {
+			const list = array.combine([
+				['Aa', 'Bb'],
+				['Cc', 'Dd'],
+				'Ee',
+				['Ff'],
+			]);
+			expect(list).toEqual([
+				'AaCcEeFf',
+				'AaDdEeFf',
+				'BbCcEeFf',
+				'BbDdEeFf',
+			]);
+		});
+	});
 });

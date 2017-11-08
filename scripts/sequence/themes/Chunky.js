@@ -78,17 +78,30 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				},
 			},
 			arrow: {
-				width: 10,
-				height: 12,
-				attrs: {
-					'fill': '#000000',
-					'stroke': '#000000',
-					'stroke-width': 3,
-					'stroke-linejoin': 'round',
+				single: {
+					width: 10,
+					height: 12,
+					attrs: {
+						'fill': '#000000',
+						'stroke': '#000000',
+						'stroke-width': 3,
+						'stroke-linejoin': 'round',
+					},
+				},
+				double: {
+					width: 10,
+					height: 12,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 3,
+						'stroke-linejoin': 'round',
+						'stroke-linecap': 'round',
+					},
 				},
 			},
 			label: {
-				padding: 6,
+				padding: 7,
 				margin: {top: 2, bottom: 3},
 				attrs: {
 					'font-family': 'sans-serif',

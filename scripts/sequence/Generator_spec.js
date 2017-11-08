@@ -52,8 +52,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		connect: (agentNames, {
 			label = '',
 			line = '',
-			left = false,
-			right = false,
+			left = 0,
+			right = 0,
 		} = {}) => {
 			return {
 				type: 'connect',
@@ -288,8 +288,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B'], {
 					label: 'foo',
 					line: 'bar',
-					left: true,
-					right: false,
+					left: 1,
+					right: 0,
 				}),
 			]});
 			expect(sequence.stages).toEqual([
@@ -297,8 +297,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.connect(['A', 'B'], {
 					label: 'foo',
 					line: 'bar',
-					left: true,
-					right: false,
+					left: 1,
+					right: 0,
 				}),
 				jasmine.anything(),
 			]);

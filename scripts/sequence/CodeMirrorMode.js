@@ -7,11 +7,12 @@ define(['core/ArrayUtilities'], (array) => {
 		const end = {type: '', suggest: '\n', then: {}};
 		const hiddenEnd = {type: '', then: {}};
 
-		const ARROWS = [
-			'->', '-->',
-			'<-', '<--',
-			'<->', '<-->',
-		];
+		const ARROWS = array.combine([
+			['', '<', '<<'],
+			['-', '--'],
+			['', '>', '>>'],
+		]);
+		array.removeAll(ARROWS, ['-', '--']);
 
 		const textToEnd = {type: 'string', then: {'': 0, '\n': end}};
 		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
