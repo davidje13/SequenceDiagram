@@ -1,6 +1,9 @@
 define(['./SVGUtilities'], (svg) => {
 	'use strict';
 
+	// Thanks, https://stackoverflow.com/a/9851769/1180785
+	const firefox = (typeof window.InstallTrigger !== 'undefined');
+
 	function fontDetails(attrs) {
 		const size = Number(attrs['font-size']);
 		const lineHeight = size * (Number(attrs['line-height']) || 1);
@@ -130,7 +133,11 @@ define(['./SVGUtilities'], (svg) => {
 
 	class SizeTester {
 		constructor(container) {
-			this.testers = svg.make('g', {'display': 'none'});
+			this.testers = svg.make('g', {
+				// Firefox fails to measure non-displayed text
+				'display': firefox ? 'block' : 'none',
+				'visibility': 'hidden',
+			});
 			this.container = container;
 			this.cache = new Map();
 		}

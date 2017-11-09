@@ -4,9 +4,13 @@ define(() => {
 	// Thanks, https://stackoverflow.com/a/23522755/1180785
 	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
+	// Thanks, https://stackoverflow.com/a/9851769/1180785
+	const firefox = (typeof window.InstallTrigger !== 'undefined');
+
 	return class Exporter {
 		constructor() {
 			this.latestSVG = null;
+			this.latestInternalSVG = null;
 			this.canvas = null;
 			this.context = null;
 			this.indexPNG = 0;
@@ -14,24 +18,42 @@ define(() => {
 			this.latestPNG = null;
 		}
 
-		getSVGContent(renderer) {
-			return renderer.svg().outerHTML;
+		getSVGContent(renderer, size = null) {
+			let code = renderer.svg().outerHTML;
+			if(firefox && size) {
+				// Firefox fails to render SVGs unless they have size
+				// attributes on the <svg> tag
+				code = code.replace(
+					/^<svg/,
+					'<svg width="' + size.width +
+					'" height="' + size.height + '" '
+				);
+			}
+			return code;
 		}
 
-		getSVGBlob(renderer) {
+		getSVGBlob(renderer, size = null) {
 			return new Blob(
-				[this.getSVGContent(renderer)],
+				[this.getSVGContent(renderer, size)],
 				{type: 'image/svg+xml'}
 			);
 		}
 
-		getSVGURL(renderer) {
-			const blob = this.getSVGBlob(renderer);
-			if(this.latestSVG) {
-				URL.revokeObjectURL(this.latestSVG);
+		getSVGURL(renderer, size = null) {
+			const blob = this.getSVGBlob(renderer, size);
+			if(size) {
+				if(this.latestInternalSVG) {
+					URL.revokeObjectURL(this.latestInternalSVG);
+				}
+				this.latestInternalSVG = URL.createObjectURL(blob);
+				return this.latestInternalSVG;
+			} else {
+				if(this.latestSVG) {
+					URL.revokeObjectURL(this.latestSVG);
+				}
+				this.latestSVG = URL.createObjectURL(blob);
+				return this.latestSVG;
 			}
-			this.latestSVG = URL.createObjectURL(blob);
-			return this.latestSVG;
 		}
 
 		getPNGBlob(renderer, resolution, callback) {
@@ -68,7 +90,7 @@ define(() => {
 				this.canvas.toBlob(callback, 'image/png');
 			}, {once: true});
 
-			img.src = this.getSVGURL(renderer);
+			img.src = this.getSVGURL(renderer, {width, height});
 		}
 
 		getPNGURL(renderer, resolution, callback) {
