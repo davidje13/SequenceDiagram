@@ -47,7 +47,7 @@ defineDescribe('Sequence Integration', [
 		const sequence = generator.generate(parsed);
 		renderer.render(sequence);
 		expect(getSimplifiedContent(renderer)).toEqual(
-			'<svg width="100%" height="100%" viewBox="-5 -5 10 10">' +
+			'<svg viewBox="-5 -5 10 10">' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
@@ -65,7 +65,7 @@ defineDescribe('Sequence Integration', [
 		renderer.render(sequence);
 
 		expect(getSimplifiedContent(renderer)).toEqual(
-			'<svg width="100%" height="100%" viewBox="-11.5 -16 23 21">' +
+			'<svg viewBox="-11.5 -16 23 21">' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
@@ -92,7 +92,7 @@ defineDescribe('Sequence Integration', [
 
 		const content = getSimplifiedContent(renderer);
 		expect(content).toContain(
-			'<svg width="100%" height="100%" viewBox="-5 -5 82 47">'
+			'<svg viewBox="-5 -5 82 47">'
 		);
 
 		// Agent 1

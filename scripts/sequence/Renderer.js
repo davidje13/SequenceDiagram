@@ -126,10 +126,7 @@ define([
 		}
 
 		buildStaticElements() {
-			this.base = svg.makeContainer({
-				'width': '100%',
-				'height': '100%',
-			});
+			this.base = svg.makeContainer();
 
 			this.defs = svg.make('defs');
 			this.mask = svg.make('mask', {

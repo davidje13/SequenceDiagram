@@ -1,6 +1,9 @@
 defineDescribe('Interface', ['./Interface'], (Interface) => {
 	'use strict';
 
+	// Thanks, https://stackoverflow.com/a/23522755/1180785
+	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 	let parser = null;
 	let generator = null;
 	let renderer = null;
@@ -61,6 +64,11 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			ui.build(container);
 
 			expect(ui.downloadSVG.getAttribute('href')).toEqual('#');
+			if(safari) {
+				// Safari actually starts a download if we do this, which
+				// doesn't seem to fit its usual security vibe
+				return;
+			}
 			ui.downloadSVG.dispatchEvent(new Event('click'));
 			expect(ui.downloadSVG.getAttribute('href')).toEqual('mySVGURL');
 		});

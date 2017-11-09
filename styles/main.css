@@ -58,6 +58,11 @@ html, body {
 .pane-view-inner {
 }
 
+.pane-view svg {
+	width: 100%;
+	height: 100%;
+}
+
 .pane-error {
 	position: absolute;
 	left: 0;
