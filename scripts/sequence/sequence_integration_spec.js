@@ -1,4 +1,4 @@
-/* jshint -W072 */
+/* jshint -W072 */ // Allow several required modules
 defineDescribe('Sequence Integration', [
 	'./Parser',
 	'./Generator',
@@ -12,6 +12,7 @@ defineDescribe('Sequence Integration', [
 	BasicTheme,
 	SVGTextBlock
 ) => {
+	/* jshint +W072 */
 	'use strict';
 
 	let parser = null;

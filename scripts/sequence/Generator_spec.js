@@ -26,26 +26,29 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			return {type: 'block end'};
 		},
 
-		defineAgents: (agentNames) => {
+		defineAgents: (agentNames, {ln = 0} = {}) => {
 			return {
 				type: 'agent define',
 				agents: makeParsedAgents(agentNames),
+				ln,
 			};
 		},
 
-		beginAgents: (agentNames, {mode = 'box'} = {}) => {
+		beginAgents: (agentNames, {mode = 'box', ln = 0} = {}) => {
 			return {
 				type: 'agent begin',
 				agents: makeParsedAgents(agentNames),
 				mode,
+				ln,
 			};
 		},
 
-		endAgents: (agentNames, {mode = 'cross'} = {}) => {
+		endAgents: (agentNames, {mode = 'cross', ln = 0} = {}) => {
 			return {
 				type: 'agent end',
 				agents: makeParsedAgents(agentNames),
 				mode,
+				ln,
 			};
 		},
 
@@ -54,6 +57,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			line = '',
 			left = 0,
 			right = 0,
+			ln = 0,
 		} = {}) => {
 			return {
 				type: 'connect',
@@ -64,18 +68,21 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					left,
 					right,
 				},
+				ln,
 			};
 		},
 
 		note: (type, agentNames, {
 			mode = '',
 			label = '',
+			ln = 0,
 		} = {}) => {
 			return {
 				type,
 				agents: makeParsedAgents(agentNames),
 				mode,
 				label,
+				ln,
 			};
 		},
 	};
@@ -83,21 +90,25 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	const GENERATED = {
 		beginAgents: (agentNames, {
 			mode = jasmine.anything(),
+			ln = jasmine.anything(),
 		} = {}) => {
 			return {
 				type: 'agent begin',
 				agentNames,
 				mode,
+				ln,
 			};
 		},
 
 		endAgents: (agentNames, {
 			mode = jasmine.anything(),
+			ln = jasmine.anything(),
 		} = {}) => {
 			return {
 				type: 'agent end',
 				agentNames,
 				mode,
+				ln,
 			};
 		},
 
@@ -106,6 +117,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			line = jasmine.anything(),
 			left = jasmine.anything(),
 			right = jasmine.anything(),
+			ln = jasmine.anything(),
 		} = {}) => {
 			return {
 				type: 'connect',
@@ -116,33 +128,42 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					left,
 					right,
 				},
+				ln,
 			};
 		},
 
-		highlight: (agentNames, highlighted) => {
+		highlight: (agentNames, highlighted, {
+			ln = jasmine.anything(),
+		} = {}) => {
 			return {
 				type: 'agent highlight',
 				agentNames,
 				highlighted,
+				ln,
 			};
 		},
 
 		note: (type, agentNames, {
 			mode = jasmine.anything(),
 			label = jasmine.anything(),
+			ln = jasmine.anything(),
 		} = {}) => {
 			return {
 				type,
 				agentNames,
 				mode,
 				label,
+				ln,
 			};
 		},
 
-		parallel: (stages) => {
+		parallel: (stages, {
+			ln = jasmine.anything(),
+		} = {}) => {
 			return {
 				type: 'parallel',
 				stages,
+				ln,
 			};
 		},
 	};
@@ -172,14 +193,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('passes marks and async through', () => {
 			const sequence = generator.generate({stages: [
-				{type: 'mark', name: 'foo'},
-				{type: 'async', target: 'foo'},
-				{type: 'async', target: ''},
+				{type: 'mark', name: 'foo', ln: 0},
+				{type: 'async', target: 'foo', ln: 1},
+				{type: 'async', target: '', ln: 2},
 			]});
 			expect(sequence.stages).toEqual([
-				{type: 'mark', name: 'foo'},
-				{type: 'async', target: 'foo'},
-				{type: 'async', target: ''},
+				{type: 'mark', name: 'foo', ln: 0},
+				{type: 'async', target: 'foo', ln: 1},
+				{type: 'async', target: '', ln: 2},
 			]);
 		});
 

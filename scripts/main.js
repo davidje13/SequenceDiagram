@@ -21,6 +21,7 @@
 		BasicTheme,
 		ChunkyTheme
 	) => {
+		/* jshint +W072 */
 		const defaultCode = (
 			'title Labyrinth\n' +
 			'\n' +

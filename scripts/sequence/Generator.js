@@ -230,6 +230,9 @@ define(['core/ArrayUtilities'], (array) => {
 			if(!stage) {
 				return;
 			}
+			if(stage.ln === undefined) {
+				stage.ln = this.latestLine;
+			}
 			this.currentSection.stages.push(stage);
 			if(isVisible) {
 				this.currentNest.hasContent = true;
@@ -244,6 +247,11 @@ define(['core/ArrayUtilities'], (array) => {
 			if(viableStages.length === 1) {
 				return this.addStage(viableStages[0]);
 			}
+			viableStages.forEach((stage) => {
+				if(stage.ln === undefined) {
+					stage.ln = this.latestLine;
+				}
+			});
 			return this.addStage({
 				type: 'parallel',
 				stages: viableStages,
@@ -503,6 +511,7 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		handleStage(stage) {
+			this.latestLine = stage.ln;
 			try {
 				this.stageHandlers[stage.type](stage);
 			} catch(e) {

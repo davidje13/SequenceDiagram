@@ -39,16 +39,24 @@ define([
 
 		render(y, {x, label}, env) {
 			const config = env.theme.agentCap.box;
-			const {height} = SVGShapes.renderBoxedText(label, {
+			const clickable = env.makeRegion();
+			const {width, height} = SVGShapes.renderBoxedText(label, {
 				x,
 				y,
 				padding: config.padding,
 				boxAttrs: config.boxAttrs,
 				labelAttrs: config.labelAttrs,
 				boxLayer: env.shapeLayer,
-				labelLayer: env.labelLayer,
+				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
+			clickable.insertBefore(svg.make('rect', {
+				'x': x - width / 2,
+				'y': y,
+				'width': width,
+				'height': height,
+				'fill': 'transparent',
+			}), clickable.firstChild);
 
 			return {
 				lineTop: 0,

@@ -47,6 +47,7 @@ define(() => {
 			textSizer,
 			SVGTextBlockClass,
 			addDef,
+			makeRegion,
 			state,
 		}*/) {
 		}

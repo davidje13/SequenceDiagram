@@ -135,6 +135,7 @@ define([
 		}
 
 		renderSelfConnect({label, agentNames, options}, env) {
+			/* jshint -W071 */ // TODO: find appropriate abstractions
 			const config = env.theme.connect;
 			const from = env.agentInfos.get(agentNames[0]);
 
@@ -155,6 +156,8 @@ define([
 				(label ? config.label.padding : 0)
 			);
 
+			const clickable = env.makeRegion();
+
 			const renderedText = SVGShapes.renderBoxedText(label, {
 				x: x0 - config.mask.padding.left,
 				y: y0 - height + config.label.margin.top,
@@ -162,7 +165,7 @@ define([
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.label.loopbackAttrs,
 				boxLayer: env.maskLayer,
-				labelLayer: env.labelLayer,
+				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 			const labelW = (label ? (
@@ -190,7 +193,17 @@ define([
 			lArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y0, dir: 1});
 			rArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y1, dir: 1});
 
-			return y1 + rArrow.height(env.theme) / 2 + env.theme.actionMargin;
+			const arrowDip = rArrow.height(env.theme) / 2;
+
+			clickable.insertBefore(svg.make('rect', {
+				'x': lineX,
+				'y': y0 - height,
+				'width': x1 + r - lineX,
+				'height': height + r * 2 + arrowDip,
+				'fill': 'transparent',
+			}), clickable.firstChild);
+
+			return y1 + arrowDip + env.theme.actionMargin;
 		}
 
 		renderSimpleConnect({label, agentNames, options}, env) {
@@ -211,7 +224,9 @@ define([
 
 			const x0 = from.x + from.currentMaxRad * dir;
 			const x1 = to.x - to.currentMaxRad * dir;
-			let y = env.primaryY;
+			const y = env.primaryY;
+
+			const clickable = env.makeRegion();
 
 			SVGShapes.renderBoxedText(label, {
 				x: (x0 + x1) / 2,
@@ -220,7 +235,7 @@ define([
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.label.attrs,
 				boxLayer: env.maskLayer,
-				labelLayer: env.labelLayer,
+				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
@@ -235,14 +250,20 @@ define([
 			lArrow.render(env.shapeLayer, env.theme, {x: x0, y, dir});
 			rArrow.render(env.shapeLayer, env.theme, {x: x1, y, dir: -dir});
 
-			return (
-				y +
-				Math.max(
-					lArrow.height(env.theme),
-					rArrow.height(env.theme)
-				) / 2 +
-				env.theme.actionMargin
-			);
+			const arrowDip = Math.max(
+				lArrow.height(env.theme),
+				rArrow.height(env.theme)
+			) / 2;
+
+			clickable.insertBefore(svg.make('rect', {
+				'x': Math.min(x0, x1),
+				'y': y - height,
+				'width': Math.abs(x1 - x0),
+				'height': height + arrowDip,
+				'fill': 'transparent',
+			}), clickable.firstChild);
+
+			return y + arrowDip + env.theme.actionMargin;
 		}
 
 		renderPre({label, agentNames, options}, env) {

@@ -51,6 +51,8 @@ define([
 			this.pngDirty = true;
 			this.updatingPNG = false;
 
+			this.marker = null;
+
 			this._downloadSVGClick = this._downloadSVGClick.bind(this);
 			this._downloadPNGClick = this._downloadPNGClick.bind(this);
 			this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
@@ -147,6 +149,50 @@ define([
 			return code;
 		}
 
+		registerListeners() {
+			this.code.on('change', () => this.update(false));
+
+			this.renderer.addEventListener('mouseover', (element) => {
+				if(this.marker) {
+					this.marker.clear();
+				}
+				if(element.ln !== undefined) {
+					this.marker = this.code.markText(
+						{line: element.ln, ch: 0},
+						{line: element.ln + 1, ch: 0},
+						{
+							className: 'hover',
+							inclusiveLeft: false,
+							inclusiveRight: false,
+							clearOnEnter: true,
+						}
+					);
+				}
+			});
+
+			this.renderer.addEventListener('mouseout', () => {
+				if(this.marker) {
+					this.marker.clear();
+					this.marker = null;
+				}
+			});
+
+			this.renderer.addEventListener('click', (element) => {
+				if(this.marker) {
+					this.marker.clear();
+					this.marker = null;
+				}
+				if(element.ln !== undefined) {
+					this.code.setSelection(
+						{line: element.ln, ch: 0},
+						{line: element.ln + 1, ch: 0},
+						{origin: '+focus', bias: -1}
+					);
+					this.code.focus();
+				}
+			});
+		}
+
 		build(container) {
 			const codePane = makeNode('div', {'class': 'pane-code'});
 			const viewPane = makeNode('div', {'class': 'pane-view'});
@@ -172,7 +218,7 @@ define([
 			this.code = this.buildEditor(codePane);
 			this.viewPaneInner.appendChild(this.renderer.svg());
 
-			this.code.on('change', () => this.update(false));
+			this.registerListeners();
 			this.update();
 		}
 

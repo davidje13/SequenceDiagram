@@ -79,6 +79,7 @@
 		ChunkyTheme,
 		Exporter
 	) => {
+		/* jshint +W072 */
 		const parser = new Parser();
 		const generator = new Generator();
 		const themes = [

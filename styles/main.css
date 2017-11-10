@@ -34,6 +34,10 @@ html, body {
 	background: rgba(255, 0, 0, 0.2);
 }
 
+.hover {
+	background: #FFFF00;
+}
+
 .pick-virtual {
 	color: #777777;
 }

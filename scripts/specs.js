@@ -1,5 +1,6 @@
 define([
 	'core/ArrayUtilities_spec',
+	'core/EventObject_spec',
 	'svg/SVGUtilities_spec',
 	'svg/SVGTextBlock_spec',
 	'svg/SVGShapes_spec',

@@ -31,6 +31,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			'render',
 			'svg',
 			'getThemeNames',
+			'addEventListener',
 		]);
 		renderer.svg.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', ['appendChild']);

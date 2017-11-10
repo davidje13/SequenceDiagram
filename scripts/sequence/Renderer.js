@@ -1,5 +1,7 @@
+/* jshint -W072 */ // Allow several required modules
 define([
 	'core/ArrayUtilities',
+	'core/EventObject',
 	'svg/SVGUtilities',
 	'svg/SVGShapes',
 	'./components/BaseComponent',
@@ -10,10 +12,12 @@ define([
 	'./components/Note',
 ], (
 	array,
+	EventObject,
 	svg,
 	SVGShapes,
 	BaseComponent
 ) => {
+	/* jshint +W072 */
 	'use strict';
 
 	function traverse(stages, callbacks) {
@@ -77,13 +81,23 @@ define([
 
 	let globalNamespace = 0;
 
-	return class Renderer {
+	function parseNamespace(namespace) {
+		if(namespace === null) {
+			namespace = 'R' + globalNamespace;
+			++ globalNamespace;
+		}
+		return namespace;
+	}
+
+	return class Renderer extends EventObject {
 		constructor({
 			themes = [],
 			namespace = null,
 			components = null,
 			SVGTextBlockClass = SVGShapes.TextBlock,
 		} = {}) {
+			super();
+
 			if(components === null) {
 				components = BaseComponent.getComponents();
 			}
@@ -111,11 +125,7 @@ define([
 			this.height = 0;
 			this.themes = makeThemes(themes);
 			this.theme = null;
-			this.namespace = namespace;
-			if(namespace === null) {
-				this.namespace = 'R' + globalNamespace;
-				++ globalNamespace;
-			}
+			this.namespace = parseNamespace(namespace);
 			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
 			this.knownDefs = new Set();
@@ -442,6 +452,29 @@ define([
 			};
 			let bottomY = topY;
 			stages.forEach((stage) => {
+				const eventOver = () => {
+					this.trigger('mouseover', [stage]);
+				};
+
+				const eventOut = () => {
+					this.trigger('mouseout');
+				};
+
+				const eventClick = () => {
+					this.trigger('click', [stage]);
+				};
+
+				env.makeRegion = (o) => {
+					if(!o) {
+						o = svg.make('g');
+					}
+					o.addEventListener('mouseenter', eventOver);
+					o.addEventListener('mouseleave', eventOut);
+					o.addEventListener('click', eventClick);
+					this.actionLabels.appendChild(o);
+					return o;
+				};
+
 				const component = this.components.get(stage.type);
 				const baseY = component.render(stage, env);
 				if(baseY !== undefined) {

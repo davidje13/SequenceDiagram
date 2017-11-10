@@ -1,4 +1,4 @@
-define(['./BaseComponent'], (BaseComponent) => {
+define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 	'use strict';
 
 	function findExtremes(agentInfos, agentNames) {
@@ -34,8 +34,10 @@ define(['./BaseComponent'], (BaseComponent) => {
 		}, env) {
 			const config = env.theme.note[mode];
 
+			const clickable = env.makeRegion();
+
 			const y = env.topY + config.margin.top + config.padding.top;
-			const labelNode = new env.SVGTextBlockClass(env.labelLayer, {
+			const labelNode = new env.SVGTextBlockClass(clickable, {
 				attrs: config.labelAttrs,
 				text: label,
 				y,
@@ -83,6 +85,14 @@ define(['./BaseComponent'], (BaseComponent) => {
 				width: x1 - x0,
 				height: fullH,
 			}));
+
+			clickable.insertBefore(svg.make('rect', {
+				'x': x0,
+				'y': env.topY + config.margin.top,
+				'width': x1 - x0,
+				'height': fullH,
+				'fill': 'transparent',
+			}), clickable.firstChild);
 
 			return (
 				env.topY +
