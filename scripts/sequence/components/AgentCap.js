@@ -94,6 +94,14 @@ define([
 				),
 			}, config.attrs)));
 
+			env.makeRegion().appendChild(svg.make('rect', {
+				'x': x - d,
+				'y': y,
+				'width': d * 2,
+				'height': d * 2,
+				'fill': 'transparent',
+			}));
+
 			return {
 				lineTop: d,
 				lineBottom: d,
@@ -137,6 +145,14 @@ define([
 				'y': y,
 				'width': width,
 			}, config.attrs)));
+
+			env.makeRegion().appendChild(svg.make('rect', {
+				'x': x - width / 2,
+				'y': y,
+				'width': width,
+				'height': config.attrs.height,
+				'fill': 'transparent',
+			}));
 
 			return {
 				lineTop: 0,
@@ -189,6 +205,14 @@ define([
 				'fill': 'url(#' + gradID + ')',
 			}));
 
+			env.makeRegion().appendChild(svg.make('rect', {
+				'x': x - config.width / 2,
+				'y': y,
+				'width': config.width,
+				'height': config.height,
+				'fill': 'transparent',
+			}));
+
 			return {
 				lineTop: config.height,
 				lineBottom: 0,
@@ -211,8 +235,18 @@ define([
 			return config.height;
 		}
 
-		render(y, agentInfo, env) {
+		render(y, {x}, env) {
 			const config = env.theme.agentCap.none;
+
+			const w = 10;
+			env.makeRegion().appendChild(svg.make('rect', {
+				'x': x - w / 2,
+				'y': y,
+				'width': w,
+				'height': config.height,
+				'fill': 'transparent',
+			}));
+
 			return {
 				lineTop: config.height,
 				lineBottom: 0,
