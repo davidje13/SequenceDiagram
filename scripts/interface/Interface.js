@@ -28,6 +28,18 @@ define([
 		events.forEach((event) => element.addEventListener(event, fn));
 	}
 
+	function simplifyPreview(code) {
+		code = code.replace(/\{Agent([0-9]*)\}/g, (match, num) => {
+			if(num === undefined) {
+				return 'A';
+			} else {
+				return String.fromCharCode('A'.charCodeAt(0) + Number(num) - 1);
+			}
+		});
+		code = code.replace(/[{}]/g, '');
+		return code;
+	}
+
 	return class Interface {
 		constructor({
 			parser,
@@ -36,6 +48,7 @@ define([
 			exporter,
 			defaultCode = '',
 			localStorage = '',
+			library = null,
 		}) {
 			this.parser = parser;
 			this.generator = generator;
@@ -43,6 +56,7 @@ define([
 			this.exporter = exporter;
 			this.defaultCode = defaultCode;
 			this.localStorage = localStorage;
+			this.library = library;
 			this.minScale = 1.5;
 
 			this.debounced = null;
@@ -133,8 +147,8 @@ define([
 			code.on('endCompletion', () => {
 				lastKey = 0;
 			});
-			code.on('change', (cm) => {
-				if(cm.state.completionActive) {
+			code.on('change', (cm, change) => {
+				if(cm.state.completionActive || change.origin === 'library') {
 					return;
 				}
 				if(lastKey === 13 || lastKey === 8) {
@@ -193,12 +207,43 @@ define([
 			});
 		}
 
-		build(container) {
-			const codePane = makeNode('div', {'class': 'pane-code'});
-			const viewPane = makeNode('div', {'class': 'pane-view'});
-			this.errorPane = makeNode('div', {'class': 'pane-error'});
+		buildLibrary(container) {
+			this.library.forEach((lib) => {
+				const hold = makeNode('div', {
+					'class': 'library-item',
+				});
+				const holdInner = makeNode('div', {
+					'title': lib.title || lib.code,
+				});
+				hold.appendChild(holdInner);
+				hold.addEventListener(
+					'click',
+					this.addCodeBlock.bind(this, lib.code)
+				);
+				container.appendChild(hold);
+				try {
+					const preview = simplifyPreview(lib.preview || lib.code);
+					const parsed = this.parser.parse(preview);
+					const generated = this.generator.generate(parsed);
+					const rendering = this.renderer.clone();
+					holdInner.appendChild(rendering.svg());
+					rendering.render(generated);
+				} catch(e) {
+					hold.setAttribute('class', 'library-item broken');
+					holdInner.appendChild(makeText(lib.code));
+				}
+			});
+		}
+
+		buildErrorReport() {
+			this.errorMsg = makeNode('div', {'class': 'msg-error'});
 			this.errorText = makeText();
-			this.errorPane.appendChild(this.errorText);
+			this.errorMsg.appendChild(this.errorText);
+			return this.errorMsg;
+		}
+
+		buildViewPane() {
+			const viewPane = makeNode('div', {'class': 'pane-view'});
 			const viewPaneScroller = makeNode('div', {
 				'class': 'pane-view-scroller',
 			});
@@ -210,16 +255,51 @@ define([
 			viewPaneScroller.appendChild(this.viewPaneInner);
 			viewPane.appendChild(this.buildOptionsLinks());
 			viewPane.appendChild(this.buildOptionsDownloads());
+			viewPane.appendChild(this.buildErrorReport());
 
+			return viewPane;
+		}
+
+		build(container) {
+			const codePane = makeNode('div', {'class': 'pane-code'});
 			container.appendChild(codePane);
-			container.appendChild(this.errorPane);
-			container.appendChild(viewPane);
+
+			if(this.library !== null) {
+				const libPane = makeNode('div', {'class': 'pane-library'});
+				const libPaneScroller = makeNode('div', {
+					'class': 'pane-library-scroller',
+				});
+				const libPaneInner = makeNode('div', {
+					'class': 'pane-library-inner',
+				});
+				libPaneScroller.appendChild(libPaneInner);
+				libPane.appendChild(libPaneScroller);
+				container.appendChild(libPane);
+				codePane.setAttribute('class', 'pane-code reduced');
+				this.buildLibrary(libPaneInner);
+			}
+
+			container.appendChild(this.buildViewPane());
 
 			this.code = this.buildEditor(codePane);
 			this.viewPaneInner.appendChild(this.renderer.svg());
 
 			this.registerListeners();
 			this.update();
+		}
+
+		addCodeBlock(block) {
+			const cur = this.code.getCursor('head');
+			const pos = {line: cur.line + ((cur.ch > 0) ? 1 : 0), ch: 0};
+			const lines = block.split('\n').length;
+			this.code.replaceRange(
+				block + '\n',
+				pos,
+				null,
+				'library'
+			);
+			this.code.setCursor({line: pos.line + lines, ch: 0});
+			this.code.focus();
 		}
 
 		updateMinSize(width, height) {
@@ -265,12 +345,12 @@ define([
 			} else {
 				this.errorText.nodeValue = error;
 			}
-			this.errorPane.setAttribute('class', 'pane-error error');
+			this.errorMsg.setAttribute('class', 'msg-error error');
 		}
 
 		markOK() {
-			this.errorText.nodeValue = 'All OK';
-			this.errorPane.setAttribute('class', 'pane-error ok');
+			this.errorText.nodeValue = '';
+			this.errorMsg.setAttribute('class', 'msg-error');
 		}
 
 		update(immediate = true) {

@@ -7,10 +7,14 @@ html, body {
 	position: absolute;
 	left: 0;
 	top: 0;
-	bottom: 100px;
+	bottom: 0;
 	width: 30%;
 	box-sizing: border-box;
 	border-right: 1px solid #808080;
+}
+
+.pane-code.reduced {
+	bottom: 200px;
 }
 
 .pane-code .CodeMirror {
@@ -67,29 +71,88 @@ html, body {
 	height: 100%;
 }
 
-.pane-error {
+.pane-library {
 	position: absolute;
 	left: 0;
 	bottom: 0;
 	width: 30%;
+	height: 200px;
+	box-sizing: border-box;
+	background: #EEEEEE;
+	border-top: 1px solid #808080;
+	border-right: 1px solid #808080;
+	user-select: none;
+}
+
+.pane-library-scroller {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+.pane-library-inner {
+	padding: 5px;
+}
+
+.library-item {
+	display: inline-block;
+	width: 80px;
+	height: 80px;
+}
+
+.library-item > div {
+	width: 80px;
+	height: 80px;
+	border: 2px solid #EEEEEE;
+	background: #FFFFFF;
+	box-sizing: border-box;
+	cursor: pointer;
+	overflow: hidden;
+	transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.library-item.broken > div {
+	padding: 5px;
+	font: 6px monospace;
+	white-space: pre;
+}
+
+.library-item svg {
+	width: 100%;
+	height: 100%;
+}
+
+.library-item:hover > div {
+	border-color: #FFCC00;
+	background: #FFFFDD;
+/*	position: absolute;*/
+	transform: scale(1.1);
+	z-index: 10;
+}
+
+.msg-error {
+	display: none;
+	position: absolute;
+	top: 50%;
+	left: 20%;
+	margin-top: -50px;
+	width: 60%;
 	height: 100px;
 	overflow: auto;
 	box-sizing: border-box;
 	padding: 5px 10px;
 	font-family: monospace;
-	background: #DDDDDD;
-	border-top: 1px solid #808080;
-	border-right: 1px solid #808080;
-}
-
-.pane-error.ok {
-	color: #007700;
-	background: #E8EEE8;
-}
-
-.pane-error.error {
 	color: #770000;
 	background: #EEE8E8;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	border-radius: 5px;
+	box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+	opacity: 0.95;
+	z-index: 4;
+}
+
+.msg-error.error {
+	display: block;
 }
 
 .options {

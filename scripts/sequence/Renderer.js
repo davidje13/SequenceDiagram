@@ -135,6 +135,15 @@ define([
 			});
 		}
 
+		clone({namespace = null} = {}) {
+			return new Renderer({
+				themes: this.getThemes(),
+				namespace,
+				components: this.components,
+				SVGTextBlockClass: this.SVGTextBlockClass,
+			});
+		}
+
 		buildStaticElements() {
 			this.base = svg.makeContainer();
 
@@ -623,6 +632,10 @@ define([
 			return (Array.from(this.themes.keys())
 				.filter((name) => (name !== ''))
 			);
+		}
+
+		getThemes() {
+			return this.getThemeNames().map((name) => this.themes.get(name));
 		}
 
 		getAgentX(name) {
