@@ -490,6 +490,25 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('uses the header theme for the topmost begin statement', () => {
+			const sequence = generator.generate({
+				meta: {
+					headers: 'foo',
+				},
+				stages: [
+					PARSED.connect(['A', 'B']),
+					PARSED.connect(['B', 'C']),
+				],
+			});
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B'], {mode: 'foo'}),
+				jasmine.anything(),
+				GENERATED.beginAgents(['C'], {mode: 'box'}),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
 		it('removes duplicate end agents', () => {
 			const sequence = generator.generate({stages: [
 				PARSED.beginAgents(['A']),

@@ -72,6 +72,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					title: '',
 					theme: '',
 					terminators: 'none',
+					headers: 'box',
 				},
 				stages: [],
 			});
@@ -90,6 +91,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('reads terminators metadata', () => {
 			const parsed = parser.parse('terminators bar');
 			expect(parsed.meta.terminators).toEqual('bar');
+		});
+
+		it('reads headers metadata', () => {
+			const parsed = parser.parse('headers bar');
+			expect(parsed.meta.headers).toEqual('bar');
 		});
 
 		it('reads multiple tokens as one when reading values', () => {
@@ -521,6 +527,12 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('rejects invalid terminators', () => {
 			expect(() => parser.parse('terminators foo')).toThrow(new Error(
 				'Unknown termination "foo" at line 1, character 12'
+			));
+		});
+
+		it('rejects invalid headers', () => {
+			expect(() => parser.parse('headers foo')).toThrow(new Error(
+				'Unknown header "foo" at line 1, character 8'
 			));
 		});
 

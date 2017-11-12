@@ -146,6 +146,32 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	}
 
+	function swapBegin(stage, mode) {
+		if(stage.type === 'agent begin') {
+			stage.mode = mode;
+			return true;
+		}
+		if(stage.type === 'parallel') {
+			let any = false;
+			stage.stages.forEach((subStage) => {
+				if(subStage.type === 'agent begin') {
+					subStage.mode = mode;
+					any = true;
+				}
+			});
+			return any;
+		}
+		return false;
+	}
+
+	function swapFirstBegin(stages, mode) {
+		for(let i = 0; i < stages.length; ++ i) {
+			if(swapBegin(stages[i], mode)) {
+				break;
+			}
+		}
+	}
+
 	function addBounds(target, agentL, agentR, involvedAgents = null) {
 		array.remove(target, agentL, agentEqCheck);
 		array.remove(target, agentR, agentEqCheck);
@@ -585,6 +611,7 @@ define(['core/ArrayUtilities'], (array) => {
 				this.currentNest.rightAgent
 			);
 			optimiseStages(globals.stages);
+			swapFirstBegin(globals.stages, meta.headers || 'box');
 
 			return {
 				meta: {

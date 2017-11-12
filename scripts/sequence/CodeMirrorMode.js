@@ -138,6 +138,13 @@ define(['core/ArrayUtilities'], (array) => {
 					},
 				},
 			}},
+			'headers': {type: 'keyword', suggest: true, then: {
+				'none': {type: 'keyword', suggest: true, then: {}},
+				'cross': {type: 'keyword', suggest: true, then: {}},
+				'box': {type: 'keyword', suggest: true, then: {}},
+				'fade': {type: 'keyword', suggest: true, then: {}},
+				'bar': {type: 'keyword', suggest: true, then: {}},
+			}},
 			'terminators': {type: 'keyword', suggest: true, then: {
 				'none': {type: 'keyword', suggest: true, then: {}},
 				'cross': {type: 'keyword', suggest: true, then: {}},

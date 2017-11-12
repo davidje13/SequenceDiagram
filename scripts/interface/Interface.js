@@ -37,6 +37,7 @@ define([
 			}
 		});
 		code = code.replace(/[{}]/g, '');
+		code = 'headers fade\nterminators fade\n' + code;
 		return code;
 	}
 

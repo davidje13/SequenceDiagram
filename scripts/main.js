@@ -176,12 +176,12 @@
 			{
 				title: 'Title',
 				code: 'title {Title}',
-				preview: 'title Title\nA -> B',
+				preview: 'headers box\ntitle Title\nA -> B',
 			},
 			{
 				title: 'Chunky theme',
 				code: 'theme chunky',
-				preview: 'theme chunky\nA -> B',
+				preview: 'headers box\ntheme chunky\nA -> B',
 			},
 			{
 				title: 'Cross terminators',

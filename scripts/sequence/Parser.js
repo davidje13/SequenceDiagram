@@ -262,6 +262,19 @@ define([
 			return true;
 		},
 
+		(line, meta) => { // headers
+			if(tokenKeyword(line[0]) !== 'headers') {
+				return null;
+			}
+
+			const type = tokenKeyword(line[1]);
+			if(TERMINATOR_TYPES.indexOf(type) === -1) {
+				throw makeError('Unknown header "' + type + '"', line[1]);
+			}
+			meta.headers = type;
+			return true;
+		},
+
 		(line) => { // autolabel
 			if(tokenKeyword(line[0]) !== 'autolabel') {
 				return null;
@@ -439,6 +452,7 @@ define([
 					title: '',
 					theme: '',
 					terminators: 'none',
+					headers: 'box',
 				},
 				stages: [],
 			};
