@@ -129,6 +129,8 @@ define([
 			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
 			this.knownDefs = new Set();
+			this.highlights = new Map();
+			this.currentHighlight = -1;
 			this.buildStaticElements();
 			this.components.forEach((component) => {
 				component.makeState(this.state);
@@ -406,6 +408,15 @@ define([
 			this.markAgentRange([left, right], this.currentY);
 		}
 
+		addHighlightObject(line, o) {
+			let list = this.highlights.get(line);
+			if(!list) {
+				list = [];
+				this.highlights.set(line, list);
+			}
+			list.push(o);
+		}
+
 		renderStages(stages) {
 			this.agentInfos.forEach((agentInfo) => {
 				const rad = agentInfo.currentRad;
@@ -477,6 +488,8 @@ define([
 					if(!o) {
 						o = svg.make('g');
 					}
+					this.addHighlightObject(stage.ln, o);
+					o.setAttribute('class', 'region');
 					o.addEventListener('mouseenter', eventOver);
 					o.addEventListener('mouseleave', eventOut);
 					o.addEventListener('click', eventClick);
@@ -585,6 +598,8 @@ define([
 
 		_reset() {
 			this.knownDefs.clear();
+			this.highlights.clear();
+			this.currentHighlight = -1;
 			svg.empty(this.defs);
 			svg.empty(this.mask);
 			svg.empty(this.agentLines);
@@ -599,7 +614,28 @@ define([
 			});
 		}
 
+		setHighlight(line = null) {
+			if(line === null || !this.highlights.has(line)) {
+				line = -1;
+			}
+			if(this.currentHighlight === line) {
+				return;
+			}
+			if(this.currentHighlight !== -1) {
+				this.highlights.get(this.currentHighlight).forEach((o) => {
+					o.setAttribute('class', 'region');
+				});
+			}
+			if(line !== -1) {
+				this.highlights.get(line).forEach((o) => {
+					o.setAttribute('class', 'region focus');
+				});
+			}
+			this.currentHighlight = line;
+		}
+
 		render(sequence) {
+			const prevHighlight = this.currentHighlight;
 			this._reset();
 
 			const themeName = sequence.meta.theme;
@@ -626,6 +662,7 @@ define([
 
 			this.sizer.resetCache();
 			this.sizer.detach();
+			this.setHighlight(prevHighlight);
 		}
 
 		getThemeNames() {

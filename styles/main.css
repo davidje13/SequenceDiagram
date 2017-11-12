@@ -71,6 +71,21 @@ html, body {
 	height: 100%;
 }
 
+.pane-view .region:hover rect {
+	stroke-width: 5px;
+	stroke: rgba(255, 255, 0, 0.5);
+}
+
+.pane-view .region.focus rect {
+	stroke-width: 5px;
+	stroke: rgba(255, 128, 0, 0.5);
+}
+
+.pane-view .region.focus:hover rect {
+	stroke-width: 5px;
+	stroke: rgba(255, 192, 0, 0.5);
+}
+
 .pane-library {
 	position: absolute;
 	left: 0;

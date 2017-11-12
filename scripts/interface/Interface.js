@@ -165,6 +165,11 @@ define([
 
 		registerListeners() {
 			this.code.on('change', () => this.update(false));
+			this.code.on('cursorActivity', () => {
+				const from = this.code.getCursor('from').line;
+				const to = this.code.getCursor('to').line;
+				this.renderer.setHighlight(Math.min(from, to));
+			});
 
 			this.renderer.addEventListener('mouseover', (element) => {
 				if(this.marker) {

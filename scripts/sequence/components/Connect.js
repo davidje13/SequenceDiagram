@@ -142,11 +142,11 @@ define([
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
 
-			const height = (
+			const height = label ? (
 				env.textSizer.measureHeight(config.label.attrs, label) +
 				config.label.margin.top +
 				config.label.margin.bottom
-			);
+			) : 0;
 
 			const lineX = from.x + from.currentMaxRad;
 			const y0 = env.primaryY;
@@ -193,13 +193,14 @@ define([
 			lArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y0, dir: 1});
 			rArrow.render(env.shapeLayer, env.theme, {x: lineX, y: y1, dir: 1});
 
+			const raise = Math.max(height, lArrow.height(env.theme) / 2);
 			const arrowDip = rArrow.height(env.theme) / 2;
 
 			clickable.insertBefore(svg.make('rect', {
 				'x': lineX,
-				'y': y0 - height,
+				'y': y0 - raise,
 				'width': x1 + r - lineX,
-				'height': height + r * 2 + arrowDip,
+				'height': raise + r * 2 + arrowDip,
 				'fill': 'transparent',
 			}), clickable.firstChild);
 
@@ -250,20 +251,20 @@ define([
 			lArrow.render(env.shapeLayer, env.theme, {x: x0, y, dir});
 			rArrow.render(env.shapeLayer, env.theme, {x: x1, y, dir: -dir});
 
-			const arrowDip = Math.max(
+			const arrowSpread = Math.max(
 				lArrow.height(env.theme),
 				rArrow.height(env.theme)
 			) / 2;
 
 			clickable.insertBefore(svg.make('rect', {
 				'x': Math.min(x0, x1),
-				'y': y - height,
+				'y': y - Math.max(height, arrowSpread),
 				'width': Math.abs(x1 - x0),
-				'height': height + arrowDip,
+				'height': Math.max(height, arrowSpread) + arrowSpread,
 				'fill': 'transparent',
 			}), clickable.firstChild);
 
-			return y + arrowDip + env.theme.actionMargin;
+			return y + arrowSpread + env.theme.actionMargin;
 		}
 
 		renderPre({label, agentNames, options}, env) {
