@@ -195,22 +195,30 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('recognises all types of connection', () => {
 			const parsed = parser.parse(
-				'A -> B\n' +
-				'A <- B\n' +
-				'A <-> B\n' +
-				'A --> B\n' +
-				'A <-- B\n' +
-				'A <--> B\n' +
-				'A ->> B\n' +
-				'A <<- B\n' +
-				'A <<->> B\n' +
-				'A <->> B\n' +
-				'A <<-> B\n' +
-				'A -->> B\n' +
-				'A <<-- B\n' +
-				'A <<-->> B\n' +
-				'A <-->> B\n' +
-				'A <<--> B\n'
+				'A->B\n' +
+				'A->>B\n' +
+				'A<-B\n' +
+				'A<->B\n' +
+				'A<->>B\n' +
+				'A<<-B\n' +
+				'A<<->B\n' +
+				'A<<->>B\n' +
+				'A-->B\n' +
+				'A-->>B\n' +
+				'A<--B\n' +
+				'A<-->B\n' +
+				'A<-->>B\n' +
+				'A<<--B\n' +
+				'A<<-->B\n' +
+				'A<<-->>B\n' +
+				'A~>B\n' +
+				'A~>>B\n' +
+				'A<~B\n' +
+				'A<~>B\n' +
+				'A<~>>B\n' +
+				'A<<~B\n' +
+				'A<<~>B\n' +
+				'A<<~>>B\n'
 			);
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
@@ -219,21 +227,29 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					right: 1,
 					label: '',
 				}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 0, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 1}),
-				PARSED.connect(['A', 'B'], {line: 'solid', left: 0, right: 2}),
-				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 0}),
-				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 2}),
-				PARSED.connect(['A', 'B'], {line: 'solid', left: 1, right: 2}),
-				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 1}),
-				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 2}),
-				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 0}),
-				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 0, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 0, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 1, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 1, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 1, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 0}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 1}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 2}),
 			]);
 		});
 

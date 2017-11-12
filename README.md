@@ -65,7 +65,7 @@ Foo -> +Bar: Foo asks Bar
 [ <- Foo: To the left
 Foo -> ]: To the right
 Foo <- ]: From the right
-[ -> ]: Left to right!
+[ ~> ]: Wavy left to right!
 # (etc.)
 ```
 

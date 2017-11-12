@@ -3,16 +3,9 @@ define(['core/ArrayUtilities'], (array) => {
 
 	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
 
-	const CM_COMMANDS = ((() => {
+	const makeCommands = ((() => {
 		const end = {type: '', suggest: '\n', then: {}};
 		const hiddenEnd = {type: '', then: {}};
-
-		const ARROWS = array.combine([
-			['', '<', '<<'],
-			['-', '--'],
-			['', '>', '>>'],
-		]);
-		array.removeAll(ARROWS, ['-', '--']);
 
 		const textToEnd = {type: 'string', then: {'': 0, '\n': end}};
 		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
@@ -108,7 +101,7 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
-		function makeCMConnect() {
+		function makeCMConnect(arrows) {
 			const connect = {
 				type: 'keyword',
 				suggest: true,
@@ -124,11 +117,11 @@ define(['core/ArrayUtilities'], (array) => {
 				},
 				'': 0,
 			};
-			ARROWS.forEach((arrow) => (then[arrow] = connect));
+			arrows.forEach((arrow) => (then[arrow] = connect));
 			return makeOpBlock({type: 'variable', suggest: 'Agent', then});
 		}
 
-		return {type: 'error line-error', then: Object.assign({
+		const BASE_THEN = {
 			'title': {type: 'keyword', suggest: true, then: {
 				'': textToEnd,
 			}},
@@ -220,7 +213,14 @@ define(['core/ArrayUtilities'], (array) => {
 					}},
 				}},
 			}},
-		}, makeCMConnect())};
+		};
+
+		return (arrows) => {
+			return {
+				type: 'error line-error',
+				then: Object.assign(BASE_THEN, makeCMConnect(arrows)),
+			};
+		};
 	})());
 
 	function cmCappedToken(token, current) {
@@ -294,12 +294,12 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	}
 
-	function cmCheckToken(state, eol) {
+	function cmCheckToken(state, eol, commands) {
 		const suggestions = {
 			type: '',
 			value: '',
 		};
-		let current = CM_COMMANDS;
+		let current = commands;
 		const path = [current];
 
 		state.line.forEach((token, i) => {
@@ -336,8 +336,9 @@ define(['core/ArrayUtilities'], (array) => {
 	}
 
 	return class Mode {
-		constructor(tokenDefinitions) {
+		constructor(tokenDefinitions, arrows) {
 			this.tokenDefinitions = tokenDefinitions;
+			this.commands = makeCommands(arrows);
 			this.lineComment = '#';
 		}
 
@@ -348,7 +349,7 @@ define(['core/ArrayUtilities'], (array) => {
 				currentQuoted: false,
 				knownAgent: [],
 				knownLabel: [],
-				beginCompletions: cmMakeCompletions({}, [CM_COMMANDS]),
+				beginCompletions: cmMakeCompletions({}, [this.commands]),
 				completions: [],
 				nextCompletions: [],
 				valid: true,
@@ -397,7 +398,7 @@ define(['core/ArrayUtilities'], (array) => {
 				return 'comment';
 			}
 			state.line.push({v: state.current, q: state.currentQuoted});
-			return cmCheckToken(state, stream.eol());
+			return cmCheckToken(state, stream.eol(), this.commands);
 		}
 
 		_tokenEOLFound(stream, state, block) {
@@ -406,7 +407,7 @@ define(['core/ArrayUtilities'], (array) => {
 				return 'comment';
 			}
 			state.line.push(({v: state.current, q: state.currentQuoted}));
-			const type = cmCheckToken(state, false);
+			const type = cmCheckToken(state, false, this.commands);
 			state.line.pop();
 			return type;
 		}

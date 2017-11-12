@@ -56,24 +56,28 @@ define(() => {
 		return list[list.length - 1];
 	}
 
-	function combineRecur(parts, position, str, target) {
+	function combineRecur(parts, position, current, target) {
 		if(position >= parts.length) {
-			target.push(str);
+			target.push(current.slice());
 			return;
 		}
 		const choices = parts[position];
 		if(!Array.isArray(choices)) {
-			combineRecur(parts, position + 1, str + choices, target);
+			current.push(choices);
+			combineRecur(parts, position + 1, current, target);
+			current.pop();
 			return;
 		}
 		for(let i = 0; i < choices.length; ++ i) {
-			combineRecur(parts, position + 1, str + choices[i], target);
+			current.push(choices[i]);
+			combineRecur(parts, position + 1, current, target);
+			current.pop();
 		}
 	}
 
 	function combine(parts) {
 		const target = [];
-		combineRecur(parts, 0, '', target);
+		combineRecur(parts, 0, [], target);
 		return target;
 	}
 

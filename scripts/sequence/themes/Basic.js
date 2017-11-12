@@ -70,6 +70,15 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 					'stroke-width': 1,
 					'stroke-dasharray': '4, 2',
 				},
+				'wave': {
+					'fill': 'none',
+					'stroke': '#000000',
+					'stroke-width': 1,
+					'stroke-linejoin': 'round',
+					'stroke-linecap': 'round',
+					'wave-width': 6,
+					'wave-height': 0.5,
+				},
 			},
 			arrow: {
 				single: {

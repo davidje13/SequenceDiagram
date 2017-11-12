@@ -31,8 +31,8 @@ define(['./CodeMirrorMode'], (CMMode) => {
 			unescape,
 			baseToken: {q: true},
 		},
-		{start: /(?=[^ \t\r\n:+\-*!<>,])/y, end: /(?=[ \t\r\n:+\-*!<>,])|$/y},
-		{start: /(?=[\-<>])/y, end: /(?=[^\-<>])|$/y},
+		{start: /(?=[^ \t\r\n:+\-~*!<>,])/y, end: /(?=[ \t\r\n:+\-~*!<>,])|$/y},
+		{start: /(?=[\-~<>])/y, end: /(?=[^\-~<>])|$/y},
 		{start: /,/y, baseToken: {v: ','}},
 		{start: /:/y, baseToken: {v: ':'}},
 		{start: /!/y, baseToken: {v: '!'}},
@@ -195,8 +195,8 @@ define(['./CodeMirrorMode'], (CMMode) => {
 			return tokens;
 		}
 
-		getCodeMirrorMode() {
-			return new CMMode(TOKENS);
+		getCodeMirrorMode(arrows) {
+			return new CMMode(TOKENS, arrows);
 		}
 
 		splitLines(tokens) {

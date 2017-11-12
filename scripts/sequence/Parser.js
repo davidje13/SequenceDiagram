@@ -18,19 +18,32 @@ define([
 	};
 
 	const CONNECT_TYPES = ((() => {
-		const lTypes = ['', '<', '<<'];
-		const mTypes = ['-', '--'];
-		const rTypes = ['', '>', '>>'];
-		const arrows = array.combine([lTypes, mTypes, rTypes]);
-		array.removeAll(arrows, mTypes);
+		const lTypes = [
+			{tok: '', type: 0},
+			{tok: '<', type: 1},
+			{tok: '<<', type: 2},
+		];
+		const mTypes = [
+			{tok: '-', type: 'solid'},
+			{tok: '--', type: 'dash'},
+			{tok: '~', type: 'wave'},
+		];
+		const rTypes = [
+			{tok: '', type: 0},
+			{tok: '>', type: 1},
+			{tok: '>>', type: 2},
+		];
+		const arrows = (array.combine([lTypes, mTypes, rTypes])
+			.filter((arrow) => (arrow[0].type !== 0 || arrow[2].type !== 0))
+		);
 
 		const types = new Map();
 
 		arrows.forEach((arrow) => {
-			types.set(arrow, {
-				line: arrow.includes('--') ? 'dash' : 'solid',
-				left: lTypes.indexOf(arrow.substr(0, arrow.indexOf('-'))),
-				right: rTypes.indexOf(arrow.substr(arrow.lastIndexOf('-') + 1)),
+			types.set(arrow.map((part) => part.tok).join(''), {
+				line: arrow[1].type,
+				left: arrow[0].type,
+				right: arrow[2].type,
 			});
 		});
 
@@ -411,7 +424,9 @@ define([
 
 	return class Parser {
 		getCodeMirrorMode() {
-			return SHARED_TOKENISER.getCodeMirrorMode();
+			return SHARED_TOKENISER.getCodeMirrorMode(
+				Array.from(CONNECT_TYPES.keys())
+			);
 		}
 
 		getCodeMirrorHints() {

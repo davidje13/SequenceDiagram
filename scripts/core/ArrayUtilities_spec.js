@@ -179,10 +179,10 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 				['Ff'],
 			]);
 			expect(list).toEqual([
-				'AaCcEeFf',
-				'AaDdEeFf',
-				'BbCcEeFf',
-				'BbDdEeFf',
+				['Aa', 'Cc', 'Ee', 'Ff'],
+				['Aa', 'Dd', 'Ee', 'Ff'],
+				['Bb', 'Cc', 'Ee', 'Ff'],
+				['Bb', 'Dd', 'Ee', 'Ff'],
 			]);
 		});
 	});

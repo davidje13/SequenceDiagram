@@ -54,6 +54,10 @@
 				code: '{Agent1} ->> {Agent2}: {Message}',
 			},
 			{
+				title: 'Wavy line',
+				code: '{Agent1} ~> {Agent2}: {Message}',
+			},
+			{
 				title: 'Self-connection',
 				code: '{Agent1} -> {Agent1}: {Message}',
 			},
