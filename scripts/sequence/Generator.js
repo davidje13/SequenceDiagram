@@ -179,6 +179,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.agentStates = new Map();
 			this.agentAliases = new Map();
 			this.agents = [];
+			this.labelPattern = null;
 			this.blockCount = 0;
 			this.nesting = [];
 			this.markers = new Set();
@@ -191,6 +192,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
+				'label pattern': this.handleLabelPattern.bind(this),
 				'connect': this.handleConnect.bind(this),
 				'note over': this.handleNote.bind(this),
 				'note left': this.handleNote.bind(this),
@@ -373,6 +375,36 @@ define(['core/ArrayUtilities'], (array) => {
 			this.addStage({type: 'async', target}, false);
 		}
 
+		handleLabelPattern({pattern}) {
+			this.labelPattern = pattern.slice();
+			for(let i = 0; i < this.labelPattern.length; ++ i) {
+				const part = this.labelPattern[i];
+				if(typeof part === 'object' && part.start !== undefined) {
+					this.labelPattern[i] = Object.assign({
+						current: part.start,
+					}, part);
+				}
+			}
+		}
+
+		applyLabelPattern(label) {
+			let result = '';
+			const tokens = {
+				'label': label,
+			};
+			this.labelPattern.forEach((part) => {
+				if(typeof part === 'string') {
+					result += part;
+				} else if(part.token !== undefined) {
+					result += tokens[part.token];
+				} else if(part.current !== undefined) {
+					result += part.current.toFixed(part.dp);
+					part.current += part.inc;
+				}
+			});
+			return result;
+		}
+
 		handleConnect({agents, label, options}) {
 			const beginAgents = (agents
 				.filter(agentHasFlag('begin'))
@@ -412,7 +444,7 @@ define(['core/ArrayUtilities'], (array) => {
 			const connectStage = {
 				type: 'connect',
 				agentNames,
-				label,
+				label: this.applyLabelPattern(label),
 				options,
 			};
 
@@ -528,6 +560,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.agents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;
+			this.labelPattern = [{token: 'label'}];
 			const globals = this.beginNested('global', '', '', 0);
 
 			stages.forEach(this.handleStage);

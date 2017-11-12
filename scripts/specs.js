@@ -7,6 +7,7 @@ define([
 	'interface/Interface_spec',
 	'sequence/Tokeniser_spec',
 	'sequence/Parser_spec',
+	'sequence/LabelPatternParser_spec',
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
 	'sequence/themes/Basic_spec',

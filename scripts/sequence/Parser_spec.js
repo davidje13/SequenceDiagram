@@ -412,6 +412,32 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			}]);
 		});
 
+		it('converts autolabel commands', () => {
+			const parsed = parser.parse('autolabel "foo <label> bar"');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'label pattern',
+					ln: jasmine.anything(),
+					pattern: [
+						'foo ',
+						{token: 'label'},
+						' bar',
+					],
+				},
+			]);
+		});
+
+		it('converts autolabel off commands', () => {
+			const parsed = parser.parse('autolabel off');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'label pattern',
+					ln: jasmine.anything(),
+					pattern: [{token: 'label'}],
+				},
+			]);
+		});
+
 		it('converts "simultaneously" flow commands', () => {
 			const parsed = parser.parse('simultaneously:');
 			expect(parsed.stages).toEqual([{

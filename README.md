@@ -17,16 +17,16 @@ other projects.
 ```
 title Labyrinth
 
-Bowie -> Gremlin: You remind me of the babe
-Gremlin -> Bowie: What babe?
-Bowie -> Gremlin: The babe with the power
-Gremlin -> Bowie: What power?
-note right of Bowie, Gremlin: Most people get muddled here!
-Bowie -> Gremlin: 'The power of voodoo'
-Gremlin -> Bowie: "Who-do?"
-Bowie -> Gremlin: You do!
-Gremlin -> Bowie: Do what?
-Bowie -> Gremlin: Remind me of the babe!
+Bowie -> Goblin: You remind me of the babe
+Goblin -> Bowie: What babe?
+Bowie -> Goblin: The babe with the power
+Goblin -> Bowie: What power?
+note right of Bowie, Goblin: Most people get muddled here!
+Bowie -> Goblin: 'The power of voodoo'
+Goblin -> Bowie: "Who-do?"
+Bowie -> Goblin: You do!
+Goblin -> Bowie: Do what?
+Bowie -> Goblin: Remind me of the babe!
 
 Bowie -> Audience: Sings
 
@@ -111,6 +111,19 @@ else if sufficient funds
 else
   ATM -> Person: Error
 end
+```
+
+### Label Templates
+
+<img src="screenshots/LabelTemplates.png" alt="Label Templates preview" width="200" align="right" />
+
+```
+autolabel "[<inc>] <label>"
+
+begin "Underpants\nGnomes" as A
+A <- ]: Collect underpants
+A <-> ]: ???
+A <- ]: Profit!
 ```
 
 ### Multiline Text

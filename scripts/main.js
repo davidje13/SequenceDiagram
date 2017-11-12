@@ -25,16 +25,16 @@
 		const defaultCode = (
 			'title Labyrinth\n' +
 			'\n' +
-			'Bowie -> Gremlin: You remind me of the babe\n' +
-			'Gremlin -> Bowie: What babe?\n' +
-			'Bowie -> Gremlin: The babe with the power\n' +
-			'Gremlin -> Bowie: What power?\n' +
-			'note right of Bowie, Gremlin: Most people get muddled here!\n' +
-			'Bowie -> Gremlin: \'The power of voodoo\'\n' +
-			'Gremlin -> Bowie: "Who-do?"\n' +
-			'Bowie -> Gremlin: You do!\n' +
-			'Gremlin -> Bowie: Do what?\n' +
-			'Bowie -> Gremlin: Remind me of the babe!\n' +
+			'Bowie -> Goblin: You remind me of the babe\n' +
+			'Goblin -> Bowie: What babe?\n' +
+			'Bowie -> Goblin: The babe with the power\n' +
+			'Goblin -> Bowie: What power?\n' +
+			'note right of Bowie, Goblin: Most people get muddled here!\n' +
+			'Bowie -> Goblin: \'The power of voodoo\'\n' +
+			'Goblin -> Bowie: "Who-do?"\n' +
+			'Bowie -> Goblin: You do!\n' +
+			'Goblin -> Bowie: Do what?\n' +
+			'Bowie -> Goblin: Remind me of the babe!\n' +
 			'\n' +
 			'Bowie -> Audience: Sings\n' +
 			'\n' +
@@ -84,6 +84,16 @@
 					'A -> B: Request\n' +
 					'A <-- B: Response\n' +
 					'end B'
+				),
+			},
+			{
+				title: 'Numbered labels',
+				code: 'autolabel "[<inc>] <label>"',
+				preview: (
+					'autolabel "[<inc>] <label>"\n' +
+					'A -> B: Foo\n' +
+					'A <- B: Bar\n' +
+					'A -> B: Baz'
 				),
 			},
 			{

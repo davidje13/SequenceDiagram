@@ -207,6 +207,10 @@ define(['core/ArrayUtilities'], (array) => {
 				'left': makeSideNote('left'),
 				'right': makeSideNote('right'),
 			}},
+			'autolabel': {type: 'keyword', suggest: true, then: {
+				'off': {type: 'keyword', suggest: true, then: {}},
+				'': textToEnd,
+			}},
 			'simultaneously': {type: 'keyword', suggest: true, then: {
 				':': {type: 'operator', suggest: true, then: {}},
 				'with': {type: 'keyword', suggest: true, then: {

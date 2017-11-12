@@ -26,6 +26,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			return {type: 'block end'};
 		},
 
+		labelPattern: (pattern, {ln = 0} = {}) => {
+			return {type: 'label pattern', pattern, ln};
+		},
+
 		defineAgents: (agentNames, {ln = 0} = {}) => {
 			return {
 				type: 'agent define',
@@ -320,6 +324,56 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					line: 'bar',
 					left: 1,
 					right: 0,
+				}),
+				jasmine.anything(),
+			]);
+		});
+
+		it('uses label patterns for connections', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.labelPattern(['foo ', {token: 'label'}, ' bar']),
+				PARSED.connect(['A', 'B'], {label: 'myLabel'}),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.connect(['A', 'B'], {
+					label: 'foo myLabel bar',
+				}),
+				jasmine.anything(),
+			]);
+		});
+
+		it('applies counters in label patterns', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.labelPattern([{start: 3, inc: 2, dp: 0}, ' suffix']),
+				PARSED.connect(['A', 'B'], {label: 'foo'}),
+				PARSED.connect(['A', 'B'], {label: 'bar'}),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.connect(['A', 'B'], {
+					label: '3 suffix',
+				}),
+				GENERATED.connect(['A', 'B'], {
+					label: '5 suffix',
+				}),
+				jasmine.anything(),
+			]);
+		});
+
+		it('applies counter rounding in label patterns', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.labelPattern([{start: 0.52, inc: 1, dp: 1}, ' suffix']),
+				PARSED.connect(['A', 'B'], {label: 'foo'}),
+				PARSED.connect(['A', 'B'], {label: 'bar'}),
+			]});
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.connect(['A', 'B'], {
+					label: '0.5 suffix',
+				}),
+				GENERATED.connect(['A', 'B'], {
+					label: '1.5 suffix',
 				}),
 				jasmine.anything(),
 			]);

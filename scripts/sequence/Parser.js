@@ -1,10 +1,12 @@
 define([
 	'core/ArrayUtilities',
 	'./Tokeniser',
+	'./LabelPatternParser',
 	'./CodeMirrorHints',
 ], (
 	array,
 	Tokeniser,
+	labelPatternParser,
 	CMHints
 ) => {
 	'use strict';
@@ -245,6 +247,23 @@ define([
 			}
 			meta.terminators = type;
 			return true;
+		},
+
+		(line) => { // autolabel
+			if(tokenKeyword(line[0]) !== 'autolabel') {
+				return null;
+			}
+
+			let raw = null;
+			if(tokenKeyword(line[1]) === 'off') {
+				raw = '<label>';
+			} else {
+				raw = joinLabel(line, 1);
+			}
+			return {
+				type: 'label pattern',
+				pattern: labelPatternParser(raw),
+			};
 		},
 
 		(line) => { // block
