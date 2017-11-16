@@ -186,22 +186,22 @@
 			{
 				title: 'Cross terminators',
 				code: 'terminators cross',
-				preview: 'A -> B\nterminators cross',
+				preview: 'begin A\nterminators cross',
 			},
 			{
 				title: 'Fade terminators',
 				code: 'terminators fade',
-				preview: 'A -> B\nterminators fade',
+				preview: 'begin A\nterminators fade',
 			},
 			{
 				title: 'Bar terminators',
 				code: 'terminators bar',
-				preview: 'A -> B\nterminators bar',
+				preview: 'begin A\nterminators bar',
 			},
 			{
 				title: 'Box terminators',
 				code: 'terminators box',
-				preview: 'A -> B\nterminators box',
+				preview: 'begin A\nterminators box',
 			},
 		];
 		const ui = new Interface({
