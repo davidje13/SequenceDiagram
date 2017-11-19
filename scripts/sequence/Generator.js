@@ -213,6 +213,10 @@ define(['core/ArrayUtilities'], (array) => {
 			this.currentNest = null;
 
 			this.stageHandlers = {
+				'block begin': this.handleBlockBegin.bind(this),
+				'block split': this.handleBlockSplit.bind(this),
+				'block end': this.handleBlockEnd.bind(this),
+				'group begin': this.handleGroupBegin.bind(this),
 				'mark': this.handleMark.bind(this),
 				'async': this.handleAsync.bind(this),
 				'agent define': this.handleAgentDefine.bind(this),
@@ -224,9 +228,6 @@ define(['core/ArrayUtilities'], (array) => {
 				'note left': this.handleNote.bind(this),
 				'note right': this.handleNote.bind(this),
 				'note between': this.handleNote.bind(this),
-				'block begin': this.handleBlockBegin.bind(this),
-				'block split': this.handleBlockSplit.bind(this),
-				'block end': this.handleBlockEnd.bind(this),
 			};
 			this.handleStage = this.handleStage.bind(this);
 			this.convertAgent = this.convertAgent.bind(this);
@@ -365,28 +366,92 @@ define(['core/ArrayUtilities'], (array) => {
 			const agents = [leftAgent, rightAgent];
 			const stages = [];
 			this.currentSection = {
-				mode,
-				label,
+				header: {
+					type: 'block begin',
+					mode,
+					label,
+					left: leftAgent.name,
+					right: rightAgent.name,
+					ln,
+				},
 				stages,
-				ln,
 			};
 			this.currentNest = {
+				mode,
 				agents,
 				leftAgent,
 				rightAgent,
 				hasContent: false,
-				stage: {
-					type: 'block',
-					sections: [this.currentSection],
-					left: leftAgent.name,
-					right: rightAgent.name,
-				},
+				sections: [this.currentSection],
 			};
 			this.agentStates.set(leftAgent.name, LOCKED_AGENT);
 			this.agentStates.set(rightAgent.name, LOCKED_AGENT);
 			this.nesting.push(this.currentNest);
 
 			return {agents, stages};
+		}
+
+		handleBlockBegin({ln, mode, label}) {
+			const name = '__BLOCK' + this.blockCount;
+			this.beginNested(mode, label, name, ln);
+			++ this.blockCount;
+		}
+
+		handleBlockSplit({ln, mode, label}) {
+			if(this.currentNest.mode !== 'if') {
+				throw new Error(
+					'Invalid block nesting ("else" inside ' +
+					this.currentNest.mode + ')'
+				);
+			}
+			optimiseStages(this.currentSection.stages);
+			this.currentSection = {
+				header: {
+					type: 'block split',
+					mode,
+					label,
+					left: this.currentNest.leftAgent.name,
+					right: this.currentNest.rightAgent.name,
+					ln,
+				},
+				stages: [],
+			};
+			this.currentNest.sections.push(this.currentSection);
+		}
+
+		handleBlockEnd() {
+			if(this.nesting.length <= 1) {
+				throw new Error('Invalid block nesting (too many "end"s)');
+			}
+			optimiseStages(this.currentSection.stages);
+			const nested = this.nesting.pop();
+			this.currentNest = array.last(this.nesting);
+			this.currentSection = array.last(this.currentNest.sections);
+
+			if(nested.hasContent) {
+				this.defineAgents(nested.agents);
+				addBounds(
+					this.agents,
+					nested.leftAgent,
+					nested.rightAgent,
+					nested.agents
+				);
+				nested.sections.forEach((section) => {
+					this.currentSection.stages.push(section.header);
+					this.currentSection.stages.push(...section.stages);
+				});
+				this.addStage({
+					type: 'block end',
+					left: nested.leftAgent.name,
+					right: nested.rightAgent.name,
+				});
+			} else {
+				throw new Error('Empty block');
+			}
+		}
+
+		handleGroupBegin() {
+			throw new Error('Groups are not supported yet');
 		}
 
 		handleMark({name}) {
@@ -524,54 +589,14 @@ define(['core/ArrayUtilities'], (array) => {
 			]);
 		}
 
-		handleBlockBegin({ln, mode, label}) {
-			const name = '__BLOCK' + this.blockCount;
-			this.beginNested(mode, label, name, ln);
-			++ this.blockCount;
-		}
-
-		handleBlockSplit({ln, mode, label}) {
-			const containerMode = this.currentNest.stage.sections[0].mode;
-			if(containerMode !== 'if') {
-				throw new Error(
-					'Invalid block nesting ("else" inside ' +
-					containerMode + ')'
-				);
-			}
-			optimiseStages(this.currentSection.stages);
-			this.currentSection = {
-				mode,
-				label,
-				stages: [],
-				ln,
-			};
-			this.currentNest.stage.sections.push(this.currentSection);
-		}
-
-		handleBlockEnd() {
-			if(this.nesting.length <= 1) {
-				throw new Error('Invalid block nesting (too many "end"s)');
-			}
-			optimiseStages(this.currentSection.stages);
-			const nested = this.nesting.pop();
-			this.currentNest = array.last(this.nesting);
-			this.currentSection = array.last(this.currentNest.stage.sections);
-			if(nested.hasContent) {
-				this.defineAgents(nested.agents);
-				addBounds(
-					this.agents,
-					nested.leftAgent,
-					nested.rightAgent,
-					nested.agents
-				);
-				this.addStage(nested.stage);
-			}
-		}
-
 		handleStage(stage) {
 			this.latestLine = stage.ln;
 			try {
-				this.stageHandlers[stage.type](stage);
+				const handler = this.stageHandlers[stage.type];
+				if(!handler) {
+					throw new Error('Unknown command: ' + stage.type);
+				}
+				handler(stage);
 			} catch(e) {
 				if(typeof e === 'object' && e.message) {
 					throw new Error(e.message + ' at line ' + (stage.ln + 1));
@@ -594,7 +619,7 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length !== 1) {
 				throw new Error(
 					'Unterminated section at line ' +
-					(this.currentSection.ln + 1)
+					(this.currentSection.header.ln + 1)
 				);
 			}
 

@@ -22,12 +22,23 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			return {type: 'block split', mode, label, ln};
 		},
 
-		blockEnd: () => {
-			return {type: 'block end'};
+		blockEnd: ({ln = 0} = {}) => {
+			return {type: 'block end', ln};
 		},
 
 		labelPattern: (pattern, {ln = 0} = {}) => {
 			return {type: 'label pattern', pattern, ln};
+		},
+
+		groupBegin: (alias, agentNames, {label = '', ln = 0} = {}) => {
+			return {
+				type: 'group begin',
+				agents: makeParsedAgents(agentNames),
+				mode: 'ref',
+				label,
+				alias,
+				ln,
+			};
 		},
 
 		defineAgents: (agentNames, {ln = 0} = {}) => {
@@ -112,6 +123,51 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				type: 'agent end',
 				agentNames,
 				mode,
+				ln,
+			};
+		},
+
+		blockBegin: (mode, {
+			label = jasmine.anything(),
+			left = jasmine.anything(),
+			right = jasmine.anything(),
+			ln = jasmine.anything(),
+		} = {}) => {
+			return {
+				type: 'block begin',
+				mode,
+				label,
+				left,
+				right,
+				ln,
+			};
+		},
+
+		blockSplit: (mode, {
+			label = jasmine.anything(),
+			left = jasmine.anything(),
+			right = jasmine.anything(),
+			ln = jasmine.anything(),
+		} = {}) => {
+			return {
+				type: 'block split',
+				mode,
+				label,
+				left,
+				right,
+				ln,
+			};
+		},
+
+		blockEnd: ({
+			left = jasmine.anything(),
+			right = jasmine.anything(),
+			ln = jasmine.anything(),
+		} = {}) => {
+			return {
+				type: 'block end',
+				left,
+				right,
 				ln,
 			};
 		},
@@ -741,39 +797,44 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
-		it('records virtual block agent names in blocks', () => {
-			const sequence = generator.generate({stages: [
-				PARSED.blockBegin('if', 'abc'),
-				PARSED.connect(['A', 'B']),
-				PARSED.blockEnd(),
-			]});
-
-			const block0 = sequence.stages[0];
-			expect(block0.type).toEqual('block');
-			expect(block0.left).toEqual('__BLOCK0[');
-			expect(block0.right).toEqual('__BLOCK0]');
-		});
-
-		it('records all sections within blocks', () => {
+		it('propagates block statements', () => {
 			const sequence = generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc', {ln: 10}),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockSplit('else', 'xyz', {ln: 20}),
-				PARSED.connect(['A', 'C']),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd({ln: 30}),
+			]});
+
+			expect(sequence.stages).toEqual([
+				GENERATED.blockBegin('if', {label: 'abc', ln: 10}),
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.blockSplit('else', {label: 'xyz', ln: 20}),
+				jasmine.anything(),
+				GENERATED.blockEnd({ln: 30}),
+				jasmine.anything(),
+			]);
+		});
+
+		it('records virtual block agent names in block commands', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockSplit('else', 'xyz'),
+				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
 			]});
 
-			const block0 = sequence.stages[0];
-			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', ln: 10, stages: [
-					GENERATED.beginAgents(['A', 'B']),
-					GENERATED.connect(['A', 'B']),
-				]},
-				{mode: 'else', label: 'xyz', ln: 20, stages: [
-					GENERATED.beginAgents(['C']),
-					GENERATED.connect(['A', 'C']),
-				]},
-			]);
+			const bounds = {
+				left: '__BLOCK0[',
+				right: '__BLOCK0]',
+			};
+
+			const stages = sequence.stages;
+			expect(stages[0]).toEqual(GENERATED.blockBegin('if', bounds));
+			expect(stages[3]).toEqual(GENERATED.blockSplit('else', bounds));
+			expect(stages[5]).toEqual(GENERATED.blockEnd(bounds));
 		});
 
 		it('records virtual block agents in nested blocks', () => {
@@ -798,15 +859,22 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{name: '__BLOCK0]', anchorRight: false},
 				{name: ']', anchorRight: false},
 			]);
-			const block0 = sequence.stages[0];
-			expect(block0.type).toEqual('block');
-			expect(block0.left).toEqual('__BLOCK0[');
-			expect(block0.right).toEqual('__BLOCK0]');
 
-			const block1 = block0.sections[1].stages[0];
-			expect(block1.type).toEqual('block');
-			expect(block1.left).toEqual('__BLOCK1[');
-			expect(block1.right).toEqual('__BLOCK1]');
+			const bounds0 = {
+				left: '__BLOCK0[',
+				right: '__BLOCK0]',
+			};
+
+			const bounds1 = {
+				left: '__BLOCK1[',
+				right: '__BLOCK1]',
+			};
+
+			const stages = sequence.stages;
+			expect(stages[0]).toEqual(GENERATED.blockBegin('if', bounds0));
+			expect(stages[4]).toEqual(GENERATED.blockBegin('if', bounds1));
+			expect(stages[7]).toEqual(GENERATED.blockEnd(bounds1));
+			expect(stages[8]).toEqual(GENERATED.blockEnd(bounds0));
 		});
 
 		it('preserves block boundaries when agents exist outside', () => {
@@ -829,123 +897,92 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{name: '__BLOCK0]', anchorRight: false},
 				{name: ']', anchorRight: false},
 			]);
-			const block0 = sequence.stages[2];
-			expect(block0.type).toEqual('block');
-			expect(block0.left).toEqual('__BLOCK0[');
-			expect(block0.right).toEqual('__BLOCK0]');
 
-			const block1 = block0.sections[0].stages[0];
-			expect(block1.type).toEqual('block');
-			expect(block1.left).toEqual('__BLOCK1[');
-			expect(block1.right).toEqual('__BLOCK1]');
+			const bounds0 = {
+				left: '__BLOCK0[',
+				right: '__BLOCK0]',
+			};
+
+			const bounds1 = {
+				left: '__BLOCK1[',
+				right: '__BLOCK1]',
+			};
+
+			const stages = sequence.stages;
+			expect(stages[2]).toEqual(GENERATED.blockBegin('if', bounds0));
+			expect(stages[3]).toEqual(GENERATED.blockBegin('if', bounds1));
+			expect(stages[5]).toEqual(GENERATED.blockEnd(bounds1));
+			expect(stages[6]).toEqual(GENERATED.blockEnd(bounds0));
 		});
 
 		it('allows empty block parts after split', () => {
-			const sequence = generator.generate({stages: [
+			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockSplit('else', 'xyz'),
 				PARSED.blockEnd(),
-			]});
-
-			const block0 = sequence.stages[0];
-			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', ln: 0, stages: [
-					jasmine.anything(),
-					jasmine.anything(),
-				]},
-				{mode: 'else', label: 'xyz', ln: 0, stages: []},
-			]);
+			]})).not.toThrow();
 		});
 
 		it('allows empty block parts before split', () => {
-			const sequence = generator.generate({stages: [
+			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockSplit('else', 'xyz'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
-			]});
-
-			const block0 = sequence.stages[0];
-			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', ln: 0, stages: []},
-				{mode: 'else', label: 'xyz', ln: 0, stages: [
-					jasmine.anything(),
-					jasmine.anything(),
-				]},
-			]);
+			]})).not.toThrow();
 		});
 
-		it('removes entirely empty blocks', () => {
-			const sequence = generator.generate({stages: [
+		it('allows deeply nested blocks', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockBegin('if', 'def'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.blockEnd(),
+			]})).not.toThrow();
+		});
+
+		it('rejects entirely empty blocks', () => {
+			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockSplit('else', 'xyz'),
-				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockEnd(),
-				PARSED.blockEnd(),
-			]});
-
-			expect(sequence.stages).toEqual([]);
+			]})).toThrow();
 		});
 
-		it('removes blocks containing only define statements / markers', () => {
-			const sequence = generator.generate({stages: [
+		it('rejects blocks containing only define statements / markers', () => {
+			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.defineAgents(['A']),
 				{type: 'mark', name: 'foo'},
 				PARSED.blockEnd(),
-			]});
-
-			expect(sequence.stages).toEqual([]);
+			]})).toThrow();
 		});
 
-		it('does not create virtual agents for empty blocks', () => {
-			const sequence = generator.generate({stages: [
-				PARSED.blockBegin('if', 'abc'),
-				PARSED.blockSplit('else', 'xyz'),
-				PARSED.blockBegin('if', 'abc'),
-				PARSED.blockEnd(),
-				PARSED.blockEnd(),
-			]});
-
-			expect(sequence.agents).toEqual([
-				{name: '[', anchorRight: true},
-				{name: ']', anchorRight: false},
-			]);
-		});
-
-		it('removes entirely empty nested blocks', () => {
-			const sequence = generator.generate({stages: [
+		it('rejects entirely empty nested blocks', () => {
+			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockSplit('else', 'xyz'),
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockEnd(),
 				PARSED.blockEnd(),
-			]});
-
-			const block0 = sequence.stages[0];
-			expect(block0.sections).toEqual([
-				{mode: 'if', label: 'abc', ln: 0, stages: [
-					jasmine.anything(),
-					jasmine.anything(),
-				]},
-				{mode: 'else', label: 'xyz', ln: 0, stages: []},
-			]);
+			]})).toThrow();
 		});
 
 		it('rejects unterminated blocks', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.connect(['A', 'B']),
-			]})).toThrow();
+			]})).toThrow(new Error('Unterminated section at line 1'));
 
 			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockBegin('if', 'def'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
-			]})).toThrow();
+			]})).toThrow(new Error('Unterminated section at line 1'));
 		});
 
 		it('rejects extra block terminations', () => {

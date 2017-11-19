@@ -14,8 +14,10 @@ define([
 	'sequence/themes/Chunky_spec',
 	'sequence/components/AgentCap_spec',
 	'sequence/components/AgentHighlight_spec',
+	'sequence/components/Block_spec',
 	'sequence/components/Connect_spec',
 	'sequence/components/Marker_spec',
 	'sequence/components/Note_spec',
+	'sequence/components/Parallel_spec',
 	'sequence/sequence_integration_spec',
 ]);

@@ -5,6 +5,8 @@ define([
 	'svg/SVGUtilities',
 	'svg/SVGShapes',
 	'./components/BaseComponent',
+	'./components/Block',
+	'./components/Parallel',
 	'./components/Marker',
 	'./components/AgentCap',
 	'./components/AgentHighlight',
@@ -19,35 +21,6 @@ define([
 ) => {
 	/* jshint +W072 */
 	'use strict';
-
-	function traverse(stages, callbacks) {
-		stages.forEach((stage) => {
-			if(stage.type === 'block') {
-				const scope = {};
-				if(callbacks.blockBeginFn) {
-					callbacks.blockBeginFn(scope, stage);
-				}
-				stage.sections.forEach((section) => {
-					if(callbacks.sectionBeginFn) {
-						callbacks.sectionBeginFn(scope, stage, section);
-					}
-					traverse(section.stages, callbacks);
-					if(callbacks.sectionEndFn) {
-						callbacks.sectionEndFn(scope, stage, section);
-					}
-				});
-				if(callbacks.blockEndFn) {
-					callbacks.blockEndFn(scope, stage);
-				}
-			} else if(callbacks.stagesFn) {
-				if(stage.type === 'parallel') {
-					callbacks.stagesFn(stage.stages);
-				} else {
-					callbacks.stagesFn([stage]);
-				}
-			}
-		});
-	}
 
 	function findExtremes(agentInfos, agentNames) {
 		let min = null;
@@ -102,20 +75,8 @@ define([
 				components = BaseComponent.getComponents();
 			}
 
-			this.separationTraversalFns = {
-				stagesFn: this.separationStages.bind(this),
-				blockBeginFn: this.separationBlockBegin.bind(this),
-				sectionBeginFn: this.separationSectionBegin.bind(this),
-				blockEndFn: this.separationBlockEnd.bind(this),
-			};
-
-			this.renderTraversalFns = {
-				stagesFn: this.renderStages.bind(this),
-				blockBeginFn: this.renderBlockBegin.bind(this),
-				sectionBeginFn: this.renderSectionBegin.bind(this),
-				sectionEndFn: this.renderSectionEnd.bind(this),
-				blockEndFn: this.renderBlockEnd.bind(this),
-			};
+			this.separationStage = this.separationStage.bind(this);
+			this.renderStage = this.renderStage.bind(this);
 
 			this.addSeparation = this.addSeparation.bind(this);
 			this.addDef = this.addDef.bind(this);
@@ -196,28 +157,7 @@ define([
 			info2.separations.set(agentName1, Math.max(d2, dist));
 		}
 
-		separationBlockBegin(scope, {left, right}) {
-			array.mergeSets(this.visibleAgents, [left, right]);
-		}
-
-		separationSectionBegin(scope, {left, right}, {mode, label}) {
-			const config = this.theme.block.section;
-			const width = (
-				this.sizer.measure(config.mode.labelAttrs, mode).width +
-				config.mode.padding.left +
-				config.mode.padding.right +
-				this.sizer.measure(config.label.labelAttrs, label).width +
-				config.label.padding.left +
-				config.label.padding.right
-			);
-			this.addSeparation(left, right, width);
-		}
-
-		separationBlockEnd(scope, {left, right}) {
-			array.removeAll(this.visibleAgents, [left, right]);
-		}
-
-		separationStages(stages) {
+		separationStage(stage) {
 			const agentSpaces = new Map();
 			const agentNames = this.visibleAgents.slice();
 
@@ -239,13 +179,14 @@ define([
 				textSizer: this.sizer,
 				addSpacing,
 				addSeparation: this.addSeparation,
+				components: this.components,
 			};
-			stages.forEach((stage) => {
-				this.components.get(stage.type).separationPre(stage, env);
-			});
-			stages.forEach((stage) => {
-				this.components.get(stage.type).separation(stage, env);
-			});
+			const component = this.components.get(stage.type);
+			if(!component) {
+				throw new Error('Unknown component: ' + stage.type);
+			}
+			component.separationPre(stage, env);
+			component.separation(stage, env);
 			array.mergeSets(agentNames, this.visibleAgents);
 
 			agentNames.forEach((agentNameR) => {
@@ -327,87 +268,6 @@ define([
 			}
 		}
 
-		renderBlockBegin(scope, {left, right}) {
-			this.currentY = (
-				this.checkAgentRange([left, right], this.currentY) +
-				this.theme.block.margin.top
-			);
-
-			scope.y = this.currentY;
-			scope.first = true;
-			this.markAgentRange([left, right], this.currentY);
-		}
-
-		renderSectionBegin(scope, {left, right}, {mode, label}) {
-			this.currentY = this.checkAgentRange([left, right], this.currentY);
-			const config = this.theme.block;
-			const agentInfoL = this.agentInfos.get(left);
-			const agentInfoR = this.agentInfos.get(right);
-
-			if(scope.first) {
-				scope.first = false;
-			} else {
-				this.currentY += config.section.padding.bottom;
-				this.sections.appendChild(svg.make('line', Object.assign({
-					'x1': agentInfoL.x,
-					'y1': this.currentY,
-					'x2': agentInfoR.x,
-					'y2': this.currentY,
-				}, config.separator.attrs)));
-			}
-
-			const modeRender = SVGShapes.renderBoxedText(mode, {
-				x: agentInfoL.x,
-				y: this.currentY,
-				padding: config.section.mode.padding,
-				boxAttrs: config.section.mode.boxAttrs,
-				labelAttrs: config.section.mode.labelAttrs,
-				boxLayer: this.blocks,
-				labelLayer: this.actionLabels,
-				SVGTextBlockClass: this.SVGTextBlockClass,
-			});
-
-			const labelRender = SVGShapes.renderBoxedText(label, {
-				x: agentInfoL.x + modeRender.width,
-				y: this.currentY,
-				padding: config.section.label.padding,
-				boxAttrs: {'fill': '#000000'},
-				labelAttrs: config.section.label.labelAttrs,
-				boxLayer: this.mask,
-				labelLayer: this.actionLabels,
-				SVGTextBlockClass: this.SVGTextBlockClass,
-			});
-
-			this.currentY += (
-				Math.max(modeRender.height, labelRender.height) +
-				config.section.padding.top
-			);
-			this.markAgentRange([left, right], this.currentY);
-		}
-
-		renderSectionEnd(/*scope, block, section*/) {
-		}
-
-		renderBlockEnd(scope, {left, right}) {
-			const config = this.theme.block;
-			this.currentY = (
-				this.checkAgentRange([left, right], this.currentY) +
-				config.section.padding.bottom
-			);
-
-			const agentInfoL = this.agentInfos.get(left);
-			const agentInfoR = this.agentInfos.get(right);
-			this.blocks.appendChild(svg.make('rect', Object.assign({
-				'x': agentInfoL.x,
-				'y': scope.y,
-				'width': agentInfoR.x - agentInfoL.x,
-				'height': this.currentY - scope.y,
-			}, config.boxAttrs)));
-
-			this.currentY += config.margin.bottom + this.theme.actionMargin;
-			this.markAgentRange([left, right], this.currentY);
-		}
-
 		addHighlightObject(line, o) {
 			let list = this.highlights.get(line);
 			if(!list) {
@@ -417,44 +277,53 @@ define([
 			list.push(o);
 		}
 
-		renderStages(stages) {
+		renderStage(stage) {
 			this.agentInfos.forEach((agentInfo) => {
 				const rad = agentInfo.currentRad;
 				agentInfo.currentMaxRad = rad;
 			});
 
-			let topY = 0;
-			let maxTopShift = 0;
-			let sequential = true;
 			const envPre = {
 				theme: this.theme,
 				agentInfos: this.agentInfos,
 				textSizer: this.sizer,
 				state: this.state,
+				components: this.components,
 			};
-			const touchedAgentNames = [];
-			stages.forEach((stage) => {
-				const component = this.components.get(stage.type);
-				const r = component.renderPre(stage, envPre) || {};
-				if(r.topShift !== undefined) {
-					maxTopShift = Math.max(maxTopShift, r.topShift);
+			const component = this.components.get(stage.type);
+			const result = component.renderPre(stage, envPre);
+			const {topShift, agentNames, asynchronousY} =
+				BaseComponent.cleanRenderPreResult(result, this.currentY);
+
+			const topY = this.checkAgentRange(agentNames, asynchronousY);
+
+			const eventOut = () => {
+				this.trigger('mouseout');
+			};
+
+			const makeRegion = (o, stageOverride = null) => {
+				if(!o) {
+					o = svg.make('g');
 				}
-				if(r.agentNames) {
-					array.mergeSets(touchedAgentNames, r.agentNames);
-				}
-				if(r.asynchronousY !== undefined) {
-					topY = Math.max(topY, r.asynchronousY);
-					sequential = false;
-				}
-			});
-			topY = this.checkAgentRange(touchedAgentNames, topY);
-			if(sequential) {
-				topY = Math.max(topY, this.currentY);
-			}
+				const targetStage = (stageOverride || stage);
+				this.addHighlightObject(targetStage.ln, o);
+				o.setAttribute('class', 'region');
+				o.addEventListener('mouseenter', () => {
+					this.trigger('mouseover', [targetStage]);
+				});
+				o.addEventListener('mouseleave', eventOut);
+				o.addEventListener('click', () => {
+					this.trigger('click', [targetStage]);
+				});
+				this.actionLabels.appendChild(o);
+				return o;
+			};
 
 			const env = {
 				topY,
-				primaryY: topY + maxTopShift,
+				primaryY: topY + topShift,
+				blockLayer: this.blocks,
+				sectionLayer: this.sections,
 				shapeLayer: this.actionShapes,
 				labelLayer: this.actionLabels,
 				maskLayer: this.mask,
@@ -469,41 +338,12 @@ define([
 					agentInfo.latestYStart = andStop ? null : toY;
 				},
 				addDef: this.addDef,
+				makeRegion,
+				components: this.components,
 			};
-			let bottomY = topY;
-			stages.forEach((stage) => {
-				const eventOver = () => {
-					this.trigger('mouseover', [stage]);
-				};
 
-				const eventOut = () => {
-					this.trigger('mouseout');
-				};
-
-				const eventClick = () => {
-					this.trigger('click', [stage]);
-				};
-
-				env.makeRegion = (o) => {
-					if(!o) {
-						o = svg.make('g');
-					}
-					this.addHighlightObject(stage.ln, o);
-					o.setAttribute('class', 'region');
-					o.addEventListener('mouseenter', eventOver);
-					o.addEventListener('mouseleave', eventOut);
-					o.addEventListener('click', eventClick);
-					this.actionLabels.appendChild(o);
-					return o;
-				};
-
-				const component = this.components.get(stage.type);
-				const baseY = component.render(stage, env);
-				if(baseY !== undefined) {
-					bottomY = Math.max(bottomY, baseY);
-				}
-			});
-			this.markAgentRange(touchedAgentNames, bottomY);
+			const bottomY = Math.max(topY, component.render(stage, env) || 0);
+			this.markAgentRange(agentNames, bottomY);
 
 			this.currentY = bottomY;
 		}
@@ -564,7 +404,7 @@ define([
 			});
 
 			this.visibleAgents = ['[', ']'];
-			traverse(stages, this.separationTraversalFns);
+			stages.forEach(this.separationStage);
 
 			this.positionAgents();
 		}
@@ -654,7 +494,7 @@ define([
 			this.buildAgentInfos(sequence.agents, sequence.stages);
 
 			this.currentY = 0;
-			traverse(sequence.stages, this.renderTraversalFns);
+			sequence.stages.forEach(this.renderStage);
 			const bottomY = this.checkAgentRange(['[', ']'], this.currentY);
 
 			const stagesHeight = Math.max(bottomY - this.theme.actionMargin, 0);

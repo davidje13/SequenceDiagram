@@ -16,6 +16,7 @@ define(() => {
 			textSizer,
 			addSpacing,
 			addSeparation,
+			components,
 		}*/) {
 		}
 
@@ -26,6 +27,7 @@ define(() => {
 			textSizer,
 			addSpacing,
 			addSeparation,
+			components,
 		}*/) {
 		}
 
@@ -34,12 +36,16 @@ define(() => {
 			agentInfos,
 			textSizer,
 			state,
+			components,
 		}*/) {
+			// return {topShift, agentNames, asynchronousY}
 		}
 
 		render(/*stage, {
 			topY,
 			primaryY,
+			blockLayer,
+			sectionLayer,
 			shapeLayer,
 			labelLayer,
 			theme,
@@ -49,9 +55,23 @@ define(() => {
 			addDef,
 			makeRegion,
 			state,
+			components,
 		}*/) {
+			// return bottom Y coordinate
 		}
 	}
+
+	BaseComponent.cleanRenderPreResult = ({
+		topShift = 0,
+		agentNames = [],
+		asynchronousY = null,
+	} = {}, currentY = null) => {
+		return {
+			topShift,
+			agentNames,
+			asynchronousY: (asynchronousY !== null) ? asynchronousY : currentY,
+		};
+	};
 
 	const components = new Map();
 

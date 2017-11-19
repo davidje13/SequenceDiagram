@@ -425,6 +425,34 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('converts reference commands', () => {
+			const parsed = parser.parse(
+				'begin reference: Foo bar as baz\n' +
+				'begin reference over A, B: Foo bar as baz\n'
+			);
+			expect(parsed.stages).toEqual([
+				{
+					type: 'group begin',
+					ln: jasmine.anything(),
+					agents: [],
+					mode: 'ref',
+					label: 'Foo bar',
+					alias: 'baz',
+				},
+				{
+					type: 'group begin',
+					ln: jasmine.anything(),
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: 'B', alias: '', flags: []},
+					],
+					mode: 'ref',
+					label: 'Foo bar',
+					alias: 'baz',
+				},
+			]);
+		});
+
 		it('converts markers', () => {
 			const parsed = parser.parse('abc:');
 			expect(parsed.stages).toEqual([{
@@ -530,9 +558,21 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			));
 		});
 
+		it('rejects missing terminators', () => {
+			expect(() => parser.parse('terminators')).toThrow(new Error(
+				'Unspecified termination at line 1, character 0'
+			));
+		});
+
 		it('rejects invalid headers', () => {
 			expect(() => parser.parse('headers foo')).toThrow(new Error(
 				'Unknown header "foo" at line 1, character 8'
+			));
+		});
+
+		it('rejects missing headers', () => {
+			expect(() => parser.parse('headers')).toThrow(new Error(
+				'Unspecified header at line 1, character 0'
 			));
 		});
 

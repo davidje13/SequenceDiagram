@@ -7,7 +7,11 @@ define(['core/ArrayUtilities'], (array) => {
 		const end = {type: '', suggest: '\n', then: {}};
 		const hiddenEnd = {type: '', then: {}};
 
-		const textToEnd = {type: 'string', then: {'': 0, '\n': end}};
+		function textTo(exit) {
+			return {type: 'string', then: Object.assign({'': 0}, exit)};
+		}
+
+		const textToEnd = textTo({'\n': end});
 		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
 			'as': {type: 'keyword', suggest: true, then: {
@@ -20,11 +24,17 @@ define(['core/ArrayUtilities'], (array) => {
 			',': {type: 'operator', suggest: true, then: {'': 1}},
 			'\n': end,
 		}};
-		const agentListToText = {type: 'variable', suggest: 'Agent', then: {
-			'': 0,
-			',': {type: 'operator', suggest: true, then: {'': 1}},
+
+		function agentListTo(exit) {
+			return {type: 'variable', suggest: 'Agent', then: Object.assign({
+				'': 0,
+				',': {type: 'operator', suggest: true, then: {'': 1}},
+			}, exit)};
+		}
+
+		const agentListToText = agentListTo({
 			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
-		}};
+		});
 		const agentList2ToText = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
 			',': {type: 'operator', suggest: true, then: {'': agentListToText}},
@@ -43,6 +53,23 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'\n': end,
 		}};
+		const referenceName = {
+			':': {type: 'operator', suggest: true, then: {
+				'': textTo({
+					'as': {type: 'keyword', suggest: true, then: {
+						'': {type: 'variable', suggest: 'Agent', then: {
+							'': 0,
+							'\n': end,
+						}},
+					}},
+				}),
+			}},
+		};
+		const refDef = {type: 'keyword', suggest: true, then: Object.assign({
+			'over': {type: 'keyword', suggest: true, then: {
+				'': agentListTo(referenceName),
+			}},
+		}, referenceName)};
 
 		function makeSideNote(side) {
 			return {
@@ -158,6 +185,7 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'begin': {type: 'keyword', suggest: true, then: {
 				'': aliasListToEnd,
+				'reference': refDef,
 				'as': CM_ERROR,
 			}},
 			'end': {type: 'keyword', suggest: true, then: {

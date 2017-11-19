@@ -255,6 +255,9 @@ define([
 			}
 
 			const type = tokenKeyword(line[1]);
+			if(!type) {
+				throw makeError('Unspecified termination', line[0]);
+			}
 			if(TERMINATOR_TYPES.indexOf(type) === -1) {
 				throw makeError('Unknown termination "' + type + '"', line[1]);
 			}
@@ -268,6 +271,9 @@ define([
 			}
 
 			const type = tokenKeyword(line[1]);
+			if(!type) {
+				throw makeError('Unspecified header', line[0]);
+			}
 			if(TERMINATOR_TYPES.indexOf(type) === -1) {
 				throw makeError('Unknown header "' + type + '"', line[1]);
 			}
@@ -310,6 +316,38 @@ define([
 				type: type.type,
 				mode: type.mode,
 				label: joinLabel(line, skip),
+			};
+		},
+
+		(line) => { // begin reference
+			if(
+				tokenKeyword(line[0]) !== 'begin' ||
+				tokenKeyword(line[1]) !== 'reference'
+			) {
+				return null;
+			}
+			let agents = [];
+			const labelSep = findToken(line, ':');
+			if(tokenKeyword(line[2]) === 'over' && labelSep > 3) {
+				agents = readAgentList(line, 3, labelSep);
+			} else if(labelSep !== 2) {
+				throw makeError('Expected ":" or "over"', line[2]);
+			}
+			const def = readAgent(
+				line,
+				labelSep + 1,
+				line.length,
+				{aliases: true}
+			);
+			if(!def.alias) {
+				throw makeError('Reference must have an alias', line[labelSep]);
+			}
+			return {
+				type: 'group begin',
+				agents,
+				mode: 'ref',
+				label: def.name,
+				alias: def.alias,
 			};
 		},
 
