@@ -81,6 +81,14 @@ define(() => {
 		return target;
 	}
 
+	function flatMap(list, fn) {
+		const result = [];
+		list.forEach((item) => {
+			result.push(...fn(item));
+		});
+		return result;
+	}
+
 	return {
 		indexOf,
 		mergeSets,
@@ -89,5 +97,6 @@ define(() => {
 		remove,
 		last,
 		combine,
+		flatMap,
 	};
 });

@@ -99,7 +99,10 @@ define([
 		}
 
 		render(stage, env) {
-			env.state.blocks.set(stage.left, env.primaryY);
+			env.state.blocks.set(stage.left, {
+				mode: stage.mode,
+				startY: env.primaryY,
+			});
 			return super.render(stage, env, true);
 		}
 	}
@@ -119,16 +122,17 @@ define([
 		render({left, right}, env) {
 			const config = env.theme.block;
 
-			const startY = env.state.blocks.get(left);
+			const {startY, mode} = env.state.blocks.get(left);
 
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
+			const configMode = config.modes[mode] || config.modes[''];
 			env.blockLayer.appendChild(svg.make('rect', Object.assign({
 				'x': agentInfoL.x,
 				'y': startY,
 				'width': agentInfoR.x - agentInfoL.x,
 				'height': env.primaryY - startY,
-			}, config.boxAttrs)));
+			}, configMode.boxAttrs)));
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
 		}

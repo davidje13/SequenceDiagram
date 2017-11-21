@@ -186,4 +186,18 @@ defineDescribe('ArrayUtilities', ['./ArrayUtilities'], (array) => {
 			]);
 		});
 	});
+
+	describe('.flatMap', () => {
+		it('applies the given function to all elements of the input', () => {
+			const fn = (x) => ([x + 1]);
+			const p1 = [2, 7];
+			expect(array.flatMap(p1, fn)).toEqual([3, 8]);
+		});
+
+		it('flattens the result', () => {
+			const fn = (x) => ([x + 1, x + 2]);
+			const p1 = [2, 7];
+			expect(array.flatMap(p1, fn)).toEqual([3, 4, 8, 9]);
+		});
+	});
 });

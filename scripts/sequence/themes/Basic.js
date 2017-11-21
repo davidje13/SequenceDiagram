@@ -131,12 +131,25 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 				top: 0,
 				bottom: 0,
 			},
-			boxAttrs: {
-				'fill': 'none',
-				'stroke': '#000000',
-				'stroke-width': 1.5,
-				'rx': 2,
-				'ry': 2,
+			modes: {
+				'ref': {
+					boxAttrs: {
+						'fill': '#FFFFFF',
+						'stroke': '#000000',
+						'stroke-width': 1.5,
+						'rx': 2,
+						'ry': 2,
+					},
+				},
+				'': {
+					boxAttrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1.5,
+						'rx': 2,
+						'ry': 2,
+					},
+				},
 			},
 			section: {
 				padding: {

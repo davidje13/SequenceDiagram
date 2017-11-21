@@ -137,6 +137,36 @@
 				),
 			},
 			{
+				title: 'References',
+				code: (
+					'begin reference: {Label} as {Name}\n' +
+					'{Agent1} -> {Name}\n' +
+					'end {Name}'
+				),
+				preview: (
+					'begin A\n' +
+					'begin reference: "See 1.3" as myRef\n' +
+					'A -> myRef\n' +
+					'myRef -> A\n' +
+					'end myRef'
+				),
+			},
+			{
+				title: 'References over agents',
+				code: (
+					'begin reference over {Covered}: {Label} as {Name}\n' +
+					'{Agent1} -> {Name}\n' +
+					'end {Name}'
+				),
+				preview: (
+					'begin A, B, C\n' +
+					'begin reference over B, C: "See 1.3" as myRef\n' +
+					'A -> myRef\n' +
+					'myRef -> A\n' +
+					'end myRef'
+				),
+			},
+			{
 				title: 'Note over agent',
 				code: 'note over {Agent1}: {Message}',
 			},

@@ -266,9 +266,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('rejects attempts to jump to markers not yet defined', () => {
 			expect(() => generator.generate({stages: [
-				{type: 'async', target: 'foo'},
+				{type: 'async', target: 'foo', ln: 10},
 				{type: 'mark', name: 'foo'},
-			]})).toThrow();
+			]})).toThrow(new Error('Unknown marker: foo at line 11'));
 		});
 
 		it('returns aggregated agents', () => {
@@ -329,14 +329,18 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(() => generator.generate({stages: [
 				PARSED.defineAgents([{name: 'Foo', alias: 'B', flags: []}]),
 				PARSED.defineAgents([{name: 'Bar', alias: 'B', flags: []}]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot use B as an alias; it is already in use at line 1'
+			));
 		});
 
 		it('rejects using agent names as aliases', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.defineAgents([{name: 'Foo', alias: 'B', flags: []}]),
 				PARSED.defineAgents([{name: 'Bar', alias: 'Foo', flags: []}]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot use Foo as an alias; it is already in use at line 1'
+			));
 		});
 
 		it('creates implicit begin stages for agents when used', () => {
@@ -675,28 +679,36 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					'A',
 					{name: 'B', alias: '', flags: ['start', 'stop']},
 				]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot set agent highlighting multiple times at line 1'
+			));
 
 			expect(() => generator.generate({stages: [
 				PARSED.connect([
 					{name: 'A', alias: '', flags: ['start']},
 					{name: 'A', alias: '', flags: ['stop']},
 				]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot set agent highlighting multiple times at line 1'
+			));
 
 			expect(() => generator.generate({stages: [
 				PARSED.connect([
 					'A',
 					{name: 'B', alias: '', flags: ['begin', 'end']},
 				]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot set agent visibility multiple times at line 1'
+			));
 
 			expect(() => generator.generate({stages: [
 				PARSED.connect([
 					{name: 'A', alias: '', flags: ['begin']},
 					{name: 'A', alias: '', flags: ['end']},
 				]),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Cannot set agent visibility multiple times at line 1'
+			));
 		});
 
 		it('adds implicit highlight end with implicit terminator', () => {
@@ -948,7 +960,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.blockSplit('else', 'xyz'),
 				PARSED.blockEnd(),
-			]})).toThrow();
+			]})).toThrow(new Error('Empty block at line 1'));
 		});
 
 		it('rejects blocks containing only define statements / markers', () => {
@@ -957,18 +969,306 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.defineAgents(['A']),
 				{type: 'mark', name: 'foo'},
 				PARSED.blockEnd(),
-			]})).toThrow();
+			]})).toThrow(new Error('Empty block at line 1'));
 		});
 
 		it('rejects entirely empty nested blocks', () => {
 			expect(() => generator.generate({stages: [
-				PARSED.blockBegin('if', 'abc'),
+				PARSED.blockBegin('if', 'abc', {ln: 10}),
 				PARSED.connect(['A', 'B']),
-				PARSED.blockSplit('else', 'xyz'),
-				PARSED.blockBegin('if', 'abc'),
-				PARSED.blockEnd(),
-				PARSED.blockEnd(),
-			]})).toThrow();
+				PARSED.blockSplit('else', 'xyz', {ln: 20}),
+				PARSED.blockBegin('if', 'abc', {ln: 30}),
+				PARSED.blockEnd({ln: 40}),
+				PARSED.blockEnd({ln: 50}),
+			]})).toThrow(new Error('Empty block at line 41'));
+		});
+
+		it('converts groups into block commands', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			const bounds = {
+				left: '__BLOCK0[',
+				right: '__BLOCK0]',
+			};
+
+			expect(sequence.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: '__BLOCK0[', anchorRight: true},
+				{name: 'A', anchorRight: false},
+				{name: 'B', anchorRight: false},
+				{name: '__BLOCK0]', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				GENERATED.blockBegin('ref', 'Foo', bounds),
+				GENERATED.blockEnd(bounds),
+				GENERATED.endAgents(['A', 'B']),
+			]);
+		});
+
+		it('adds implicit begin statements when creating groups', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B'], {mode: 'box'}),
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('augments explicit begin statements when creating groups', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A']),
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B'], {mode: 'box'}),
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('rejects unterminated groups', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+			]})).toThrow(new Error('Unterminated group'));
+		});
+
+		it('uses group agent list when positioning bounds', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: 'A', anchorRight: false},
+				{name: '__BLOCK0[', anchorRight: true},
+				{name: 'B', anchorRight: false},
+				{name: 'C', anchorRight: false},
+				{name: '__BLOCK0]', anchorRight: false},
+				{name: 'D', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+		});
+
+		it('implicitly adds contained agents to groups', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D', 'E']),
+				PARSED.groupBegin('Bar', ['B', 'D'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: 'A', anchorRight: false},
+				{name: '__BLOCK0[', anchorRight: true},
+				{name: 'B', anchorRight: false},
+				{name: 'C', anchorRight: false},
+				{name: 'D', anchorRight: false},
+				{name: '__BLOCK0]', anchorRight: false},
+				{name: 'E', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+		});
+
+		it('repoints explicit group connectors at bounds', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect(['A', 'Bar']),
+				PARSED.connect(['D', 'Bar']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['A', '__BLOCK0[']),
+				GENERATED.connect(['D', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('correctly positions new agents when repointing at bounds', () => {
+			const sequence1 = generator.generate({stages: [
+				PARSED.beginAgents(['B', 'C']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect(['D', 'Bar']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence1.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['D', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+
+			const sequence2 = generator.generate({stages: [
+				PARSED.beginAgents(['B', 'C']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect(['Bar', 'D']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence2.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['__BLOCK0]', 'D']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('repoints explicit group notes at bounds', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.note('note over', ['Bar']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.note('note over', ['__BLOCK0[', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('repoints group self-connections to right bound', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect(['B', 'B']),
+				PARSED.connect(['Bar', 'Bar']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['__BLOCK0]', '__BLOCK0]']),
+				GENERATED.connect(['__BLOCK0]', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('rejects using an agent in multiple groups simultaneously', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.groupBegin('Baz', ['B', 'C'], {label: 'Foob'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.endAgents(['Baz']),
+			]})).toThrow(new Error('Agent B is in a group at line 1'));
+		});
+
+		it('rejects explicit group connectors after ending', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.connect(['B', 'Bar']),
+			]})).toThrow(new Error('Duplicate agent name: Bar at line 1'));
+		});
+
+		it('rejects notes over groups after ending', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.note('note over', ['Bar']),
+			]})).toThrow(new Error('Duplicate agent name: Bar at line 1'));
+		});
+
+		it('repoints implicit group connectors at bounds', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect(['A', 'C']),
+				PARSED.connect(['D', 'C']),
+				PARSED.endAgents(['Bar']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['A', '__BLOCK0[']),
+				GENERATED.connect(['D', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('does not repoint implicit group connectors after ending', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.connect(['A', 'C']),
+				PARSED.connect(['D', 'C']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['A', 'C']),
+				GENERATED.connect(['D', 'C']),
+				jasmine.anything(),
+			]);
+		});
+
+		it('can connect multiple reference blocks', () => {
+			const sequence = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('AB', ['A', 'B'], {label: 'Foo'}),
+				PARSED.groupBegin('CD', ['C', 'D'], {label: 'Foo'}),
+				PARSED.connect(['AB', 'CD']),
+				PARSED.connect(['CD', 'AB']),
+				PARSED.endAgents(['AB']),
+				PARSED.endAgents(['CD']),
+			]});
+
+			expect(sequence.stages).toEqual([
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+				GENERATED.connect(['__BLOCK0]', '__BLOCK1[']),
+				GENERATED.connect(['__BLOCK1[', '__BLOCK0]']),
+				jasmine.anything(),
+				jasmine.anything(),
+				jasmine.anything(),
+			]);
+		});
+
+		it('rejects interactions with agents hidden beneath references', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('AC', ['A', 'C'], {label: 'Foo'}),
+				PARSED.connect(['B', 'D']),
+				PARSED.endAgents(['AC']),
+			]})).toThrow(new Error('Agent B is hidden behind group at line 1'));
 		});
 
 		it('rejects unterminated blocks', () => {
@@ -988,27 +1288,35 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		it('rejects extra block terminations', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.blockEnd(),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Invalid block nesting (too many "end"s) at line 1'
+			));
 
 			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.connect(['A', 'B']),
-				PARSED.blockEnd(),
-				PARSED.blockEnd(),
-			]})).toThrow();
+				PARSED.blockEnd({ln: 10}),
+				PARSED.blockEnd({ln: 20}),
+			]})).toThrow(new Error(
+				'Invalid block nesting (too many "end"s) at line 21'
+			));
 		});
 
 		it('rejects block splitting without a block', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.blockSplit('else', 'xyz'),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Invalid block nesting ("else" inside global) at line 1'
+			));
 
 			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
 				PARSED.blockSplit('else', 'xyz'),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Invalid block nesting ("else" inside global) at line 1'
+			));
 		});
 
 		it('rejects block splitting in non-splittable blocks', () => {
@@ -1017,7 +1325,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.blockSplit('else', 'xyz'),
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'Invalid block nesting ("else" inside repeat) at line 1'
+			));
 		});
 
 		it('passes notes through', () => {
@@ -1043,7 +1353,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					mode: 'foo',
 					label: 'bar',
 				}),
-			]})).toThrow();
+			]})).toThrow(new Error(
+				'note between requires at least 2 agents at line 1'
+			));
 		});
 
 		it('defaults to showing notes around the entire diagram', () => {
@@ -1059,22 +1371,80 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
-		it('rejects attempts to change implicit agents', () => {
+		it('rejects creating agents with the same name as a group', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.beginAgents(['Bar']),
+				PARSED.endAgents(['Bar']),
+			]})).toThrow(new Error('Duplicate agent name: Bar at line 1'));
+
+			expect(() => generator.generate({stages: [
+				PARSED.beginAgents(['Bar']),
+				PARSED.endAgents(['Bar']),
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]})).toThrow(new Error('Duplicate agent name: Bar at line 1'));
+		});
+
+		it('rejects explicit interactions with virtual group agents', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.connect(['C', '__BLOCK0[']),
+				PARSED.endAgents(['Bar']),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+
+			expect(() => generator.generate({stages: [
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+				PARSED.connect(['C', '__BLOCK0[']),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect(['C', '__BLOCK0[']),
+				PARSED.groupBegin('Bar', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['Bar']),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+		});
+
+		it('rejects explicit interactions with virtual block agents', () => {
+			expect(() => generator.generate({stages: [
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['C', '__BLOCK0[']),
+				PARSED.blockEnd(),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+
+			expect(() => generator.generate({stages: [
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.connect(['C', '__BLOCK0[']),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+
+			expect(() => generator.generate({stages: [
+				PARSED.connect(['C', '__BLOCK0[']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+			]})).toThrow(new Error('__BLOCK0[ is a reserved name at line 1'));
+		});
+
+		it('rejects attempts to change virtual agents', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.beginAgents(['[']),
-			]})).toThrow();
+			]})).toThrow(new Error('Cannot begin/end agent: [ at line 1'));
 
 			expect(() => generator.generate({stages: [
 				PARSED.beginAgents([']']),
-			]})).toThrow();
+			]})).toThrow(new Error('Cannot begin/end agent: ] at line 1'));
 
 			expect(() => generator.generate({stages: [
 				PARSED.endAgents(['[']),
-			]})).toThrow();
+			]})).toThrow(new Error('Cannot begin/end agent: [ at line 1'));
 
 			expect(() => generator.generate({stages: [
 				PARSED.endAgents([']']),
-			]})).toThrow();
+			]})).toThrow(new Error('Cannot begin/end agent: ] at line 1'));
 		});
 	});
 });
