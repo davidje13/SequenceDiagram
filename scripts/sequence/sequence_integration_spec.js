@@ -93,12 +93,12 @@ defineDescribe('Sequence Integration', [
 
 		const content = getSimplifiedContent(renderer);
 		expect(content).toContain(
-			'<svg viewBox="-5 -5 82 47">'
+			'<svg viewBox="-5 -5 82 56">'
 		);
 
 		// Agent 1
 		expect(content).toContain(
-			'<line x1="20.5" y1="11" x2="20.5" y2="37" class="agent-1-line"'
+			'<line x1="20.5" y1="11" x2="20.5" y2="46" class="agent-1-line"'
 		);
 		expect(content).toContain(
 			'<rect x="10" y="0" width="21" height="11"'
@@ -109,7 +109,7 @@ defineDescribe('Sequence Integration', [
 
 		// Agent 2
 		expect(content).toContain(
-			'<line x1="51.5" y1="11" x2="51.5" y2="37" class="agent-2-line"'
+			'<line x1="51.5" y1="11" x2="51.5" y2="46" class="agent-2-line"'
 		);
 		expect(content).toContain(
 			'<rect x="41" y="0" width="21" height="11"'
@@ -120,10 +120,10 @@ defineDescribe('Sequence Integration', [
 
 		// Arrow
 		expect(content).toContain(
-			'<line x1="20.5" y1="19" x2="48.5" y2="19"'
+			'<line x1="20.5" y1="26" x2="48.5" y2="26"'
 		);
 		expect(content).toContain(
-			'<polygon points="46 14 51 19 46 24"'
+			'<polygon points="46 21 51 26 46 31"'
 		);
 	});
 

@@ -29,6 +29,7 @@ define(['./BaseComponent'], (BaseComponent) => {
 				env.drawAgentLine(name, env.primaryY);
 				env.agentInfos.get(name).currentRad = r;
 			});
+			return env.primaryY + env.theme.actionMargin;
 		}
 	}
 

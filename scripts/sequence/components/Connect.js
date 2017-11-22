@@ -300,7 +300,10 @@ define([
 				'fill': 'transparent',
 			}), clickable.firstChild);
 
-			return y1 + arrowDip + env.theme.actionMargin;
+			return y1 + Math.max(
+				arrowDip + env.theme.minActionMargin,
+				env.theme.actionMargin
+			);
 		}
 
 		renderSimpleConnect({label, agentNames, options}, env) {
@@ -359,7 +362,10 @@ define([
 				'fill': 'transparent',
 			}), clickable.firstChild);
 
-			return y + arrowSpread + env.theme.actionMargin;
+			return y + Math.max(
+				arrowSpread + env.theme.minActionMargin,
+				env.theme.actionMargin
+			);
 		}
 
 		renderPre({label, agentNames, options}, env) {

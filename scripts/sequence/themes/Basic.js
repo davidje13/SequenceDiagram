@@ -7,7 +7,8 @@ define(['core/ArrayUtilities', 'svg/SVGShapes'], (array, SVGShapes) => {
 		titleMargin: 10,
 		outerMargin: 5,
 		agentMargin: 10,
-		actionMargin: 3,
+		actionMargin: 10,
+		minActionMargin: 3,
 		agentLineHighlightRadius: 4,
 
 		agentCap: {
