@@ -4,6 +4,13 @@ define(['core/ArrayUtilities'], (array) => {
 	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
 
 	const makeCommands = ((() => {
+		// The order of commands inside "then" blocks directly influences the
+		// order they are displayed to the user in autocomplete menus.
+		// This relies on the fact that common JS engines maintain insertion
+		// order in objects, though this is not guaranteed. It could be switched
+		// to use Map objects instead for strict compliance, at the cost of
+		// extra syntax.
+
 		const end = {type: '', suggest: '\n', then: {}};
 		const hiddenEnd = {type: '', then: {}};
 
@@ -14,6 +21,8 @@ define(['core/ArrayUtilities'], (array) => {
 		const textToEnd = textTo({'\n': end});
 		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
+			'\n': end,
+			',': {type: 'operator', suggest: true, then: {'': 1}},
 			'as': {type: 'keyword', suggest: true, then: {
 				'': {type: 'variable', suggest: 'Agent', then: {
 					'': 0,
@@ -21,15 +30,16 @@ define(['core/ArrayUtilities'], (array) => {
 					'\n': end,
 				}},
 			}},
-			',': {type: 'operator', suggest: true, then: {'': 1}},
-			'\n': end,
 		}};
 
 		function agentListTo(exit) {
-			return {type: 'variable', suggest: 'Agent', then: Object.assign({
-				'': 0,
-				',': {type: 'operator', suggest: true, then: {'': 1}},
-			}, exit)};
+			return {type: 'variable', suggest: 'Agent', then: Object.assign({},
+				exit,
+				{
+					'': 0,
+					',': {type: 'operator', suggest: true, then: {'': 1}},
+				}
+			)};
 		}
 
 		const agentListToText = agentListTo({
@@ -135,16 +145,14 @@ define(['core/ArrayUtilities'], (array) => {
 				then: makeOpBlock(agentToOptText),
 			};
 
-			const then = {
-				':': {
-					type: 'operator',
-					suggest: true,
-					override: 'Label',
-					then: {},
-				},
-				'': 0,
-			};
+			const then = {'': 0};
 			arrows.forEach((arrow) => (then[arrow] = connect));
+			then[':'] = {
+				type: 'operator',
+				suggest: true,
+				override: 'Label',
+				then: {},
+			};
 			return makeOpBlock({type: 'variable', suggest: 'Agent', then});
 		}
 
@@ -253,7 +261,7 @@ define(['core/ArrayUtilities'], (array) => {
 		return (arrows) => {
 			return {
 				type: 'error line-error',
-				then: Object.assign(BASE_THEN, makeCMConnect(arrows)),
+				then: Object.assign({}, BASE_THEN, makeCMConnect(arrows)),
 			};
 		};
 	})());
