@@ -325,15 +325,18 @@ define(['core/ArrayUtilities'], (array) => {
 				}
 				array.mergeSets(
 					state['known' + locals.type],
-					[locals.value]
+					[locals.value + ' ']
 				);
 				locals.type = '';
-			} else {
-				locals.value += token + ' ';
+				locals.value = '';
 			}
-		} else if(typeof suggest === 'string' && state['known' + suggest]) {
+		}
+		if(typeof suggest === 'string' && state['known' + suggest]) {
 			locals.type = suggest;
-			locals.value = token + ' ';
+			if(locals.value) {
+				locals.value += token.s;
+			}
+			locals.value += token.v;
 		}
 	}
 
@@ -357,10 +360,10 @@ define(['core/ArrayUtilities'], (array) => {
 				path.push(found || CM_ERROR);
 			}
 			current = array.last(path);
-			updateSuggestion(state, suggestions, token.v, current);
+			updateSuggestion(state, suggestions, token, current);
 		});
 		if(eol) {
-			updateSuggestion(state, suggestions, '', {});
+			updateSuggestion(state, suggestions, null, {});
 		}
 		state.nextCompletions = cmMakeCompletions(state, path);
 		state.valid = (
@@ -389,6 +392,7 @@ define(['core/ArrayUtilities'], (array) => {
 			return {
 				currentType: -1,
 				current: '',
+				currentSpace: '',
 				currentQuoted: false,
 				knownAgent: [],
 				knownLabel: [],
@@ -410,10 +414,13 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		_tokenBegin(stream, state) {
+			state.currentSpace = '';
+			let lastChar = '';
 			while(true) {
 				if(stream.eol()) {
 					return false;
 				}
+				state.currentSpace += lastChar;
 				for(let i = 0; i < this.tokenDefinitions.length; ++ i) {
 					const block = this.tokenDefinitions[i];
 					if(this._matchPattern(stream, block.start, true)) {
@@ -424,7 +431,7 @@ define(['core/ArrayUtilities'], (array) => {
 						return true;
 					}
 				}
-				stream.next();
+				lastChar = stream.next();
 			}
 		}
 
@@ -435,12 +442,20 @@ define(['core/ArrayUtilities'], (array) => {
 			}
 		}
 
+		_addToken(state) {
+			state.line.push({
+				v: state.current,
+				s: state.currentSpace,
+				q: state.currentQuoted,
+			});
+		}
+
 		_tokenEndFound(stream, state, block) {
 			state.currentType = -1;
 			if(block.omit) {
 				return 'comment';
 			}
-			state.line.push({v: state.current, q: state.currentQuoted});
+			this._addToken(state);
 			return cmCheckToken(state, stream.eol(), this.commands);
 		}
 
@@ -449,7 +464,7 @@ define(['core/ArrayUtilities'], (array) => {
 			if(block.omit) {
 				return 'comment';
 			}
-			state.line.push(({v: state.current, q: state.currentQuoted}));
+			this._addToken(state);
 			const type = cmCheckToken(state, false, this.commands);
 			state.line.pop();
 			return type;
