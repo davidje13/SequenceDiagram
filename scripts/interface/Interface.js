@@ -145,17 +145,15 @@ define([
 			code.on('keydown', (cm, event) => {
 				lastKey = event.keyCode;
 			});
-			code.on('endCompletion', () => {
-				lastKey = 0;
-			});
 			code.on('change', (cm, change) => {
-				if(cm.state.completionActive || change.origin === 'library') {
+				if(change.origin === '+input') {
+					if(lastKey === 13) {
+						lastKey = 0;
+						return;
+					}
+				} else if(change.origin !== 'complete') {
 					return;
 				}
-				if(lastKey === 13 || lastKey === 8) {
-					return;
-				}
-				lastKey = 0;
 				CodeMirror.commands.autocomplete(cm, null, {
 					completeSingle: false,
 				});
