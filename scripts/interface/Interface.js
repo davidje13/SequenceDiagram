@@ -43,22 +43,18 @@ define([
 
 	return class Interface {
 		constructor({
-			parser,
-			generator,
-			renderer,
-			exporter,
+			sequenceDiagram,
 			defaultCode = '',
 			localStorage = '',
 			library = null,
 		}) {
-			this.parser = parser;
-			this.generator = generator;
-			this.renderer = renderer;
-			this.exporter = exporter;
+			this.diagram = sequenceDiagram;
 			this.defaultCode = defaultCode;
 			this.localStorage = localStorage;
 			this.library = library;
 			this.minScale = 1.5;
+
+			this.diagram.registerCodeMirrorMode(CodeMirror);
 
 			this.debounced = null;
 			this.latestSeq = null;
@@ -114,20 +110,11 @@ define([
 
 		buildEditor(container) {
 			const value = this.loadCode() || this.defaultCode;
-			CodeMirror.defineMode(
-				'sequence',
-				() => this.parser.getCodeMirrorMode()
-			);
-			CodeMirror.registerHelper(
-				'hint',
-				'sequence',
-				this.parser.getCodeMirrorHints()
-			);
 			const code = new CodeMirror(container, {
 				value,
 				mode: 'sequence',
 				globals: {
-					themes: this.renderer.getThemeNames(),
+					themes: this.diagram.getThemeNames(),
 				},
 				lineNumbers: true,
 				showTrailingSpace: true,
@@ -167,10 +154,10 @@ define([
 			this.code.on('cursorActivity', () => {
 				const from = this.code.getCursor('from').line;
 				const to = this.code.getCursor('to').line;
-				this.renderer.setHighlight(Math.min(from, to));
+				this.diagram.setHighlight(Math.min(from, to));
 			});
 
-			this.renderer.addEventListener('mouseover', (element) => {
+			this.diagram.addEventListener('mouseover', (element) => {
 				if(this.marker) {
 					this.marker.clear();
 				}
@@ -188,14 +175,14 @@ define([
 				}
 			});
 
-			this.renderer.addEventListener('mouseout', () => {
+			this.diagram.addEventListener('mouseout', () => {
 				if(this.marker) {
 					this.marker.clear();
 					this.marker = null;
 				}
 			});
 
-			this.renderer.addEventListener('click', (element) => {
+			this.diagram.addEventListener('click', (element) => {
 				if(this.marker) {
 					this.marker.clear();
 					this.marker = null;
@@ -226,12 +213,10 @@ define([
 				);
 				container.appendChild(hold);
 				try {
-					const preview = simplifyPreview(lib.preview || lib.code);
-					const parsed = this.parser.parse(preview);
-					const generated = this.generator.generate(parsed);
-					const rendering = this.renderer.clone();
-					holdInner.appendChild(rendering.svg());
-					rendering.render(generated);
+					this.diagram.clone({
+						code: simplifyPreview(lib.preview || lib.code),
+						container: holdInner,
+					});
 				} catch(e) {
 					hold.setAttribute('class', 'library-item broken');
 					holdInner.appendChild(makeText(lib.code));
@@ -286,7 +271,7 @@ define([
 			container.appendChild(this.buildViewPane());
 
 			this.code = this.buildEditor(codePane);
-			this.viewPaneInner.appendChild(this.renderer.svg());
+			this.viewPaneInner.appendChild(this.diagram.dom());
 
 			this.registerListeners();
 			this.update();
@@ -306,7 +291,7 @@ define([
 			this.code.focus();
 		}
 
-		updateMinSize(width, height) {
+		updateMinSize({width, height}) {
 			const style = this.viewPaneInner.style;
 			style.minWidth = Math.ceil(width * this.minScale) + 'px';
 			style.minHeight = Math.ceil(height * this.minScale) + 'px';
@@ -317,8 +302,8 @@ define([
 			this.debounced = null;
 			this.pngDirty = true;
 			this.renderedSeq = sequence;
-			this.renderer.render(sequence);
-			this.updateMinSize(this.renderer.width, this.renderer.height);
+			this.diagram.render(sequence);
+			this.updateMinSize(this.diagram.getSize());
 		}
 
 		saveCode(src) {
@@ -362,8 +347,7 @@ define([
 			this.saveCode(src);
 			let sequence = null;
 			try {
-				const parsed = this.parser.parse(src);
-				sequence = this.generator.generate(parsed);
+				sequence = this.diagram.process(src);
 			} catch(e) {
 				this.markError(e);
 				return;
@@ -403,16 +387,13 @@ define([
 			}
 			this.pngDirty = false;
 			this.updatingPNG = true;
-			this.exporter.getPNGURL(
-				this.renderer,
-				PNG_RESOLUTION,
-				(url, latest) => {
+			this.diagram.getPNG({resolution: PNG_RESOLUTION})
+				.then(({url, latest}) => {
 					if(latest) {
 						this.downloadPNG.setAttribute('href', url);
 						this.updatingPNG = false;
 					}
-				}
-			);
+				});
 			return true;
 		}
 
@@ -430,7 +411,7 @@ define([
 
 		_downloadSVGClick() {
 			this.forceRender();
-			const url = this.exporter.getSVGURL(this.renderer);
+			const url = this.diagram.getSVGSynchronous();
 			this.downloadSVG.setAttribute('href', url);
 		}
 	};

@@ -98,13 +98,8 @@ define([
 			});
 		}
 
-		clone({namespace = null} = {}) {
-			return new Renderer({
-				themes: this.getThemes(),
-				namespace,
-				components: this.components,
-				SVGTextBlockClass: this.SVGTextBlockClass,
-			});
+		addTheme(theme) {
+			this.themes.set(theme.name, theme);
 		}
 
 		buildStaticElements() {

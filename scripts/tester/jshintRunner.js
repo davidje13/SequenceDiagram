@@ -8,6 +8,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 	const extraFiles = [
 		'scripts/main.js',
 		'scripts/requireConfig.js',
+		'scripts/readmeImages.js',
 	];
 
 	const PREDEF = [

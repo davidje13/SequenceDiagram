@@ -63,42 +63,15 @@
 		}
 	}
 
-	/* jshint -W072 */ // Allow several required modules
-	requirejs([
-		'sequence/Parser',
-		'sequence/Generator',
-		'sequence/Renderer',
-		'sequence/themes/Basic',
-		'sequence/themes/Chunky',
-		'interface/Exporter',
-	], (
-		Parser,
-		Generator,
-		Renderer,
-		BasicTheme,
-		ChunkyTheme,
-		Exporter
-	) => {
-		/* jshint +W072 */
-		const parser = new Parser();
-		const generator = new Generator();
-		const themes = [
-			new BasicTheme(),
-			new ChunkyTheme(),
-		];
-
+	requirejs(['sequence/SequenceDiagram'], (SequenceDiagram) => {
 		const status = makeNode('div', {'class': 'status'});
 		const statusText = makeText('Loading\u2026');
 		status.appendChild(statusText);
 		document.body.appendChild(status);
 
 		function renderSample({file, code, size}) {
-			const renderer = new Renderer({themes});
-			const exporter = new Exporter();
-
 			const hold = makeNode('div', {'class': 'hold'});
-
-			hold.appendChild(renderer.svg());
+			const diagram = new SequenceDiagram(code, {container: hold});
 
 			const raster = makeNode('img', {
 				'src': '',
@@ -122,14 +95,7 @@
 
 			document.body.appendChild(hold);
 
-			const parsed = parser.parse(code);
-			const sequence = generator.generate(parsed);
-			renderer.render(sequence);
-			if(size) {
-				renderer.width = size.width;
-				renderer.height = size.height;
-			}
-			exporter.getPNGURL(renderer, PNG_RESOLUTION, (url) => {
+			diagram.getPNG({resolution: PNG_RESOLUTION, size}).then(({url}) => {
 				raster.setAttribute('src', url);
 				downloadPNG.setAttribute('href', url);
 			});

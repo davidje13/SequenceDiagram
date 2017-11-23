@@ -5,6 +5,7 @@ define([
 	'svg/SVGTextBlock_spec',
 	'svg/SVGShapes_spec',
 	'interface/Interface_spec',
+	'sequence/SequenceDiagram_spec',
 	'sequence/Tokeniser_spec',
 	'sequence/Parser_spec',
 	'sequence/LabelPatternParser_spec',
@@ -19,5 +20,4 @@ define([
 	'sequence/components/Marker_spec',
 	'sequence/components/Note_spec',
 	'sequence/components/Parallel_spec',
-	'sequence/sequence_integration_spec',
 ]);

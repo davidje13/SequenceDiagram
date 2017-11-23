@@ -4,44 +4,33 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 	// Thanks, https://stackoverflow.com/a/23522755/1180785
 	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-	let parser = null;
-	let generator = null;
-	let renderer = null;
-	let exporter = null;
+	let sequenceDiagram = null;
 	let container = null;
 	let ui = null;
 
 	beforeEach(() => {
-		parser = jasmine.createSpyObj('parser', [
-			'parse',
-			'getCodeMirrorMode',
-			'getCodeMirrorHints',
+		sequenceDiagram = jasmine.createSpyObj('sequenceDiagram', [
+			'dom',
+			'render',
+			'clone',
+			'getSize',
+			'process',
+			'getThemeNames',
+			'addEventListener',
+			'registerCodeMirrorMode',
+			'getSVGSynchronous',
 		]);
-		parser.parse.and.returnValue({
-			meta: {},
-			stages: [],
-		});
-		generator = jasmine.createSpyObj('generator', ['generate']);
-		generator.generate.and.returnValue({
+		sequenceDiagram.process.and.returnValue({
 			meta: {},
 			agents: [],
 			stages: [],
 		});
-		renderer = jasmine.createSpyObj('renderer', [
-			'render',
-			'svg',
-			'getThemeNames',
-			'addEventListener',
-		]);
-		renderer.svg.and.returnValue(document.createElement('svg'));
+		sequenceDiagram.getSize.and.returnValue({width: 10, height: 20});
+		sequenceDiagram.dom.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', ['appendChild']);
-		exporter = jasmine.createSpyObj('exporter', ['getSVGURL']);
 
 		ui = new Interface({
-			parser,
-			generator,
-			renderer,
-			exporter,
+			sequenceDiagram,
 			defaultCode: 'my default code',
 		});
 	});
@@ -61,7 +50,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 
 	describe('download SVG', () => {
 		it('triggers a download of the current image in SVG format', () => {
-			exporter.getSVGURL.and.returnValue('mySVGURL');
+			sequenceDiagram.getSVGSynchronous.and.returnValue('mySVGURL');
 			ui.build(container);
 
 			expect(ui.downloadSVG.getAttribute('href')).toEqual('#');

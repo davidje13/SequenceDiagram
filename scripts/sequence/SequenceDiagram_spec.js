@@ -1,53 +1,53 @@
 /* jshint -W072 */ // Allow several required modules
-defineDescribe('Sequence Integration', [
+defineDescribe('SequenceDiagram', [
+	'./SequenceDiagram',
 	'./Parser',
 	'./Generator',
 	'./Renderer',
-	'./themes/Basic',
+	'./Exporter',
 	'stubs/SVGTextBlock',
 ], (
+	SequenceDiagram,
 	Parser,
 	Generator,
 	Renderer,
-	BasicTheme,
+	Exporter,
 	SVGTextBlock
 ) => {
 	/* jshint +W072 */
 	'use strict';
 
-	let parser = null;
-	let generator = null;
-	let renderer = null;
-	let theme = null;
-
-	beforeEach(() => {
-		theme = new BasicTheme();
-		parser = new Parser();
-		generator = new Generator();
-		renderer = new Renderer({
-			themes: [new BasicTheme()],
-			namespace: '',
-			SVGTextBlockClass: SVGTextBlock,
-		});
-		document.body.appendChild(renderer.svg());
-	});
-
-	afterEach(() => {
-		document.body.removeChild(renderer.svg());
-	});
-
-	function getSimplifiedContent(r) {
-		return (r.svg().outerHTML
+	function getSimplifiedContent(d) {
+		return (d.dom().outerHTML
 			.replace(/<g><\/g>/g, '')
 			.replace(' xmlns="http://www.w3.org/2000/svg" version="1.1"', '')
 		);
 	}
 
-	it('Renders empty diagrams without error', () => {
-		const parsed = parser.parse('');
-		const sequence = generator.generate(parsed);
-		renderer.render(sequence);
-		expect(getSimplifiedContent(renderer)).toEqual(
+	let diagram = null;
+
+	beforeEach(() => {
+		diagram = new SequenceDiagram({
+			namespace: '',
+			SVGTextBlockClass: SVGTextBlock,
+		});
+	});
+
+	it('contains references to core objects', () => {
+		expect(SequenceDiagram.Parser).toBe(Parser);
+		expect(SequenceDiagram.Generator).toBe(Generator);
+		expect(SequenceDiagram.Renderer).toBe(Renderer);
+		expect(SequenceDiagram.Exporter).toBe(Exporter);
+	});
+
+	it('provides default themes', () => {
+		expect(SequenceDiagram.themes.length).toEqual(2);
+	});
+
+	it('renders empty diagrams without error', () => {
+		diagram.set('');
+
+		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-5 -5 10 10">' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
@@ -60,12 +60,10 @@ defineDescribe('Sequence Integration', [
 		);
 	});
 
-	it('Renders simple metadata', () => {
-		const parsed = parser.parse('title My title here');
-		const sequence = generator.generate(parsed);
-		renderer.render(sequence);
+	it('renders simple metadata', () => {
+		diagram.set('title My title here');
 
-		expect(getSimplifiedContent(renderer)).toEqual(
+		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-11.5 -16 23 21">' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
@@ -86,12 +84,11 @@ defineDescribe('Sequence Integration', [
 		);
 	});
 
-	it('Renders simple components', () => {
-		const parsed = parser.parse('A -> B');
-		const sequence = generator.generate(parsed);
-		renderer.render(sequence);
+	it('renders simple components', () => {
+		diagram.set('A -> B');
 
-		const content = getSimplifiedContent(renderer);
+		const content = getSimplifiedContent(diagram);
+
 		expect(content).toContain(
 			'<svg viewBox="-5 -5 82 56">'
 		);
@@ -149,9 +146,7 @@ defineDescribe('Sequence Integration', [
 		.then(findSamples)
 		.then((samples) => samples.forEach((code, i) => {
 			it('Renders readme example #' + (i + 1) + ' without error', () => {
-				const parsed = parser.parse(code);
-				const sequence = generator.generate(parsed);
-				expect(() => renderer.render(sequence)).not.toThrow();
+				expect(() => diagram.set(code)).not.toThrow();
 			});
 		}))
 	);

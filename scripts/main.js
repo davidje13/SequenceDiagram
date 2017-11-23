@@ -3,25 +3,13 @@
 
 	requirejs.config(window.getRequirejsCDN());
 
-	/* jshint -W072 */ // Allow several required modules
 	requirejs([
 		'interface/Interface',
-		'interface/Exporter',
-		'sequence/Parser',
-		'sequence/Generator',
-		'sequence/Renderer',
-		'sequence/themes/Basic',
-		'sequence/themes/Chunky',
+		'sequence/SequenceDiagram',
 	], (
 		Interface,
-		Exporter,
-		Parser,
-		Generator,
-		Renderer,
-		BasicTheme,
-		ChunkyTheme
+		SequenceDiagram
 	) => {
-		/* jshint +W072 */
 		const defaultCode = (
 			'title Labyrinth\n' +
 			'\n' +
@@ -236,13 +224,7 @@
 		];
 		const ui = new Interface({
 			defaultCode,
-			parser: new Parser(),
-			generator: new Generator(),
-			renderer: new Renderer({themes: [
-				new BasicTheme(),
-				new ChunkyTheme(),
-			]}),
-			exporter: new Exporter(),
+			sequenceDiagram: new SequenceDiagram(),
 			library,
 			localStorage: 'src',
 		});
