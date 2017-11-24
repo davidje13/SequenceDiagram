@@ -70,14 +70,20 @@ define([
 		}
 
 		buildOptionsLinks() {
+			const libLink = makeNode('a', {
+				'href': '.',
+				'target': '_blank',
+			});
+			libLink.appendChild(makeText('Library'));
+
 			const githubLink = makeNode('a', {
-				'class': 'github',
 				'href': 'https://github.com/davidje13/SequenceDiagram',
 				'target': '_blank',
 			});
 			githubLink.appendChild(makeText('GitHub'));
 
 			const options = makeNode('div', {'class': 'options links'});
+			options.appendChild(libLink);
 			options.appendChild(githubLink);
 			return options;
 		}
