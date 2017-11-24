@@ -9,6 +9,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 		'scripts/main.js',
 		'scripts/requireConfig.js',
 		'scripts/readmeImages.js',
+		'scripts/standalone.js',
 	];
 
 	const PREDEF = [

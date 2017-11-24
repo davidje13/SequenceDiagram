@@ -181,6 +181,10 @@ define([
 	}
 
 	function convert(element, code = null, options = {}) {
+		if(element.tagName === 'svg') {
+			return null;
+		}
+
 		if(code === null) {
 			code = element.innerText;
 		} else if(typeof code === 'object') {
@@ -188,19 +192,37 @@ define([
 			code = options.code;
 		}
 		const diagram = new SequenceDiagram(code, options);
-		element.parentNode.insertBefore(diagram.dom(), element);
+		const newElement = diagram.dom();
+		element.parentNode.insertBefore(newElement, element);
 		element.parentNode.removeChild(element);
+		const attrs = element.attributes;
+		for(let i = 0; i < attrs.length; ++ i) {
+			newElement.setAttribute(
+				attrs[i].nodeName,
+				attrs[i].nodeValue
+			);
+		}
 		return diagram;
 	}
 
-	function convertAll(root = null) {
-		if(!root) {
-			root = document;
+	function convertAll(root = null, className = 'sequence-diagram') {
+		if(typeof root === 'string') {
+			className = root;
+			root = null;
 		}
-		const elements = root.getElementsByClassName('sequence-diagram');
+		let elements = null;
+		if(root && root.length !== undefined) {
+			elements = root;
+		} else {
+			elements = (root || document).getElementsByClassName(className);
+		}
+		// Convert from "live" collection to static to avoid infinite loops:
+		const els = [];
 		for(let i = 0; i < elements.length; ++ i) {
-			convert(elements[i]);
+			els.push(elements[i]);
 		}
+		// Convert elements
+		els.forEach((el) => convert(el));
 	}
 
 	return Object.assign(SequenceDiagram, {

@@ -2,11 +2,11 @@
 
 A tool for creating sequence diagrams from a Domain-Specific Language.
 
-[See it in action!](https://davidje13.github.io/SequenceDiagram/)
+[See it in action!](https://davidje13.github.io/SequenceDiagram/editor.htm)
 
 This project includes a web page for editing the diagrams, but the core
-logic is available as separate components which can be included in
-other projects.
+logic is available as a component which can be
+[included in other projects](https://davidje13.github.io/SequenceDiagram/).
 
 ## Examples
 
@@ -298,11 +298,13 @@ run a local HTTP server to ensure linting is successful. One option if
 you have NPM installed is:
 
 ```shell
-# Setup
-npm install http-server -g;
+npm run serve;
+```
 
-# Then
-http-server;
+It is also good to rebuild the minified library when committing:
+
+```shell
+npm run minify;
 ```
 
 The current status of the tests on the master branch can be checked at

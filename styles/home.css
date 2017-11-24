@@ -1,0 +1,138 @@
+body {
+	background: rgb(140, 185, 231);
+	margin: 30px 30px 80px;
+	padding: 0;
+	font-family: sans-serif;
+	line-height: 1.5;
+}
+
+article {
+	max-width: 800px;
+	background: #FFFFFF;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+	margin: 0 auto;
+	padding: 20px;
+	border-radius: 2px;
+	color: #222222;
+}
+
+article > header {
+	margin: -20px -20px 30px;
+	padding: 10px 20px;
+	background: linear-gradient(#DDEEFF, #FFFFFF);
+	border-radius: 2px;
+}
+
+article > header > h1 {
+	margin: 0 0 10px;
+	padding: 0;
+	font: 3.5em 'Vollkorn', serif;
+	text-align: center;
+	clear: both;
+}
+
+article > header > .sequence-diagram {
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.fancy {
+	filter:
+		sepia(1)
+		hue-rotate(140deg)
+		drop-shadow(0 5px 5px rgba(0, 64, 128, 0.5));
+}
+
+article > h2 {
+	margin: 35px -20px 10px;
+	padding: 5px 20px 0;
+	font: 2em 'Vollkorn', serif;
+	clear: both;
+}
+
+article > h3 {
+	margin: 25px -20px 10px;
+	padding: 5px 20px 0;
+	font: 1.5em 'Vollkorn', serif;
+	clear: both;
+}
+
+article > p {
+	margin: 20px 0;
+	padding: 0;
+	text-align: justify;
+}
+
+a:link, a:visited {
+	color: #556688;
+	text-decoration: underline;
+}
+
+a:hover, a:active {
+	color: #5577AA;
+	text-decoration: none;
+}
+
+.right {
+	float: right;
+	width: 150px;
+}
+
+.example-diagram {
+	float: right;
+	max-width: 300px;
+	margin-left: 20px;
+	background: #F8F8F8;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.region.focus rect {
+	stroke-width: 5px;
+	stroke: rgba(255, 128, 0, 0.5);
+}
+
+pre {
+	background: #EEEEEE;
+	margin: 5px 0;
+	padding: 10px;
+	overflow: auto;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	min-width: 150px;
+	font-size: 1.1em;
+	line-height: 1.2;
+}
+
+pre .tag {
+	color: #BB44AA;
+}
+
+pre .attr {
+	color: #887722;
+}
+
+pre .literal {
+	color: #AA3322;
+}
+
+nav {
+	display: block;
+	position: sticky;
+	bottom: -1px;
+	margin: 40px -20px -20px;
+	border-top: 1px solid rgba(0, 0, 0, 0.2);
+	background: #FFFFFF;
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	text-align: right;
+	font-size: 0.8em;
+	box-shadow: 0 -2px 4px -4px #000000;
+}
+
+nav a {
+	display: inline-block;
+	padding: 10px 20px;
+	border-left: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+nav a:hover {
+	background: #EEEEEE;
+}

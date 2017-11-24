@@ -4,66 +4,503 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' https://cdnjs.cloudflare.com;
-	style-src 'self' https://cdnjs.cloudflare.com;
-	img-src 'self' blob:;
+	script-src 'self' 'unsafe-inline';
+	style-src 'self' https://fonts.googleapis.com;
+	font-src 'self' https://fonts.gstatic.com;
+	img-src 'self';
 	form-action 'none';
 ">
 
-<title>Sequence Diagram</title>
+<title>Sequence Diagram Plugin</title>
 <link rel="icon" href="favicon.png">
 
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/codemirror.min.css"
-	integrity="sha256-Zg9EoB1hB8n8EVhx/D07lT5dD3ZZqjJbxlDmHx8jsMc="
-	crossorigin="anonymous"
->
+<link href="https://fonts.googleapis.com/css?family=Vollkorn" rel="stylesheet">
+<link rel="stylesheet" href="styles/home.css">
 
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/hint/show-hint.min.css"
-	integrity="sha256-Ng5EdzHS/CC37tR7tE75e4Th9+fBvOB4eYITOkXS22Q="
-	crossorigin="anonymous"
->
+<script src="lib/sequence-diagram.min.js"></script>
 
-<link rel="stylesheet" href="styles/main.css">
+<script>window.addEventListener('load', () => {
 
-<script src="scripts/requireConfig.js"></script>
+// Example 1:
+(() => {
+	const diagram = new SequenceDiagram();
+	diagram.set('A -> B\nB -> A');
+	diagram.dom().setAttribute('class', 'sequence-diagram');
+	document.getElementById('hold1').appendChild(diagram.dom());
+	diagram.setHighlight(1);
+})();
 
-<script
-	data-main="scripts/main"
-	src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
-	integrity="sha256-0SGl1PJNDyJwcV5T+weg2zpEMrh7xvlwO4oXgvZCeZk="
-	crossorigin="anonymous"
-></script>
+// Snippets:
+const elements = document.getElementsByClassName('example');
+for(let i = 0; i < elements.length; ++ i) {
+	const el = elements[i];
+	const diagram = new SequenceDiagram(el.innerText);
+	diagram.dom().setAttribute('class', 'example-diagram');
+	el.parentNode.insertBefore(diagram.dom(), el);
+}
 
-<meta
-	name="cdn-cm/lib/codemirror"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/codemirror.min.js"
-	data-integrity="sha256-eue5ceZRwKVQ1OXOZSyU7MXCTZMlqsPi/TOIqh1Vlzo="
->
-
-<meta
-	name="cdn-cm/addon/hint/show-hint"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/hint/show-hint.min.js"
-	data-integrity="sha256-OvxDPyq6KQAoWh11DLJdBVlHHLkYYiy4EzqTjIEJbb4="
->
-
-<meta
-	name="cdn-cm/addon/edit/trailingspace"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/edit/trailingspace.min.js"
-	data-integrity="sha256-vnm8bzrI+krtz5228JDC2DoTv0e+sfnfTCiUnO2EBAM="
->
-
-<meta
-	name="cdn-cm/addon/comment/comment"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/comment/comment.min.js"
-	data-integrity="sha256-HYX1RusN7a369vYuOd1mGvxLcNL4z/MihkahAI2CH8k="
->
+}, {once: true});</script>
 
 </head>
 <body>
 
-<noscript>This tool requires Javascript!</noscript>
+<article>
+
+<header>
+<h1>Sequence Diagram</h1>
+
+<pre class="sequence-diagram">
+  define Complex System as sys
+  define User as usr
+  define Sequence Diagram as diagram
+  define Other Users as usr2
+  begin sys, usr, usr2
+  sys ~> usr
+  note over usr: "Take time to\nunderstand System"
+  usr -> *diagram: Create
+  usr -> usr2: Inform
+  usr2 <-> diagram: Learn &amp; understand
+  usr2 -> sys: Use
+  terminators box
+</pre>
+</header>
+
+<h2 id="Introduction">Introduction</h2>
+
+<p>
+Want to draw a Sequence Diagram?
+<a href="editor.htm" target="_blank">Go to the online editor</a>.
+</p>
+<p>
+This library renders sequence diagrams from code. It is
+<a href="https://github.com/davidje13/SequenceDiagram" target="_blank">open-source</a>
+(LGPL-3.0), and including it in a website is as simple as adding the script:</p>
+
+<pre>
+<span class="tag">&lt;script</span> <span class="attr">src=</span><span class="literal">"lib/sequence-diagram.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+</pre>
+
+<p>
+Any element with the class <code>sequence-diagram</code> will automatically be
+converted when the page loads:
+</p>
+
+<div class="right">
+<pre class="sequence-diagram">
+  A -> B: foo
+  B -> A: bar
+</pre>
+</div>
+
+<pre>
+<span class="tag">&lt;pre</span> <span class="attr">class=</span><span class="literal">"sequence-diagram"</span><span class="tag">&gt;</span>
+  A -&gt; B: foo
+  B -&gt; A: bar
+<span class="tag">&lt;/pre&gt;</span>
+</pre>
+
+<h2 id="Language">Language</h2>
+
+<h3 id="ConnectionTypes">Connection Types</h3>
+<pre class="example">
+title Connection Types
+
+begin Foo, Bar, Baz
+
+Foo -> Bar: Simple arrow
+Bar --> Baz: Dashed arrow
+Foo <- Bar: Reversed arrow
+Bar <-- Baz: Reversed & dashed
+Foo <-> Bar: Double arrow
+Bar <--> Baz: Double dashed arrow
+
+# An arrow with no label:
+Foo -> Bar
+
+Bar ->> Baz: Different arrow
+Foo <<--> Bar: Mix of arrows
+
+Bar -> Bar: Bar talks to itself
+
+Foo -> +Bar: Foo asks Bar
+-Bar --> Foo: and Bar replies
+
+# Arrows leaving on the left and right of the diagram
+[ -> Foo: From the left
+[ <- Foo: To the left
+Foo -> ]: To the right
+Foo <- ]: From the right
+[ ~> ]: Wavy left to right!
+# (etc.)
+</pre>
+
+<h3 id="NotesState">Notes &amp; State</h3>
+<pre class="example">
+title Note Placements
+
+note over Foo: Foo says something
+note left of Foo: Stuff
+note right of Bar: More stuff
+note over Foo, Bar: "Foo and Bar
+on multiple lines"
+note between Foo, Bar: Link
+
+text right: 'Comments\nOver here!'
+
+state over Foo: Foo is ponderous
+</pre>
+
+<h3 id="Logic">Logic</h3>
+<pre class="example">
+title At the Bank
+
+begin Person, ATM, Bank
+Person -> ATM: Request money
+ATM -> Bank: Check funds
+if fraud detected
+  Bank -> Police: "Get 'em!"
+  Police -> Person: "You're nicked"
+  end Police
+else if sufficient funds
+  ATM -> Bank: Withdraw funds
+  repeat until "all requested money
+                has been handed over"
+    ATM -> Person: Dispense note
+  end
+else
+  ATM -> Person: Error
+end
+</pre>
+
+<h3 id="LabelTemplates">Label Templates</h3>
+<pre class="example">
+autolabel "[&lt;inc>] &lt;label>"
+
+begin "Underpants\nGnomes" as A
+A <- ]: Collect underpants
+A <-> ]: ???
+A <- ]: Profit!
+</pre>
+
+<h3 id="MultilineText">Multiline Text</h3>
+<pre class="example">
+title 'My Multiline
+Title'
+
+note over Foo: 'Also possible\nwith escapes'
+
+Foo -> Bar: 'Lines of text\non this arrow'
+
+if 'Even multiline\ninside conditions like this'
+  Foo -> 'Multiline\nagent'
+end
+
+state over Foo: 'Newlines here,
+too!'
+</pre>
+
+<h3 id="ShortLivedAgents">Short-Lived Agents</h3>
+<pre class="example">
+title "Baz doesn't live long"
+
+note over Foo, Bar: Using begin / end
+
+begin Baz
+Bar -> Baz
+Baz -> Foo
+end Baz
+
+note over Foo, Bar: Using * / !
+
+# * and ! cause agents to be created and destroyed inline
+Bar -> *Baz: make Baz
+Foo <- !Baz: end Baz
+
+# Foo and Bar end with black bars
+terminators bar
+# (options are: box, bar, cross, fade, none)
+</pre>
+
+<h3 id="AgentAliases">Agent Aliases</h3>
+<pre class="example">
+define My complicated agent name as A
+define "Another agent name,
+and this one's multi-line!" as B
+
+A -> B: this is much easier
+A <- B: than writing the whole name
+</pre>
+
+<h3 id="AlternativeAgentOrdering">Alternative Agent Ordering</h3>
+<pre class="example">
+define Baz, Foo
+
+Foo -> Bar
+Bar -> Baz
+</pre>
+
+<h3 id="LanguageMore">More</h3>
+
+<p>
+More features are supported. See the
+<a href="editor.htm" target="_blank">online editor</a>'s library and
+autocomplete features to discover them.
+</p>
+
+<h2 id="BrowserSupport">Browser Support</h2>
+
+<p>
+This has been tested in the latest versions of Google Chrome, Mozilla Firefox,
+and Apple Safari. Versions of Microsoft Internet Explorer / Edge have not been
+tested and probably won't work. Any bugs found in a supported browser should be
+reported in the
+<a href="https://github.com/davidje13/SequenceDiagram/issues" target="_blank">Issue Tracker</a>.
+</p>
+
+<h2 id="API">API</h2>
+
+<p>
+For more advanced usage, an API is available:
+</p>
+
+<div id="hold1" class="right"></div>
+
+<pre>
+var diagram = new SequenceDiagram();
+diagram.set('A -> B\nB -> A');
+document.body.appendChild(diagram.dom());
+diagram.setHighlight(1); // Highlight elements created in line 1 (0-based)
+</pre>
+
+<h3 id="API_Constructor">Constructor</h3>
+
+<pre>
+diagram = new SequenceDiagram(code, options);
+diagram = new SequenceDiagram(code);
+diagram = new SequenceDiagram(options);
+diagram = new SequenceDiagram();
+</pre>
+
+<p>
+Creates a new SequenceDiagram object. Options is an object which can contain:
+</p>
+<ul>
+<li><code>code</code>: Alternative way of specifying code, instead of using a separate argument.</li>
+<li><code>container</code>: DOM node to append the diagram to (defaults to null).</li>
+<li><code>themes</code>: List of themes to make available to the diagram (defaults to globally registered themes).</li>
+<li><code>namespace</code>: Each diagram on a page must have a unique namespace. By default a unique namespace is generated, but if you want something specific, enter it here.</li>
+</ul>
+
+<h3 id="API_clone">.clone</h3>
+
+<pre>
+newDiagram = diagram.clone(options);
+newDiagram = diagram.clone();
+</pre>
+
+<p>
+Creates a copy of the diagram. If options are given, they will override the
+current diagram's state (options is passed to the constructor of the new object,
+so all the same options are available).
+</p>
+
+<h3 id="API_set">.set</h3>
+
+<pre>
+diagram.set(code);
+</pre>
+
+<p>
+Changes the code for the diagram and causes a re-render.
+</p>
+
+<h3 id="API_process">.process</h3>
+
+<pre>
+processed = diagram.process(code);
+</pre>
+
+<p>
+Processes the given code but does not render it. Causes no change to the
+diagram object. This is mostly useful for debounced rendering with immediate
+error notifications. The resulting object can be passed to
+<a href="#API_render"><code>render</code></a> at a later point.
+</p>
+
+<h3 id="API_render">.render</h3>
+
+<pre>
+diagram.render();
+diagram.render(processed);
+</pre>
+
+<p>
+Forces a re-render of the diagram. Typically this happens automatically.
+Optionally, the result of an earlier call to
+<a href="#API_process"><code>process</code></a> can be provided.
+</p>
+
+<h3 id="API_setHighlight">.setHighlight</h3>
+
+<pre>
+diagram.setHighlight(line);
+diagram.setHighlight();
+</pre>
+
+<p>
+Marks elements generated by the specified line with a "focus" CSS class, which
+can be used to style them. Only one line can be highlighted at a time. Calling
+with no parameter (or <code>null</code>) will remove the highlighting.
+</p>
+
+<h3 id="API_addTheme">.addTheme</h3>
+
+<pre>
+diagram.addTheme(theme);
+</pre>
+
+<p>
+Make a new theme available to the diagram. Any unrecognised themes are replaced
+with the default theme.
+</p>
+<p>
+The theme API has not been finalised yet, so this method is not typically
+useful.
+</p>
+
+<h3 id="API_getThemeNames">.getThemeNames</h3>
+
+<pre>
+names = diagram.getThemeNames();
+</pre>
+
+<p>
+Returns a list of names of themes which are available to this diagram. These
+can be specified in a <code>theme &lt;name&gt;</code> line in the code.
+</p>
+
+<h3 id="API_getThemes">.getThemes</h3>
+
+<pre>
+themes = diagram.getThemes();
+</pre>
+
+<p>
+Returns a list of themes which are available to this diagram.
+</p>
+
+<h3 id="API_getSVGSynchronous">.getSVGSynchronous</h3>
+
+<pre>
+svgURL = diagram.getSVGSynchronous();
+</pre>
+
+<p>
+Returns a blob URL which contains the SVG code for the current diagram.
+</p>
+
+<h3 id="API_getSVG">.getSVG</h3>
+
+<pre>
+diagram.getSVG().then(({url, latest}) => { ... });
+</pre>
+
+<p>
+Asynchronous version of
+<a href="#API_getSVGSynchronous"><code>getSVGSynchronous</code></a>. This is
+provided for compatibility with <a href="#API_getPNG"><code>getPNG</code></a>,
+which has no synchronous equivalent.
+</p>
+<p>The callback recieves an object containing:</p>
+<ul>
+<li><code>url</code>: The URL of the generated blob.</li>
+<li><code>latest</code>: True if the URL given is still valid; subsequent calls to this method will invalidate previous URLs.</li>
+</ul>
+
+<h3 id="API_getPNG">.getPNG</h3>
+
+<pre>
+diagram.getPNG(options).then(({url, latest}) => { ... });
+</pre>
+
+<p>
+Generates a PNG image and returns a blob URL.
+</p>
+<p>The options can include:</p>
+<ul>
+<li><code>resolution</code>: Desired pixels-per-unit.</li>
+<li><code>size</code>: Optional width and/or height to render the image at (defaults to the unit size of the diagram). The final output will have size <code>width * resolution</code> &times; <code>height * resolution</code>.</li>
+</ul>
+<p>The callback recieves an object containing:</p>
+<ul>
+<li><code>url</code>: The URL of the generated blob.</li>
+<li><code>latest</code>: True if the URL given is still valid; subsequent calls to this method will invalidate previous URLs.</li>
+</ul>
+
+<h3 id="API_getSize">.getSize</h3>
+
+<pre>
+size = diagram.getSize();
+</pre>
+
+<p>
+Returns an object containing <code>width</code> and <code>height</code>
+properties, corresponding to the size of the diagram in units.
+</p>
+
+<h3 id="API_setContainer">.setContainer</h3>
+
+<pre>
+diagram.setContainer(node);
+</pre>
+
+<p>
+Same as calling <code>node.appendChild(diagram.dom())</code>.
+</p>
+
+<h3 id="API_dom">.dom</h3>
+
+<pre>
+node = diagram.dom();
+</pre>
+
+<p>
+Returns the base SVG element which the diagram has been rendered into.
+</p>
+
+<h2 id="Thanks">Thanks</h2>
+
+<p>
+Thanks to
+<a href="https://www.websequencediagrams.com/" target="_blank">websequencediagrams.com</a>
+and
+<a href="https://github.com/bramp/js-sequence-diagrams" target="_blank">js-sequence-diagrams</a>
+for inspiring the syntax of this project.
+</p>
+
+<pre class="sequence-diagram fancy">
+  begin User, SequenceDiagram as SD, Parser, Generator, Renderer
+
+  User -> +SD: code
+
+  SD -> +Parser: code
+  -Parser --> SD: parsed
+
+  SD -> +Generator: parsed
+  -Generator --> SD: generated
+
+  -SD -> +Renderer: generated
+  -Renderer -> *DOM: SVG
+  User <~> DOM: interaction
+
+  terminators box
+</pre>
+
+<nav>
+<a href="editor.htm" target="_blank">Online Editor</a><a href="https://github.com/davidje13/SequenceDiagram" target="_blank">GitHub</a>
+</nav>
+
+</article>
 
 </body>
 </html>
