@@ -35,7 +35,7 @@ article > header > .sequence-diagram {
 	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
 
-.fancy {
+svg.fancy {
 	filter:
 		sepia(1)
 		hue-rotate(140deg)
