@@ -101,18 +101,6 @@ pre {
 	line-height: 1.2;
 }
 
-pre .tag {
-	color: #BB44AA;
-}
-
-pre .attr {
-	color: #887722;
-}
-
-pre .literal {
-	color: #AA3322;
-}
-
 nav {
 	display: block;
 	position: sticky;

@@ -4,8 +4,8 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' 'unsafe-inline';
-	style-src 'self' https://fonts.googleapis.com;
+	script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;
+	style-src 'self' cdnjs.cloudflare.com https://fonts.googleapis.com;
 	font-src 'self' https://fonts.gstatic.com;
 	img-src 'self';
 	form-action 'none';
@@ -15,11 +15,46 @@
 <link rel="icon" href="favicon.png">
 
 <link href="https://fonts.googleapis.com/css?family=Vollkorn" rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/codemirror.min.css"
+	integrity="sha256-Zg9EoB1hB8n8EVhx/D07lT5dD3ZZqjJbxlDmHx8jsMc="
+	crossorigin="anonymous"
+>
 <link rel="stylesheet" href="styles/home.css">
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/codemirror.min.js"
+	integrity="sha256-eue5ceZRwKVQ1OXOZSyU7MXCTZMlqsPi/TOIqh1Vlzo="
+	crossorigin="anonymous"
+></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/mode/xml/xml.min.js"
+	integrity="sha256-vCgE6RZrM/AIA/Pehk5z7yUKk8DpsRgo8X1XwNOF2es="
+	crossorigin="anonymous"
+></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/mode/javascript/javascript.min.js"
+	integrity="sha256-HsJWsds5aKkwAYG0TiLqeC2qDYLIvudVyvVMkom+N4U="
+	crossorigin="anonymous"
+></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/runmode/runmode.min.js"
+	integrity="sha256-zO/lIsoS+q+kwzLO/YDjAGkeHUEw7Ql6ceZ4UMbityU="
+	crossorigin="anonymous"
+></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.31.0/addon/runmode/colorize.min.js"
+	integrity="sha256-bJPg5F1iN/qIZnSkhygsh8kU3xrbqz9V2Od/0trPBEc="
+	crossorigin="anonymous"
+></script>
 
 <script src="lib/sequence-diagram.min.js"></script>
 
-<script>window.addEventListener('load', () => {
+<script>document.addEventListener('DOMContentLoaded', () => {
 
 // Example 1:
 (() => {
@@ -38,6 +73,8 @@ for(let i = 0; i < elements.length; ++ i) {
 	diagram.dom().setAttribute('class', 'example-diagram');
 	el.parentNode.insertBefore(diagram.dom(), el);
 }
+
+CodeMirror.colorize();
 
 }, {once: true});</script>
 
@@ -76,8 +113,16 @@ This library renders sequence diagrams from code. It is
 <a href="https://github.com/davidje13/SequenceDiagram" target="_blank">open-source</a>
 (LGPL-3.0), and including it in a website is as simple as adding the script:</p>
 
-<pre>
-<span class="tag">&lt;script</span> <span class="attr">src=</span><span class="literal">"lib/sequence-diagram.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<pre data-lang="text/html">
+&lt;script src="lib/sequence-diagram.min.js"&gt;&lt;/script&gt;
+</pre>
+
+<p>Or if you are using requirejs:</p>
+
+<pre data-lang="javascript">
+requirejs(['lib/sequence-diagram.min'], (SequenceDiagram) => {
+  SequenceDiagram.convertAll();
+});
 </pre>
 
 <p>
@@ -86,23 +131,23 @@ converted when the page loads:
 </p>
 
 <div class="right">
-<pre class="sequence-diagram">
+<pre class="sequence-diagram" data-lang="sequence">
   A -> B: foo
   B -> A: bar
 </pre>
 </div>
 
-<pre>
-<span class="tag">&lt;pre</span> <span class="attr">class=</span><span class="literal">"sequence-diagram"</span><span class="tag">&gt;</span>
+<pre data-lang="text/html">
+&lt;pre class="sequence-diagram"&gt;
   A -&gt; B: foo
   B -&gt; A: bar
-<span class="tag">&lt;/pre&gt;</span>
+&lt;/pre&gt;
 </pre>
 
 <h2 id="Language">Language</h2>
 
 <h3 id="ConnectionTypes">Connection Types</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 title Connection Types
 
 begin Foo, Bar, Baz
@@ -135,7 +180,7 @@ Foo <- ]: From the right
 </pre>
 
 <h3 id="NotesState">Notes &amp; State</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 title Note Placements
 
 note over Foo: Foo says something
@@ -151,7 +196,7 @@ state over Foo: Foo is ponderous
 </pre>
 
 <h3 id="Logic">Logic</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 title At the Bank
 
 begin Person, ATM, Bank
@@ -173,7 +218,7 @@ end
 </pre>
 
 <h3 id="LabelTemplates">Label Templates</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 autolabel "[&lt;inc>] &lt;label>"
 
 begin "Underpants\nGnomes" as A
@@ -183,7 +228,7 @@ A <- ]: Profit!
 </pre>
 
 <h3 id="MultilineText">Multiline Text</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 title 'My Multiline
 Title'
 
@@ -200,7 +245,7 @@ too!'
 </pre>
 
 <h3 id="ShortLivedAgents">Short-Lived Agents</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 title "Baz doesn't live long"
 
 note over Foo, Bar: Using begin / end
@@ -222,7 +267,7 @@ terminators bar
 </pre>
 
 <h3 id="AgentAliases">Agent Aliases</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 define My complicated agent name as A
 define "Another agent name,
 and this one's multi-line!" as B
@@ -232,7 +277,7 @@ A <- B: than writing the whole name
 </pre>
 
 <h3 id="AlternativeAgentOrdering">Alternative Agent Ordering</h3>
-<pre class="example">
+<pre class="example" data-lang="sequence">
 define Baz, Foo
 
 Foo -> Bar
@@ -265,7 +310,7 @@ For more advanced usage, an API is available:
 
 <div id="hold1" class="right"></div>
 
-<pre>
+<pre data-lang="javascript">
 var diagram = new SequenceDiagram();
 diagram.set('A -> B\nB -> A');
 document.body.appendChild(diagram.dom());
@@ -274,7 +319,7 @@ diagram.setHighlight(1); // Highlight elements created in line 1 (0-based)
 
 <h3 id="API_Constructor">Constructor</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram = new SequenceDiagram(code, options);
 diagram = new SequenceDiagram(code);
 diagram = new SequenceDiagram(options);
@@ -293,7 +338,7 @@ Creates a new SequenceDiagram object. Options is an object which can contain:
 
 <h3 id="API_clone">.clone</h3>
 
-<pre>
+<pre data-lang="javascript">
 newDiagram = diagram.clone(options);
 newDiagram = diagram.clone();
 </pre>
@@ -306,7 +351,7 @@ so all the same options are available).
 
 <h3 id="API_set">.set</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.set(code);
 </pre>
 
@@ -316,7 +361,7 @@ Changes the code for the diagram and causes a re-render.
 
 <h3 id="API_process">.process</h3>
 
-<pre>
+<pre data-lang="javascript">
 processed = diagram.process(code);
 </pre>
 
@@ -329,7 +374,7 @@ error notifications. The resulting object can be passed to
 
 <h3 id="API_render">.render</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.render();
 diagram.render(processed);
 </pre>
@@ -342,7 +387,7 @@ Optionally, the result of an earlier call to
 
 <h3 id="API_setHighlight">.setHighlight</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.setHighlight(line);
 diagram.setHighlight();
 </pre>
@@ -355,7 +400,7 @@ with no parameter (or <code>null</code>) will remove the highlighting.
 
 <h3 id="API_addTheme">.addTheme</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.addTheme(theme);
 </pre>
 
@@ -370,7 +415,7 @@ useful.
 
 <h3 id="API_getThemeNames">.getThemeNames</h3>
 
-<pre>
+<pre data-lang="javascript">
 names = diagram.getThemeNames();
 </pre>
 
@@ -381,7 +426,7 @@ can be specified in a <code>theme &lt;name&gt;</code> line in the code.
 
 <h3 id="API_getThemes">.getThemes</h3>
 
-<pre>
+<pre data-lang="javascript">
 themes = diagram.getThemes();
 </pre>
 
@@ -391,7 +436,7 @@ Returns a list of themes which are available to this diagram.
 
 <h3 id="API_getSVGSynchronous">.getSVGSynchronous</h3>
 
-<pre>
+<pre data-lang="javascript">
 svgURL = diagram.getSVGSynchronous();
 </pre>
 
@@ -401,7 +446,7 @@ Returns a blob URL which contains the SVG code for the current diagram.
 
 <h3 id="API_getSVG">.getSVG</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.getSVG().then(({url, latest}) => { ... });
 </pre>
 
@@ -419,7 +464,7 @@ which has no synchronous equivalent.
 
 <h3 id="API_getPNG">.getPNG</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.getPNG(options).then(({url, latest}) => { ... });
 </pre>
 
@@ -439,7 +484,7 @@ Generates a PNG image and returns a blob URL.
 
 <h3 id="API_getSize">.getSize</h3>
 
-<pre>
+<pre data-lang="javascript">
 size = diagram.getSize();
 </pre>
 
@@ -450,7 +495,7 @@ properties, corresponding to the size of the diagram in units.
 
 <h3 id="API_setContainer">.setContainer</h3>
 
-<pre>
+<pre data-lang="javascript">
 diagram.setContainer(node);
 </pre>
 
@@ -460,7 +505,7 @@ Same as calling <code>node.appendChild(diagram.dom())</code>.
 
 <h3 id="API_dom">.dom</h3>
 
-<pre>
+<pre data-lang="javascript">
 node = diagram.dom();
 </pre>
 
