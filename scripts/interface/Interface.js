@@ -46,12 +46,14 @@ define([
 			sequenceDiagram,
 			defaultCode = '',
 			localStorage = '',
-			library = null,
+			library = [],
+			links = [],
 		}) {
 			this.diagram = sequenceDiagram;
 			this.defaultCode = defaultCode;
 			this.localStorage = localStorage;
 			this.library = library;
+			this.links = links;
 			this.minScale = 1.5;
 
 			this.diagram.registerCodeMirrorMode(CodeMirror);
@@ -70,21 +72,15 @@ define([
 		}
 
 		buildOptionsLinks() {
-			const libLink = makeNode('a', {
-				'href': '.',
-				'target': '_blank',
-			});
-			libLink.appendChild(makeText('Library'));
-
-			const githubLink = makeNode('a', {
-				'href': 'https://github.com/davidje13/SequenceDiagram',
-				'target': '_blank',
-			});
-			githubLink.appendChild(makeText('GitHub'));
-
 			const options = makeNode('div', {'class': 'options links'});
-			options.appendChild(libLink);
-			options.appendChild(githubLink);
+			this.links.forEach((link) => {
+				const linkNode = makeNode('a', {
+					'href': link.href,
+					'target': '_blank',
+				});
+				linkNode.appendChild(makeText(link.label));
+				options.appendChild(linkNode);
+			});
 			return options;
 		}
 
@@ -259,7 +255,7 @@ define([
 			const codePane = makeNode('div', {'class': 'pane-code'});
 			container.appendChild(codePane);
 
-			if(this.library !== null) {
+			if(this.library.length > 0) {
 				const libPane = makeNode('div', {'class': 'pane-library'});
 				const libPaneScroller = makeNode('div', {
 					'class': 'pane-library-scroller',

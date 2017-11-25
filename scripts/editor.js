@@ -222,12 +222,26 @@
 				preview: 'begin A\nterminators box',
 			},
 		];
+
+		const loader = document.getElementById('loader');
+		const nav = loader.getElementsByTagName('nav')[0];
+		const linkElements = nav.getElementsByTagName('a');
+		const links = [];
+		for(let i = 0; i < linkElements.length; ++ i) {
+			links.push({
+				label: linkElements[i].innerText,
+				href: linkElements[i].getAttribute('href'),
+			});
+		}
+
 		const ui = new Interface({
 			defaultCode,
 			sequenceDiagram: new SequenceDiagram(),
 			library,
+			links,
 			localStorage: 'src',
 		});
+		loader.parentNode.removeChild(loader);
 		ui.build(document.body);
 	});
 })());

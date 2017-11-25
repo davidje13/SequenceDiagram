@@ -6,7 +6,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 	// Thanks, https://opensoul.org/2011/02/20/jslint-and-jasmine/
 
 	const extraFiles = [
-		'scripts/main.js',
+		'scripts/editor.js',
 		'scripts/requireConfig.js',
 		'scripts/readmeImages.js',
 		'scripts/standalone.js',
