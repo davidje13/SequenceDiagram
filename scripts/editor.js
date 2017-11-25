@@ -3,9 +3,12 @@
 
 	requirejs.config(window.getRequirejsCDN());
 
+	// Set to false during development to avoid need to minify sources
+	const release = true;
+
 	requirejs([
 		'interface/Interface',
-		'sequence/SequenceDiagram',
+		release ? '../lib/sequence-diagram.min' : 'sequence/SequenceDiagram',
 	], (
 		Interface,
 		SequenceDiagram
