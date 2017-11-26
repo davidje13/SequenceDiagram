@@ -45,7 +45,6 @@ define(() => {
 			topY,
 			primaryY,
 			blockLayer,
-			sectionLayer,
 			shapeLayer,
 			labelLayer,
 			theme,

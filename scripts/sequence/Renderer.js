@@ -115,13 +115,11 @@ define([
 				'mask': 'url(#' + this.namespace + 'LineMask)',
 			});
 			this.blocks = svg.make('g');
-			this.sections = svg.make('g');
 			this.actionShapes = svg.make('g');
 			this.actionLabels = svg.make('g');
 			this.base.appendChild(this.defs);
 			this.base.appendChild(this.agentLines);
 			this.base.appendChild(this.blocks);
-			this.base.appendChild(this.sections);
 			this.base.appendChild(this.actionShapes);
 			this.base.appendChild(this.actionLabels);
 			this.title = new this.SVGTextBlockClass(this.base);
@@ -318,7 +316,6 @@ define([
 				topY,
 				primaryY: topY + topShift,
 				blockLayer: this.blocks,
-				sectionLayer: this.sections,
 				shapeLayer: this.actionShapes,
 				labelLayer: this.actionLabels,
 				maskLayer: this.mask,
@@ -439,7 +436,6 @@ define([
 			svg.empty(this.mask);
 			svg.empty(this.agentLines);
 			svg.empty(this.blocks);
-			svg.empty(this.sections);
 			svg.empty(this.actionShapes);
 			svg.empty(this.actionLabels);
 			this.mask.appendChild(this.maskReveal);

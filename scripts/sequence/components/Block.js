@@ -35,12 +35,13 @@ define([
 			const config = env.theme.block;
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
+			const {hold} = env.state.blocks.get(left);
 
 			let y = env.primaryY;
 
 			if(!first) {
 				y += config.section.padding.bottom;
-				env.sectionLayer.appendChild(svg.make('line', Object.assign({
+				hold.appendChild(svg.make('line', Object.assign({
 					'x1': agentInfoL.x,
 					'y1': y,
 					'x2': agentInfoR.x,
@@ -48,14 +49,16 @@ define([
 				}, config.separator.attrs)));
 			}
 
+			const clickable = env.makeRegion();
+
 			const modeRender = SVGShapes.renderBoxedText(mode, {
 				x: agentInfoL.x,
 				y,
 				padding: config.section.mode.padding,
 				boxAttrs: config.section.mode.boxAttrs,
 				labelAttrs: config.section.mode.labelAttrs,
-				boxLayer: env.blockLayer,
-				labelLayer: env.labelLayer,
+				boxLayer: hold,
+				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
@@ -66,14 +69,21 @@ define([
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.section.label.labelAttrs,
 				boxLayer: env.maskLayer,
-				labelLayer: env.labelLayer,
+				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
-			return y + (
-				Math.max(modeRender.height, labelRender.height) +
-				config.section.padding.top
-			);
+			const labelHeight = Math.max(modeRender.height, labelRender.height);
+
+			clickable.insertBefore(svg.make('rect', {
+				'x': agentInfoL.x,
+				'y': y,
+				'width': agentInfoR.x - agentInfoL.x,
+				'height': labelHeight,
+				'fill': 'transparent',
+			}), clickable.firstChild);
+
+			return y + labelHeight + config.section.padding.top;
 		}
 	}
 
@@ -99,10 +109,15 @@ define([
 		}
 
 		render(stage, env) {
+			const hold = svg.make('g');
+			env.blockLayer.appendChild(hold);
+
 			env.state.blocks.set(stage.left, {
+				hold,
 				mode: stage.mode,
 				startY: env.primaryY,
 			});
+
 			return super.render(stage, env, true);
 		}
 	}
@@ -122,12 +137,11 @@ define([
 		render({left, right}, env) {
 			const config = env.theme.block;
 
-			const {startY, mode} = env.state.blocks.get(left);
-
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
+			const {hold, startY, mode} = env.state.blocks.get(left);
 			const configMode = config.modes[mode] || config.modes[''];
-			env.blockLayer.appendChild(svg.make('rect', Object.assign({
+			hold.appendChild(svg.make('rect', Object.assign({
 				'x': agentInfoL.x,
 				'y': startY,
 				'width': agentInfoR.x - agentInfoL.x,
