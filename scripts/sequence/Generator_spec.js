@@ -1271,6 +1271,52 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]})).toThrow(new Error('Agent B is hidden behind group at line 1'));
 		});
 
+		it('encompasses entire reference boxes in block statements', () => {
+			const sequenceR = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('BC', ['B', 'C'], {label: 'Foo'}),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['BC', 'D']),
+				PARSED.blockEnd(),
+				PARSED.endAgents(['BC']),
+			]});
+
+			expect(sequenceR.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: 'A', anchorRight: false},
+				{name: '__BLOCK1[', anchorRight: true},
+				{name: '__BLOCK0[', anchorRight: true},
+				{name: 'B', anchorRight: false},
+				{name: 'C', anchorRight: false},
+				{name: '__BLOCK0]', anchorRight: false},
+				{name: 'D', anchorRight: false},
+				{name: '__BLOCK1]', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+
+			const sequenceL = generator.generate({stages: [
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('BC', ['B', 'C'], {label: 'Foo'}),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['BC', 'A']),
+				PARSED.blockEnd(),
+				PARSED.endAgents(['BC']),
+			]});
+
+			expect(sequenceL.agents).toEqual([
+				{name: '[', anchorRight: true},
+				{name: '__BLOCK1[', anchorRight: true},
+				{name: 'A', anchorRight: false},
+				{name: '__BLOCK0[', anchorRight: true},
+				{name: 'B', anchorRight: false},
+				{name: 'C', anchorRight: false},
+				{name: '__BLOCK0]', anchorRight: false},
+				{name: '__BLOCK1]', anchorRight: false},
+				{name: 'D', anchorRight: false},
+				{name: ']', anchorRight: false},
+			]);
+		});
+
 		it('rejects unterminated blocks', () => {
 			expect(() => generator.generate({stages: [
 				PARSED.blockBegin('if', 'abc'),

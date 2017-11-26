@@ -689,10 +689,12 @@ define(['core/ArrayUtilities'], (array) => {
 
 			let colAgents = agents.map(this.convertAgent);
 			this.validateAgents(colAgents, {allowGrouped: true});
-			colAgents = this.expandGroupedAgentConnection(colAgents);
 
+			const allAgents = array.flatMap(colAgents, this.expandGroupedAgent);
+			this.defineAgents(allAgents);
+
+			colAgents = this.expandGroupedAgentConnection(colAgents);
 			const agentNames = colAgents.map(Agent.getName);
-			this.defineAgents(colAgents);
 
 			const implicitBegin = (agents
 				.filter(Agent.hasFlag('begin', false))
