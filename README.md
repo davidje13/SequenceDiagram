@@ -2,11 +2,11 @@
 
 A tool for creating sequence diagrams from a Domain-Specific Language.
 
-[See it in action!](https://davidje13.github.io/SequenceDiagram/editor.htm)
+[See it in action!](https://davidje13.github.io/SequenceDiagram/)
 
 This project includes a web page for editing the diagrams, but the core
 logic is available as a component which can be
-[included in other projects](https://davidje13.github.io/SequenceDiagram/).
+[included in other projects](https://davidje13.github.io/SequenceDiagram/library.htm).
 
 ## Examples
 
