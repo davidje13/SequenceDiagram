@@ -4,7 +4,7 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' https://cdnjs.cloudflare.com;
+	script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com;
 	style-src 'self' https://cdnjs.cloudflare.com;
 	img-src 'self' blob:;
 	form-action 'none';
@@ -35,6 +35,12 @@
 	integrity="sha256-0SGl1PJNDyJwcV5T+weg2zpEMrh7xvlwO4oXgvZCeZk="
 	crossorigin="anonymous"
 ></script>
+
+<meta
+	name="cdn-split"
+	content="https://unpkg.com/split.js@1.3.5/split.min.js"
+	data-integrity="sha256-vBu0/2gpeLlfmY2yFkr8eHTMuYKBw2M+/Id/qZx27F4="
+>
 
 <meta
 	name="cdn-cm/lib/codemirror"

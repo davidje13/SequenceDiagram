@@ -1,9 +1,10 @@
 define([
+	'split',
 	'cm/lib/codemirror',
 	'cm/addon/hint/show-hint',
 	'cm/addon/edit/trailingspace',
 	'cm/addon/comment/comment',
-], (CodeMirror) => {
+], (Split, CodeMirror) => {
 	'use strict';
 
 	const DELAY_AGENTCHANGE = 500;
@@ -39,6 +40,47 @@ define([
 		code = code.replace(/[{}]/g, '');
 		code = 'headers fade\nterminators fade\n' + code;
 		return code;
+	}
+
+	function makeSplit(nodes, options) {
+		// Patches for:
+		// https://github.com/nathancahill/Split.js/issues/97
+		// https://github.com/nathancahill/Split.js/issues/111
+		const parent = nodes[0].parentNode;
+		const oldAEL = parent.addEventListener;
+		const oldREL = parent.removeEventListener;
+		parent.addEventListener = (event, callback) => {
+			if(event === 'mousemove' || event === 'touchmove') {
+				window.addEventListener(event, callback, {passive: true});
+			} else {
+				oldAEL.call(parent, event, callback);
+			}
+		};
+		parent.removeEventListener = (event, callback) => {
+			if(event === 'mousemove' || event === 'touchmove') {
+				window.removeEventListener(event, callback);
+			} else {
+				oldREL.call(parent, event, callback);
+			}
+		};
+
+		let oldCursor = null;
+		const resolvedOptions = Object.assign({
+			direction: 'vertical',
+			cursor: (options.direction === 'vertical') ?
+				'row-resize' : 'col-resize',
+			gutterSize: 1,
+			onDragStart: () => {
+				oldCursor = document.body.style.cursor;
+				document.body.style.cursor = resolvedOptions.cursor;
+			},
+			onDragEnd: () => {
+				document.body.style.cursor = oldCursor;
+				oldCursor = null;
+			},
+		}, options);
+
+		return new Split(nodes, resolvedOptions);
 	}
 
 	return class Interface {
@@ -244,19 +286,18 @@ define([
 
 			viewPane.appendChild(viewPaneScroller);
 			viewPaneScroller.appendChild(this.viewPaneInner);
-			viewPane.appendChild(this.buildOptionsLinks());
-			viewPane.appendChild(this.buildOptionsDownloads());
 			viewPane.appendChild(this.buildErrorReport());
 
 			return viewPane;
 		}
 
-		build(container) {
+		buildLeftPanes(container) {
 			const codePane = makeNode('div', {'class': 'pane-code'});
 			container.appendChild(codePane);
+			let libPane = null;
 
 			if(this.library.length > 0) {
-				const libPane = makeNode('div', {'class': 'pane-library'});
+				libPane = makeNode('div', {'class': 'pane-library'});
 				const libPaneScroller = makeNode('div', {
 					'class': 'pane-library-scroller',
 				});
@@ -266,11 +307,38 @@ define([
 				libPaneScroller.appendChild(libPaneInner);
 				libPane.appendChild(libPaneScroller);
 				container.appendChild(libPane);
-				codePane.setAttribute('class', 'pane-code reduced');
 				this.buildLibrary(libPaneInner);
+
+				makeSplit([codePane, libPane], {
+					direction: 'vertical',
+					snapOffset: 5,
+					sizes: [70, 30],
+					minSize: [100, 0],
+				});
 			}
 
-			container.appendChild(this.buildViewPane());
+			return {codePane, libPane};
+		}
+
+		build(container) {
+			const hold = makeNode('div', {'class': 'pane-hold'});
+			const lPane = makeNode('div', {'class': 'pane-side'});
+			hold.appendChild(lPane);
+			container.appendChild(hold);
+			const {codePane} = this.buildLeftPanes(lPane);
+
+			const viewPane = this.buildViewPane();
+			hold.appendChild(viewPane);
+
+			hold.appendChild(this.buildOptionsLinks());
+			hold.appendChild(this.buildOptionsDownloads());
+
+			makeSplit([lPane, viewPane], {
+				direction: 'horizontal',
+				snapOffset: 70,
+				sizes: [30, 70],
+				minSize: [10, 10],
+			});
 
 			this.code = this.buildEditor(codePane);
 			this.viewPaneInner.appendChild(this.diagram.dom());

@@ -36,18 +36,56 @@ html, body {
 	margin: 0 10px 10px;
 }
 
-.pane-code {
+.pane-hold {
 	position: absolute;
 	left: 0;
 	top: 0;
+	right: 0;
 	bottom: 0;
-	width: 30%;
-	box-sizing: border-box;
-	border-right: 1px solid #808080;
 }
 
-.pane-code.reduced {
-	bottom: 200px;
+.pane-side {
+	display: inline-block;
+	height: 100%;
+}
+
+.pane-code {
+}
+
+.pane-library {
+	background: #EEEEEE;
+	user-select: none;
+}
+
+.pane-view {
+	display: inline-block;
+	height: 100%;
+	position: relative;
+}
+
+.gutter {
+	display: inline-block;
+	background: #808080;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	z-index: 20;
+	border: 0px solid transparent;
+	background-clip: padding-box;
+}
+
+.gutter-horizontal {
+	margin: 0 -3px;
+	border-left-width: 3px;
+	border-right-width: 3px;
+	cursor: col-resize;
+}
+
+.gutter-vertical {
+	margin: -3px 0;
+	border-top-width: 3px;
+	border-bottom-width: 3px;
+	cursor: row-resize;
 }
 
 .pane-code .CodeMirror {
@@ -79,14 +117,6 @@ html, body {
 	color: #777777;
 }
 
-.pane-view {
-	position: absolute;
-	left: 30%;
-	top: 0;
-	bottom: 0;
-	right: 0;
-}
-
 .pane-view-scroller {
 	position: absolute;
 	top: 0;
@@ -97,6 +127,8 @@ html, body {
 }
 
 .pane-view-inner {
+	width: 100%;
+	height: 100%;
 }
 
 .pane-view svg {
@@ -117,19 +149,6 @@ html, body {
 .pane-view .region.focus:hover rect {
 	stroke-width: 5px;
 	stroke: rgba(255, 192, 0, 0.5);
-}
-
-.pane-library {
-	position: absolute;
-	left: 0;
-	bottom: 0;
-	width: 30%;
-	height: 200px;
-	box-sizing: border-box;
-	background: #EEEEEE;
-	border-top: 1px solid #808080;
-	border-right: 1px solid #808080;
-	user-select: none;
 }
 
 .pane-library-scroller {
@@ -208,6 +227,7 @@ html, body {
 	background: #FFFFFF;
 	overflow: hidden;
 	user-select: none;
+	z-index: 30;
 }
 
 .options.links {
