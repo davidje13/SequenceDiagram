@@ -46,19 +46,23 @@ html, body {
 
 .pane-side {
 	display: inline-block;
+	width: 30%;
 	height: 100%;
 }
 
 .pane-code {
+	height: 70%;
 }
 
 .pane-library {
 	background: #EEEEEE;
 	user-select: none;
+	height: 30%;
 }
 
 .pane-view {
 	display: inline-block;
+	width: 70%;
 	height: 100%;
 	position: relative;
 }
@@ -92,6 +96,19 @@ html, body {
 	width: 100%;
 	height: 100%;
 	background: #EEEEEE;
+}
+
+.pane-code .editor-simple {
+	width: 100%;
+	height: 100%;
+	border: none;
+	background: #EEEEEE;
+	color: #222222;
+	font: 1em monospace;
+	margin: 0;
+	padding: 4px 8px 16px 8px;
+	resize: none;
+	white-space: pre;
 }
 
 .CodeMirror-line.error {

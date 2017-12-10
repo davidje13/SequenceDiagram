@@ -22,7 +22,7 @@
   "devDependencies": {
     "almond": "^0.3.3",
     "http-server": "^0.10.0",
-    "requirejs": "^2.3.5",
+    "requirejs": "2.3.5",
     "uglify-es": "^3.1.10"
   }
 }

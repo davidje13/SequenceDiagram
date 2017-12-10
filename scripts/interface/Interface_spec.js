@@ -4,6 +4,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 	// Thanks, https://stackoverflow.com/a/23522755/1180785
 	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
+	const defaultCode = 'my default code';
 	let sequenceDiagram = null;
 	let container = null;
 	let ui = null;
@@ -31,7 +32,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 
 		ui = new Interface({
 			sequenceDiagram,
-			defaultCode: 'my default code',
+			defaultCode,
 		});
 	});
 
@@ -41,10 +42,17 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			expect(container.appendChild).toHaveBeenCalled();
 		});
 
-		it('creates a code mirror instance with the given code', () => {
+		it('creates a code mirror instance with the given code', (done) => {
 			ui.build(container);
-			const constructorArgs = ui.code.constructor;
-			expect(constructorArgs.options.value).toEqual('my default code');
+			const check = setInterval(() => {
+				const constructorArgs = ui.code.constructor;
+				if(!constructorArgs.options) {
+					return;
+				}
+				clearInterval(check);
+				expect(constructorArgs.options.value).toEqual(defaultCode);
+				done();
+			}, 50);
 		});
 	});
 

@@ -1,10 +1,4 @@
-define([
-	'split',
-	'cm/lib/codemirror',
-	'cm/addon/hint/show-hint',
-	'cm/addon/edit/trailingspace',
-	'cm/addon/comment/comment',
-], (Split, CodeMirror) => {
+define(['require'], (require) => {
 	'use strict';
 
 	const DELAY_AGENTCHANGE = 500;
@@ -25,6 +19,13 @@ define([
 		return o;
 	}
 
+	function addNewline(value) {
+		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
+			return value + '\n';
+		}
+		return value;
+	}
+
 	function on(element, events, fn) {
 		events.forEach((event) => element.addEventListener(event, fn));
 	}
@@ -43,44 +44,48 @@ define([
 	}
 
 	function makeSplit(nodes, options) {
-		// Patches for:
-		// https://github.com/nathancahill/Split.js/issues/97
-		// https://github.com/nathancahill/Split.js/issues/111
-		const parent = nodes[0].parentNode;
-		const oldAEL = parent.addEventListener;
-		const oldREL = parent.removeEventListener;
-		parent.addEventListener = (event, callback) => {
-			if(event === 'mousemove' || event === 'touchmove') {
-				window.addEventListener(event, callback, {passive: true});
-			} else {
-				oldAEL.call(parent, event, callback);
-			}
-		};
-		parent.removeEventListener = (event, callback) => {
-			if(event === 'mousemove' || event === 'touchmove') {
-				window.removeEventListener(event, callback);
-			} else {
-				oldREL.call(parent, event, callback);
-			}
-		};
+		// Load on demand for progressive enhancement
+		// (failure to load external module will not block functionality)
+		require(['split'], (Split) => {
+			// Patches for:
+			// https://github.com/nathancahill/Split.js/issues/97
+			// https://github.com/nathancahill/Split.js/issues/111
+			const parent = nodes[0].parentNode;
+			const oldAEL = parent.addEventListener;
+			const oldREL = parent.removeEventListener;
+			parent.addEventListener = (event, callback) => {
+				if(event === 'mousemove' || event === 'touchmove') {
+					window.addEventListener(event, callback, {passive: true});
+				} else {
+					oldAEL.call(parent, event, callback);
+				}
+			};
+			parent.removeEventListener = (event, callback) => {
+				if(event === 'mousemove' || event === 'touchmove') {
+					window.removeEventListener(event, callback);
+				} else {
+					oldREL.call(parent, event, callback);
+				}
+			};
 
-		let oldCursor = null;
-		const resolvedOptions = Object.assign({
-			direction: 'vertical',
-			cursor: (options.direction === 'vertical') ?
-				'row-resize' : 'col-resize',
-			gutterSize: 1,
-			onDragStart: () => {
-				oldCursor = document.body.style.cursor;
-				document.body.style.cursor = resolvedOptions.cursor;
-			},
-			onDragEnd: () => {
-				document.body.style.cursor = oldCursor;
-				oldCursor = null;
-			},
-		}, options);
+			let oldCursor = null;
+			const resolvedOptions = Object.assign({
+				direction: 'vertical',
+				cursor: (options.direction === 'vertical') ?
+					'row-resize' : 'col-resize',
+				gutterSize: 1,
+				onDragStart: () => {
+					oldCursor = document.body.style.cursor;
+					document.body.style.cursor = resolvedOptions.cursor;
+				},
+				onDragEnd: () => {
+					document.body.style.cursor = oldCursor;
+					oldCursor = null;
+				},
+			}, options);
 
-		return new Split(nodes, resolvedOptions);
+			return new Split(nodes, resolvedOptions);
+		});
 	}
 
 	return class Interface {
@@ -98,8 +103,6 @@ define([
 			this.links = links;
 			this.minScale = 1.5;
 
-			this.diagram.registerCodeMirrorMode(CodeMirror);
-
 			this.debounced = null;
 			this.latestSeq = null;
 			this.renderedSeq = null;
@@ -111,6 +114,8 @@ define([
 			this._downloadSVGClick = this._downloadSVGClick.bind(this);
 			this._downloadPNGClick = this._downloadPNGClick.bind(this);
 			this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
+
+			this._enhanceEditor();
 		}
 
 		buildOptionsLinks() {
@@ -154,58 +159,21 @@ define([
 
 		buildEditor(container) {
 			const value = this.loadCode() || this.defaultCode;
-			const code = new CodeMirror(container, {
-				value,
-				mode: 'sequence',
-				globals: {
-					themes: this.diagram.getThemeNames(),
-				},
-				lineNumbers: true,
-				showTrailingSpace: true,
-				extraKeys: {
-					'Tab': (cm) => cm.execCommand('indentMore'),
-					'Shift-Tab': (cm) => cm.execCommand('indentLess'),
-					'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
-					'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
-					'Ctrl-Space': 'autocomplete',
-					'Ctrl-Enter': 'autocomplete',
-					'Cmd-Enter': 'autocomplete',
-				},
-			});
-			let lastKey = 0;
-			code.on('keydown', (cm, event) => {
-				lastKey = event.keyCode;
-			});
-			code.on('change', (cm, change) => {
-				if(change.origin === '+input') {
-					if(lastKey === 13) {
-						lastKey = 0;
-						return;
-					}
-				} else if(change.origin !== 'complete') {
-					return;
-				}
-				CodeMirror.commands.autocomplete(cm, null, {
-					completeSingle: false,
-				});
-			});
+			const code = makeNode('textarea', {'class': 'editor-simple'});
+			code.value = value;
+			container.appendChild(code);
 
 			return code;
 		}
 
 		registerListeners() {
-			this.code.on('change', () => this.update(false));
-			this.code.on('cursorActivity', () => {
-				const from = this.code.getCursor('from').line;
-				const to = this.code.getCursor('to').line;
-				this.diagram.setHighlight(Math.min(from, to));
-			});
+			this.code.addEventListener('input', () => this.update(false));
 
 			this.diagram.addEventListener('mouseover', (element) => {
 				if(this.marker) {
 					this.marker.clear();
 				}
-				if(element.ln !== undefined) {
+				if(element.ln !== undefined && this.code.markText) {
 					this.marker = this.code.markText(
 						{line: element.ln, ch: 0},
 						{line: element.ln + 1, ch: 0},
@@ -231,7 +199,7 @@ define([
 					this.marker.clear();
 					this.marker = null;
 				}
-				if(element.ln !== undefined) {
+				if(element.ln !== undefined && this.code.setSelection) {
 					this.code.setSelection(
 						{line: element.ln, ch: 0},
 						{line: element.ln + 1, ch: 0},
@@ -262,6 +230,7 @@ define([
 						container: holdInner,
 					});
 				} catch(e) {
+					window.console.log('Failed to render preview', e);
 					hold.setAttribute('class', 'library-item broken');
 					holdInner.appendChild(makeText(lib.code));
 				}
@@ -348,16 +317,32 @@ define([
 		}
 
 		addCodeBlock(block) {
-			const cur = this.code.getCursor('head');
-			const pos = {line: cur.line + ((cur.ch > 0) ? 1 : 0), ch: 0};
 			const lines = block.split('\n').length;
-			this.code.replaceRange(
-				block + '\n',
-				pos,
-				null,
-				'library'
-			);
-			this.code.setCursor({line: pos.line + lines, ch: 0});
+
+			if(this.code.getCursor) {
+				const cur = this.code.getCursor('head');
+				const pos = {line: cur.line + ((cur.ch > 0) ? 1 : 0), ch: 0};
+				this.code.replaceRange(
+					addNewline(block),
+					pos,
+					null,
+					'library'
+				);
+				this.code.setCursor({line: pos.line + lines, ch: 0});
+			} else {
+				const value = this.value();
+				const cur = this.code.selectionStart;
+				const pos = ('\n' + value + '\n').indexOf('\n', cur);
+				const replaced = (
+					addNewline(value.substr(0, pos)) +
+					addNewline(block)
+				);
+				this.code.value = replaced + value.substr(pos);
+				this.code.selectionStart = replaced.length;
+				this.code.selectionEnd = replaced.length;
+				this.update(false);
+			}
+
 			this.code.focus();
 		}
 
@@ -412,8 +397,16 @@ define([
 			this.errorMsg.setAttribute('class', 'msg-error');
 		}
 
+		value() {
+			if(this.code.getDoc) {
+				return this.code.getDoc().getValue();
+			} else {
+				return this.code.value;
+			}
+		}
+
 		update(immediate = true) {
-			const src = this.code.getDoc().getValue();
+			const src = this.value();
 			this.saveCode(src);
 			let sequence = null;
 			try {
@@ -483,6 +476,68 @@ define([
 			this.forceRender();
 			const url = this.diagram.getSVGSynchronous();
 			this.downloadSVG.setAttribute('href', url);
+		}
+
+		_enhanceEditor() {
+			// Load on demand for progressive enhancement
+			// (failure to load external module will not block functionality)
+			require([
+				'cm/lib/codemirror',
+				'cm/addon/hint/show-hint',
+				'cm/addon/edit/trailingspace',
+				'cm/addon/comment/comment',
+			], (CodeMirror) => {
+				this.diagram.registerCodeMirrorMode(CodeMirror);
+
+				const code = new CodeMirror(this.code.parentNode, {
+					value: this.code.value,
+					mode: 'sequence',
+					globals: {
+						themes: this.diagram.getThemeNames(),
+					},
+					lineNumbers: true,
+					showTrailingSpace: true,
+					extraKeys: {
+						'Tab': (cm) => cm.execCommand('indentMore'),
+						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
+						'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
+						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
+						'Ctrl-Space': 'autocomplete',
+						'Ctrl-Enter': 'autocomplete',
+						'Cmd-Enter': 'autocomplete',
+					},
+				});
+				this.code.parentNode.removeChild(this.code);
+
+				let lastKey = 0;
+				code.on('keydown', (cm, event) => {
+					lastKey = event.keyCode;
+				});
+
+				code.on('change', (cm, change) => {
+					this.update(false);
+
+					if(change.origin === '+input') {
+						if(lastKey === 13) {
+							lastKey = 0;
+							return;
+						}
+					} else if(change.origin !== 'complete') {
+						return;
+					}
+					CodeMirror.commands.autocomplete(cm, null, {
+						completeSingle: false,
+					});
+				});
+
+				code.on('cursorActivity', () => {
+					const from = code.getCursor('from').line;
+					const to = code.getCursor('to').line;
+					this.diagram.setHighlight(Math.min(from, to));
+				});
+
+				this.code = code;
+			});
 		}
 	};
 });
