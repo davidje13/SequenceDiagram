@@ -4,7 +4,7 @@
 	requirejs.config(window.getRequirejsCDN());
 
 	// Set to false during development to avoid need to minify sources
-	const release = true;
+	const release = !window.location.href.includes('editor-dev.htm');
 
 	requirejs([
 		'interface/Interface',
