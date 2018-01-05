@@ -32,7 +32,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			mode,
 			label,
 		}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 
 			const clickable = env.makeRegion();
 
@@ -106,7 +106,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 
 	class NoteOver extends NoteComponent {
 		separation({agentNames, mode, label}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 			const width = (
 				env.textSizer.measure(config.labelAttrs, label).width +
 				config.padding.left +
@@ -133,7 +133,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 		}
 
 		render({agentNames, mode, label}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 
 			const {left, right} = findExtremes(env.agentInfos, agentNames);
 			const infoL = env.agentInfos.get(left);
@@ -165,7 +165,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 		}
 
 		separation({agentNames, mode, label}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 			const {left, right} = findExtremes(env.agentInfos, agentNames);
 			const width = (
 				env.textSizer.measure(config.labelAttrs, label).width +
@@ -191,7 +191,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 		}
 
 		render({agentNames, mode, label}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 			const {left, right} = findExtremes(env.agentInfos, agentNames);
 			if(this.isRight) {
 				const info = env.agentInfos.get(right);
@@ -217,7 +217,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 
 	class NoteBetween extends NoteComponent {
 		separation({agentNames, mode, label}, env) {
-			const config = env.theme.note[mode];
+			const config = env.theme.getNote(mode);
 			const {left, right} = findExtremes(env.agentInfos, agentNames);
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);

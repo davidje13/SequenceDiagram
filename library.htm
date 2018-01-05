@@ -5,8 +5,12 @@
 	base-uri 'self';
 	default-src 'none';
 	script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;
-	style-src 'self' cdnjs.cloudflare.com https://fonts.googleapis.com;
-	font-src 'self' https://fonts.gstatic.com;
+	style-src 'self'
+		https://cdnjs.cloudflare.com
+		https://fonts.googleapis.com
+		'sha256-ru2GY2rXeOf7PQX5LzK3ckNo21FCDUoRc2f3i0QcD1g='
+	;
+	font-src 'self' data: https://fonts.gstatic.com;
 	img-src 'self';
 	form-action 'none';
 ">
@@ -243,6 +247,26 @@ end
 state over Foo: 'Newlines here,
 too!'
 </pre>
+
+<h3 id="Themes">Themes</h3>
+<pre class="example" data-lang="sequence">
+theme sketch
+
+title Mockup
+
+A thing -> +Another thing: Something happens
+-Another thing --> A thing: With some response
+note right of Another thing: Find out what happens here
+end Another thing
+</pre>
+
+<h4>Available themes</h4>
+<ul>
+<li>basic</li>
+<li>chunky</li>
+<li>sketch</li>
+<li>sketch left handed</li>
+</ul>
 
 <h3 id="ShortLivedAgents">Short-Lived Agents</h3>
 <pre class="example" data-lang="sequence">
@@ -522,8 +546,14 @@ and
 <a href="https://github.com/bramp/js-sequence-diagrams" target="_blank">js-sequence-diagrams</a>
 for inspiring the syntax of this project.
 </p>
+<p>
+Also thanks to
+<a href="https://fonts.google.com/specimen/Handlee" target="_blank">the Handlee font</a>
+which is used in the sketch theme.
+</p>
 
-<pre class="sequence-diagram fancy">
+<pre class="sequence-diagram">
+  theme sketch
   begin User, SequenceDiagram as SD, Parser, Generator, Renderer
 
   User -> +SD: code

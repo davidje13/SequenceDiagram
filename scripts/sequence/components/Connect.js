@@ -143,10 +143,10 @@ define([
 			if(!ww || !hh) {
 				container.appendChild(svg.make('path', Object.assign({
 					'd': (
-						'M ' + xL1 + ' ' + y1 +
-						' L ' + xR + ' ' + y1 +
-						' A ' + r + ' ' + r + ' 0 0 1 ' + xR + ' ' + y2 +
-						' L ' + xL2 + ' ' + y2
+						'M' + xL1 + ' ' + y1 +
+						'L' + xR + ' ' + y1 +
+						'A' + r + ' ' + r + ' 0 0 1 ' + xR + ' ' + y2 +
+						'L' + xL2 + ' ' + y2
 					),
 				}, attrs)));
 				return;

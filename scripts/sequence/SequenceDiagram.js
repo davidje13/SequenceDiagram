@@ -7,6 +7,7 @@ define([
 	'./Exporter',
 	'./themes/Basic',
 	'./themes/Chunky',
+	'./themes/Sketch',
 ], (
 	EventObject,
 	Parser,
@@ -14,7 +15,8 @@ define([
 	Renderer,
 	Exporter,
 	BasicTheme,
-	ChunkyTheme
+	ChunkyTheme,
+	SketchTheme
 ) => {
 	/* jshint +W072 */
 	'use strict';
@@ -22,6 +24,8 @@ define([
 	const themes = [
 		new BasicTheme(),
 		new ChunkyTheme(),
+		new SketchTheme(SketchTheme.RIGHT),
+		new SketchTheme(SketchTheme.LEFT),
 	];
 
 	const SharedParser = new Parser();

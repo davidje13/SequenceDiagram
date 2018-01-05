@@ -240,25 +240,13 @@ define([
 				return;
 			}
 
-			const r = agentInfo.currentRad;
-
-			if(r > 0) {
-				this.agentLines.appendChild(svg.make('rect', Object.assign({
-					'x': agentInfo.x - r,
-					'y': agentInfo.latestYStart,
-					'width': r * 2,
-					'height': toY - agentInfo.latestYStart,
-					'class': 'agent-' + agentInfo.index + '-line',
-				}, this.theme.agentLineAttrs)));
-			} else {
-				this.agentLines.appendChild(svg.make('line', Object.assign({
-					'x1': agentInfo.x,
-					'y1': agentInfo.latestYStart,
-					'x2': agentInfo.x,
-					'y2': toY,
-					'class': 'agent-' + agentInfo.index + '-line',
-				}, this.theme.agentLineAttrs)));
-			}
+			this.theme.drawAgentLine(this.agentLines, {
+				x: agentInfo.x,
+				y0: agentInfo.latestYStart,
+				y1: toY,
+				width: agentInfo.currentRad * 2,
+				className: 'agent-' + agentInfo.index + '-line',
+			});
 		}
 
 		addHighlightObject(line, o) {
@@ -474,6 +462,9 @@ define([
 			if(!this.theme) {
 				this.theme = this.themes.get('');
 			}
+
+			this.theme.reset();
+			this.theme.addDefs(this.addDef);
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,

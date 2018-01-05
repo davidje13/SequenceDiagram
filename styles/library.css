@@ -35,13 +35,6 @@ article > header > .sequence-diagram {
 	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
 
-svg.fancy {
-	filter:
-		sepia(1)
-		hue-rotate(140deg)
-		drop-shadow(0 5px 5px rgba(0, 64, 128, 0.5));
-}
-
 article > h2 {
 	margin: 35px -20px 10px;
 	padding: 5px 20px 0;
@@ -56,10 +49,21 @@ article > h3 {
 	clear: both;
 }
 
+article > h4 {
+	margin: 15px -20px 10px;
+	padding: 5px 20px 0;
+	font: 1.1em 'Vollkorn', serif;
+}
+
 article > p {
 	margin: 20px 0;
 	padding: 0;
 	text-align: justify;
+}
+
+article > ul {
+	margin: 10px 0;
+	padding: 0 0 0 30px;
 }
 
 a:link, a:visited {

@@ -146,6 +146,21 @@ state over Foo: 'Newlines here,
 too!'
 ```
 
+### Themes
+
+<img src="screenshots/Themes.png" alt="Themes preview" width="200" align="right" />
+
+```
+theme sketch
+
+title Mockup
+
+A thing -> +Another thing: Something happens
+-Another thing --> A thing: With some response
+note right of Another thing: Find out what happens here
+end Another thing
+```
+
 ### Short-Lived Agents
 
 <img src="screenshots/ShortLivedAgents.png" alt="Short Lived Agents preview" width="200" align="right" />

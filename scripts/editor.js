@@ -205,6 +205,11 @@
 				preview: 'headers box\ntheme chunky\nA -> B',
 			},
 			{
+				title: 'Sketch theme',
+				code: 'theme sketch',
+				preview: 'headers box\ntheme sketch\nA -> B',
+			},
+			{
 				title: 'Cross terminators',
 				code: 'terminators cross',
 				preview: 'begin A\nterminators cross',

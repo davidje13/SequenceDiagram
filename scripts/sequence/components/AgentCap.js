@@ -45,6 +45,7 @@ define([
 				y,
 				padding: config.padding,
 				boxAttrs: config.boxAttrs,
+				boxRenderer: config.boxRenderer,
 				labelAttrs: config.labelAttrs,
 				boxLayer: env.shapeLayer,
 				labelLayer: clickable,
@@ -85,14 +86,7 @@ define([
 			const config = env.theme.agentCap.cross;
 			const d = config.size / 2;
 
-			env.shapeLayer.appendChild(svg.make('path', Object.assign({
-				'd': (
-					'M ' + (x - d) + ' ' + y +
-					' L ' + (x + d) + ' ' + (y + d * 2) +
-					' M ' + (x + d) + ' ' + y +
-					' L ' + (x - d) + ' ' + (y + d * 2)
-				),
-			}, config.attrs)));
+			env.shapeLayer.appendChild(config.render({x, y: y + d, radius: d}));
 
 			env.makeRegion().appendChild(svg.make('rect', {
 				'x': x - d,
@@ -128,7 +122,7 @@ define([
 
 		topShift(agentInfo, env) {
 			const config = env.theme.agentCap.bar;
-			return config.attrs.height / 2;
+			return config.height / 2;
 		}
 
 		render(y, {x, label}, env) {
@@ -139,25 +133,27 @@ define([
 				configB.padding.left +
 				configB.padding.right
 			);
+			const height = config.height;
 
-			env.shapeLayer.appendChild(svg.make('rect', Object.assign({
-				'x': x - width / 2,
-				'y': y,
-				'width': width,
-			}, config.attrs)));
+			env.shapeLayer.appendChild(config.render({
+				x: x - width / 2,
+				y,
+				width,
+				height,
+			}));
 
 			env.makeRegion().appendChild(svg.make('rect', {
 				'x': x - width / 2,
 				'y': y,
 				'width': width,
-				'height': config.attrs.height,
+				'height': height,
 				'fill': 'transparent',
 			}));
 
 			return {
 				lineTop: 0,
-				lineBottom: config.attrs.height,
-				height: config.attrs.height,
+				lineBottom: height,
+				height: height,
 			};
 		}
 	}

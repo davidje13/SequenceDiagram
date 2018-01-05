@@ -41,7 +41,7 @@ defineDescribe('SequenceDiagram', [
 	});
 
 	it('provides default themes', () => {
-		expect(SequenceDiagram.themes.length).toEqual(2);
+		expect(SequenceDiagram.themes.length).toBeGreaterThan(1);
 	});
 
 	it('renders empty diagrams without error', () => {
