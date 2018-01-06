@@ -12,7 +12,6 @@ define([
 	'use strict';
 
 	// TODO:
-	// * arrows
 	// * fade starter/terminator sometimes does not fully cover line
 	// * blocks (if/else/repeat/ref)
 
@@ -32,6 +31,13 @@ define([
 		}
 		return r;
 	}
+
+	const PENCIL = {
+		'stroke': 'rgba(0,0,0,0.7)',
+		'stroke-width': 0.8,
+		'stroke-linejoin': 'round',
+		'stroke-linecap': 'round',
+	};
 
 	const SETTINGS = {
 		titleMargin: 10,
@@ -77,47 +83,50 @@ define([
 
 		connect: {
 			loopbackRadius: 6,
-			lineAttrs: {
+			line: {
 				'solid': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
+					attrs: Object.assign({
+						'fill': 'none',
+					}, PENCIL),
+					render: null,
+					renderRev: null,
 				},
 				'dash': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
-					'stroke-dasharray': '4, 2',
+					attrs: Object.assign({
+						'fill': 'none',
+						'stroke-dasharray': '4, 2',
+					}, PENCIL),
+					render: null,
+					renderRev: null,
 				},
 				'wave': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
-					'stroke-linejoin': 'round',
-					'stroke-linecap': 'round',
-					'wave-width': 6,
-					'wave-height': 0.5,
+					attrs: Object.assign({
+						'fill': 'none',
+						'stroke-linejoin': 'round',
+						'stroke-linecap': 'round',
+						'wave-width': 6,
+						'wave-height': 0.5,
+					}, PENCIL),
+					render: null,
+					renderRev: null,
 				},
 			},
 			arrow: {
-				single: {
+				'single': {
 					width: 5,
-					height: 10,
-					attrs: {
-						'fill': '#000000',
-						'stroke-width': 0,
-						'stroke-linejoin': 'miter',
-					},
-				},
-				double: {
-					width: 4,
 					height: 6,
-					attrs: {
+					attrs: Object.assign({
+						'fill': 'rgba(0,0,0,0.9)',
+					}, PENCIL),
+					render: null,
+				},
+				'double': {
+					width: 4,
+					height: 8,
+					attrs: Object.assign({
 						'fill': 'none',
-						'stroke': '#000000',
-						'stroke-width': 1,
-						'stroke-linejoin': 'miter',
-					},
+					}, PENCIL),
+					render: null,
 				},
 			},
 			label: {
@@ -330,6 +339,10 @@ define([
 			this.agentCap.cross.render = this.renderCross.bind(this);
 			this.agentCap.bar.render = this.renderBar.bind(this);
 			this.agentCap.box.boxRenderer = this.renderBox.bind(this);
+			this.connect.arrow.single.render = this.renderArrowHead.bind(this);
+			this.connect.arrow.double.render = this.renderArrowHead.bind(this);
+			this.connect.line.solid.render = this.renderConnect.bind(this);
+			this.connect.line.dash.render = this.renderConnect.bind(this);
 			this.notes.note.boxRenderer = this.renderNote.bind(this);
 			this.notes.state.boxRenderer = this.renderState.bind(this);
 		}
@@ -374,16 +387,22 @@ define([
 			return Math.asin(rand * 2 - 1) * 2 * range / Math.PI;
 		}
 
-		lineNodes(p1, p2, {var1 = 1, var2 = 1, move = true}) {
+		lineNodes(p1, p2, {
+			var1 = 1,
+			var2 = 1,
+			varX = 1,
+			varY = 1,
+			move = true,
+		}) {
 			const length = Math.sqrt(
 				(p2.x - p1.x) * (p2.x - p1.x) +
 				(p2.y - p1.y) * (p2.y - p1.y)
 			);
 			const rough = Math.min(Math.sqrt(length) * 0.2, 5);
-			const x1 = p1.x + this.vary(var1 * rough);
-			const y1 = p1.y + this.vary(var1 * rough);
-			const x2 = p2.x + this.vary(var2 * rough);
-			const y2 = p2.y + this.vary(var2 * rough);
+			const x1 = p1.x + this.vary(var1 * varX * rough);
+			const y1 = p1.y + this.vary(var1 * varY * rough);
+			const x2 = p2.x + this.vary(var2 * varX * rough);
+			const y2 = p2.y + this.vary(var2 * varY * rough);
 
 			// -1 = p1 higher, 1 = p2 higher
 			const upper = Math.max(-1, Math.min(1,
@@ -410,14 +429,12 @@ define([
 			};
 		}
 
-		renderLine(p1, p2, {var1 = 1, var2 = 1}) {
-			const line = this.lineNodes(p1, p2, {var1, var2});
-			const shape = svg.make('path', {
+		renderLine(p1, p2, lineOptions) {
+			const line = this.lineNodes(p1, p2, lineOptions);
+			const shape = svg.make('path', Object.assign({
 				'd': line.nodes,
-				'stroke': 'rgba(0,0,0,0.7)',
-				'stroke-width': 0.8,
 				'fill': 'none',
-			});
+			}, PENCIL));
 			return shape;
 		}
 
@@ -443,12 +460,10 @@ define([
 				{var1: 0, var2: 0.3, move: false}
 			);
 
-			const shape = svg.make('path', {
+			const shape = svg.make('path', Object.assign({
 				'd': lT.nodes + lR.nodes + lB.nodes + lL.nodes,
-				'stroke': 'rgba(0,0,0,0.7)',
-				'stroke-width': 0.8,
 				'fill': fill || '#FFFFFF',
-			});
+			}, PENCIL));
 
 			return shape;
 		}
@@ -492,7 +507,7 @@ define([
 			);
 
 			const g = svg.make('g');
-			g.appendChild(svg.make('path', {
+			g.appendChild(svg.make('path', Object.assign({
 				'd': (
 					lT.nodes +
 					lF.nodes +
@@ -500,18 +515,50 @@ define([
 					lB.nodes +
 					lL.nodes
 				),
-				'stroke': 'rgba(0,0,0,0.7)',
-				'stroke-width': 0.8,
 				'fill': '#FFFFFF',
-			}));
-			g.appendChild(svg.make('path', {
+			}, PENCIL)));
+			g.appendChild(svg.make('path', Object.assign({
 				'd': lF1.nodes + lF2.nodes,
-				'stroke': 'rgba(0,0,0,0.7)',
-				'stroke-width': 0.8,
 				'fill': 'none',
-			}));
+			}, PENCIL)));
 
 			return g;
+		}
+
+		renderConnect({x1, dx1, x2, dx2, y}, attrs) {
+			const ln = this.lineNodes(
+				{x: x1 + dx1, y},
+				{x: x2 + dx2, y},
+				{varX: 0.3}
+			);
+			return {
+				shape: svg.make('path', Object.assign({'d': ln.nodes}, attrs)),
+				p1: {x: ln.p1.x - dx1, y: ln.p2.y},
+				p2: {x: ln.p2.x - dx2, y: ln.p2.y},
+			};
+		}
+
+		renderArrowHead({x, y, dx, dy, attrs}) {
+			const w = dx * (1 + this.vary(0.2));
+			const h = dy * (1 + this.vary(0.3));
+			const l1 = this.lineNodes(
+				{x: x + w, y: y - h},
+				{x, y},
+				{var1: 2.0, var2: 0.2}
+			);
+			const l2 = this.lineNodes(
+				l1.p2,
+				{x: x + w, y: y + h},
+				{var1: 0, var2: 2.0, move: false}
+			);
+			const l3 = (attrs.fill === 'none') ? {nodes: ''} : this.lineNodes(
+				l2.p2,
+				l1.p1,
+				{var1: 0, var2: 0, move: false}
+			);
+			return svg.make('path', Object.assign({
+				'd': l1.nodes + l2.nodes + l3.nodes,
+			}, attrs));
 		}
 
 		renderState({x, y, width, height}) {
@@ -537,12 +584,10 @@ define([
 				{}
 			);
 
-			return svg.make('path', {
+			return svg.make('path', Object.assign({
 				'd': l1.nodes + l2.nodes,
-				'stroke': 'rgba(0,0,0,0.7)',
-				'stroke-width': 0.8,
 				'fill': 'none',
-			});
+			}, PENCIL));
 		}
 
 		getNote(type) {
@@ -563,7 +608,7 @@ define([
 				const shape = this.renderLine(
 					{x, y: y0},
 					{x, y: y1},
-					{}
+					{varY: 0.3}
 				);
 				shape.setAttribute('class', className);
 				container.appendChild(shape);

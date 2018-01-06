@@ -89,26 +89,32 @@ define([
 
 		connect: {
 			loopbackRadius: 8,
-			lineAttrs: {
+			line: {
 				'solid': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 3,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 3,
+					},
 				},
 				'dash': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 3,
-					'stroke-dasharray': '10, 4',
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 3,
+						'stroke-dasharray': '10, 4',
+					},
 				},
 				'wave': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 3,
-					'stroke-linejoin': 'round',
-					'stroke-linecap': 'round',
-					'wave-width': 10,
-					'wave-height': 1,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 3,
+						'stroke-linejoin': 'round',
+						'stroke-linecap': 'round',
+						'wave-width': 10,
+						'wave-height': 1,
+					},
 				},
 			},
 			arrow: {

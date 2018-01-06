@@ -82,30 +82,36 @@ define([
 
 		connect: {
 			loopbackRadius: 6,
-			lineAttrs: {
+			line: {
 				'solid': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					},
 				},
 				'dash': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
-					'stroke-dasharray': '4, 2',
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1,
+						'stroke-dasharray': '4, 2',
+					},
 				},
 				'wave': {
-					'fill': 'none',
-					'stroke': '#000000',
-					'stroke-width': 1,
-					'stroke-linejoin': 'round',
-					'stroke-linecap': 'round',
-					'wave-width': 6,
-					'wave-height': 0.5,
+					attrs: {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1,
+						'stroke-linejoin': 'round',
+						'stroke-linecap': 'round',
+						'wave-width': 6,
+						'wave-height': 0.5,
+					},
 				},
 			},
 			arrow: {
-				single: {
+				'single': {
 					width: 5,
 					height: 10,
 					attrs: {
@@ -114,7 +120,7 @@ define([
 						'stroke-linejoin': 'miter',
 					},
 				},
-				double: {
+				'double': {
 					width: 4,
 					height: 6,
 					attrs: {
