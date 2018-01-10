@@ -9,19 +9,6 @@ define([
 ) => {
 	'use strict';
 
-	function drawHorizontalArrowHead({x, y, dx, dy, attrs}) {
-		return svg.make(
-			attrs.fill === 'none' ? 'polyline' : 'polygon',
-			Object.assign({
-				'points': (
-					(x + dx) + ' ' + (y - dy) + ' ' +
-					x + ' ' + y + ' ' +
-					(x + dx) + ' ' + (y + dy)
-				),
-			}, attrs)
-		);
-	}
-
 	class Arrowhead {
 		constructor(propName) {
 			this.propName = propName;
@@ -48,13 +35,11 @@ define([
 
 		render(layer, theme, pt, dir) {
 			const config = this.getConfig(theme);
-			const func = config.render || drawHorizontalArrowHead;
-			layer.appendChild(func({
+			layer.appendChild(config.render(config.attrs, {
 				x: pt.x + this.short(theme) * dir,
 				y: pt.y,
 				dx: config.width * dir,
 				dy: config.height / 2,
-				attrs: config.attrs,
 			}));
 		}
 

@@ -13,7 +13,8 @@ define([
 
 	class BlockSplit extends BaseComponent {
 		separation({left, right, mode, label}, env) {
-			const config = env.theme.block.section;
+			const blockInfo = env.state.blocks.get(left);
+			const config = env.theme.getBlock(blockInfo.mode).section;
 			const width = (
 				env.textSizer.measure(config.mode.labelAttrs, mode).width +
 				config.mode.padding.left +
@@ -32,21 +33,15 @@ define([
 		}
 
 		render({left, right, mode, label}, env, first = false) {
-			const config = env.theme.block;
+			const blockInfo = env.state.blocks.get(left);
+			const config = env.theme.getBlock(blockInfo.mode);
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
-			const {hold} = env.state.blocks.get(left);
 
 			let y = env.primaryY;
 
 			if(!first) {
 				y += config.section.padding.bottom;
-				hold.appendChild(svg.make('line', Object.assign({
-					'x1': agentInfoL.x,
-					'y1': y,
-					'x2': agentInfoR.x,
-					'y2': y,
-				}, config.separator.attrs)));
 			}
 
 			const clickable = env.makeRegion();
@@ -56,8 +51,9 @@ define([
 				y,
 				padding: config.section.mode.padding,
 				boxAttrs: config.section.mode.boxAttrs,
+				boxRenderer: config.section.mode.boxRenderer,
 				labelAttrs: config.section.mode.labelAttrs,
-				boxLayer: hold,
+				boxLayer: blockInfo.hold,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
@@ -83,6 +79,15 @@ define([
 				'fill': 'transparent',
 			}), clickable.firstChild);
 
+			if(!first) {
+				blockInfo.hold.appendChild(config.sepRenderer({
+					'x1': agentInfoL.x,
+					'y1': y,
+					'x2': agentInfoR.x,
+					'y2': y,
+				}));
+			}
+
 			return y + labelHeight + config.section.padding.top;
 		}
 	}
@@ -96,15 +101,31 @@ define([
 			state.blocks.clear();
 		}
 
+		storeBlockInfo(stage, env) {
+			env.state.blocks.set(stage.left, {
+				mode: stage.mode,
+				hold: null,
+				startY: null,
+			});
+		}
+
+		separationPre(stage, env) {
+			this.storeBlockInfo(stage, env);
+		}
+
 		separation(stage, env) {
 			array.mergeSets(env.visibleAgents, [stage.left, stage.right]);
 			super.separation(stage, env);
 		}
 
-		renderPre({left, right}, env) {
+		renderPre(stage, env) {
+			this.storeBlockInfo(stage, env);
+
+			const config = env.theme.getBlock(stage.mode);
+
 			return {
-				agentNames: [left, right],
-				topShift: env.theme.block.margin.top,
+				agentNames: [stage.left, stage.right],
+				topShift: config.margin.top,
 			};
 		}
 
@@ -112,11 +133,9 @@ define([
 			const hold = svg.make('g');
 			env.blockLayer.appendChild(hold);
 
-			env.state.blocks.set(stage.left, {
-				hold,
-				mode: stage.mode,
-				startY: env.primaryY,
-			});
+			const blockInfo = env.state.blocks.get(stage.left);
+			blockInfo.hold = hold;
+			blockInfo.startY = env.primaryY;
 
 			return super.render(stage, env, true);
 		}
@@ -128,25 +147,27 @@ define([
 		}
 
 		renderPre({left, right}, env) {
+			const blockInfo = env.state.blocks.get(left);
+			const config = env.theme.getBlock(blockInfo.mode);
+
 			return {
 				agentNames: [left, right],
-				topShift: env.theme.block.section.padding.bottom,
+				topShift: config.section.padding.bottom,
 			};
 		}
 
 		render({left, right}, env) {
-			const config = env.theme.block;
-
+			const blockInfo = env.state.blocks.get(left);
+			const config = env.theme.getBlock(blockInfo.mode);
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
-			const {hold, startY, mode} = env.state.blocks.get(left);
-			const configMode = config.modes[mode] || config.modes[''];
-			hold.appendChild(svg.make('rect', Object.assign({
-				'x': agentInfoL.x,
-				'y': startY,
-				'width': agentInfoR.x - agentInfoL.x,
-				'height': env.primaryY - startY,
-			}, configMode.boxAttrs)));
+
+			blockInfo.hold.appendChild(config.boxRenderer({
+				x: agentInfoL.x,
+				y: blockInfo.startY,
+				width: agentInfoR.x - agentInfoL.x,
+				height: env.primaryY - blockInfo.startY,
+			}));
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
 		}

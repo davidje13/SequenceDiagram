@@ -1,9 +1,9 @@
 define([
-	'core/ArrayUtilities',
+	'./BaseTheme',
 	'svg/SVGUtilities',
 	'svg/SVGShapes',
 ], (
-	array,
+	BaseTheme,
 	svg,
 	SVGShapes
 ) => {
@@ -43,33 +43,19 @@ define([
 			},
 			cross: {
 				size: 20,
-				render: ({x, y, radius}) => {
-					return svg.make('path', {
-						'd': (
-							'M' + (x - radius) + ' ' + (y - radius) +
-							'l' + (radius * 2) + ' ' + (radius * 2) +
-							'm0 ' + (-radius * 2) +
-							'l' + (-radius * 2) + ' ' + (radius * 2)
-						),
-						'fill': 'none',
-						'stroke': '#000000',
-						'stroke-width': 1,
-					});
-				},
+				render: BaseTheme.renderCross.bind(null, {
+					'fill': 'none',
+					'stroke': '#000000',
+					'stroke-width': 1,
+				}),
 			},
 			bar: {
 				height: 4,
-				render: ({x, y, width, height}) => {
-					return svg.make('rect', {
-						'x': x,
-						'y': y,
-						'width': width,
-						'height': height,
-						'fill': '#000000',
-						'stroke': '#000000',
-						'stroke-width': 1,
-					});
-				},
+				render: SVGShapes.renderBox.bind(null, {
+					'fill': '#000000',
+					'stroke': '#000000',
+					'stroke-width': 1,
+				}),
 			},
 			fade: {
 				width: 5,
@@ -114,6 +100,7 @@ define([
 				'single': {
 					width: 5,
 					height: 10,
+					render: BaseTheme.renderHorizArrowHead,
 					attrs: {
 						'fill': '#000000',
 						'stroke-width': 0,
@@ -123,6 +110,7 @@ define([
 				'double': {
 					width: 4,
 					height: 6,
+					render: BaseTheme.renderHorizArrowHead,
 					attrs: {
 						'fill': 'none',
 						'stroke': '#000000',
@@ -156,82 +144,6 @@ define([
 			},
 		},
 
-		block: {
-			margin: {
-				top: 0,
-				bottom: 0,
-			},
-			modes: {
-				'ref': {
-					boxAttrs: {
-						'fill': '#FFFFFF',
-						'stroke': '#000000',
-						'stroke-width': 1.5,
-						'rx': 2,
-						'ry': 2,
-					},
-				},
-				'': {
-					boxAttrs: {
-						'fill': 'none',
-						'stroke': '#000000',
-						'stroke-width': 1.5,
-						'rx': 2,
-						'ry': 2,
-					},
-				},
-			},
-			section: {
-				padding: {
-					top: 3,
-					bottom: 2,
-				},
-				mode: {
-					padding: {
-						top: 1,
-						left: 3,
-						right: 3,
-						bottom: 0,
-					},
-					boxAttrs: {
-						'fill': '#FFFFFF',
-						'stroke': '#000000',
-						'stroke-width': 1,
-						'rx': 2,
-						'ry': 2,
-					},
-					labelAttrs: {
-						'font-family': FONT,
-						'font-weight': 'bold',
-						'font-size': 9,
-						'line-height': LINE_HEIGHT,
-						'text-anchor': 'left',
-					},
-				},
-				label: {
-					padding: {
-						top: 1,
-						left: 5,
-						right: 3,
-						bottom: 0,
-					},
-					labelAttrs: {
-						'font-family': FONT,
-						'font-size': 8,
-						'line-height': LINE_HEIGHT,
-						'text-anchor': 'left',
-					},
-				},
-			},
-			separator: {
-				attrs: {
-					'stroke': '#000000',
-					'stroke-width': 1.5,
-					'stroke-dasharray': '4, 2',
-				},
-			},
-		},
-
 		titleAttrs: {
 			'font-family': FONT,
 			'font-size': 20,
@@ -247,6 +159,91 @@ define([
 		},
 	};
 
+	const SHARED_BLOCK_SECTION = {
+		padding: {
+			top: 3,
+			bottom: 2,
+		},
+		mode: {
+			padding: {
+				top: 1,
+				left: 3,
+				right: 3,
+				bottom: 0,
+			},
+			boxRenderer: BaseTheme.renderTag.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 1,
+				'rx': 2,
+				'ry': 2,
+			}),
+			labelAttrs: {
+				'font-family': FONT,
+				'font-weight': 'bold',
+				'font-size': 9,
+				'line-height': LINE_HEIGHT,
+				'text-anchor': 'left',
+			},
+		},
+		label: {
+			padding: {
+				top: 1,
+				left: 5,
+				right: 3,
+				bottom: 0,
+			},
+			labelAttrs: {
+				'font-family': FONT,
+				'font-size': 8,
+				'line-height': LINE_HEIGHT,
+				'text-anchor': 'left',
+			},
+		},
+	};
+
+	const BLOCKS = {
+		'ref': {
+			margin: {
+				top: 0,
+				bottom: 0,
+			},
+			boxRenderer: SVGShapes.renderBox.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 1.5,
+				'rx': 2,
+				'ry': 2,
+			}),
+			section: SHARED_BLOCK_SECTION,
+		},
+		'': {
+			margin: {
+				top: 0,
+				bottom: 0,
+			},
+			boxRenderer: SVGShapes.renderBox.bind(null, {
+				'fill': 'none',
+				'stroke': '#000000',
+				'stroke-width': 1.5,
+				'rx': 2,
+				'ry': 2,
+			}),
+			section: SHARED_BLOCK_SECTION,
+			sepRenderer: SVGShapes.renderLine.bind(null, {
+				'stroke': '#000000',
+				'stroke-width': 1.5,
+				'stroke-dasharray': '4, 2',
+			}),
+		},
+	};
+
+	const NOTE_ATTRS = {
+		'font-family': FONT,
+		'font-size': 8,
+		'line-height': LINE_HEIGHT,
+	};
+
 	const NOTES = {
 		'text': {
 			margin: {top: 0, left: 2, right: 2, bottom: 0},
@@ -255,11 +252,7 @@ define([
 			boxRenderer: SVGShapes.renderBox.bind(null, {
 				'fill': '#FFFFFF',
 			}),
-			labelAttrs: {
-				'font-family': FONT,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 		'note': {
 			margin: {top: 0, left: 5, right: 5, bottom: 0},
@@ -274,11 +267,7 @@ define([
 				'stroke': '#000000',
 				'stroke-width': 1,
 			}),
-			labelAttrs: {
-				'font-family': FONT,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 		'state': {
 			margin: {top: 0, left: 5, right: 5, bottom: 0},
@@ -291,48 +280,18 @@ define([
 				'rx': 10,
 				'ry': 10,
 			}),
-			labelAttrs: {
-				'font-family': FONT,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 	};
 
-	return class BasicTheme {
+	return class BasicTheme extends BaseTheme {
 		constructor() {
-			this.name = 'basic';
-			Object.assign(this, SETTINGS);
-		}
-
-		reset() {
-		}
-
-		addDefs() {
-		}
-
-		getNote(type) {
-			return NOTES[type];
-		}
-
-		drawAgentLine(container, {x, y0, y1, width, className}) {
-			if(width > 0) {
-				container.appendChild(svg.make('rect', Object.assign({
-					'x': x - width / 2,
-					'y': y0,
-					'width': width,
-					'height': y1 - y0,
-					'class': className,
-				}, this.agentLineAttrs)));
-			} else {
-				container.appendChild(svg.make('line', Object.assign({
-					'x1': x,
-					'y1': y0,
-					'x2': x,
-					'y2': y1,
-					'class': className,
-				}, this.agentLineAttrs)));
-			}
+			super({
+				name: 'basic',
+				settings: SETTINGS,
+				blocks: BLOCKS,
+				notes: NOTES,
+			});
 		}
 	};
 });

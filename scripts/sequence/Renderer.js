@@ -172,6 +172,7 @@ define([
 				textSizer: this.sizer,
 				addSpacing,
 				addSeparation: this.addSeparation,
+				state: this.state,
 				components: this.components,
 			};
 			const component = this.components.get(stage.type);
@@ -240,13 +241,13 @@ define([
 				return;
 			}
 
-			this.theme.drawAgentLine(this.agentLines, {
+			this.agentLines.appendChild(this.theme.renderAgentLine({
 				x: agentInfo.x,
 				y0: agentInfo.latestYStart,
 				y1: toY,
 				width: agentInfo.currentRad * 2,
 				className: 'agent-' + agentInfo.index + '-line',
-			});
+			}));
 		}
 
 		addHighlightObject(line, o) {
@@ -416,6 +417,13 @@ define([
 			this.height = (y1 - y0);
 		}
 
+		_resetState() {
+			this.components.forEach((component) => {
+				component.resetState(this.state);
+			});
+			this.currentY = 0;
+		}
+
 		_reset() {
 			this.knownDefs.clear();
 			this.highlights.clear();
@@ -428,9 +436,7 @@ define([
 			svg.empty(this.actionLabels);
 			this.mask.appendChild(this.maskReveal);
 			this.defs.appendChild(this.mask);
-			this.components.forEach((component) => {
-				component.resetState(this.state);
-			});
+			this._resetState();
 		}
 
 		setHighlight(line = null) {
@@ -475,7 +481,7 @@ define([
 			this.maxX = 0;
 			this.buildAgentInfos(sequence.agents, sequence.stages);
 
-			this.currentY = 0;
+			this._resetState();
 			sequence.stages.forEach(this.renderStage);
 			const bottomY = this.checkAgentRange(['[', ']'], this.currentY);
 

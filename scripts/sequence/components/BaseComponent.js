@@ -16,6 +16,7 @@ define(() => {
 			textSizer,
 			addSpacing,
 			addSeparation,
+			state,
 			components,
 		}*/) {
 		}
@@ -27,6 +28,7 @@ define(() => {
 			textSizer,
 			addSpacing,
 			addSeparation,
+			state,
 			components,
 		}*/) {
 		}

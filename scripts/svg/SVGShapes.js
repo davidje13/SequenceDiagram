@@ -5,6 +5,10 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 		return svg.make('rect', Object.assign({}, position, attrs));
 	}
 
+	function renderLine(attrs, position) {
+		return svg.make('line', Object.assign({}, position, attrs));
+	}
+
 	function renderNote(attrs, flickAttrs, position) {
 		const g = svg.make('g');
 		const x0 = position.x;
@@ -104,6 +108,7 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 
 	return {
 		renderBox,
+		renderLine,
 		renderNote,
 		renderBoxedText,
 		TextBlock: SVGTextBlock,

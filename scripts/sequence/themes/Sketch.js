@@ -1,10 +1,10 @@
 define([
-	'core/ArrayUtilities',
+	'./BaseTheme',
 	'svg/SVGUtilities',
 	'svg/SVGShapes',
 	'./HandleeFontData',
 ], (
-	array,
+	BaseTheme,
 	svg,
 	SVGShapes,
 	Handlee
@@ -13,28 +13,21 @@ define([
 
 	// TODO:
 	// * fade starter/terminator sometimes does not fully cover line
-	// * blocks (if/else/repeat/ref)
 
 	const FONT = Handlee.name;
 	const FONT_FAMILY = '"' + FONT + '",cursive';
 	const LINE_HEIGHT = 1.5;
 
-	function deepCopy(o) {
-		if(typeof o !== 'object' || !o) {
-			return o;
-		}
-		const r = {};
-		for(let k in o) {
-			if(o.hasOwnProperty(k)) {
-				r[k] = deepCopy(o[k]);
-			}
-		}
-		return r;
-	}
-
 	const PENCIL = {
 		'stroke': 'rgba(0,0,0,0.7)',
 		'stroke-width': 0.8,
+		'stroke-linejoin': 'round',
+		'stroke-linecap': 'round',
+	};
+
+	const THICK_PENCIL = {
+		'stroke': 'rgba(0,0,0,0.8)',
+		'stroke-width': 1.2,
 		'stroke-linejoin': 'round',
 		'stroke-linecap': 'round',
 	};
@@ -154,82 +147,6 @@ define([
 			},
 		},
 
-		block: {
-			margin: {
-				top: 0,
-				bottom: 0,
-			},
-			modes: {
-				'ref': {
-					boxAttrs: {
-						'fill': '#FFFFFF',
-						'stroke': '#000000',
-						'stroke-width': 1.5,
-						'rx': 2,
-						'ry': 2,
-					},
-				},
-				'': {
-					boxAttrs: {
-						'fill': 'none',
-						'stroke': '#000000',
-						'stroke-width': 1.5,
-						'rx': 2,
-						'ry': 2,
-					},
-				},
-			},
-			section: {
-				padding: {
-					top: 3,
-					bottom: 2,
-				},
-				mode: {
-					padding: {
-						top: 1,
-						left: 3,
-						right: 3,
-						bottom: 0,
-					},
-					boxAttrs: {
-						'fill': '#FFFFFF',
-						'stroke': '#000000',
-						'stroke-width': 1,
-						'rx': 2,
-						'ry': 2,
-					},
-					labelAttrs: {
-						'font-family': FONT_FAMILY,
-						'font-weight': 'bold',
-						'font-size': 9,
-						'line-height': LINE_HEIGHT,
-						'text-anchor': 'left',
-					},
-				},
-				label: {
-					padding: {
-						top: 1,
-						left: 5,
-						right: 3,
-						bottom: 0,
-					},
-					labelAttrs: {
-						'font-family': FONT_FAMILY,
-						'font-size': 8,
-						'line-height': LINE_HEIGHT,
-						'text-anchor': 'left',
-					},
-				},
-			},
-			separator: {
-				attrs: {
-					'stroke': '#000000',
-					'stroke-width': 1.5,
-					'stroke-dasharray': '4, 2',
-				},
-			},
-		},
-
 		titleAttrs: {
 			'font-family': FONT_FAMILY,
 			'font-size': 20,
@@ -245,6 +162,69 @@ define([
 		},
 	};
 
+	const SHARED_BLOCK_SECTION = {
+		padding: {
+			top: 3,
+			bottom: 2,
+		},
+		mode: {
+			padding: {
+				top: 2,
+				left: 3,
+				right: 5,
+				bottom: 0,
+			},
+			boxRenderer: null,
+			labelAttrs: {
+				'font-family': FONT_FAMILY,
+				'font-weight': 'bold',
+				'font-size': 9,
+				'line-height': LINE_HEIGHT,
+				'text-anchor': 'left',
+			},
+		},
+		label: {
+			padding: {
+				top: 1,
+				left: 5,
+				right: 3,
+				bottom: 0,
+			},
+			labelAttrs: {
+				'font-family': FONT_FAMILY,
+				'font-size': 8,
+				'line-height': LINE_HEIGHT,
+				'text-anchor': 'left',
+			},
+		},
+	};
+
+	const BLOCKS = {
+		'ref': {
+			margin: {
+				top: 0,
+				bottom: 0,
+			},
+			boxRenderer: null,
+			section: SHARED_BLOCK_SECTION,
+		},
+		'': {
+			margin: {
+				top: 0,
+				bottom: 0,
+			},
+			boxRenderer: null,
+			section: SHARED_BLOCK_SECTION,
+			sepRenderer: null,
+		},
+	};
+
+	const NOTE_ATTRS = {
+		'font-family': FONT_FAMILY,
+		'font-size': 8,
+		'line-height': LINE_HEIGHT,
+	};
+
 	const NOTES = {
 		'text': {
 			margin: {top: 0, left: 2, right: 2, bottom: 0},
@@ -253,33 +233,21 @@ define([
 			boxRenderer: SVGShapes.renderBox.bind(null, {
 				'fill': '#FFFFFF',
 			}),
-			labelAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 		'note': {
 			margin: {top: 0, left: 5, right: 5, bottom: 0},
 			padding: {top: 5, left: 5, right: 10, bottom: 5},
 			overlap: {left: 10, right: 10},
 			boxRenderer: null,
-			labelAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 		'state': {
 			margin: {top: 0, left: 5, right: 5, bottom: 0},
 			padding: {top: 7, left: 7, right: 7, bottom: 7},
 			overlap: {left: 10, right: 10},
 			boxRenderer: null,
-			labelAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-			},
+			labelAttrs: NOTE_ATTRS,
 		},
 	};
 
@@ -324,8 +292,15 @@ define([
 	const RIGHT = {};
 	const LEFT = {};
 
-	class SketchTheme {
+	class SketchTheme extends BaseTheme {
 		constructor(handedness = RIGHT) {
+			super({
+				name: '',
+				settings: SETTINGS,
+				blocks: BLOCKS,
+				notes: NOTES,
+			});
+
 			if(handedness === RIGHT) {
 				this.name = 'sketch';
 				this.handedness = 1;
@@ -334,17 +309,31 @@ define([
 				this.handedness = -1;
 			}
 			this.random = new Random();
-			Object.assign(this, deepCopy(SETTINGS));
-			this.notes = deepCopy(NOTES);
+
+			this._assignFunctions();
+		}
+
+		_assignFunctions() {
+			this.renderBar = this.renderBar.bind(this);
+			this.renderBox = this.renderBox.bind(this);
+			this.renderArrowHead = this.renderArrowHead.bind(this);
+			this.renderConnect = this.renderConnect.bind(this);
+			this.renderTag = this.renderTag.bind(this);
+
 			this.agentCap.cross.render = this.renderCross.bind(this);
-			this.agentCap.bar.render = this.renderBar.bind(this);
-			this.agentCap.box.boxRenderer = this.renderBox.bind(this);
-			this.connect.arrow.single.render = this.renderArrowHead.bind(this);
-			this.connect.arrow.double.render = this.renderArrowHead.bind(this);
-			this.connect.line.solid.render = this.renderConnect.bind(this);
-			this.connect.line.dash.render = this.renderConnect.bind(this);
+			this.agentCap.bar.render = this.renderBar;
+			this.agentCap.box.boxRenderer = this.renderBox;
+			this.connect.arrow.single.render = this.renderArrowHead;
+			this.connect.arrow.double.render = this.renderArrowHead;
+			this.connect.line.solid.render = this.renderConnect;
+			this.connect.line.dash.render = this.renderConnect;
 			this.notes.note.boxRenderer = this.renderNote.bind(this);
 			this.notes.state.boxRenderer = this.renderState.bind(this);
+			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
+			this.blocks[''].boxRenderer = this.renderBlock.bind(this);
+			this.blocks.ref.section.mode.boxRenderer = this.renderTag;
+			this.blocks[''].section.mode.boxRenderer = this.renderTag;
+			this.blocks[''].sepRenderer = this.renderSeparator.bind(this);
 		}
 
 		reset() {
@@ -434,11 +423,12 @@ define([
 			const shape = svg.make('path', Object.assign({
 				'd': line.nodes,
 				'fill': 'none',
-			}, PENCIL));
+				'stroke-dasharray': lineOptions.dash ? '6, 5' : 'none',
+			}, lineOptions.thick ? THICK_PENCIL : PENCIL));
 			return shape;
 		}
 
-		renderBox({x, y, width, height}, {fill = null} = {}) {
+		renderBox({x, y, width, height}, {fill = null, thick = false} = {}) {
 			const lT = this.lineNodes(
 				{x, y},
 				{x: x + width, y},
@@ -463,7 +453,7 @@ define([
 			const shape = svg.make('path', Object.assign({
 				'd': lT.nodes + lR.nodes + lB.nodes + lL.nodes,
 				'fill': fill || '#FFFFFF',
-			}, PENCIL));
+			}, thick ? THICK_PENCIL : PENCIL));
 
 			return shape;
 		}
@@ -538,7 +528,7 @@ define([
 			};
 		}
 
-		renderArrowHead({x, y, dx, dy, attrs}) {
+		renderArrowHead(attrs, {x, y, dx, dy}) {
 			const w = dx * (1 + this.vary(0.2));
 			const h = dy * (1 + this.vary(0.3));
 			const l1 = this.lineNodes(
@@ -566,6 +556,60 @@ define([
 			return this.renderBox({x, y, width, height});
 		}
 
+		renderRefBlock({x, y, width, height}) {
+			return this.renderBox(
+				{x, y, width, height},
+				{fill: '#FFFFFF', thick: true}
+			);
+		}
+
+		renderBlock({x, y, width, height}) {
+			return this.renderBox(
+				{x, y, width, height},
+				{fill: 'none', thick: true}
+			);
+		}
+
+		renderTag({x, y, width, height}) {
+			const x2 = x + width;
+			const y2 = y + height;
+
+			const l1 = this.lineNodes(
+				{x: x2 + 3, y},
+				{x: x2 - 2, y: y2},
+				{}
+			);
+			const l2 = this.lineNodes(
+				l1.p2,
+				{x, y: y2 + 1},
+				{var1: 0, move: false}
+			);
+
+			const line = l1.nodes + l2.nodes;
+
+			const g = svg.make('g');
+
+			g.appendChild(svg.make('path', {
+				'd': line + 'L' + x + ' ' + y,
+				'fill': '#FFFFFF',
+			}));
+
+			g.appendChild(svg.make('path', Object.assign({
+				'd': line,
+				'fill': '#FFFFFF',
+			}, PENCIL)));
+
+			return g;
+		}
+
+		renderSeparator({x1, y1, x2, y2}) {
+			return this.renderLine(
+				{x: x1, y: y1},
+				{x: x2, y: y2},
+				{thick: true, dash: true}
+			);
+		}
+
 		renderBar({x, y, width, height}) {
 			return this.renderBox({x, y, width, height}, {fill: '#000000'});
 		}
@@ -590,11 +634,7 @@ define([
 			}, PENCIL));
 		}
 
-		getNote(type) {
-			return this.notes[type];
-		}
-
-		drawAgentLine(container, {x, y0, y1, width, className}) {
+		renderAgentLine({x, y0, y1, width, className}) {
 			if(width > 0) {
 				const shape = this.renderBox({
 					x: x - width / 2,
@@ -603,7 +643,7 @@ define([
 					height: y1 - y0,
 				}, {fill: 'none'});
 				shape.setAttribute('class', className);
-				container.appendChild(shape);
+				return shape;
 			} else {
 				const shape = this.renderLine(
 					{x, y: y0},
@@ -611,7 +651,7 @@ define([
 					{varY: 0.3}
 				);
 				shape.setAttribute('class', className);
-				container.appendChild(shape);
+				return shape;
 			}
 		}
 	}

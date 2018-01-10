@@ -5,6 +5,7 @@ define([
 	'./Generator',
 	'./Renderer',
 	'./Exporter',
+	'./themes/BaseTheme',
 	'./themes/Basic',
 	'./themes/Chunky',
 	'./themes/Sketch',
@@ -14,6 +15,7 @@ define([
 	Generator,
 	Renderer,
 	Exporter,
+	BaseTheme,
 	BasicTheme,
 	ChunkyTheme,
 	SketchTheme
@@ -234,6 +236,7 @@ define([
 		Generator,
 		Renderer,
 		Exporter,
+		BaseTheme,
 		themes,
 		addTheme,
 		registerCodeMirrorMode,
