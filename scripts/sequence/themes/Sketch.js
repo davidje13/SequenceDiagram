@@ -357,9 +357,9 @@ define([
 			});
 		}
 
-		vary(range) {
+		vary(range, centre = 0) {
 			if(!range) {
-				return 0;
+				return centre;
 			}
 			// cosine distribution [-pi/2 pi/2] scaled to [-range range]
 			// int(cos(x))dx = sin(x)
@@ -372,7 +372,7 @@ define([
 			// normalise range
 			// x = asin(2p - 1) * range / (pi/2)
 			const rand = this.random.nextFloat(); // [0 1)
-			return Math.asin(rand * 2 - 1) * 2 * range / Math.PI;
+			return centre + Math.asin(rand * 2 - 1) * 2 * range / Math.PI;
 		}
 
 		lineNodes(p1, p2, {
@@ -387,10 +387,10 @@ define([
 				(p2.y - p1.y) * (p2.y - p1.y)
 			);
 			const rough = Math.min(Math.sqrt(length) * 0.2, MAX_CHAOS);
-			const x1 = p1.x + this.vary(var1 * varX * rough);
-			const y1 = p1.y + this.vary(var1 * varY * rough);
-			const x2 = p2.x + this.vary(var2 * varX * rough);
-			const y2 = p2.y + this.vary(var2 * varY * rough);
+			const x1 = this.vary(var1 * varX * rough, p1.x);
+			const y1 = this.vary(var1 * varY * rough, p1.y);
+			const x2 = this.vary(var2 * varX * rough, p2.x);
+			const y2 = this.vary(var2 * varY * rough, p2.y);
 
 			// -1 = p1 higher, 1 = p2 higher
 			const upper = Math.max(-1, Math.min(1,
@@ -400,8 +400,8 @@ define([
 
 			// Line curve is to top / left (simulates right-handed drawing)
 			// or top / right (left-handed)
-			const curveX = (0.5 + this.vary(0.5)) * rough;
-			const curveY = (0.5 + this.vary(0.5)) * rough;
+			const curveX = this.vary(0.5, 0.5) * rough;
+			const curveY = this.vary(0.5, 0.5) * rough;
 			const xc = x1 * (1 - frac) + x2 * frac - curveX * this.handedness;
 			const yc = y1 * (1 - frac) + y2 * frac - curveY;
 			const nodes = (
@@ -528,8 +528,8 @@ define([
 		}
 
 		renderArrowHead(attrs, {x, y, dx, dy}) {
-			const w = dx * (1 + this.vary(0.2));
-			const h = dy * (1 + this.vary(0.3));
+			const w = dx * this.vary(0.2, 1);
+			const h = dy * this.vary(0.3, 1);
 			const l1 = this.lineNodes(
 				{x: x + w, y: y - h},
 				{x, y},
@@ -551,8 +551,49 @@ define([
 		}
 
 		renderState({x, y, width, height}) {
-			// TODO: rounded corners
-			return this.renderBox({x, y, width, height});
+			const dx = Math.min(width * 0.06, 3);
+			const dy = Math.min(height * 0.06, 3);
+			const tlX = x + dx * this.vary(0.6, 1);
+			const tlY = y + dy * this.vary(0.6, 1);
+			const trX = x + width - dx * this.vary(0.6, 1);
+			const trY = y + dy * this.vary(0.6, 1);
+			const blX = x + dx * this.vary(0.6, 1);
+			const blY = y + height - dy * this.vary(0.6, 1);
+			const brX = x + width - dx * this.vary(0.6, 1);
+			const brY = y + height - dy * this.vary(0.6, 1);
+			const mX = x + width / 2;
+			const mY = y + height / 2;
+			const cx = dx * this.vary(0.2, 1.2);
+			const cy = dy * this.vary(0.2, 1.2);
+			const bentT = y - Math.min(width * 0.005, 1);
+			const bentB = y + height - Math.min(width * 0.01, 2);
+			const bentL = x - Math.min(height * 0.01, 2) * this.handedness;
+			const bentR = bentL + width;
+
+			return svg.make('path', Object.assign({
+				'd': (
+					'M' + tlX + ' ' + tlY +
+					'C' + (tlX + cx) + ' ' + (tlY - cy) +
+					',' + (mX - width * this.vary(0.03, 0.3)) + ' ' + bentT +
+					',' + mX + ' ' + bentT +
+					'S' + (trX - cx) + ' ' + (trY - cy) +
+					',' + trX + ' ' + trY +
+					'S' + bentR + ' ' + (mY - height * this.vary(0.03, 0.3)) +
+					',' + bentR + ' ' + mY +
+					'S' + (brX + cx) + ' ' + (brY - cy) +
+					',' + brX + ' ' + brY +
+					'S' + (mX + width * this.vary(0.03, 0.3)) + ' ' + bentB +
+					',' + mX + ' ' + bentB +
+					'S' + (blX + cx) + ' ' + (blY + cy) +
+					',' + blX + ' ' + blY +
+					'S' + bentL + ' ' + (mY + height * this.vary(0.03, 0.3)) +
+					',' + bentL + ' ' + mY +
+					'S' + (tlX - cx) + ' ' + (tlY + cy) +
+					',' + tlX + ' ' + tlY +
+					'Z'
+				),
+				'fill': '#FFFFFF',
+			}, PENCIL));
 		}
 
 		renderRefBlock({x, y, width, height}) {
@@ -614,13 +655,13 @@ define([
 		}
 
 		renderCross({x, y, radius}) {
-			const r1 = (this.vary(0.2) + 1) * radius;
+			const r1 = this.vary(0.2, 1) * radius;
 			const l1 = this.lineNodes(
 				{x: x - r1, y: y - r1},
 				{x: x + r1, y: y + r1},
 				{}
 			);
-			const r2 = (this.vary(0.2) + 1) * radius;
+			const r2 = this.vary(0.2, 1) * radius;
 			const l2 = this.lineNodes(
 				{x: x + r2, y: y - r2},
 				{x: x - r2, y: y + r2},
