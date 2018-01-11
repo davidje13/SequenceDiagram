@@ -66,6 +66,7 @@ define([
 			fade: {
 				width: 5,
 				height: 10,
+				extend: 1,
 			},
 			none: {
 				height: 10,

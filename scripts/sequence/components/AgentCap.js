@@ -174,6 +174,7 @@ define([
 
 		render(y, {x, label}, env, isBegin) {
 			const config = env.theme.agentCap.fade;
+			const ratio = config.height / (config.height + config.extend);
 
 			const gradID = env.addDef(isBegin ? 'FadeIn' : 'FadeOut', () => {
 				const grad = svg.make('linearGradient', {
@@ -183,11 +184,11 @@ define([
 					'y2': isBegin ? '0%' : '100%',
 				});
 				grad.appendChild(svg.make('stop', {
-					'offset': (100 * 1 / 12) + '%',
+					'offset': '0%',
 					'stop-color': '#FFFFFF',
 				}));
 				grad.appendChild(svg.make('stop', {
-					'offset': (100 * 11 / 12) + '%',
+					'offset': (100 * ratio).toFixed(3) + '%',
 					'stop-color': '#000000',
 				}));
 				return grad;
@@ -195,9 +196,9 @@ define([
 
 			env.maskLayer.appendChild(svg.make('rect', {
 				'x': x - config.width / 2,
-				'y': y - config.height * 0.1,
+				'y': y - (isBegin ? config.extend : 0),
 				'width': config.width,
-				'height': config.height * 1.2,
+				'height': config.height + config.extend,
 				'fill': 'url(#' + gradID + ')',
 			}));
 

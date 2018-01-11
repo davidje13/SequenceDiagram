@@ -11,12 +11,10 @@ define([
 ) => {
 	'use strict';
 
-	// TODO:
-	// * fade starter/terminator sometimes does not fully cover line
-
 	const FONT = Handlee.name;
-	const FONT_FAMILY = '"' + FONT + '",cursive';
+	const FONT_FAMILY = '\'' + FONT + '\',cursive';
 	const LINE_HEIGHT = 1.5;
+	const MAX_CHAOS = 5;
 
 	const PENCIL = {
 		'stroke': 'rgba(0,0,0,0.7)',
@@ -66,8 +64,9 @@ define([
 				render: null,
 			},
 			fade: {
-				width: 8,
+				width: Math.ceil(MAX_CHAOS * 2 + 2),
 				height: 6,
+				extend: Math.ceil(MAX_CHAOS * 0.3 + 1),
 			},
 			none: {
 				height: 10,
@@ -387,7 +386,7 @@ define([
 				(p2.x - p1.x) * (p2.x - p1.x) +
 				(p2.y - p1.y) * (p2.y - p1.y)
 			);
-			const rough = Math.min(Math.sqrt(length) * 0.2, 5);
+			const rough = Math.min(Math.sqrt(length) * 0.2, MAX_CHAOS);
 			const x1 = p1.x + this.vary(var1 * varX * rough);
 			const y1 = p1.y + this.vary(var1 * varY * rough);
 			const x2 = p2.x + this.vary(var2 * varX * rough);
