@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "container:scripts">
+   </FileRef>
+   <FileRef
+      location = "container:styles">
+   </FileRef>
+   <FileRef
+      location = "container:editor-dev.htm">
+   </FileRef>
+   <FileRef
+      location = "container:index.html">
+   </FileRef>
+   <FileRef
+      location = "container:library.htm">
+   </FileRef>
+   <FileRef
+      location = "container:LICENSE">
+   </FileRef>
+   <FileRef
+      location = "container:package.json">
+   </FileRef>
+   <FileRef
+      location = "container:readme_images.htm">
+   </FileRef>
+   <FileRef
+      location = "container:README.md">
+   </FileRef>
+   <FileRef
+      location = "container:test.htm">
+   </FileRef>
+</Workspace>
