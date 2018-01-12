@@ -1,4 +1,4 @@
-define(['svg/SVGUtilities'], (svg) => {
+define(['svg/SVGUtilities', 'svg/PatternedLine'], (svg, PatternedLine) => {
 	'use strict';
 
 	function deepCopy(o) {
@@ -107,6 +107,60 @@ define(['svg/SVGUtilities'], (svg) => {
 				'l' + (-radius * 2) + ' ' + (radius * 2)
 			),
 		}, attrs));
+	};
+
+	BaseTheme.WavePattern = class WavePattern {
+		constructor(width, height) {
+			this.deltas = [
+				0,
+				-height * 2 / 3,
+				-height,
+				-height * 2 / 3,
+				0,
+				height * 2 / 3,
+				height,
+				height * 2 / 3,
+			];
+			this.partWidth = width / this.deltas.length;
+		}
+
+		getDelta(p) {
+			return this.deltas[p % this.deltas.length];
+		}
+	};
+
+	BaseTheme.renderFlatConnector = (pattern, attrs, {x1, dx1, x2, dx2, y}) => {
+		return {
+			shape: svg.make('path', Object.assign({
+				d: new PatternedLine(pattern)
+					.move(x1 + dx1, y)
+					.line(x2 + dx2, y)
+					.cap()
+					.asPath(),
+			}, attrs)),
+			p1: {x: x1, y},
+			p2: {x: x2, y},
+		};
+	};
+
+	BaseTheme.renderRevConnector = (
+		pattern,
+		attrs,
+		{xL, dx1, dx2, y1, y2, xR}
+	) => {
+		return {
+			shape: svg.make('path', Object.assign({
+				d: new PatternedLine(pattern)
+					.move(xL + dx1, y1)
+					.line(xR, y1)
+					.arc(xR, (y1 + y2) / 2, Math.PI)
+					.line(xL + dx2, y2)
+					.cap()
+					.asPath(),
+			}, attrs)),
+			p1: {x: xL, y: y1},
+			p2: {x: xL, y: y2},
+		};
 	};
 
 	return BaseTheme;

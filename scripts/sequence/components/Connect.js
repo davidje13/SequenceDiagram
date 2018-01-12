@@ -76,113 +76,6 @@ define([
 		new Arrowhead('double'),
 	];
 
-	function makeWavyLineHeights(height) {
-		return [
-			0,
-			-height * 2 / 3,
-			-height,
-			-height * 2 / 3,
-			0,
-			height * 2 / 3,
-			height,
-			height * 2 / 3,
-		];
-	}
-
-	function renderFlat({x1, dx1, x2, dx2, y}, attrs) {
-		const ww = attrs['wave-width'];
-		const hh = attrs['wave-height'];
-
-		if(!ww || !hh) {
-			return {
-				shape: svg.make('line', Object.assign({
-					'x1': x1 + dx1,
-					'y1': y,
-					'x2': x2 + dx2,
-					'y2': y,
-				}, attrs)),
-				p1: {x: x1, y},
-				p2: {x: x2, y},
-			};
-		}
-
-		const heights = makeWavyLineHeights(hh);
-		const dw = ww / heights.length;
-		let p = 0;
-
-		let points = '';
-		const xL = Math.min(x1 + dx1, x2 + dx2);
-		const xR = Math.max(x1 + dx1, x2 + dx2);
-		for(let x = xL; x + dw <= xR; x += dw) {
-			points += (
-				x + ' ' +
-				(y + heights[(p ++) % heights.length]) + ' '
-			);
-		}
-		points += xR + ' ' + y;
-		return {
-			shape: svg.make('polyline', Object.assign({points}, attrs)),
-			p1: {x: x1, y},
-			p2: {x: x2, y},
-		};
-	}
-
-	function renderRev({xL, dx1, dx2, y1, y2, xR}, attrs) {
-		const r = (y2 - y1) / 2;
-		const ww = attrs['wave-width'];
-		const hh = attrs['wave-height'];
-
-		if(!ww || !hh) {
-			return {
-				shape: svg.make('path', Object.assign({
-					'd': (
-						'M' + (xL + dx1) + ' ' + y1 +
-						'L' + xR + ' ' + y1 +
-						'A' + r + ' ' + r + ' 0 0 1 ' + xR + ' ' + y2 +
-						'L' + (xL + dx2) + ' ' + y2
-					),
-				}, attrs)),
-				p1: {x: xL, y: y1},
-				p2: {x: xL, y: y2},
-			};
-		}
-
-		const heights = makeWavyLineHeights(hh);
-		const dw = ww / heights.length;
-		let p = 0;
-
-		let points = '';
-		for(let x = xL + dx1; x + dw <= xR; x += dw) {
-			points += (
-				x + ' ' +
-				(y1 + heights[(p ++) % heights.length]) + ' '
-			);
-		}
-
-		const ym = (y1 + y2) / 2;
-		for(let t = 0; t + dw / r <= Math.PI; t += dw / r) {
-			const h = heights[(p ++) % heights.length];
-			points += (
-				(xR + Math.sin(t) * (r - h)) + ' ' +
-				(ym - Math.cos(t) * (r - h)) + ' '
-			);
-		}
-
-		for(let x = xR; x - dw >= xL + dx2; x -= dw) {
-			points += (
-				x + ' ' +
-				(y2 - heights[(p ++) % heights.length]) + ' '
-			);
-		}
-
-		points += (xL + dx2) + ' ' + y2;
-		return {
-			shape: svg.make('polyline', Object.assign({points}, attrs)),
-			p1: {x: xL, y: y1},
-			p2: {x: xL, y: y2},
-		};
-	}
-
 	class Connect extends BaseComponent {
 		separation({label, agentNames, options}, env) {
 			const config = env.theme.connect;
@@ -272,14 +165,14 @@ define([
 			const y1 = y0 + r * 2;
 
 			const line = config.line[options.line];
-			const rendered = (line.renderRev || renderRev)({
+			const rendered = line.renderRev(line.attrs, {
 				xL: lineX,
 				dx1: lArrow.lineGap(env.theme, line.attrs),
 				dx2: rArrow.lineGap(env.theme, line.attrs),
 				y1: y0,
 				y2: y1,
 				xR: x1,
-			}, line.attrs);
+			});
 			env.shapeLayer.appendChild(rendered.shape);
 
 			lArrow.render(env.shapeLayer, env.theme, rendered.p1, 1);
@@ -336,13 +229,13 @@ define([
 			});
 
 			const line = config.line[options.line];
-			const rendered = (line.render || renderFlat)({
+			const rendered = line.renderFlat(line.attrs, {
 				x1: x0,
 				dx1: lArrow.lineGap(env.theme, line.attrs) * dir,
 				x2: x1,
 				dx2: -rArrow.lineGap(env.theme, line.attrs) * dir,
 				y,
-			}, line.attrs);
+			});
 			env.shapeLayer.appendChild(rendered.shape);
 
 			lArrow.render(env.shapeLayer, env.theme, rendered.p1, dir);

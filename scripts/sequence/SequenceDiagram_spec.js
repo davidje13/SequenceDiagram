@@ -118,7 +118,7 @@ defineDescribe('SequenceDiagram', [
 
 		// Arrow
 		expect(content).toContain(
-			'<line x1="20.5" y1="26" x2="48.5" y2="26"'
+			'<path d="M20.5 26L48.5 26"'
 		);
 		expect(content).toContain(
 			'<polygon points="46 21 51 26 46 31"'

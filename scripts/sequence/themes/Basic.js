@@ -12,6 +12,8 @@ define([
 	const FONT = 'sans-serif';
 	const LINE_HEIGHT = 1.3;
 
+	const WAVE = new BaseTheme.WavePattern(6, 0.5);
+
 	const SETTINGS = {
 		titleMargin: 10,
 		outerMargin: 5,
@@ -76,6 +78,8 @@ define([
 						'stroke': '#000000',
 						'stroke-width': 1,
 					},
+					renderFlat: BaseTheme.renderFlatConnector.bind(null, null),
+					renderRev: BaseTheme.renderRevConnector.bind(null, null),
 				},
 				'dash': {
 					attrs: {
@@ -84,6 +88,8 @@ define([
 						'stroke-width': 1,
 						'stroke-dasharray': '4, 2',
 					},
+					renderFlat: BaseTheme.renderFlatConnector.bind(null, null),
+					renderRev: BaseTheme.renderRevConnector.bind(null, null),
 				},
 				'wave': {
 					attrs: {
@@ -92,9 +98,9 @@ define([
 						'stroke-width': 1,
 						'stroke-linejoin': 'round',
 						'stroke-linecap': 'round',
-						'wave-width': 6,
-						'wave-height': 0.5,
 					},
+					renderFlat: BaseTheme.renderFlatConnector.bind(null, WAVE),
+					renderRev: BaseTheme.renderRevConnector.bind(null, WAVE),
 				},
 			},
 			arrow: {

@@ -30,6 +30,8 @@ define([
 		'stroke-linecap': 'round',
 	};
 
+	const WAVE = new BaseTheme.WavePattern(6, 0.5);
+
 	const SETTINGS = {
 		titleMargin: 10,
 		outerMargin: 5,
@@ -80,27 +82,25 @@ define([
 					attrs: Object.assign({
 						'fill': 'none',
 					}, PENCIL),
-					render: null,
-					renderRev: null,
+					renderFlat: null,
+					renderRev: BaseTheme.renderRevConnector.bind(null, null),
 				},
 				'dash': {
 					attrs: Object.assign({
 						'fill': 'none',
 						'stroke-dasharray': '4, 2',
 					}, PENCIL),
-					render: null,
-					renderRev: null,
+					renderFlat: null,
+					renderRev: BaseTheme.renderRevConnector.bind(null, null),
 				},
 				'wave': {
 					attrs: Object.assign({
 						'fill': 'none',
 						'stroke-linejoin': 'round',
 						'stroke-linecap': 'round',
-						'wave-width': 6,
-						'wave-height': 0.5,
 					}, PENCIL),
-					render: null,
-					renderRev: null,
+					renderFlat: BaseTheme.renderFlatConnector.bind(null, WAVE),
+					renderRev: BaseTheme.renderRevConnector.bind(null, WAVE),
 				},
 			},
 			arrow: {
@@ -316,16 +316,19 @@ define([
 			this.renderBar = this.renderBar.bind(this);
 			this.renderBox = this.renderBox.bind(this);
 			this.renderArrowHead = this.renderArrowHead.bind(this);
-			this.renderConnect = this.renderConnect.bind(this);
+			this.renderFlatConnector = this.renderFlatConnector.bind(this);
 			this.renderTag = this.renderTag.bind(this);
 
 			this.agentCap.cross.render = this.renderCross.bind(this);
 			this.agentCap.bar.render = this.renderBar;
 			this.agentCap.box.boxRenderer = this.renderBox;
+
 			this.connect.arrow.single.render = this.renderArrowHead;
 			this.connect.arrow.double.render = this.renderArrowHead;
-			this.connect.line.solid.render = this.renderConnect;
-			this.connect.line.dash.render = this.renderConnect;
+
+			this.connect.line.solid.renderFlat = this.renderFlatConnector;
+			this.connect.line.dash.renderFlat = this.renderFlatConnector;
+
 			this.notes.note.boxRenderer = this.renderNote.bind(this);
 			this.notes.state.boxRenderer = this.renderState.bind(this);
 			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
@@ -514,7 +517,7 @@ define([
 			return g;
 		}
 
-		renderConnect({x1, dx1, x2, dx2, y}, attrs) {
+		renderFlatConnector(attrs, {x1, dx1, x2, dx2, y}) {
 			const ln = this.lineNodes(
 				{x: x1 + dx1, y},
 				{x: x2 + dx2, y},
