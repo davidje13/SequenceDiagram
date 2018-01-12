@@ -313,7 +313,10 @@ define(['require'], (require) => {
 			this.viewPaneInner.appendChild(this.diagram.dom());
 
 			this.registerListeners();
-			this.update();
+
+			// Delay first update 1 frame to ensure render target is ready
+			// (prevents initial incorrect font calculations for custom fonts)
+			setTimeout(this.update.bind(this), 0);
 		}
 
 		addCodeBlock(block) {
