@@ -20,6 +20,7 @@ defineDescribe('SequenceDiagram', [
 	function getSimplifiedContent(d) {
 		return (d.dom().outerHTML
 			.replace(/<g><\/g>/g, '')
+			.replace(/<defs><\/defs>/g, '')
 			.replace(' xmlns="http://www.w3.org/2000/svg" version="1.1"', '')
 		);
 	}

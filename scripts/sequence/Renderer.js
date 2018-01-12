@@ -75,11 +75,7 @@ define([
 				components = BaseComponent.getComponents();
 			}
 
-			this.separationStage = this.separationStage.bind(this);
-			this.renderStage = this.renderStage.bind(this);
-
-			this.addSeparation = this.addSeparation.bind(this);
-			this.addDef = this.addDef.bind(this);
+			this._bindMethods();
 
 			this.state = {};
 			this.width = 0;
@@ -89,6 +85,7 @@ define([
 			this.namespace = parseNamespace(namespace);
 			this.components = components;
 			this.SVGTextBlockClass = SVGTextBlockClass;
+			this.knownThemeDefs = new Set();
 			this.knownDefs = new Set();
 			this.highlights = new Map();
 			this.currentHighlight = -1;
@@ -98,6 +95,14 @@ define([
 			});
 		}
 
+		_bindMethods() {
+			this.separationStage = this.separationStage.bind(this);
+			this.renderStage = this.renderStage.bind(this);
+			this.addSeparation = this.addSeparation.bind(this);
+			this.addThemeDef = this.addThemeDef.bind(this);
+			this.addDef = this.addDef.bind(this);
+		}
+
 		addTheme(theme) {
 			this.themes.set(theme.name, theme);
 		}
@@ -105,6 +110,7 @@ define([
 		buildStaticElements() {
 			this.base = svg.makeContainer();
 
+			this.themeDefs = svg.make('defs');
 			this.defs = svg.make('defs');
 			this.mask = svg.make('mask', {
 				'id': this.namespace + 'LineMask',
@@ -117,6 +123,7 @@ define([
 			this.blocks = svg.make('g');
 			this.actionShapes = svg.make('g');
 			this.actionLabels = svg.make('g');
+			this.base.appendChild(this.themeDefs);
 			this.base.appendChild(this.defs);
 			this.base.appendChild(this.agentLines);
 			this.base.appendChild(this.blocks);
@@ -125,6 +132,18 @@ define([
 			this.title = new this.SVGTextBlockClass(this.base);
 
 			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
+		}
+
+		addThemeDef(name, generator) {
+			const namespacedName = this.namespace + name;
+			if(this.knownThemeDefs.has(name)) {
+				return namespacedName;
+			}
+			this.knownThemeDefs.add(name);
+			const def = generator();
+			def.setAttribute('id', namespacedName);
+			this.themeDefs.appendChild(def);
+			return namespacedName;
 		}
 
 		addDef(name, generator) {
@@ -424,7 +443,12 @@ define([
 			this.currentY = 0;
 		}
 
-		_reset() {
+		_reset(theme) {
+			if(theme) {
+				this.knownThemeDefs.clear();
+				svg.empty(this.themeDefs);
+			}
+
 			this.knownDefs.clear();
 			this.highlights.clear();
 			this.currentHighlight = -1;
@@ -461,16 +485,15 @@ define([
 
 		render(sequence) {
 			const prevHighlight = this.currentHighlight;
-			this._reset();
+			const oldTheme = this.theme;
 
-			const themeName = sequence.meta.theme;
-			this.theme = this.themes.get(themeName);
-			if(!this.theme) {
-				this.theme = this.themes.get('');
-			}
+			this.theme = this.getThemeNamed(sequence.meta.theme);
+
+			const themeChanged = (this.theme !== oldTheme);
+			this._reset(themeChanged);
 
 			this.theme.reset();
-			this.theme.addDefs(this.addDef);
+			this.theme.addDefs(this.addThemeDef);
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,
@@ -501,6 +524,14 @@ define([
 
 		getThemes() {
 			return this.getThemeNames().map((name) => this.themes.get(name));
+		}
+
+		getThemeNamed(themeName) {
+			const theme = this.themes.get(themeName);
+			if(theme) {
+				return theme;
+			}
+			return this.themes.get('');
 		}
 
 		getAgentX(name) {
