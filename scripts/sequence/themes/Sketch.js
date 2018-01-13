@@ -30,8 +30,6 @@ define([
 		'stroke-linecap': 'round',
 	};
 
-	const WAVE = new BaseTheme.WavePattern(6, 0.5);
-
 	const SETTINGS = {
 		titleMargin: 10,
 		outerMargin: 5,
@@ -83,7 +81,7 @@ define([
 						'fill': 'none',
 					}, PENCIL),
 					renderFlat: null,
-					renderRev: BaseTheme.renderRevConnector.bind(null, null),
+					renderRev: null,
 				},
 				'dash': {
 					attrs: Object.assign({
@@ -91,7 +89,7 @@ define([
 						'stroke-dasharray': '4, 2',
 					}, PENCIL),
 					renderFlat: null,
-					renderRev: BaseTheme.renderRevConnector.bind(null, null),
+					renderRev: null,
 				},
 				'wave': {
 					attrs: Object.assign({
@@ -99,8 +97,8 @@ define([
 						'stroke-linejoin': 'round',
 						'stroke-linecap': 'round',
 					}, PENCIL),
-					renderFlat: BaseTheme.renderFlatConnector.bind(null, WAVE),
-					renderRev: BaseTheme.renderRevConnector.bind(null, WAVE),
+					renderFlat: null,
+					renderRev: null,
 				},
 			},
 			arrow: {
@@ -291,6 +289,31 @@ define([
 	const RIGHT = {};
 	const LEFT = {};
 
+	class SketchWavePattern extends BaseTheme.WavePattern {
+		constructor(width, handedness) {
+			const heights = [
+				+0.0,
+				-0.3,
+				-0.6,
+				-0.75,
+				-0.45,
+				+0.0,
+				+0.45,
+				+0.75,
+				+0.6,
+				+0.3,
+			];
+			if(handedness !== RIGHT) {
+				heights.reverse();
+			}
+			super(6, heights);
+		}
+
+		getDelta(p) {
+			return super.getDelta(p) + Math.sin(p * 0.03) * 0.5;
+		}
+	}
+
 	class SketchTheme extends BaseTheme {
 		constructor(handedness = RIGHT) {
 			super({
@@ -308,29 +331,49 @@ define([
 				this.handedness = -1;
 			}
 			this.random = new Random();
+			this.wave = new SketchWavePattern(4, handedness);
 
-			this._assignFunctions();
+			this._assignCapFunctions();
+			this._assignConnectFunctions();
+			this._assignNoteFunctions();
+			this._assignBlockFunctions();
 		}
 
-		_assignFunctions() {
+		_assignCapFunctions() {
 			this.renderBar = this.renderBar.bind(this);
 			this.renderBox = this.renderBox.bind(this);
-			this.renderArrowHead = this.renderArrowHead.bind(this);
-			this.renderFlatConnector = this.renderFlatConnector.bind(this);
-			this.renderTag = this.renderTag.bind(this);
 
 			this.agentCap.cross.render = this.renderCross.bind(this);
 			this.agentCap.bar.render = this.renderBar;
 			this.agentCap.box.boxRenderer = this.renderBox;
+		}
+
+		_assignConnectFunctions() {
+			this.renderArrowHead = this.renderArrowHead.bind(this);
+			this.renderFlatConnector = this.renderFlatConnector.bind(this);
+			this.renderRevConnector = this.renderRevConnector.bind(this);
 
 			this.connect.arrow.single.render = this.renderArrowHead;
 			this.connect.arrow.double.render = this.renderArrowHead;
 
 			this.connect.line.solid.renderFlat = this.renderFlatConnector;
+			this.connect.line.solid.renderRev = this.renderRevConnector;
 			this.connect.line.dash.renderFlat = this.renderFlatConnector;
+			this.connect.line.dash.renderRev = this.renderRevConnector;
+			this.connect.line.wave.renderFlat =
+				this.renderFlatConnectorWave.bind(this);
+			this.connect.line.wave.renderRev =
+				this.renderRevConnectorWave.bind(this);
+		}
 
+		_assignNoteFunctions() {
 			this.notes.note.boxRenderer = this.renderNote.bind(this);
 			this.notes.state.boxRenderer = this.renderState.bind(this);
+		}
+
+		_assignBlockFunctions() {
+			this.renderTag = this.renderTag.bind(this);
+
 			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
 			this.blocks[''].boxRenderer = this.renderBlock.bind(this);
 			this.blocks.ref.section.mode.boxRenderer = this.renderTag;
@@ -527,6 +570,74 @@ define([
 				shape: svg.make('path', Object.assign({'d': ln.nodes}, attrs)),
 				p1: {x: ln.p1.x - dx1, y: ln.p2.y},
 				p2: {x: ln.p2.x - dx2, y: ln.p2.y},
+			};
+		}
+
+		renderRevConnector(attrs, {xL, dx1, dx2, y1, y2, xR}) {
+			const variance = Math.min((xR - xL) * 0.06, 3);
+			const overshoot = Math.min((xR - xL) * 0.5, 6);
+			const p1x = xL + dx1 + this.vary(variance, -1);
+			const p1y = y1 + this.vary(variance, -1);
+			const b1x = xR - overshoot * this.vary(0.2, 1);
+			const b1y = y1 - this.vary(1, 2);
+			const p2x = xR;
+			const p2y = y1 + this.vary(1, 1);
+			const b2x = xR;
+			const b2y = y2 + this.vary(2);
+			const p3x = xL + dx2 + this.vary(variance, -1);
+			const p3y = y2 + this.vary(variance, -1);
+
+			return {
+				shape: svg.make('path', Object.assign({
+					d: (
+						'M' + p1x + ' ' + p1y +
+						'C' + p1x + ' ' + p1y +
+						',' + b1x + ' ' + b1y +
+						',' + p2x + ' ' + p2y +
+						'S' + b2x + ' ' + b2y +
+						',' + p3x + ' ' + p3y
+					),
+				}, attrs)),
+				p1: {x: p1x - dx1, y: p1y},
+				p2: {x: p3x - dx2, y: p3y},
+			};
+		}
+
+		renderFlatConnectorWave(attrs, {x1, dx1, x2, dx2, y}) {
+			const x1v = x1 + this.vary(0.3);
+			const x2v = x2 + this.vary(0.3);
+			const y1v = y + this.vary(1);
+			const y2v = y + this.vary(1);
+			return {
+				shape: svg.make('path', Object.assign({
+					d: new SVGShapes.PatternedLine(this.wave)
+						.move(x1v + dx1, y1v)
+						.line(x2v + dx2, y2v)
+						.cap()
+						.asPath(),
+				}, attrs)),
+				p1: {x: x1v, y: y1v},
+				p2: {x: x2v, y: y2v},
+			};
+		}
+
+		renderRevConnectorWave(attrs, {xL, dx1, dx2, y1, y2, xR}) {
+			const x1v = xL + this.vary(0.3);
+			const x2v = xL + this.vary(0.3);
+			const y1v = y1 + this.vary(1);
+			const y2v = y2 + this.vary(1);
+			return {
+				shape: svg.make('path', Object.assign({
+					d: new SVGShapes.PatternedLine(this.wave)
+						.move(x1v + dx1, y1v)
+						.line(xR, y1)
+						.arc(xR, (y1 + y2) / 2, Math.PI)
+						.line(x2v + dx2, y2v)
+						.cap()
+						.asPath(),
+				}, attrs)),
+				p1: {x: x1v, y: y1v},
+				p2: {x: x2v, y: y2v},
 			};
 		}
 

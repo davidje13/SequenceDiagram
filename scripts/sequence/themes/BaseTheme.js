@@ -1,4 +1,10 @@
-define(['svg/SVGUtilities', 'svg/PatternedLine'], (svg, PatternedLine) => {
+define([
+	'svg/SVGUtilities',
+	'svg/SVGShapes',
+], (
+	svg,
+	SVGShapes
+) => {
 	'use strict';
 
 	function deepCopy(o) {
@@ -111,16 +117,20 @@ define(['svg/SVGUtilities', 'svg/PatternedLine'], (svg, PatternedLine) => {
 
 	BaseTheme.WavePattern = class WavePattern {
 		constructor(width, height) {
-			this.deltas = [
-				0,
-				-height * 2 / 3,
-				-height,
-				-height * 2 / 3,
-				0,
-				height * 2 / 3,
-				height,
-				height * 2 / 3,
-			];
+			if(Array.isArray(height)) {
+				this.deltas = height;
+			} else {
+				this.deltas = [
+					0,
+					-height * 2 / 3,
+					-height,
+					-height * 2 / 3,
+					0,
+					height * 2 / 3,
+					height,
+					height * 2 / 3,
+				];
+			}
 			this.partWidth = width / this.deltas.length;
 		}
 
@@ -132,7 +142,7 @@ define(['svg/SVGUtilities', 'svg/PatternedLine'], (svg, PatternedLine) => {
 	BaseTheme.renderFlatConnector = (pattern, attrs, {x1, dx1, x2, dx2, y}) => {
 		return {
 			shape: svg.make('path', Object.assign({
-				d: new PatternedLine(pattern)
+				d: new SVGShapes.PatternedLine(pattern)
 					.move(x1 + dx1, y)
 					.line(x2 + dx2, y)
 					.cap()
@@ -150,7 +160,7 @@ define(['svg/SVGUtilities', 'svg/PatternedLine'], (svg, PatternedLine) => {
 	) => {
 		return {
 			shape: svg.make('path', Object.assign({
-				d: new PatternedLine(pattern)
+				d: new SVGShapes.PatternedLine(pattern)
 					.move(xL + dx1, y1)
 					.line(xR, y1)
 					.arc(xR, (y1 + y2) / 2, Math.PI)

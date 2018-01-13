@@ -1,4 +1,12 @@
-define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
+define([
+	'./SVGUtilities',
+	'./SVGTextBlock',
+	'./PatternedLine',
+], (
+	svg,
+	SVGTextBlock,
+	PatternedLine
+) => {
 	'use strict';
 
 	function renderBox(attrs, position) {
@@ -112,5 +120,6 @@ define(['./SVGUtilities', './SVGTextBlock'], (svg, SVGTextBlock) => {
 		renderNote,
 		renderBoxedText,
 		TextBlock: SVGTextBlock,
+		PatternedLine,
 	};
 });
