@@ -58,6 +58,17 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			]);
 		});
 
+		it('parses windows-style newlines as tokens', () => {
+			const input = 'foo bar\r\nbaz';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: ' ', v: 'bar'}),
+				token({s: '\r', v: '\n'}),
+				token({s: '', v: 'baz'}),
+			]);
+		});
+
 		it('stores line numbers', () => {
 			const input = 'foo bar\nbaz';
 			const tokens = tokeniser.tokenise(input);
@@ -181,6 +192,19 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 				{s: '', v: 'abc', q: false},
 				{s: '', v: 'd', q: false},
 				{s: '', v: '\n', q: false},
+				{s: '', v: 'e', q: false},
+			]);
+			expect(lines).toEqual([
+				[{s: '', v: 'abc', q: false}, {s: '', v: 'd', q: false}],
+				[{s: '', v: 'e', q: false}],
+			]);
+		});
+
+		it('splits at windows-style newlines', () => {
+			const lines = tokeniser.splitLines([
+				{s: '', v: 'abc', q: false},
+				{s: '', v: 'd', q: false},
+				{s: '\r', v: '\n', q: false},
 				{s: '', v: 'e', q: false},
 			]);
 			expect(lines).toEqual([
