@@ -182,7 +182,7 @@ define([
 		},
 		label: {
 			padding: {
-				top: 1,
+				top: 2,
 				left: 5,
 				right: 3,
 				bottom: 0,
@@ -224,7 +224,7 @@ define([
 
 	const NOTES = {
 		'text': {
-			margin: {top: 0, left: 2, right: 2, bottom: 0},
+			margin: {top: 0, left: 6, right: 6, bottom: 0},
 			padding: {top: 2, left: 2, right: 2, bottom: 2},
 			overlap: {left: 10, right: 10},
 			boxRenderer: SVGShapes.renderBox.bind(null, {

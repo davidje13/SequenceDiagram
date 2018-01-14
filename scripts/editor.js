@@ -200,14 +200,19 @@
 				preview: 'headers box\ntitle Title\nA -> B',
 			},
 			{
+				title: 'Monospace theme',
+				code: 'theme monospace',
+				preview: 'headers box\ntitle mono\ntheme monospace\nA -> B',
+			},
+			{
 				title: 'Chunky theme',
 				code: 'theme chunky',
-				preview: 'headers box\ntheme chunky\nA -> B',
+				preview: 'headers box\ntitle chunky\ntheme chunky\nA -> B',
 			},
 			{
 				title: 'Sketch theme',
 				code: 'theme sketch',
-				preview: 'headers box\ntheme sketch\nA -> B',
+				preview: 'headers box\ntitle sketch\ntheme sketch\nA -> B',
 			},
 			{
 				title: 'Cross terminators',

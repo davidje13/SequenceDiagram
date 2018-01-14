@@ -7,6 +7,7 @@ define([
 	'./Exporter',
 	'./themes/BaseTheme',
 	'./themes/Basic',
+	'./themes/Monospace',
 	'./themes/Chunky',
 	'./themes/Sketch',
 ], (
@@ -17,6 +18,7 @@ define([
 	Exporter,
 	BaseTheme,
 	BasicTheme,
+	MonospaceTheme,
 	ChunkyTheme,
 	SketchTheme
 ) => {
@@ -25,6 +27,7 @@ define([
 
 	const themes = [
 		new BasicTheme(),
+		new MonospaceTheme(),
 		new ChunkyTheme(),
 		new SketchTheme(SketchTheme.RIGHT),
 		new SketchTheme(SketchTheme.LEFT),
