@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "container:docs">
+   </FileRef>
+   <FileRef
       location = "container:scripts">
    </FileRef>
    <FileRef
@@ -23,7 +26,7 @@
       location = "container:package.json">
    </FileRef>
    <FileRef
-      location = "container:readme_images.htm">
+      location = "container:readme-images.htm">
    </FileRef>
    <FileRef
       location = "container:README.md">

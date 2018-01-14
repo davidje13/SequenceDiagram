@@ -303,24 +303,5 @@ If you find a bug or desire a new feature, feel free to report it in
 the [GitHub issue tracker](https://github.com/davidje13/SequenceDiagram/issues),
 or write the code yourself and make a pull request.
 
-Pull requests are more likely to be accepted if the code you changed
-is tested (write new tests for new features and bug fixes, and update
-existing tests where necessary). You can make sure the tests and linter
-are passing by opening test.htm
-
-Note: the linter can't run from the local filesystem, so you'll need to
-run a local HTTP server to ensure linting is successful. One option if
-you have NPM installed is:
-
-```shell
-npm run serve;
-```
-
-It is also good to rebuild the minified library when committing:
-
-```shell
-npm run minify;
-```
-
-The current status of the tests on the master branch can be checked at
-[test.htm](https://davidje13.github.io/SequenceDiagram/test.htm)
+For more details on contributing, see the
+[CONTRIBUTING.md file](docs/CONTRIBUTING.md).
