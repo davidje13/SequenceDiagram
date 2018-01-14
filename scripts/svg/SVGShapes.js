@@ -46,24 +46,10 @@ define([
 		return g;
 	}
 
-	function renderBoxedText(text, {
-		x,
-		y,
-		padding,
-		boxAttrs,
-		labelAttrs,
-		boxLayer,
-		labelLayer,
-		boxRenderer = null,
-		SVGTextBlockClass = SVGTextBlock,
-	}) {
-		if(!text) {
-			return {width: 0, height: 0, label: null, box: null};
-		}
-
+	function calculateAnchor(x, attrs, padding) {
 		let shift = 0;
 		let anchorX = x;
-		switch(labelAttrs['text-anchor']) {
+		switch(attrs['text-anchor']) {
 		case 'middle':
 			shift = 0.5;
 			anchorX += (padding.left - padding.right) / 2;
@@ -77,10 +63,29 @@ define([
 			anchorX += padding.left;
 			break;
 		}
+		return {shift, anchorX};
+	}
+
+	function renderBoxedText(formatted, {
+		x,
+		y,
+		padding,
+		boxAttrs,
+		labelAttrs,
+		boxLayer,
+		labelLayer,
+		boxRenderer = null,
+		SVGTextBlockClass = SVGTextBlock,
+	}) {
+		if(!formatted || !formatted.length) {
+			return {width: 0, height: 0, label: null, box: null};
+		}
+
+		const {shift, anchorX} = calculateAnchor(x, labelAttrs, padding);
 
 		const label = new SVGTextBlockClass(labelLayer, {
 			attrs: labelAttrs,
-			text,
+			formatted,
 			x: anchorX,
 			y: y + padding.top,
 		});

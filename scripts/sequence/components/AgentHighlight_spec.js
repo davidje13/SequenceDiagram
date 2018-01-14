@@ -28,7 +28,7 @@ defineDescribe('AgentHighlight', [
 			theme,
 			agentInfos,
 		};
-		highlight.separationPre({agentNames: ['foo'], highlighted: true}, env);
+		highlight.separationPre({agentIDs: ['foo'], highlighted: true}, env);
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(2);
 	});
@@ -41,7 +41,7 @@ defineDescribe('AgentHighlight', [
 			theme,
 			agentInfos,
 		};
-		highlight.separationPre({agentNames: ['foo'], highlighted: true}, env);
+		highlight.separationPre({agentIDs: ['foo'], highlighted: true}, env);
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(3);
 	});
@@ -54,7 +54,7 @@ defineDescribe('AgentHighlight', [
 			theme,
 			agentInfos,
 		};
-		highlight.separationPre({agentNames: ['foo'], highlighted: false}, env);
+		highlight.separationPre({agentIDs: ['foo'], highlighted: false}, env);
 		expect(agentInfo.currentRad).toEqual(0);
 		expect(agentInfo.currentMaxRad).toEqual(1);
 	});

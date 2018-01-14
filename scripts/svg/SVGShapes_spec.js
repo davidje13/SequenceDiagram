@@ -56,7 +56,7 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 	describe('renderBoxedText', () => {
 		it('renders a label', () => {
 			const o = document.createElement('p');
-			const rendered = SVGShapes.renderBoxedText('foo', {
+			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
 				padding: {left: 4, top: 8, right: 16, bottom: 32},
@@ -65,7 +65,7 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 				boxLayer: o,
 				labelLayer: o,
 			});
-			expect(rendered.label.state.text).toEqual('foo');
+			expect(rendered.label.state.formatted).toEqual([[{text: 'foo'}]]);
 			expect(rendered.label.state.x).toEqual(5);
 			expect(rendered.label.state.y).toEqual(10);
 			expect(rendered.label.firstLine().parentNode).toEqual(o);
@@ -73,7 +73,7 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 
 		it('positions a box beneath the rendered label', () => {
 			const o = document.createElement('p');
-			const rendered = SVGShapes.renderBoxedText('foo', {
+			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
 				padding: {left: 4, top: 8, right: 16, bottom: 32},
@@ -91,7 +91,7 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 
 		it('returns the size of the rendered box', () => {
 			const o = document.createElement('p');
-			const rendered = SVGShapes.renderBoxedText('foo', {
+			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
 				padding: {left: 4, top: 8, right: 16, bottom: 32},

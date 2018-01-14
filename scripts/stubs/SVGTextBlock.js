@@ -14,12 +14,14 @@ define(['svg/SVGUtilities'], (svg) => {
 		}
 	}
 
+	const EMPTY = [];
+
 	class SVGTextBlock {
 		constructor(container, initialState = {}) {
 			this.container = container;
 			this.state = {
 				attrs: {},
-				text: '',
+				formatted: EMPTY,
 				x: 0,
 				y: 0,
 			};
@@ -57,18 +59,19 @@ define(['svg/SVGUtilities'], (svg) => {
 		}
 
 		_renderText() {
-			if(!this.state.text) {
+			if(!this.state.formatted) {
 				this._reset();
 				return;
 			}
 
-			const lines = this.state.text.split('\n');
-			this._rebuildNodes(lines.length);
+			const formatted = this.state.formatted;
+			this._rebuildNodes(formatted.length);
 
 			let maxWidth = 0;
 			this.nodes.forEach(({text, element}, i) => {
-				text.nodeValue = lines[i];
-				maxWidth = Math.max(maxWidth, lines[i].length);
+				const ln = formatted[i].reduce((v, pt) => v + pt.text, '');
+				text.nodeValue = ln;
+				maxWidth = Math.max(maxWidth, ln.length);
 			});
 			this.width = maxWidth;
 		}
@@ -100,12 +103,12 @@ define(['svg/SVGUtilities'], (svg) => {
 
 			if(this.state.attrs !== oldState.attrs) {
 				this._reset();
-				oldState.text = '';
+				oldState.formatted = EMPTY;
 			}
 
 			const oldNodes = this.nodes.length;
 
-			if(this.state.text !== oldState.text) {
+			if(this.state.formatted !== oldState.formatted) {
 				this._renderText();
 			}
 
@@ -120,29 +123,29 @@ define(['svg/SVGUtilities'], (svg) => {
 	}
 
 	class SizeTester {
-		measure(attrs, content) {
-			if(!content) {
+		measure(attrs, formatted) {
+			if(!formatted || !formatted.length) {
 				return {width: 0, height: 0};
 			}
 
-			const lines = content.split('\n');
 			let width = 0;
-			lines.forEach((line) => {
-				width = Math.max(width, line.length);
+			formatted.forEach((line) => {
+				const length = line.reduce((v, pt) => v + pt.text.length, 0);
+				width = Math.max(width, length);
 			});
 
 			return {
 				width,
-				height: lines.length,
+				height: formatted.length,
 			};
 		}
 
-		measureHeight(attrs, content) {
-			if(!content) {
+		measureHeight(attrs, formatted) {
+			if(!formatted) {
 				return 0;
 			}
 
-			return content.split('\n').length;
+			return formatted.length;
 		}
 
 		resetCache() {

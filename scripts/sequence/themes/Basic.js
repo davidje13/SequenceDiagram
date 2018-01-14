@@ -171,7 +171,7 @@ define([
 			top: 3,
 			bottom: 2,
 		},
-		mode: {
+		tag: {
 			padding: {
 				top: 1,
 				left: 3,

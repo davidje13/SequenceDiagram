@@ -23,84 +23,107 @@ define(['./SVGUtilities'], (svg) => {
 		}
 	}
 
+	function populateSvgTextLine(node, formattedLine) {
+		if(!Array.isArray(formattedLine)) {
+			throw new Error('Invalid formatted text line: ' + formattedLine);
+		}
+		formattedLine.forEach(({text, attrs}) => {
+			const textNode = svg.makeText(text);
+			if(attrs) {
+				const span = svg.make('tspan', attrs);
+				span.appendChild(textNode);
+				node.appendChild(span);
+			} else {
+				node.appendChild(textNode);
+			}
+		});
+	}
+
+	const EMPTY = [];
+
 	class SVGTextBlock {
 		constructor(container, initialState = {}) {
 			this.container = container;
 			this.state = {
 				attrs: {},
-				text: '',
+				formatted: EMPTY,
 				x: 0,
 				y: 0,
 			};
 			this.width = 0;
 			this.height = 0;
-			this.nodes = [];
+			this.lines = [];
 			this.set(initialState);
 		}
 
-		_rebuildNodes(count) {
-			if(count > this.nodes.length) {
+		_rebuildLines(count) {
+			if(count > this.lines.length) {
 				const attrs = Object.assign({
 					'x': this.state.x,
 				}, this.state.attrs);
 
-				while(this.nodes.length < count) {
-					const element = svg.make('text', attrs);
-					const text = svg.makeText();
-					element.appendChild(text);
-					this.container.appendChild(element);
-					this.nodes.push({element, text});
+				while(this.lines.length < count) {
+					const node = svg.make('text', attrs);
+					this.container.appendChild(node);
+					this.lines.push({node, latest: ''});
 				}
 			} else {
-				while(this.nodes.length > count) {
-					const {element} = this.nodes.pop();
-					this.container.removeChild(element);
+				while(this.lines.length > count) {
+					const {node} = this.lines.pop();
+					this.container.removeChild(node);
 				}
 			}
 		}
 
 		_reset() {
-			this._rebuildNodes(0);
+			this._rebuildLines(0);
 			this.width = 0;
 			this.height = 0;
 		}
 
 		_renderText() {
-			if(!this.state.text) {
+			const {formatted} = this.state;
+
+			if(!formatted || !formatted.length) {
 				this._reset();
 				return;
 			}
+			if(!Array.isArray(formatted)) {
+				throw new Error('Invalid formatted text: ' + formatted);
+			}
 
-			const lines = this.state.text.split('\n');
-			this._rebuildNodes(lines.length);
+			this._rebuildLines(formatted.length);
 
 			let maxWidth = 0;
-			this.nodes.forEach(({text, element}, i) => {
-				if(text.nodeValue !== lines[i]) {
-					text.nodeValue = lines[i];
+			this.lines.forEach((ln, i) => {
+				const id = JSON.stringify(formatted[i]);
+				if(id !== ln.latest) {
+					svg.empty(ln.node);
+					populateSvgTextLine(ln.node, formatted[i]);
+					ln.latest = id;
 				}
-				maxWidth = Math.max(maxWidth, element.getComputedTextLength());
+				maxWidth = Math.max(maxWidth, ln.node.getComputedTextLength());
 			});
 			this.width = maxWidth;
 		}
 
 		_updateX() {
-			this.nodes.forEach(({element}) => {
-				element.setAttribute('x', this.state.x);
+			this.lines.forEach(({node}) => {
+				node.setAttribute('x', this.state.x);
 			});
 		}
 
 		_updateY() {
 			const {size, lineHeight} = fontDetails(this.state.attrs);
-			this.nodes.forEach(({element}, i) => {
-				element.setAttribute('y', this.state.y + i * lineHeight + size);
+			this.lines.forEach(({node}, i) => {
+				node.setAttribute('y', this.state.y + i * lineHeight + size);
 			});
-			this.height = lineHeight * this.nodes.length;
+			this.height = lineHeight * this.lines.length;
 		}
 
 		firstLine() {
-			if(this.nodes.length > 0) {
-				return this.nodes[0].element;
+			if(this.lines.length > 0) {
+				return this.lines[0].node;
 			} else {
 				return null;
 			}
@@ -112,12 +135,12 @@ define(['./SVGUtilities'], (svg) => {
 
 			if(this.state.attrs !== oldState.attrs) {
 				this._reset();
-				oldState.text = '';
+				oldState.formatted = EMPTY;
 			}
 
-			const oldNodes = this.nodes.length;
+			const oldLines = this.lines.length;
 
-			if(this.state.text !== oldState.text) {
+			if(this.state.formatted !== oldState.formatted) {
 				this._renderText();
 			}
 
@@ -125,7 +148,7 @@ define(['./SVGUtilities'], (svg) => {
 				this._updateX();
 			}
 
-			if(this.state.y !== oldState.y || this.nodes.length !== oldNodes) {
+			if(this.state.y !== oldState.y || this.lines.length !== oldLines) {
 				this._updateY();
 			}
 		}
@@ -142,18 +165,18 @@ define(['./SVGUtilities'], (svg) => {
 			this.cache = new Map();
 		}
 
-		measure(attrs, content) {
-			if(!content) {
+		measure(attrs, formatted) {
+			if(!formatted || !formatted.length) {
 				return {width: 0, height: 0};
+			}
+			if(!Array.isArray(formatted)) {
+				throw new Error('Invalid formatted text: ' + formatted);
 			}
 
 			let tester = this.cache.get(attrs);
 			if(!tester) {
-				const text = svg.makeText();
-				const node = svg.make('text', attrs);
-				node.appendChild(text);
-				this.testers.appendChild(node);
-				tester = {text, node};
+				tester = svg.make('text', attrs);
+				this.testers.appendChild(tester);
 				this.cache.set(attrs, tester);
 			}
 
@@ -161,26 +184,28 @@ define(['./SVGUtilities'], (svg) => {
 				this.container.appendChild(this.testers);
 			}
 
-			const lines = content.split('\n');
 			let width = 0;
-			lines.forEach((line) => {
-				tester.text.nodeValue = line;
-				width = Math.max(width, tester.node.getComputedTextLength());
+			formatted.forEach((line) => {
+				svg.empty(tester);
+				populateSvgTextLine(tester, line);
+				width = Math.max(width, tester.getComputedTextLength());
 			});
 
 			return {
 				width,
-				height: lines.length * fontDetails(attrs).lineHeight,
+				height: formatted.length * fontDetails(attrs).lineHeight,
 			};
 		}
 
-		measureHeight(attrs, content) {
-			if(!content) {
+		measureHeight(attrs, formatted) {
+			if(!formatted) {
 				return 0;
 			}
+			if(!Array.isArray(formatted)) {
+				throw new Error('Invalid formatted text: ' + formatted);
+			}
 
-			const lines = content.split('\n');
-			return lines.length * fontDetails(attrs).lineHeight;
+			return formatted.length * fontDetails(attrs).lineHeight;
 		}
 
 		resetCache() {

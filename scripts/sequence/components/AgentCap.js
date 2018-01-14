@@ -12,10 +12,10 @@ define([
 	'use strict';
 
 	class CapBox {
-		separation({label}, env) {
+		separation({formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const width = (
-				env.textSizer.measure(config.labelAttrs, label).width +
+				env.textSizer.measure(config.labelAttrs, formattedLabel).width +
 				config.padding.left +
 				config.padding.right
 			);
@@ -27,20 +27,20 @@ define([
 			};
 		}
 
-		topShift({label}, env) {
+		topShift({formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const height = (
-				env.textSizer.measureHeight(config.labelAttrs, label) +
+				env.textSizer.measureHeight(config.labelAttrs, formattedLabel) +
 				config.padding.top +
 				config.padding.bottom
 			);
 			return Math.max(0, height - config.arrowBottom);
 		}
 
-		render(y, {x, label}, env) {
+		render(y, {x, formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const clickable = env.makeRegion();
-			const {width, height} = SVGShapes.renderBoxedText(label, {
+			const {width, height} = SVGShapes.renderBoxedText(formattedLabel, {
 				x,
 				y,
 				padding: config.padding,
@@ -105,10 +105,10 @@ define([
 	}
 
 	class CapBar {
-		separation({label}, env) {
+		separation({formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const width = (
-				env.textSizer.measure(config.labelAttrs, label).width +
+				env.textSizer.measure(config.labelAttrs, formattedLabel).width +
 				config.padding.left +
 				config.padding.right
 			);
@@ -125,17 +125,17 @@ define([
 			return config.height / 2;
 		}
 
-		render(y, {x, label}, env) {
-			const configB = env.theme.agentCap.box;
-			const config = env.theme.agentCap.bar;
+		render(y, {x, formattedLabel}, env) {
+			const boxCfg = env.theme.agentCap.box;
+			const barCfg = env.theme.agentCap.bar;
 			const width = (
-				env.textSizer.measure(configB.labelAttrs, label).width +
-				configB.padding.left +
-				configB.padding.right
+				env.textSizer.measure(boxCfg.labelAttrs, formattedLabel).width +
+				boxCfg.padding.left +
+				boxCfg.padding.right
 			);
-			const height = config.height;
+			const height = barCfg.height;
 
-			env.shapeLayer.appendChild(config.render({
+			env.shapeLayer.appendChild(barCfg.render({
 				x: x - width / 2,
 				y,
 				width,
@@ -172,7 +172,7 @@ define([
 			return isBegin ? config.height : 0;
 		}
 
-		render(y, {x, label}, env, isBegin) {
+		render(y, {x}, env, isBegin) {
 			const config = env.theme.agentCap.fade;
 			const ratio = config.height / (config.height + config.extend);
 
@@ -266,12 +266,12 @@ define([
 			this.begin = begin;
 		}
 
-		separationPre({mode, agentNames}, env) {
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
+		separationPre({mode, agentIDs}, env) {
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
 				const cap = AGENT_CAPS[mode];
 				const sep = cap.separation(agentInfo, env, this.begin);
-				env.addSpacing(name, sep);
+				env.addSpacing(id, sep);
 				agentInfo.currentMaxRad = Math.max(
 					agentInfo.currentMaxRad,
 					sep.radius
@@ -279,18 +279,18 @@ define([
 			});
 		}
 
-		separation({mode, agentNames}, env) {
+		separation({mode, agentIDs}, env) {
 			if(this.begin) {
-				array.mergeSets(env.visibleAgents, agentNames);
+				array.mergeSets(env.visibleAgentIDs, agentIDs);
 			} else {
-				array.removeAll(env.visibleAgents, agentNames);
+				array.removeAll(env.visibleAgentIDs, agentIDs);
 			}
 		}
 
-		renderPre({mode, agentNames}, env) {
+		renderPre({mode, agentIDs}, env) {
 			let maxTopShift = 0;
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
 				const cap = AGENT_CAPS[mode];
 				const topShift = cap.topShift(agentInfo, env, this.begin);
 				maxTopShift = Math.max(maxTopShift, topShift);
@@ -299,15 +299,15 @@ define([
 				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 			});
 			return {
-				agentNames,
+				agentIDs,
 				topShift: maxTopShift,
 			};
 		}
 
-		render({mode, agentNames}, env) {
+		render({mode, agentIDs}, env) {
 			let maxEnd = 0;
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
 				const cap = AGENT_CAPS[mode];
 				const topShift = cap.topShift(agentInfo, env, this.begin);
 				const y0 = env.primaryY - topShift;
@@ -319,9 +319,9 @@ define([
 				);
 				maxEnd = Math.max(maxEnd, y0 + shifts.height);
 				if(this.begin) {
-					env.drawAgentLine(name, y0 + shifts.lineBottom);
+					env.drawAgentLine(id, y0 + shifts.lineBottom);
 				} else {
-					env.drawAgentLine(name, y0 + shifts.lineTop, true);
+					env.drawAgentLine(id, y0 + shifts.lineTop, true);
 				}
 			});
 			return maxEnd + env.theme.actionMargin;

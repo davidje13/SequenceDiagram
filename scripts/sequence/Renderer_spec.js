@@ -26,10 +26,10 @@ defineDescribe('Sequence Renderer', [
 	});
 
 	const GENERATED = {
-		connect: (agentNames, label = '') => {
+		connect: (agentIDs, label = []) => {
 			return {
 				type: 'connect',
-				agentNames,
+				agentIDs,
 				label,
 				options: {
 					line: 'solid',
@@ -40,15 +40,35 @@ defineDescribe('Sequence Renderer', [
 		},
 	};
 
+	function format(text) {
+		if(!text) {
+			return [];
+		}
+		return [[{text}]];
+	}
+
 	describe('.render', () => {
 		it('populates the SVG with content', () => {
 			renderer.render({
-				meta: {title: 'Title'},
+				meta: {title: format('Title')},
 				agents: [
-					{name: '[', anchorRight: true},
-					{name: 'Col 1', anchorRight: false},
-					{name: 'Col 2', anchorRight: false},
-					{name: ']', anchorRight: false},
+					{
+						id: '[',
+						formattedLabel: null,
+						anchorRight: true,
+					}, {
+						id: 'Col 1',
+						formattedLabel: format('Col 1!'),
+						anchorRight: false,
+					}, {
+						id: 'Col 2',
+						formattedLabel: format('Col 2!'),
+						anchorRight: false,
+					}, {
+						id: ']',
+						formattedLabel: null,
+						anchorRight: false,
+					},
 				],
 				stages: [],
 			});
@@ -63,17 +83,17 @@ defineDescribe('Sequence Renderer', [
 			*/
 
 			renderer.render({
-				meta: {title: ''},
+				meta: {title: []},
 				agents: [
-					{name: '[', anchorRight: true},
-					{name: 'A', anchorRight: false},
-					{name: 'B', anchorRight: false},
-					{name: ']', anchorRight: false},
+					{id: '[', formattedLabel: null, anchorRight: true},
+					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
+					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
+					{id: ']', formattedLabel: null, anchorRight: false},
 				],
 				stages: [
-					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
+					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},
 					GENERATED.connect(['A', 'B']),
-					{type: 'agent end', agentNames: ['A', 'B'], mode: 'none'},
+					{type: 'agent end', agentIDs: ['A', 'B'], mode: 'none'},
 				],
 			});
 
@@ -93,18 +113,18 @@ defineDescribe('Sequence Renderer', [
 			*/
 
 			renderer.render({
-				meta: {title: ''},
+				meta: {title: []},
 				agents: [
-					{name: '[', anchorRight: true},
-					{name: 'A', anchorRight: false},
-					{name: 'B', anchorRight: false},
-					{name: 'C', anchorRight: false},
-					{name: ']', anchorRight: false},
+					{id: '[', formattedLabel: null, anchorRight: true},
+					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
+					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
+					{id: 'C', formattedLabel: format('C!'), anchorRight: false},
+					{id: ']', formattedLabel: null, anchorRight: false},
 				],
 				stages: [
 					{
 						type: 'agent begin',
-						agentNames: ['A', 'B', 'C'],
+						agentIDs: ['A', 'B', 'C'],
 						mode: 'box',
 					},
 					GENERATED.connect(['[', 'A']),
@@ -113,7 +133,7 @@ defineDescribe('Sequence Renderer', [
 					GENERATED.connect(['C', ']']),
 					{
 						type: 'agent end',
-						agentNames: ['A', 'B', 'C'],
+						agentIDs: ['A', 'B', 'C'],
 						mode: 'none',
 					},
 				],
@@ -142,25 +162,25 @@ defineDescribe('Sequence Renderer', [
 			*/
 
 			renderer.render({
-				meta: {title: ''},
+				meta: {title: []},
 				agents: [
-					{name: '[', anchorRight: true},
-					{name: 'A', anchorRight: false},
-					{name: 'B', anchorRight: false},
-					{name: 'C', anchorRight: false},
-					{name: 'D', anchorRight: false},
-					{name: ']', anchorRight: false},
+					{id: '[', formattedLabel: null, anchorRight: true},
+					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
+					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
+					{id: 'C', formattedLabel: format('C!'), anchorRight: false},
+					{id: 'D', formattedLabel: format('D!'), anchorRight: false},
+					{id: ']', formattedLabel: null, anchorRight: false},
 				],
 				stages: [
-					{type: 'agent begin', agentNames: ['A', 'B'], mode: 'box'},
-					GENERATED.connect(['A', 'B'], 'short'),
-					{type: 'agent end', agentNames: ['B'], mode: 'cross'},
-					{type: 'agent begin', agentNames: ['C'], mode: 'box'},
-					GENERATED.connect(['A', 'C'], 'long description here'),
-					{type: 'agent end', agentNames: ['C'], mode: 'cross'},
-					{type: 'agent begin', agentNames: ['D'], mode: 'box'},
-					GENERATED.connect(['A', 'D'], 'short again'),
-					{type: 'agent end', agentNames: ['A', 'D'], mode: 'cross'},
+					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},
+					GENERATED.connect(['A', 'B'], format('short')),
+					{type: 'agent end', agentIDs: ['B'], mode: 'cross'},
+					{type: 'agent begin', agentIDs: ['C'], mode: 'box'},
+					GENERATED.connect(['A', 'C'], format('long description')),
+					{type: 'agent end', agentIDs: ['C'], mode: 'cross'},
+					{type: 'agent begin', agentIDs: ['D'], mode: 'box'},
+					GENERATED.connect(['A', 'D'], format('short again')),
+					{type: 'agent end', agentIDs: ['A', 'D'], mode: 'cross'},
 				],
 			});
 

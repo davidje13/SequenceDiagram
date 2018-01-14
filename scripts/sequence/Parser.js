@@ -1,20 +1,35 @@
 define([
 	'core/ArrayUtilities',
 	'./Tokeniser',
+	'./MarkdownParser',
 	'./LabelPatternParser',
-	'./CodeMirrorHints',
 ], (
 	array,
 	Tokeniser,
-	labelPatternParser,
-	CMHints
+	markdownParser,
+	labelPatternParser
 ) => {
 	'use strict';
 
 	const BLOCK_TYPES = {
-		'if': {type: 'block begin', mode: 'if', skip: []},
-		'else': {type: 'block split', mode: 'else', skip: ['if']},
-		'repeat': {type: 'block begin', mode: 'repeat', skip: []},
+		'if': {
+			type: 'block begin',
+			blockType: 'if',
+			tag: 'if',
+			skip: [],
+		},
+		'else': {
+			type: 'block split',
+			blockType: 'else',
+			tag: 'else',
+			skip: ['if'],
+		},
+		'repeat': {
+			type: 'block begin',
+			blockType: 'repeat',
+			tag: 'repeat',
+			skip: [],
+		},
 	};
 
 	const CONNECT_TYPES = ((() => {
@@ -314,7 +329,8 @@ define([
 			skip = skipOver(line, skip, [':']);
 			return {
 				type: type.type,
-				mode: type.mode,
+				blockType: type.blockType,
+				tag: type.tag,
 				label: joinLabel(line, skip),
 			};
 		},
@@ -345,7 +361,8 @@ define([
 			return {
 				type: 'group begin',
 				agents,
-				mode: 'ref',
+				blockType: 'ref',
+				tag: 'ref',
 				label: def.name,
 				alias: def.alias,
 			};
@@ -480,10 +497,6 @@ define([
 			);
 		}
 
-		getCodeMirrorHints() {
-			return CMHints.getHints;
-		}
-
 		parseLines(lines) {
 			const result = {
 				meta: {
@@ -491,6 +504,7 @@ define([
 					theme: '',
 					terminators: 'none',
 					headers: 'box',
+					textFormatter: markdownParser,
 				},
 				stages: [],
 			};

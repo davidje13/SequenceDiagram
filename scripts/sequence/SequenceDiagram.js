@@ -5,6 +5,7 @@ define([
 	'./Generator',
 	'./Renderer',
 	'./Exporter',
+	'./CodeMirrorHints',
 	'./themes/BaseTheme',
 	'./themes/Basic',
 	'./themes/Monospace',
@@ -16,6 +17,7 @@ define([
 	Generator,
 	Renderer,
 	Exporter,
+	CMHints,
 	BaseTheme,
 	BasicTheme,
 	MonospaceTheme,
@@ -36,14 +38,13 @@ define([
 	const SharedParser = new Parser();
 	const SharedGenerator = new Generator();
 	const CMMode = SharedParser.getCodeMirrorMode();
-	const CMHints = SharedParser.getCodeMirrorHints();
 
 	function registerCodeMirrorMode(CodeMirror, modeName = 'sequence') {
 		if(!CodeMirror) {
 			CodeMirror = window.CodeMirror;
 		}
 		CodeMirror.defineMode(modeName, () => CMMode);
-		CodeMirror.registerHelper('hint', modeName, CMHints);
+		CodeMirror.registerHelper('hint', modeName, CMHints.getHints);
 	}
 
 	function addTheme(theme) {

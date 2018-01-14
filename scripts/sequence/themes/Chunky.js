@@ -180,7 +180,7 @@ define([
 			top: 3,
 			bottom: 4,
 		},
-		mode: {
+		tag: {
 			padding: {
 				top: 2,
 				left: 5,

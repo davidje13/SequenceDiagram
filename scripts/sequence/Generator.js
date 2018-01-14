@@ -21,35 +21,52 @@ define(['core/ArrayUtilities'], (array) => {
 	AgentState.LOCKED = new AgentState({locked: true});
 	AgentState.DEFAULT = new AgentState();
 
-	const Agent = {
+	// Agent from Parser: {name, flags}
+	const PAgent = {
 		equals: (a, b) => {
 			return a.name === b.name;
 		},
-		make: (name, {anchorRight = false} = {}) => {
-			return {name, anchorRight};
-		},
-		getName: (agent) => {
-			return agent.name;
-		},
 		hasFlag: (flag, has = true) => {
-			return (agent) => (agent.flags.includes(flag) === has);
+			return (pAgent) => (pAgent.flags.includes(flag) === has);
 		},
+	};
+
+	// Agent from Generator: {id, formattedLabel, anchorRight}
+	const GAgent = {
+		equals: (a, b) => {
+			return a.id === b.id;
+		},
+		make: (id, {anchorRight = false} = {}) => {
+			return {id, anchorRight};
+		},
+		indexOf: (list, gAgent) => {
+			return array.indexOf(list, gAgent, GAgent.equals);
+		},
+		hasIntersection: (a, b) => {
+			return array.hasIntersection(a, b, GAgent.equals);
+		},
+	};
+
+	const NOTE_DEFAULT_G_AGENTS = {
+		'note over': [GAgent.make('['), GAgent.make(']')],
+		'note left': [GAgent.make('[')],
+		'note right': [GAgent.make(']')],
 	};
 
 	const MERGABLE = {
 		'agent begin': {
 			check: ['mode'],
-			merge: ['agentNames'],
+			merge: ['agentIDs'],
 			siblings: new Set(['agent highlight']),
 		},
 		'agent end': {
 			check: ['mode'],
-			merge: ['agentNames'],
+			merge: ['agentIDs'],
 			siblings: new Set(['agent highlight']),
 		},
 		'agent highlight': {
 			check: ['highlighted'],
-			merge: ['agentNames'],
+			merge: ['agentIDs'],
 			siblings: new Set(['agent begin', 'agent end']),
 		},
 	};
@@ -183,39 +200,33 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	}
 
-	function addBounds(target, agentL, agentR, involvedAgents = null) {
-		array.remove(target, agentL, Agent.equals);
-		array.remove(target, agentR, Agent.equals);
+	function addBounds(allGAgents, gAgentL, gAgentR, involvedGAgents = null) {
+		array.remove(allGAgents, gAgentL, GAgent.equals);
+		array.remove(allGAgents, gAgentR, GAgent.equals);
 
 		let indexL = 0;
-		let indexR = target.length;
-		if(involvedAgents) {
-			const found = (involvedAgents
-				.map((agent) => array.indexOf(target, agent, Agent.equals))
+		let indexR = allGAgents.length;
+		if(involvedGAgents) {
+			const found = (involvedGAgents
+				.map((gAgent) => GAgent.indexOf(allGAgents, gAgent))
 				.filter((p) => (p !== -1))
 			);
-			indexL = found.reduce((a, b) => Math.min(a, b), target.length);
+			indexL = found.reduce((a, b) => Math.min(a, b), allGAgents.length);
 			indexR = found.reduce((a, b) => Math.max(a, b), indexL) + 1;
 		}
 
-		target.splice(indexL, 0, agentL);
-		target.splice(indexR + 1, 0, agentR);
+		allGAgents.splice(indexL, 0, gAgentL);
+		allGAgents.splice(indexR + 1, 0, gAgentR);
 
 		return {indexL, indexR: indexR + 1};
 	}
-
-	const NOTE_DEFAULT_AGENTS = {
-		'note over': [{name: '[', flags: []}, {name: ']', flags: []}],
-		'note left': [{name: '[', flags: []}],
-		'note right': [{name: ']', flags: []}],
-	};
 
 	return class Generator {
 		constructor() {
 			this.agentStates = new Map();
 			this.agentAliases = new Map();
 			this.activeGroups = new Map();
-			this.agents = [];
+			this.gAgents = [];
 			this.labelPattern = null;
 			this.blockCount = 0;
 			this.nesting = [];
@@ -240,13 +251,13 @@ define(['core/ArrayUtilities'], (array) => {
 				'note right': this.handleNote.bind(this),
 				'note between': this.handleNote.bind(this),
 			};
-			this.expandGroupedAgent = this.expandGroupedAgent.bind(this);
+			this.expandGroupedGAgent = this.expandGroupedGAgent.bind(this);
 			this.handleStage = this.handleStage.bind(this);
-			this.convertAgent = this.convertAgent.bind(this);
+			this.toGAgent = this.toGAgent.bind(this);
 			this.endGroup = this.endGroup.bind(this);
 		}
 
-		convertAgent({alias, name}) {
+		toGAgent({alias, name}) {
 			if(alias) {
 				if(this.agentAliases.has(name)) {
 					throw new Error(
@@ -256,7 +267,7 @@ define(['core/ArrayUtilities'], (array) => {
 				const old = this.agentAliases.get(alias);
 				if(
 					(old && old !== alias) ||
-					this.agents.some((agent) => (agent.name === alias))
+					this.gAgents.some((gAgent) => (gAgent.id === alias))
 				) {
 					throw new Error(
 						'Cannot use ' + alias +
@@ -265,7 +276,7 @@ define(['core/ArrayUtilities'], (array) => {
 				}
 				this.agentAliases.set(alias, name);
 			}
-			return Agent.make(this.agentAliases.get(name) || name);
+			return GAgent.make(this.agentAliases.get(name) || name);
 		}
 
 		addStage(stage, isVisible = true) {
@@ -300,138 +311,139 @@ define(['core/ArrayUtilities'], (array) => {
 			});
 		}
 
-		defineAgents(colAgents) {
-			array.mergeSets(this.currentNest.agents, colAgents, Agent.equals);
-			array.mergeSets(this.agents, colAgents, Agent.equals);
+		defineGAgents(gAgents) {
+			array.mergeSets(this.currentNest.gAgents, gAgents, GAgent.equals);
+			array.mergeSets(this.gAgents, gAgents, GAgent.equals);
 		}
 
-		getAgentState(agent) {
-			return this.agentStates.get(agent.name) || AgentState.DEFAULT;
+		getGAgentState(gAgent) {
+			return this.agentStates.get(gAgent.id) || AgentState.DEFAULT;
 		}
 
-		updateAgentState(agent, change) {
-			const state = this.agentStates.get(agent.name);
+		updateGAgentState(gAgent, change) {
+			const state = this.agentStates.get(gAgent.id);
 			if(state) {
 				Object.assign(state, change);
 			} else {
-				this.agentStates.set(agent.name, new AgentState(change));
+				this.agentStates.set(gAgent.id, new AgentState(change));
 			}
 		}
 
-		validateAgents(agents, {
+		replaceGAgentState(gAgent, state) {
+			this.agentStates.set(gAgent.id, state);
+		}
+
+		validateGAgents(gAgents, {
 			allowGrouped = false,
 			rejectGrouped = false,
 		} = {}) {
-			agents.forEach((agent) => {
-				const state = this.getAgentState(agent);
+			gAgents.forEach((gAgent) => {
+				const state = this.getGAgentState(gAgent);
 				if(state.covered) {
 					throw new Error(
-						'Agent ' + agent.name + ' is hidden behind group'
+						'Agent ' + gAgent.id + ' is hidden behind group'
 					);
 				}
 				if(rejectGrouped && state.group !== null) {
-					throw new Error('Agent ' + agent.name + ' is in a group');
+					throw new Error('Agent ' + gAgent.id + ' is in a group');
 				}
 				if(state.blocked && (!allowGrouped || state.group === null)) {
-					throw new Error('Duplicate agent name: ' + agent.name);
+					throw new Error('Duplicate agent name: ' + gAgent.id);
 				}
-				if(agent.name.startsWith('__')) {
-					throw new Error(agent.name + ' is a reserved name');
+				if(gAgent.id.startsWith('__')) {
+					throw new Error(gAgent.id + ' is a reserved name');
 				}
 			});
 		}
 
-		setAgentVis(colAgents, visible, mode, checked = false) {
+		setGAgentVis(gAgents, visible, mode, checked = false) {
 			const seen = new Set();
-			const filteredAgents = colAgents.filter((agent) => {
-				if(seen.has(agent.name)) {
+			const filteredGAgents = gAgents.filter((gAgent) => {
+				if(seen.has(gAgent.id)) {
 					return false;
 				}
-				seen.add(agent.name);
-				const state = this.getAgentState(agent);
+				seen.add(gAgent.id);
+				const state = this.getGAgentState(gAgent);
 				if(state.locked || state.blocked) {
 					if(checked) {
-						throw new Error(
-							'Cannot begin/end agent: ' + agent.name
-						);
+						throw new Error('Cannot begin/end agent: ' + gAgent.id);
 					} else {
 						return false;
 					}
 				}
 				return state.visible !== visible;
 			});
-			if(filteredAgents.length === 0) {
+			if(filteredGAgents.length === 0) {
 				return null;
 			}
-			filteredAgents.forEach((agent) => {
-				this.updateAgentState(agent, {visible});
+			filteredGAgents.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {visible});
 			});
-			this.defineAgents(filteredAgents);
+			this.defineGAgents(filteredGAgents);
 
 			return {
 				type: (visible ? 'agent begin' : 'agent end'),
-				agentNames: filteredAgents.map(Agent.getName),
+				agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
 				mode,
 			};
 		}
 
-		setAgentHighlight(colAgents, highlighted, checked = false) {
-			const filteredAgents = colAgents.filter((agent) => {
-				const state = this.getAgentState(agent);
+		setGAgentHighlight(gAgents, highlighted, checked = false) {
+			const filteredGAgents = gAgents.filter((gAgent) => {
+				const state = this.getGAgentState(gAgent);
 				if(state.locked || state.blocked) {
 					if(checked) {
-						throw new Error(
-							'Cannot highlight agent: ' + agent.name
-						);
+						throw new Error('Cannot highlight agent: ' + gAgent.id);
 					} else {
 						return false;
 					}
 				}
 				return state.visible && (state.highlighted !== highlighted);
 			});
-			if(filteredAgents.length === 0) {
+			if(filteredGAgents.length === 0) {
 				return null;
 			}
-			filteredAgents.forEach((agent) => {
-				this.updateAgentState(agent, {highlighted});
+			filteredGAgents.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {highlighted});
 			});
 
 			return {
 				type: 'agent highlight',
-				agentNames: filteredAgents.map(Agent.getName),
+				agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
 				highlighted,
 			};
 		}
 
-		beginNested(mode, label, name, ln) {
-			const leftAgent = Agent.make(name + '[', {anchorRight: true});
-			const rightAgent = Agent.make(name + ']');
-			const agents = [leftAgent, rightAgent];
+		beginNested(blockType, {tag, label, name, ln}) {
+			const leftGAgent = GAgent.make(name + '[', {anchorRight: true});
+			const rightGAgent = GAgent.make(name + ']');
+			const gAgents = [leftGAgent, rightGAgent];
 			const stages = [];
 			this.currentSection = {
 				header: {
 					type: 'block begin',
-					mode,
-					label,
-					left: leftAgent.name,
-					right: rightAgent.name,
+					blockType,
+					tag: this.textFormatter(tag),
+					label: this.textFormatter(label),
+					left: leftGAgent.id,
+					right: rightGAgent.id,
 					ln,
 				},
 				stages,
 			};
 			this.currentNest = {
-				mode,
-				agents,
-				leftAgent,
-				rightAgent,
+				blockType,
+				gAgents,
+				leftGAgent,
+				rightGAgent,
 				hasContent: false,
 				sections: [this.currentSection],
 			};
-			this.agentStates.set(leftAgent.name, AgentState.LOCKED);
-			this.agentStates.set(rightAgent.name, AgentState.LOCKED);
+			this.replaceGAgentState(leftGAgent, AgentState.LOCKED);
+			this.replaceGAgentState(rightGAgent, AgentState.LOCKED);
 			this.nesting.push(this.currentNest);
 
-			return {agents, stages};
+			return {gAgents, stages};
 		}
 
 		nextBlockName() {
@@ -440,25 +452,31 @@ define(['core/ArrayUtilities'], (array) => {
 			return name;
 		}
 
-		handleBlockBegin({ln, mode, label}) {
-			this.beginNested(mode, label, this.nextBlockName(), ln);
+		handleBlockBegin({ln, blockType, tag, label}) {
+			this.beginNested(blockType, {
+				tag,
+				label,
+				name: this.nextBlockName(),
+				ln,
+			});
 		}
 
-		handleBlockSplit({ln, mode, label}) {
-			if(this.currentNest.mode !== 'if') {
+		handleBlockSplit({ln, blockType, tag, label}) {
+			if(this.currentNest.blockType !== 'if') {
 				throw new Error(
 					'Invalid block nesting ("else" inside ' +
-					this.currentNest.mode + ')'
+					this.currentNest.blockType + ')'
 				);
 			}
 			optimiseStages(this.currentSection.stages);
 			this.currentSection = {
 				header: {
 					type: 'block split',
-					mode,
-					label,
-					left: this.currentNest.leftAgent.name,
-					right: this.currentNest.rightAgent.name,
+					blockType,
+					tag: this.textFormatter(tag),
+					label: this.textFormatter(label),
+					left: this.currentNest.leftGAgent.id,
+					right: this.currentNest.rightGAgent.id,
 					ln,
 				},
 				stages: [],
@@ -476,12 +494,12 @@ define(['core/ArrayUtilities'], (array) => {
 			this.currentSection = array.last(this.currentNest.sections);
 
 			if(nested.hasContent) {
-				this.defineAgents(nested.agents);
+				this.defineGAgents(nested.gAgents);
 				addBounds(
-					this.agents,
-					nested.leftAgent,
-					nested.rightAgent,
-					nested.agents
+					this.gAgents,
+					nested.leftGAgent,
+					nested.rightGAgent,
+					nested.gAgents
 				);
 				nested.sections.forEach((section) => {
 					this.currentSection.stages.push(section.header);
@@ -489,70 +507,71 @@ define(['core/ArrayUtilities'], (array) => {
 				});
 				this.addStage({
 					type: 'block end',
-					left: nested.leftAgent.name,
-					right: nested.rightAgent.name,
+					left: nested.leftGAgent.id,
+					right: nested.rightGAgent.id,
 				});
 			} else {
 				throw new Error('Empty block');
 			}
 		}
 
-		makeGroupDetails(agents, alias) {
-			const colAgents = agents.map(this.convertAgent);
-			this.validateAgents(colAgents, {rejectGrouped: true});
+		makeGroupDetails(pAgents, alias) {
+			const gAgents = pAgents.map(this.toGAgent);
+			this.validateGAgents(gAgents, {rejectGrouped: true});
 			if(this.agentStates.has(alias)) {
 				throw new Error('Duplicate agent name: ' + alias);
 			}
 			const name = this.nextBlockName();
-			const leftAgent = Agent.make(name + '[', {anchorRight: true});
-			const rightAgent = Agent.make(name + ']');
-			this.agentStates.set(leftAgent.name, AgentState.LOCKED);
-			this.agentStates.set(rightAgent.name, AgentState.LOCKED);
-			this.updateAgentState(
-				{name: alias},
+			const leftGAgent = GAgent.make(name + '[', {anchorRight: true});
+			const rightGAgent = GAgent.make(name + ']');
+			this.replaceGAgentState(leftGAgent, AgentState.LOCKED);
+			this.replaceGAgentState(rightGAgent, AgentState.LOCKED);
+			this.updateGAgentState(
+				GAgent.make(alias),
 				{blocked: true, group: alias}
 			);
-			this.defineAgents(colAgents);
+			this.defineGAgents(gAgents);
 			const {indexL, indexR} = addBounds(
-				this.agents,
-				leftAgent,
-				rightAgent,
-				colAgents
+				this.gAgents,
+				leftGAgent,
+				rightGAgent,
+				gAgents
 			);
 
-			const agentsCovered = [];
-			const agentsContained = colAgents.slice();
+			const gAgentsCovered = [];
+			const gAgentsContained = gAgents.slice();
 			for(let i = indexL + 1; i < indexR; ++ i) {
-				agentsCovered.push(this.agents[i]);
+				gAgentsCovered.push(this.gAgents[i]);
 			}
-			array.removeAll(agentsCovered, agentsContained, Agent.equals);
+			array.removeAll(gAgentsCovered, gAgentsContained, GAgent.equals);
 
 			return {
-				colAgents,
-				leftAgent,
-				rightAgent,
-				agentsContained,
-				agentsCovered,
+				gAgents,
+				leftGAgent,
+				rightGAgent,
+				gAgentsContained,
+				gAgentsCovered,
 			};
 		}
 
-		handleGroupBegin({agents, mode, label, alias}) {
+		handleGroupBegin({agents, blockType, tag, label, alias}) {
 			const details = this.makeGroupDetails(agents, alias);
 
-			details.agentsContained.forEach((agent) => {
-				this.updateAgentState(agent, {group: alias});
+			details.gAgentsContained.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {group: alias});
 			});
-			details.agentsCovered.forEach((agent) => {
-				this.updateAgentState(agent, {covered: true});
+			details.gAgentsCovered.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {covered: true});
 			});
 			this.activeGroups.set(alias, details);
-			this.addStage(this.setAgentVis(details.colAgents, true, 'box'));
+			this.addStage(this.setGAgentVis(details.gAgents, true, 'box'));
 			this.addStage({
 				type: 'block begin',
-				mode,
-				label,
-				left: details.leftAgent.name,
-				right: details.rightAgent.name,
+				blockType,
+				tag: this.textFormatter(tag),
+				label: this.textFormatter(label),
+				left: details.leftGAgent.id,
+				right: details.rightGAgent.id,
 			});
 		}
 
@@ -563,18 +582,18 @@ define(['core/ArrayUtilities'], (array) => {
 			}
 			this.activeGroups.delete(name);
 
-			details.agentsContained.forEach((agent) => {
-				this.updateAgentState(agent, {group: null});
+			details.gAgentsContained.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {group: null});
 			});
-			details.agentsCovered.forEach((agent) => {
-				this.updateAgentState(agent, {covered: false});
+			details.gAgentsCovered.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {covered: false});
 			});
-			this.updateAgentState({name}, {group: null});
+			this.updateGAgentState(GAgent.make(name), {group: null});
 
 			return {
 				type: 'block end',
-				left: details.leftAgent.name,
-				right: details.rightAgent.name,
+				left: details.leftGAgent.id,
+				right: details.rightGAgent.id,
 			};
 		}
 
@@ -620,156 +639,156 @@ define(['core/ArrayUtilities'], (array) => {
 			return result;
 		}
 
-		expandGroupedAgent(agent) {
-			const group = this.getAgentState(agent).group;
+		expandGroupedGAgent(gAgent) {
+			const group = this.getGAgentState(gAgent).group;
 			if(!group) {
-				return [agent];
+				return [gAgent];
 			}
 			const details = this.activeGroups.get(group);
-			return [details.leftAgent, details.rightAgent];
+			return [details.leftGAgent, details.rightGAgent];
 		}
 
-		expandGroupedAgentConnection(agents) {
-			const agents1 = this.expandGroupedAgent(agents[0]);
-			const agents2 = this.expandGroupedAgent(agents[1]);
-			let ind1 = array.indexOf(this.agents, agents1[0], Agent.equals);
-			let ind2 = array.indexOf(this.agents, agents2[0], Agent.equals);
+		expandGroupedGAgentConnection(gAgents) {
+			const gAgents1 = this.expandGroupedGAgent(gAgents[0]);
+			const gAgents2 = this.expandGroupedGAgent(gAgents[1]);
+			let ind1 = GAgent.indexOf(this.gAgents, gAgents1[0]);
+			let ind2 = GAgent.indexOf(this.gAgents, gAgents2[0]);
 			if(ind1 === -1) {
-				ind1 = this.agents.length;
+				ind1 = this.gAgents.length;
 			}
 			if(ind2 === -1) {
-				ind2 = this.agents.length;
+				ind2 = this.gAgents.length;
 			}
 			if(ind1 === ind2) {
 				// Self-connection
-				return [array.last(agents1), array.last(agents2)];
+				return [array.last(gAgents1), array.last(gAgents2)];
 			} else if(ind1 < ind2) {
-				return [array.last(agents1), agents2[0]];
+				return [array.last(gAgents1), gAgents2[0]];
 			} else {
-				return [agents1[0], array.last(agents2)];
+				return [gAgents1[0], array.last(gAgents2)];
 			}
 		}
 
-		filterConnectFlags(agents) {
-			const beginAgents = (agents
-				.filter(Agent.hasFlag('begin'))
-				.map(this.convertAgent)
+		filterConnectFlags(pAgents) {
+			const beginGAgents = (pAgents
+				.filter(PAgent.hasFlag('begin'))
+				.map(this.toGAgent)
 			);
-			const endAgents = (agents
-				.filter(Agent.hasFlag('end'))
-				.map(this.convertAgent)
+			const endGAgents = (pAgents
+				.filter(PAgent.hasFlag('end'))
+				.map(this.toGAgent)
 			);
-			if(array.hasIntersection(beginAgents, endAgents, Agent.equals)) {
+			if(GAgent.hasIntersection(beginGAgents, endGAgents)) {
 				throw new Error('Cannot set agent visibility multiple times');
 			}
 
-			const startAgents = (agents
-				.filter(Agent.hasFlag('start'))
-				.map(this.convertAgent)
+			const startGAgents = (pAgents
+				.filter(PAgent.hasFlag('start'))
+				.map(this.toGAgent)
 			);
-			const stopAgents = (agents
-				.filter(Agent.hasFlag('stop'))
-				.map(this.convertAgent)
+			const stopGAgents = (pAgents
+				.filter(PAgent.hasFlag('stop'))
+				.map(this.toGAgent)
 			);
-			array.mergeSets(stopAgents, endAgents);
-			if(array.hasIntersection(startAgents, stopAgents, Agent.equals)) {
+			array.mergeSets(stopGAgents, endGAgents);
+			if(GAgent.hasIntersection(startGAgents, stopGAgents)) {
 				throw new Error('Cannot set agent highlighting multiple times');
 			}
 
-			this.validateAgents(beginAgents);
-			this.validateAgents(endAgents);
-			this.validateAgents(startAgents);
-			this.validateAgents(stopAgents);
+			this.validateGAgents(beginGAgents);
+			this.validateGAgents(endGAgents);
+			this.validateGAgents(startGAgents);
+			this.validateGAgents(stopGAgents);
 
-			return {beginAgents, endAgents, startAgents, stopAgents};
+			return {beginGAgents, endGAgents, startGAgents, stopGAgents};
 		}
 
 		handleConnect({agents, label, options}) {
 			const flags = this.filterConnectFlags(agents);
 
-			let colAgents = agents.map(this.convertAgent);
-			this.validateAgents(colAgents, {allowGrouped: true});
+			let gAgents = agents.map(this.toGAgent);
+			this.validateGAgents(gAgents, {allowGrouped: true});
 
-			const allAgents = array.flatMap(colAgents, this.expandGroupedAgent);
-			this.defineAgents(allAgents);
+			const allGAgents = array.flatMap(gAgents, this.expandGroupedGAgent);
+			this.defineGAgents(allGAgents);
 
-			colAgents = this.expandGroupedAgentConnection(colAgents);
-			const agentNames = colAgents.map(Agent.getName);
+			gAgents = this.expandGroupedGAgentConnection(gAgents);
+			const agentIDs = gAgents.map((gAgent) => gAgent.id);
 
-			const implicitBegin = (agents
-				.filter(Agent.hasFlag('begin', false))
-				.map(this.convertAgent)
+			const implicitBeginGAgents = (agents
+				.filter(PAgent.hasFlag('begin', false))
+				.map(this.toGAgent)
 			);
-			this.addStage(this.setAgentVis(implicitBegin, true, 'box'));
+			this.addStage(this.setGAgentVis(implicitBeginGAgents, true, 'box'));
 
 			const connectStage = {
 				type: 'connect',
-				agentNames,
-				label: this.applyLabelPattern(label),
+				agentIDs,
+				label: this.textFormatter(this.applyLabelPattern(label)),
 				options,
 			};
 
 			this.addParallelStages([
-				this.setAgentVis(flags.beginAgents, true, 'box', true),
-				this.setAgentHighlight(flags.startAgents, true, true),
+				this.setGAgentVis(flags.beginGAgents, true, 'box', true),
+				this.setGAgentHighlight(flags.startGAgents, true, true),
 				connectStage,
-				this.setAgentHighlight(flags.stopAgents, false, true),
-				this.setAgentVis(flags.endAgents, false, 'cross', true),
+				this.setGAgentHighlight(flags.stopGAgents, false, true),
+				this.setGAgentVis(flags.endGAgents, false, 'cross', true),
 			]);
 		}
 
 		handleNote({type, agents, mode, label}) {
-			let colAgents = null;
+			let gAgents = null;
 			if(agents.length === 0) {
-				colAgents = NOTE_DEFAULT_AGENTS[type] || [];
+				gAgents = NOTE_DEFAULT_G_AGENTS[type] || [];
 			} else {
-				colAgents = agents.map(this.convertAgent);
+				gAgents = agents.map(this.toGAgent);
 			}
 
-			this.validateAgents(colAgents, {allowGrouped: true});
-			colAgents = array.flatMap(colAgents, this.expandGroupedAgent);
-			const agentNames = colAgents.map(Agent.getName);
-			const uniqueAgents = new Set(agentNames).size;
+			this.validateGAgents(gAgents, {allowGrouped: true});
+			gAgents = array.flatMap(gAgents, this.expandGroupedGAgent);
+			const agentIDs = gAgents.map((gAgent) => gAgent.id);
+			const uniqueAgents = new Set(agentIDs).size;
 			if(type === 'note between' && uniqueAgents < 2) {
 				throw new Error('note between requires at least 2 agents');
 			}
 
-			this.addStage(this.setAgentVis(colAgents, true, 'box'));
-			this.defineAgents(colAgents);
+			this.addStage(this.setGAgentVis(gAgents, true, 'box'));
+			this.defineGAgents(gAgents);
 
 			this.addStage({
 				type,
-				agentNames,
+				agentIDs,
 				mode,
-				label,
+				label: this.textFormatter(label),
 			});
 		}
 
 		handleAgentDefine({agents}) {
-			const colAgents = agents.map(this.convertAgent);
-			this.validateAgents(colAgents);
-			this.defineAgents(colAgents);
+			const gAgents = agents.map(this.toGAgent);
+			this.validateGAgents(gAgents);
+			this.defineGAgents(gAgents);
 		}
 
 		handleAgentBegin({agents, mode}) {
-			const colAgents = agents.map(this.convertAgent);
-			this.validateAgents(colAgents);
-			this.addStage(this.setAgentVis(colAgents, true, mode, true));
+			const gAgents = agents.map(this.toGAgent);
+			this.validateGAgents(gAgents);
+			this.addStage(this.setGAgentVis(gAgents, true, mode, true));
 		}
 
 		handleAgentEnd({agents, mode}) {
-			const groupAgents = (agents
-				.filter((agent) => this.activeGroups.has(agent.name))
+			const groupPAgents = (agents
+				.filter((pAgent) => this.activeGroups.has(pAgent.name))
 			);
-			const colAgents = (agents
-				.filter((agent) => !this.activeGroups.has(agent.name))
-				.map(this.convertAgent)
+			const gAgents = (agents
+				.filter((pAgent) => !this.activeGroups.has(pAgent.name))
+				.map(this.toGAgent)
 			);
-			this.validateAgents(colAgents);
+			this.validateGAgents(gAgents);
 			this.addParallelStages([
-				this.setAgentHighlight(colAgents, false),
-				this.setAgentVis(colAgents, false, mode, true),
-				...groupAgents.map(this.endGroup),
+				this.setGAgentHighlight(gAgents, false),
+				this.setGAgentVis(gAgents, false, mode, true),
+				...groupPAgents.map(this.endGroup),
 			]);
 		}
 
@@ -783,21 +802,46 @@ define(['core/ArrayUtilities'], (array) => {
 				handler(stage);
 			} catch(e) {
 				if(typeof e === 'object' && e.message) {
-					throw new Error(e.message + ' at line ' + (stage.ln + 1));
+					e.message += ' at line ' + (stage.ln + 1);
+					throw e;
 				}
 			}
 		}
 
-		generate({stages, meta = {}}) {
+		_reset() {
 			this.agentStates.clear();
 			this.markers.clear();
 			this.agentAliases.clear();
 			this.activeGroups.clear();
-			this.agents.length = 0;
+			this.gAgents.length = 0;
 			this.blockCount = 0;
 			this.nesting.length = 0;
 			this.labelPattern = [{token: 'label'}];
-			const globals = this.beginNested('global', '', '', 0);
+		}
+
+		_finalise(globals) {
+			addBounds(
+				this.gAgents,
+				this.currentNest.leftGAgent,
+				this.currentNest.rightGAgent
+			);
+			optimiseStages(globals.stages);
+
+			this.gAgents.forEach((gAgent) => {
+				gAgent.formattedLabel = this.textFormatter(gAgent.id);
+			});
+		}
+
+		generate({stages, meta = {}}) {
+			this._reset();
+
+			this.textFormatter = meta.textFormatter;
+			const globals = this.beginNested('global', {
+				tag: '',
+				label: '',
+				name: '',
+				ln: 0,
+			});
 
 			stages.forEach(this.handleStage);
 
@@ -812,26 +856,21 @@ define(['core/ArrayUtilities'], (array) => {
 			}
 
 			const terminators = meta.terminators || 'none';
-
 			this.addParallelStages([
-				this.setAgentHighlight(this.agents, false),
-				this.setAgentVis(this.agents, false, terminators),
+				this.setGAgentHighlight(this.gAgents, false),
+				this.setGAgentVis(this.gAgents, false, terminators),
 			]);
 
-			addBounds(
-				this.agents,
-				this.currentNest.leftAgent,
-				this.currentNest.rightAgent
-			);
-			optimiseStages(globals.stages);
+			this._finalise(globals);
+
 			swapFirstBegin(globals.stages, meta.headers || 'box');
 
 			return {
 				meta: {
-					title: meta.title,
+					title: this.textFormatter(meta.title),
 					theme: meta.theme,
 				},
-				agents: this.agents.slice(),
+				agents: this.gAgents.slice(),
 				stages: globals.stages,
 			};
 		}

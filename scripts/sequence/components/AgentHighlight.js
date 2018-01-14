@@ -6,28 +6,28 @@ define(['./BaseComponent'], (BaseComponent) => {
 			return highlighted ? env.theme.agentLineHighlightRadius : 0;
 		}
 
-		separationPre({agentNames, highlighted}, env) {
+		separationPre({agentIDs, highlighted}, env) {
 			const r = this.radius(highlighted, env);
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
 				agentInfo.currentRad = r;
 				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 			});
 		}
 
-		renderPre({agentNames, highlighted}, env) {
+		renderPre({agentIDs, highlighted}, env) {
 			const r = this.radius(highlighted, env);
-			agentNames.forEach((name) => {
-				const agentInfo = env.agentInfos.get(name);
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
 				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 			});
 		}
 
-		render({agentNames, highlighted}, env) {
+		render({agentIDs, highlighted}, env) {
 			const r = this.radius(highlighted, env);
-			agentNames.forEach((name) => {
-				env.drawAgentLine(name, env.primaryY);
-				env.agentInfos.get(name).currentRad = r;
+			agentIDs.forEach((id) => {
+				env.drawAgentLine(id, env.primaryY);
+				env.agentInfos.get(id).currentRad = r;
 			});
 			return env.primaryY + env.theme.actionMargin;
 		}

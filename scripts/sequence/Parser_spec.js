@@ -6,26 +6,30 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 	const PARSED = {
 		blockBegin: ({
 			ln = jasmine.anything(),
-			mode = jasmine.anything(),
+			blockType = jasmine.anything(),
+			tag = jasmine.anything(),
 			label = jasmine.anything(),
 		} = {}) => {
 			return {
 				type: 'block begin',
 				ln,
-				mode,
+				blockType,
+				tag,
 				label,
 			};
 		},
 
 		blockSplit: ({
 			ln = jasmine.anything(),
-			mode = jasmine.anything(),
+			blockType = jasmine.anything(),
+			tag = jasmine.anything(),
 			label = jasmine.anything(),
 		} = {}) => {
 			return {
 				type: 'block split',
 				ln,
-				mode,
+				blockType,
+				tag,
 				label,
 			};
 		},
@@ -73,6 +77,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					theme: '',
 					terminators: 'none',
 					headers: 'box',
+					textFormatter: jasmine.anything(),
 				},
 				stages: [],
 			});
@@ -96,6 +101,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('reads headers metadata', () => {
 			const parsed = parser.parse('headers bar');
 			expect(parsed.meta.headers).toEqual('bar');
+		});
+
+		it('propagates a function which can be used to format text', () => {
+			const parsed = parser.parse('title foo');
+			expect(parsed.meta.textFormatter).toEqual(jasmine.any(Function));
 		});
 
 		it('reads multiple tokens as one when reading values', () => {
@@ -435,7 +445,8 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 					type: 'group begin',
 					ln: jasmine.anything(),
 					agents: [],
-					mode: 'ref',
+					blockType: 'ref',
+					tag: 'ref',
 					label: 'Foo bar',
 					alias: 'baz',
 				},
@@ -446,7 +457,8 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 						{name: 'A', alias: '', flags: []},
 						{name: 'B', alias: '', flags: []},
 					],
-					mode: 'ref',
+					blockType: 'ref',
+					tag: 'ref',
 					label: 'Foo bar',
 					alias: 'baz',
 				},
@@ -518,12 +530,24 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'end\n'
 			);
 			expect(parsed.stages).toEqual([
-				PARSED.blockBegin({mode: 'if', label: 'something happens'}),
+				PARSED.blockBegin({
+					blockType: 'if',
+					tag: 'if',
+					label: 'something happens',
+				}),
 				PARSED.connect(['A', 'B']),
-				PARSED.blockSplit({mode: 'else', label: 'something else'}),
+				PARSED.blockSplit({
+					blockType: 'else',
+					tag: 'else',
+					label: 'something else',
+				}),
 				PARSED.connect(['A', 'C']),
 				PARSED.connect(['C', 'B']),
-				PARSED.blockSplit({mode: 'else', label: ''}),
+				PARSED.blockSplit({
+					blockType: 'else',
+					tag: 'else',
+					label: '',
+				}),
 				PARSED.connect(['A', 'D']),
 				PARSED.blockEnd(),
 			]);
@@ -532,7 +556,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('converts loop blocks', () => {
 			const parsed = parser.parse('repeat until something');
 			expect(parsed.stages).toEqual([
-				PARSED.blockBegin({mode: 'repeat', label: 'until something'}),
+				PARSED.blockBegin({
+					blockType: 'repeat',
+					tag: 'repeat',
+					label: 'until something',
+				}),
 			]);
 		});
 

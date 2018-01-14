@@ -18,10 +18,10 @@ define([
 	}
 
 	function mergeResults(a, b) {
-		array.mergeSets(a.agentNames, b.agentNames);
+		array.mergeSets(a.agentIDs, b.agentIDs);
 		return {
 			topShift: Math.max(a.topShift, b.topShift),
-			agentNames: a.agentNames,
+			agentIDs: a.agentIDs,
 			asynchronousY: nullableMax(a.asynchronousY, b.asynchronousY),
 		};
 	}
@@ -42,7 +42,7 @@ define([
 		renderPre(stage, env) {
 			const baseResults = {
 				topShift: 0,
-				agentNames: [],
+				agentIDs: [],
 				asynchronousY: null,
 			};
 

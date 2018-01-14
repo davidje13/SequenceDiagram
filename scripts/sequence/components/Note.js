@@ -1,11 +1,11 @@
 define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 	'use strict';
 
-	function findExtremes(agentInfos, agentNames) {
+	function findExtremes(agentInfos, agentIDs) {
 		let min = null;
 		let max = null;
-		agentNames.forEach((name) => {
-			const info = agentInfos.get(name);
+		agentIDs.forEach((id) => {
+			const info = agentInfos.get(id);
 			if(min === null || info.index < min.index) {
 				min = info;
 			}
@@ -14,14 +14,14 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			}
 		});
 		return {
-			left: min.label,
-			right: max.label,
+			left: min.id,
+			right: max.id,
 		};
 	}
 
 	class NoteComponent extends BaseComponent {
-		renderPre({agentNames}) {
-			return {agentNames};
+		renderPre({agentIDs}) {
+			return {agentIDs};
 		}
 
 		renderNote({
@@ -39,7 +39,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			const y = env.topY + config.margin.top + config.padding.top;
 			const labelNode = new env.SVGTextBlockClass(clickable, {
 				attrs: config.labelAttrs,
-				text: label,
+				formatted: label,
 				y,
 			});
 
@@ -105,7 +105,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 	}
 
 	class NoteOver extends NoteComponent {
-		separation({agentNames, mode, label}, env) {
+		separation({agentIDs, mode, label}, env) {
 			const config = env.theme.getNote(mode);
 			const width = (
 				env.textSizer.measure(config.labelAttrs, label).width +
@@ -113,7 +113,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				config.padding.right
 			);
 
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);
 			if(infoL !== infoR) {
@@ -132,10 +132,10 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			}
 		}
 
-		render({agentNames, mode, label}, env) {
+		render({agentIDs, mode, label}, env) {
 			const config = env.theme.getNote(mode);
 
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);
 			if(infoL !== infoR) {
@@ -164,9 +164,9 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			this.isRight = isRight;
 		}
 
-		separation({agentNames, mode, label}, env) {
+		separation({agentIDs, mode, label}, env) {
 			const config = env.theme.getNote(mode);
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			const width = (
 				env.textSizer.measure(config.labelAttrs, label).width +
 				config.padding.left +
@@ -190,9 +190,9 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			}
 		}
 
-		render({agentNames, mode, label}, env) {
+		render({agentIDs, mode, label}, env) {
 			const config = env.theme.getNote(mode);
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			if(this.isRight) {
 				const info = env.agentInfos.get(right);
 				const x0 = info.x + info.currentMaxRad + config.margin.left;
@@ -216,9 +216,9 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 	}
 
 	class NoteBetween extends NoteComponent {
-		separation({agentNames, mode, label}, env) {
+		separation({agentIDs, mode, label}, env) {
 			const config = env.theme.getNote(mode);
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);
 
@@ -236,8 +236,8 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 			);
 		}
 
-		render({agentNames, mode, label}, env) {
-			const {left, right} = findExtremes(env.agentInfos, agentNames);
+		render({agentIDs, mode, label}, env) {
+			const {left, right} = findExtremes(env.agentInfos, agentIDs);
 			const infoL = env.agentInfos.get(left);
 			const infoR = env.agentInfos.get(right);
 			const xMid = (

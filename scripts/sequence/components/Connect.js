@@ -77,7 +77,7 @@ define([
 	];
 
 	class Connect extends BaseComponent {
-		separation({label, agentNames, options}, env) {
+		separation({label, agentIDs, options}, env) {
 			const config = env.theme.connect;
 
 			const lArrow = ARROWHEADS[options.left];
@@ -90,9 +90,9 @@ define([
 				labelWidth += config.label.padding * 2;
 			}
 
-			const info1 = env.agentInfos.get(agentNames[0]);
-			if(agentNames[0] === agentNames[1]) {
-				env.addSpacing(agentNames[0], {
+			const info1 = env.agentInfos.get(agentIDs[0]);
+			if(agentIDs[0] === agentIDs[1]) {
+				env.addSpacing(agentIDs[0], {
 					left: 0,
 					right: (
 						info1.currentMaxRad +
@@ -104,10 +104,10 @@ define([
 					),
 				});
 			} else {
-				const info2 = env.agentInfos.get(agentNames[1]);
+				const info2 = env.agentInfos.get(agentIDs[1]);
 				env.addSeparation(
-					agentNames[0],
-					agentNames[1],
+					agentIDs[0],
+					agentIDs[1],
 
 					info1.currentMaxRad +
 					info2.currentMaxRad +
@@ -120,10 +120,10 @@ define([
 			}
 		}
 
-		renderSelfConnect({label, agentNames, options}, env) {
+		renderSelfConnect({label, agentIDs, options}, env) {
 			/* jshint -W071 */ // TODO: find appropriate abstractions
 			const config = env.theme.connect;
-			const from = env.agentInfos.get(agentNames[0]);
+			const from = env.agentInfos.get(agentIDs[0]);
 
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
@@ -195,10 +195,10 @@ define([
 			);
 		}
 
-		renderSimpleConnect({label, agentNames, options}, env) {
+		renderSimpleConnect({label, agentIDs, options}, env) {
 			const config = env.theme.connect;
-			const from = env.agentInfos.get(agentNames[0]);
-			const to = env.agentInfos.get(agentNames[1]);
+			const from = env.agentInfos.get(agentIDs[0]);
+			const to = env.agentInfos.get(agentIDs[1]);
 
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
@@ -260,7 +260,7 @@ define([
 			);
 		}
 
-		renderPre({label, agentNames, options}, env) {
+		renderPre({label, agentIDs, options}, env) {
 			const config = env.theme.connect;
 
 			const lArrow = ARROWHEADS[options.left];
@@ -273,18 +273,18 @@ define([
 			);
 
 			let arrowH = lArrow.height(env.theme);
-			if(agentNames[0] !== agentNames[1]) {
+			if(agentIDs[0] !== agentIDs[1]) {
 				arrowH = Math.max(arrowH, rArrow.height(env.theme));
 			}
 
 			return {
-				agentNames,
+				agentIDs,
 				topShift: Math.max(arrowH / 2, height),
 			};
 		}
 
 		render(stage, env) {
-			if(stage.agentNames[0] === stage.agentNames[1]) {
+			if(stage.agentIDs[0] === stage.agentIDs[1]) {
 				return this.renderSelfConnect(stage, env);
 			} else {
 				return this.renderSimpleConnect(stage, env);

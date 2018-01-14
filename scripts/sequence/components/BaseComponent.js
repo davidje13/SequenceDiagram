@@ -12,7 +12,7 @@ define(() => {
 		separationPre(/*stage, {
 			theme,
 			agentInfos,
-			visibleAgents,
+			visibleAgentIDs,
 			textSizer,
 			addSpacing,
 			addSeparation,
@@ -24,7 +24,7 @@ define(() => {
 		separation(/*stage, {
 			theme,
 			agentInfos,
-			visibleAgents,
+			visibleAgentIDs,
 			textSizer,
 			addSpacing,
 			addSeparation,
@@ -40,7 +40,7 @@ define(() => {
 			state,
 			components,
 		}*/) {
-			// return {topShift, agentNames, asynchronousY}
+			// return {topShift, agentIDs, asynchronousY}
 		}
 
 		render(/*stage, {
@@ -64,12 +64,12 @@ define(() => {
 
 	BaseComponent.cleanRenderPreResult = ({
 		topShift = 0,
-		agentNames = [],
+		agentIDs = [],
 		asynchronousY = null,
 	} = {}, currentY = null) => {
 		return {
 			topShift,
-			agentNames,
+			agentIDs,
 			asynchronousY: (asynchronousY !== null) ? asynchronousY : currentY,
 		};
 	};

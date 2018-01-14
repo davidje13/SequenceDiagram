@@ -22,11 +22,11 @@ define([
 	/* jshint +W072 */
 	'use strict';
 
-	function findExtremes(agentInfos, agentNames) {
+	function findExtremes(agentInfos, agentIDs) {
 		let min = null;
 		let max = null;
-		agentNames.forEach((name) => {
-			const info = agentInfos.get(name);
+		agentIDs.forEach((id) => {
+			const info = agentInfos.get(id);
 			if(min === null || info.index < min.index) {
 				min = info;
 			}
@@ -35,8 +35,8 @@ define([
 			}
 		});
 		return {
-			left: min.label,
-			right: max.label,
+			left: min.id,
+			right: max.id,
 		};
 	}
 
@@ -158,23 +158,23 @@ define([
 			return namespacedName;
 		}
 
-		addSeparation(agentName1, agentName2, dist) {
-			const info1 = this.agentInfos.get(agentName1);
-			const info2 = this.agentInfos.get(agentName2);
+		addSeparation(agentID1, agentID2, dist) {
+			const info1 = this.agentInfos.get(agentID1);
+			const info2 = this.agentInfos.get(agentID2);
 
-			const d1 = info1.separations.get(agentName2) || 0;
-			info1.separations.set(agentName2, Math.max(d1, dist));
+			const d1 = info1.separations.get(agentID2) || 0;
+			info1.separations.set(agentID2, Math.max(d1, dist));
 
-			const d2 = info2.separations.get(agentName1) || 0;
-			info2.separations.set(agentName1, Math.max(d2, dist));
+			const d2 = info2.separations.get(agentID1) || 0;
+			info2.separations.set(agentID1, Math.max(d2, dist));
 		}
 
 		separationStage(stage) {
 			const agentSpaces = new Map();
-			const agentNames = this.visibleAgents.slice();
+			const agentIDs = this.visibleAgentIDs.slice();
 
-			const addSpacing = (agentName, {left, right}) => {
-				const current = agentSpaces.get(agentName);
+			const addSpacing = (agentID, {left, right}) => {
+				const current = agentSpaces.get(agentID);
 				current.left = Math.max(current.left, left);
 				current.right = Math.max(current.right, right);
 			};
@@ -182,12 +182,12 @@ define([
 			this.agentInfos.forEach((agentInfo) => {
 				const rad = agentInfo.currentRad;
 				agentInfo.currentMaxRad = rad;
-				agentSpaces.set(agentInfo.label, {left: rad, right: rad});
+				agentSpaces.set(agentInfo.id, {left: rad, right: rad});
 			});
 			const env = {
 				theme: this.theme,
 				agentInfos: this.agentInfos,
-				visibleAgents: this.visibleAgents,
+				visibleAgentIDs: this.visibleAgentIDs,
 				textSizer: this.sizer,
 				addSpacing,
 				addSeparation: this.addSeparation,
@@ -200,33 +200,33 @@ define([
 			}
 			component.separationPre(stage, env);
 			component.separation(stage, env);
-			array.mergeSets(agentNames, this.visibleAgents);
+			array.mergeSets(agentIDs, this.visibleAgentIDs);
 
-			agentNames.forEach((agentNameR) => {
-				const infoR = this.agentInfos.get(agentNameR);
-				const sepR = agentSpaces.get(agentNameR);
+			agentIDs.forEach((agentIDR) => {
+				const infoR = this.agentInfos.get(agentIDR);
+				const sepR = agentSpaces.get(agentIDR);
 				infoR.maxRPad = Math.max(infoR.maxRPad, sepR.right);
 				infoR.maxLPad = Math.max(infoR.maxLPad, sepR.left);
-				agentNames.forEach((agentNameL) => {
-					const infoL = this.agentInfos.get(agentNameL);
+				agentIDs.forEach((agentIDL) => {
+					const infoL = this.agentInfos.get(agentIDL);
 					if(infoL.index >= infoR.index) {
 						return;
 					}
-					const sepL = agentSpaces.get(agentNameL);
+					const sepL = agentSpaces.get(agentIDL);
 					this.addSeparation(
-						agentNameR,
-						agentNameL,
+						agentIDR,
+						agentIDL,
 						sepR.left + sepL.right + this.theme.agentMargin
 					);
 				});
 			});
 		}
 
-		checkAgentRange(agentNames, topY = 0) {
-			if(agentNames.length === 0) {
+		checkAgentRange(agentIDs, topY = 0) {
+			if(agentIDs.length === 0) {
 				return topY;
 			}
-			const {left, right} = findExtremes(this.agentInfos, agentNames);
+			const {left, right} = findExtremes(this.agentInfos, agentIDs);
 			const leftX = this.agentInfos.get(left).x;
 			const rightX = this.agentInfos.get(right).x;
 			let baseY = topY;
@@ -238,11 +238,11 @@ define([
 			return baseY;
 		}
 
-		markAgentRange(agentNames, y) {
-			if(agentNames.length === 0) {
+		markAgentRange(agentIDs, y) {
+			if(agentIDs.length === 0) {
 				return;
 			}
-			const {left, right} = findExtremes(this.agentInfos, agentNames);
+			const {left, right} = findExtremes(this.agentInfos, agentIDs);
 			const leftX = this.agentInfos.get(left).x;
 			const rightX = this.agentInfos.get(right).x;
 			this.agentInfos.forEach((agentInfo) => {
@@ -293,10 +293,10 @@ define([
 			};
 			const component = this.components.get(stage.type);
 			const result = component.renderPre(stage, envPre);
-			const {topShift, agentNames, asynchronousY} =
+			const {topShift, agentIDs, asynchronousY} =
 				BaseComponent.cleanRenderPreResult(result, this.currentY);
 
-			const topY = this.checkAgentRange(agentNames, asynchronousY);
+			const topY = this.checkAgentRange(agentIDs, asynchronousY);
 
 			const eventOut = () => {
 				this.trigger('mouseout');
@@ -332,8 +332,8 @@ define([
 				textSizer: this.sizer,
 				SVGTextBlockClass: this.SVGTextBlockClass,
 				state: this.state,
-				drawAgentLine: (agentName, toY, andStop = false) => {
-					const agentInfo = this.agentInfos.get(agentName);
+				drawAgentLine: (agentID, toY, andStop = false) => {
+					const agentInfo = this.agentInfos.get(agentID);
 					this.drawAgentLine(agentInfo, toY);
 					agentInfo.latestYStart = andStop ? null : toY;
 				},
@@ -343,7 +343,7 @@ define([
 			};
 
 			const bottomY = Math.max(topY, component.render(stage, env) || 0);
-			this.markAgentRange(agentNames, bottomY);
+			this.markAgentRange(agentIDs, bottomY);
 
 			this.currentY = bottomY;
 		}
@@ -379,7 +379,7 @@ define([
 				agentInfo.x = currentX;
 			});
 
-			this.agentInfos.forEach(({label, x, maxRPad, maxLPad}) => {
+			this.agentInfos.forEach(({x, maxRPad, maxLPad}) => {
 				this.minX = Math.min(this.minX, x - maxLPad);
 				this.maxX = Math.max(this.maxX, x + maxRPad);
 			});
@@ -388,8 +388,9 @@ define([
 		buildAgentInfos(agents, stages) {
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
-				this.agentInfos.set(agent.name, {
-					label: agent.name,
+				this.agentInfos.set(agent.id, {
+					id: agent.id,
+					formattedLabel: agent.formattedLabel,
 					anchorRight: agent.anchorRight,
 					index,
 					x: null,
@@ -403,7 +404,7 @@ define([
 				});
 			});
 
-			this.visibleAgents = ['[', ']'];
+			this.visibleAgentIDs = ['[', ']'];
 			stages.forEach(this.separationStage);
 
 			this.positionAgents();
@@ -497,7 +498,7 @@ define([
 
 			this.title.set({
 				attrs: this.theme.titleAttrs,
-				text: sequence.meta.title,
+				formatted: sequence.meta.title,
 			});
 
 			this.minX = 0;
@@ -534,8 +535,8 @@ define([
 			return this.themes.get('');
 		}
 
-		getAgentX(name) {
-			return this.agentInfos.get(name).x;
+		getAgentX(id) {
+			return this.agentInfos.get(id).x;
 		}
 
 		svg() {

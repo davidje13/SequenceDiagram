@@ -164,7 +164,7 @@ define([
 			top: 3,
 			bottom: 2,
 		},
-		mode: {
+		tag: {
 			padding: {
 				top: 2,
 				left: 3,
@@ -376,8 +376,8 @@ define([
 
 			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
 			this.blocks[''].boxRenderer = this.renderBlock.bind(this);
-			this.blocks.ref.section.mode.boxRenderer = this.renderTag;
-			this.blocks[''].section.mode.boxRenderer = this.renderTag;
+			this.blocks.ref.section.tag.boxRenderer = this.renderTag;
+			this.blocks[''].section.tag.boxRenderer = this.renderTag;
 			this.blocks[''].sepRenderer = this.renderSeparator.bind(this);
 		}
 

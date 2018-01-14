@@ -9,6 +9,7 @@ define([
 	'sequence/SequenceDiagram_spec',
 	'sequence/Tokeniser_spec',
 	'sequence/Parser_spec',
+	'sequence/MarkdownParser_spec',
 	'sequence/LabelPatternParser_spec',
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',

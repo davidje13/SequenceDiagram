@@ -12,13 +12,13 @@ define([
 	'use strict';
 
 	class BlockSplit extends BaseComponent {
-		separation({left, right, mode, label}, env) {
+		separation({left, right, tag, label}, env) {
 			const blockInfo = env.state.blocks.get(left);
-			const config = env.theme.getBlock(blockInfo.mode).section;
+			const config = env.theme.getBlock(blockInfo.type).section;
 			const width = (
-				env.textSizer.measure(config.mode.labelAttrs, mode).width +
-				config.mode.padding.left +
-				config.mode.padding.right +
+				env.textSizer.measure(config.tag.labelAttrs, tag).width +
+				config.tag.padding.left +
+				config.tag.padding.right +
 				env.textSizer.measure(config.label.labelAttrs, label).width +
 				config.label.padding.left +
 				config.label.padding.right
@@ -28,13 +28,13 @@ define([
 
 		renderPre({left, right}) {
 			return {
-				agentNames: [left, right],
+				agentIDs: [left, right],
 			};
 		}
 
-		render({left, right, mode, label}, env, first = false) {
+		render({left, right, tag, label}, env, first = false) {
 			const blockInfo = env.state.blocks.get(left);
-			const config = env.theme.getBlock(blockInfo.mode);
+			const config = env.theme.getBlock(blockInfo.type);
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
 
@@ -46,20 +46,20 @@ define([
 
 			const clickable = env.makeRegion();
 
-			const modeRender = SVGShapes.renderBoxedText(mode, {
+			const tagRender = SVGShapes.renderBoxedText(tag, {
 				x: agentInfoL.x,
 				y,
-				padding: config.section.mode.padding,
-				boxAttrs: config.section.mode.boxAttrs,
-				boxRenderer: config.section.mode.boxRenderer,
-				labelAttrs: config.section.mode.labelAttrs,
+				padding: config.section.tag.padding,
+				boxAttrs: config.section.tag.boxAttrs,
+				boxRenderer: config.section.tag.boxRenderer,
+				labelAttrs: config.section.tag.labelAttrs,
 				boxLayer: blockInfo.hold,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
 			const labelRender = SVGShapes.renderBoxedText(label, {
-				x: agentInfoL.x + modeRender.width,
+				x: agentInfoL.x + tagRender.width,
 				y,
 				padding: config.section.label.padding,
 				boxAttrs: {'fill': '#000000'},
@@ -69,7 +69,7 @@ define([
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
-			const labelHeight = Math.max(modeRender.height, labelRender.height);
+			const labelHeight = Math.max(tagRender.height, labelRender.height);
 
 			clickable.insertBefore(svg.make('rect', {
 				'x': agentInfoL.x,
@@ -102,11 +102,13 @@ define([
 		}
 
 		storeBlockInfo(stage, env) {
-			env.state.blocks.set(stage.left, {
-				mode: stage.mode,
+			const blockInfo = {
+				type: stage.blockType,
 				hold: null,
 				startY: null,
-			});
+			};
+			env.state.blocks.set(stage.left, blockInfo);
+			return blockInfo;
 		}
 
 		separationPre(stage, env) {
@@ -114,17 +116,17 @@ define([
 		}
 
 		separation(stage, env) {
-			array.mergeSets(env.visibleAgents, [stage.left, stage.right]);
+			array.mergeSets(env.visibleAgentIDs, [stage.left, stage.right]);
 			super.separation(stage, env);
 		}
 
 		renderPre(stage, env) {
-			this.storeBlockInfo(stage, env);
+			const blockInfo = this.storeBlockInfo(stage, env);
 
-			const config = env.theme.getBlock(stage.mode);
+			const config = env.theme.getBlock(blockInfo.type);
 
 			return {
-				agentNames: [stage.left, stage.right],
+				agentIDs: [stage.left, stage.right],
 				topShift: config.margin.top,
 			};
 		}
@@ -143,22 +145,22 @@ define([
 
 	class BlockEnd extends BaseComponent {
 		separation({left, right}, env) {
-			array.removeAll(env.visibleAgents, [left, right]);
+			array.removeAll(env.visibleAgentIDs, [left, right]);
 		}
 
 		renderPre({left, right}, env) {
 			const blockInfo = env.state.blocks.get(left);
-			const config = env.theme.getBlock(blockInfo.mode);
+			const config = env.theme.getBlock(blockInfo.type);
 
 			return {
-				agentNames: [left, right],
+				agentIDs: [left, right],
 				topShift: config.section.padding.bottom,
 			};
 		}
 
 		render({left, right}, env) {
 			const blockInfo = env.state.blocks.get(left);
-			const config = env.theme.getBlock(blockInfo.mode);
+			const config = env.theme.getBlock(blockInfo.type);
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
 
