@@ -160,15 +160,14 @@ define(['core/ArrayUtilities'], (array) => {
 			const viable = findViableSequentialMergers(subStages);
 			performSequentialMergers(lastViable, viable, lastStages, subStages);
 
-			lastViable = viable;
-			lastStages = subStages;
-
 			if(subStages.length === 0) {
 				stages.splice(i, 1);
-			} else if(stage.type === 'parallel' && subStages.length === 1) {
-				stages.splice(i, 1, subStages[0]);
-				++ i;
 			} else {
+				if(stage.type === 'parallel' && subStages.length === 1) {
+					stages.splice(i, 1, subStages[0]);
+				}
+				lastViable = viable;
+				lastStages = subStages;
 				++ i;
 			}
 		}
@@ -468,7 +467,6 @@ define(['core/ArrayUtilities'], (array) => {
 					this.currentNest.blockType + ')'
 				);
 			}
-			optimiseStages(this.currentSection.stages);
 			this.currentSection = {
 				header: {
 					type: 'block split',
@@ -488,7 +486,6 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting (too many "end"s)');
 			}
-			optimiseStages(this.currentSection.stages);
 			const nested = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
 			this.currentSection = array.last(this.currentNest.sections);

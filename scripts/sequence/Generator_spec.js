@@ -563,6 +563,31 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('collapses chains of adjacent begin statements', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A']),
+				PARSED.beginAgents(['B']),
+				PARSED.beginAgents(['C']),
+			]);
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B', 'C']),
+				any(),
+			]);
+		});
+
+		it('collapses chains of adjacent end statements', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.endAgents(['A']),
+				PARSED.endAgents(['B']),
+				PARSED.endAgents(['C']),
+			]);
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.endAgents(['A', 'B', 'C']),
+			]);
+		});
+
 		it('removes superfluous begin statements', () => {
 			const sequence = invoke([
 				PARSED.connect(['A', 'B']),
