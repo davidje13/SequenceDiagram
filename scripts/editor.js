@@ -200,6 +200,26 @@
 				preview: 'headers box\ntitle Title\nA -> B',
 			},
 			{
+				title: 'Bold markdown',
+				code: '**{text}**',
+				preview: 'A -> B: **bold**',
+			},
+			{
+				title: 'Italic markdown',
+				code: '_{text}_',
+				preview: 'A -> B: _italic_',
+			},
+			{
+				title: 'Strikeout markdown',
+				code: '~{text}~',
+				preview: 'A -> B: ~strikeout~',
+			},
+			{
+				title: 'Monospace markdown',
+				code: '`{text}`',
+				preview: 'A -> B: `mono`',
+			},
+			{
 				title: 'Monospace theme',
 				code: 'theme monospace',
 				preview: 'headers box\ntitle mono\ntheme monospace\nA -> B',

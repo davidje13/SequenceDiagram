@@ -199,6 +199,20 @@ A -> B: this is much easier
 A <- B: than writing the whole name
 ```
 
+### Markdown
+
+<img src="screenshots/Markdown.png" alt="Markdown preview" width="200" align="right" />
+
+```
+define 'Name with
+**bold** and _italic_' as A
+define 'Also `code`
+and ~strikeout~' as B
+
+A -> B: '_**basic markdown
+is supported!**_'
+```
+
 ### Alternative Agent Ordering
 
 <img src="screenshots/AlternativeAgentOrdering.png" alt="Alternative Agent Ordering preview" width="200" align="right" />
