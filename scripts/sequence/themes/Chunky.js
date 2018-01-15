@@ -110,7 +110,7 @@ define([
 				},
 			},
 			arrow: {
-				single: {
+				'single': {
 					width: 10,
 					height: 12,
 					render: BaseTheme.renderHorizArrowHead,
@@ -121,7 +121,7 @@ define([
 						'stroke-linejoin': 'round',
 					},
 				},
-				double: {
+				'double': {
 					width: 10,
 					height: 12,
 					render: BaseTheme.renderHorizArrowHead,
@@ -132,6 +132,17 @@ define([
 						'stroke-linejoin': 'round',
 						'stroke-linecap': 'round',
 					},
+				},
+				'cross': {
+					short: 10,
+					radius: 5,
+					render: BaseTheme.renderCross.bind(null, {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 3,
+						'stroke-linejoin': 'round',
+						'stroke-linecap': 'round',
+					}),
 				},
 			},
 			label: {

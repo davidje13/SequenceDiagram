@@ -33,16 +33,20 @@
 		);
 		const library = [
 			{
-				title: 'Simple arrow',
+				title: 'Simple arrow (synchronous)',
 				code: '{Agent1} -> {Agent2}: {Message}',
 			},
 			{
-				title: 'Arrow with dotted line',
+				title: 'Arrow with dotted line (response)',
 				code: '{Agent1} --> {Agent2}: {Message}',
 			},
 			{
-				title: 'Open arrow',
+				title: 'Open arrow (asynchronous)',
 				code: '{Agent1} ->> {Agent2}: {Message}',
+			},
+			{
+				title: 'Lost message',
+				code: '{Agent1} -x {Agent2}: {Message}',
 			},
 			{
 				title: 'Wavy line',
@@ -114,7 +118,7 @@
 				),
 			},
 			{
-				title: 'Repeated blocks',
+				title: 'Repeated block',
 				code: (
 					'repeat {Condition}\n' +
 					'  {Agent1} -> {Agent2}\n' +
@@ -128,7 +132,7 @@
 				),
 			},
 			{
-				title: 'References',
+				title: 'Reference',
 				code: (
 					'begin reference: {Label} as {Name}\n' +
 					'{Agent1} -> {Name}\n' +
@@ -143,7 +147,7 @@
 				),
 			},
 			{
-				title: 'References over agents',
+				title: 'Reference over agents',
 				code: (
 					'begin reference over {Covered}: {Label} as {Name}\n' +
 					'{Agent1} -> {Name}\n' +

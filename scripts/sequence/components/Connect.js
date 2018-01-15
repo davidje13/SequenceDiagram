@@ -65,6 +65,34 @@ define([
 		}
 	}
 
+	class Arrowcross {
+		getConfig(theme) {
+			return theme.connect.arrow.cross;
+		}
+
+		render(layer, theme, pt, dir) {
+			const config = this.getConfig(theme);
+			layer.appendChild(config.render({
+				x: pt.x + config.short * dir,
+				y: pt.y,
+				radius: config.radius,
+			}));
+		}
+
+		width(theme) {
+			const config = this.getConfig(theme);
+			return config.short + config.radius;
+		}
+
+		height(theme) {
+			return this.getConfig(theme).radius * 2;
+		}
+
+		lineGap(theme) {
+			return this.getConfig(theme).short;
+		}
+	}
+
 	const ARROWHEADS = [
 		{
 			render: () => {},
@@ -74,6 +102,7 @@ define([
 		},
 		new Arrowhead('single'),
 		new Arrowhead('double'),
+		new Arrowcross(),
 	];
 
 	class Connect extends BaseComponent {

@@ -47,6 +47,7 @@ define([
 			{tok: '', type: 0},
 			{tok: '>', type: 1},
 			{tok: '>>', type: 2},
+			{tok: 'x', type: 3},
 		];
 		const arrows = (array.combine([lTypes, mTypes, rTypes])
 			.filter((arrow) => (arrow[0].type !== 0 || arrow[2].type !== 0))

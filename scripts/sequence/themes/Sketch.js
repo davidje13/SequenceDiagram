@@ -118,6 +118,11 @@ define([
 					}, PENCIL),
 					render: null,
 				},
+				'cross': {
+					short: 5,
+					radius: 3,
+					render: null,
+				},
 			},
 			label: {
 				padding: 6,
@@ -355,6 +360,7 @@ define([
 
 			this.connect.arrow.single.render = this.renderArrowHead;
 			this.connect.arrow.double.render = this.renderArrowHead;
+			this.connect.arrow.cross.render = this.renderCross.bind(this);
 
 			this.connect.line.solid.renderFlat = this.renderFlatConnector;
 			this.connect.line.solid.renderRev = this.renderRevConnector;

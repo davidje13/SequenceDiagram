@@ -132,6 +132,15 @@ define([
 						'stroke-linejoin': 'miter',
 					},
 				},
+				'cross': {
+					short: 8,
+					radius: 4,
+					render: BaseTheme.renderCross.bind(null, {
+						'fill': 'none',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					}),
+				},
 			},
 			label: {
 				padding: 4,

@@ -450,8 +450,11 @@ define(['core/ArrayUtilities'], (array) => {
 			});
 		}
 
-		_tokenEndFound(stream, state, block) {
+		_tokenEndFound(stream, state, block, match) {
 			state.currentType = -1;
+			if(block.includeEnd) {
+				state.current += match[0];
+			}
 			if(block.omit) {
 				return 'comment';
 			}
@@ -474,8 +477,13 @@ define(['core/ArrayUtilities'], (array) => {
 			while(true) {
 				const block = this.tokenDefinitions[state.currentType];
 				this._tokenCheckEscape(stream, state, block);
-				if(!block.end || this._matchPattern(stream, block.end, true)) {
-					return this._tokenEndFound(stream, state, block);
+				if(!block.end) {
+					return this._tokenEndFound(stream, state, block, null);
+				} else {
+					const match = this._matchPattern(stream, block.end, true);
+					if(match) {
+						return this._tokenEndFound(stream, state, block, match);
+					}
 				}
 				if(stream.eol()) {
 					return this._tokenEOLFound(stream, state, block);

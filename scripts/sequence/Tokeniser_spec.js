@@ -174,6 +174,38 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 				'Unterminated literal (began at line 1, character 0)'
 			));
 		});
+
+		it('stops tokenising arrows once they become invalid', () => {
+			expect(tokeniser.tokenise('foo -> bar')).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: ' ', v: '->'}),
+				token({s: ' ', v: 'bar'}),
+			]);
+
+			expect(tokeniser.tokenise('foo->bar')).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '->'}),
+				token({s: '', v: 'bar'}),
+			]);
+
+			expect(tokeniser.tokenise('foo-xbar')).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '-x'}),
+				token({s: '', v: 'bar'}),
+			]);
+
+			expect(tokeniser.tokenise('foo-xxyz')).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '-x'}),
+				token({s: '', v: 'xyz'}),
+			]);
+
+			expect(tokeniser.tokenise('foo->xyz')).toEqual([
+				token({s: '', v: 'foo'}),
+				token({s: '', v: '->'}),
+				token({s: '', v: 'xyz'}),
+			]);
+		});
 	});
 
 	describe('.splitLines', () => {

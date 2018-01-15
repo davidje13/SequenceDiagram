@@ -219,6 +219,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A<<-B\n' +
 				'A<<->B\n' +
 				'A<<->>B\n' +
+				'A-xB\n' +
 				'A-->B\n' +
 				'A-->>B\n' +
 				'A<--B\n' +
@@ -227,6 +228,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A<<--B\n' +
 				'A<<-->B\n' +
 				'A<<-->>B\n' +
+				'A--xB\n' +
 				'A~>B\n' +
 				'A~>>B\n' +
 				'A<~B\n' +
@@ -234,7 +236,8 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A<~>>B\n' +
 				'A<<~B\n' +
 				'A<<~>B\n' +
-				'A<<~>>B\n'
+				'A<<~>>B\n' +
+				'A~xB\n'
 			);
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
@@ -250,6 +253,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 1}),
 				PARSED.connect(['A', 'B'], {line: 'solid', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'solid', left: 0, right: 3}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 1}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 1, right: 0}),
@@ -258,6 +262,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 1}),
 				PARSED.connect(['A', 'B'], {line: 'dash', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'dash', left: 0, right: 3}),
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 0, right: 1}),
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 0, right: 2}),
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 1, right: 0}),
@@ -266,6 +271,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 0}),
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 1}),
 				PARSED.connect(['A', 'B'], {line: 'wave', left: 2, right: 2}),
+				PARSED.connect(['A', 'B'], {line: 'wave', left: 0, right: 3}),
 			]);
 		});
 

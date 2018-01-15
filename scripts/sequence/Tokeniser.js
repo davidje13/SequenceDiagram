@@ -32,7 +32,11 @@ define(['./CodeMirrorMode'], (CMMode) => {
 			baseToken: {q: true},
 		},
 		{start: /(?=[^ \t\r\n:+\-~*!<>,])/y, end: /(?=[ \t\r\n:+\-~*!<>,])|$/y},
-		{start: /(?=[\-~<>])/y, end: /(?=[^\-~<>])|$/y},
+		{
+			start: /(?=[\-~<])/y,
+			end: /(?=[^\-~<>x])|[\-~]x|[<>](?=x)|$/y,
+			includeEnd: true,
+		},
 		{start: /,/y, baseToken: {v: ','}},
 		{start: /:/y, baseToken: {v: ':'}},
 		{start: /!/y, baseToken: {v: '!'}},
@@ -83,7 +87,7 @@ define(['./CodeMirrorMode'], (CMMode) => {
 				newBlock: null,
 				end: true,
 				appendSpace: '',
-				appendValue: '',
+				appendValue: block.includeEnd ? match[0] : '',
 				skip: match[0].length,
 			};
 		}

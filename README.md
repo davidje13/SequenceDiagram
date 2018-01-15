@@ -60,6 +60,8 @@ Bar -> Bar: Bar talks to itself
 Foo -> +Bar: Foo asks Bar
 -Bar --> Foo: and Bar replies
 
+Bar -x Baz: Lost message
+
 # Arrows leaving on the left and right of the diagram
 [ -> Foo: From the left
 [ <- Foo: To the left
