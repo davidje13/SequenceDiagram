@@ -42,8 +42,13 @@ define(['core/ArrayUtilities'], (array) => {
 			)};
 		}
 
+		const colonTextToEnd = {
+			type: 'operator',
+			suggest: true,
+			then: {'': textToEnd, '\n': hiddenEnd},
+		};
 		const agentListToText = agentListTo({
-			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
+			':': colonTextToEnd,
 		});
 		const agentList2ToText = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
@@ -53,7 +58,7 @@ define(['core/ArrayUtilities'], (array) => {
 		const singleAgentToText = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
 			',': CM_ERROR,
-			':': {type: 'operator', suggest: true, then: {'': textToEnd}},
+			':': colonTextToEnd,
 		}};
 		const agentToOptText = {type: 'variable', suggest: 'Agent', then: {
 			'': 0,
@@ -97,7 +102,7 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
-		function makeOpBlock(exit) {
+		function makeOpBlock(exit, sourceExit) {
 			const op = {type: 'operator', suggest: true, then: {
 				'+': CM_ERROR,
 				'-': CM_ERROR,
@@ -126,13 +131,13 @@ define(['core/ArrayUtilities'], (array) => {
 					}},
 					'': exit,
 				}},
-				'*': {type: 'operator', suggest: true, then: {
+				'*': {type: 'operator', suggest: true, then: Object.assign({
 					'+': op,
 					'-': op,
 					'*': CM_ERROR,
 					'!': CM_ERROR,
 					'': exit,
-				}},
+				}, sourceExit)},
 				'!': op,
 				'': exit,
 			};
@@ -142,7 +147,10 @@ define(['core/ArrayUtilities'], (array) => {
 			const connect = {
 				type: 'keyword',
 				suggest: true,
-				then: makeOpBlock(agentToOptText),
+				then: makeOpBlock(agentToOptText, {
+					':': colonTextToEnd,
+					'\n': hiddenEnd,
+				}),
 			};
 
 			const then = {'': 0};
@@ -153,7 +161,10 @@ define(['core/ArrayUtilities'], (array) => {
 				override: 'Label',
 				then: {},
 			};
-			return makeOpBlock({type: 'variable', suggest: 'Agent', then});
+			return makeOpBlock(
+				{type: 'variable', suggest: 'Agent', then},
+				then
+			);
 		}
 
 		const BASE_THEN = {

@@ -36,14 +36,22 @@ define(['core/ArrayUtilities'], (array) => {
 		equals: (a, b) => {
 			return a.id === b.id;
 		},
-		make: (id, {anchorRight = false} = {}) => {
-			return {id, anchorRight};
+		make: (id, {anchorRight = false, isVirtualSource = false} = {}) => {
+			return {id, anchorRight, isVirtualSource};
 		},
 		indexOf: (list, gAgent) => {
 			return array.indexOf(list, gAgent, GAgent.equals);
 		},
 		hasIntersection: (a, b) => {
 			return array.hasIntersection(a, b, GAgent.equals);
+		},
+		addNearby: (target, reference, item, offset) => {
+			const p = array.indexOf(target, reference, GAgent.equals);
+			if(p === -1) {
+				target.push(item);
+			} else {
+				target.splice(p + offset, 0, item);
+			}
 		},
 	};
 
@@ -52,6 +60,8 @@ define(['core/ArrayUtilities'], (array) => {
 		'note left': [GAgent.make('[')],
 		'note right': [GAgent.make(']')],
 	};
+
+	const SPECIAL_AGENT_IDS = ['[', ']'];
 
 	const MERGABLE = {
 		'agent begin': {
@@ -227,7 +237,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.activeGroups = new Map();
 			this.gAgents = [];
 			this.labelPattern = null;
-			this.blockCount = 0;
+			this.nextID = 0;
 			this.nesting = [];
 			this.markers = new Set();
 			this.currentSection = null;
@@ -256,7 +266,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.endGroup = this.endGroup.bind(this);
 		}
 
-		toGAgent({alias, name}) {
+		toGAgent({name, alias, flags}) {
 			if(alias) {
 				if(this.agentAliases.has(name)) {
 					throw new Error(
@@ -275,7 +285,9 @@ define(['core/ArrayUtilities'], (array) => {
 				}
 				this.agentAliases.set(alias, name);
 			}
-			return GAgent.make(this.agentAliases.get(name) || name);
+			return GAgent.make(this.agentAliases.get(name) || name, {
+				isVirtualSource: flags.includes('source'),
+			});
 		}
 
 		addStage(stage, isVisible = true) {
@@ -311,7 +323,12 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		defineGAgents(gAgents) {
-			array.mergeSets(this.currentNest.gAgents, gAgents, GAgent.equals);
+			array.mergeSets(
+				this.currentNest.gAgents,
+				gAgents.filter((gAgent) =>
+					!SPECIAL_AGENT_IDS.includes(gAgent.id)),
+				GAgent.equals
+			);
 			array.mergeSets(this.gAgents, gAgents, GAgent.equals);
 		}
 
@@ -335,7 +352,9 @@ define(['core/ArrayUtilities'], (array) => {
 		validateGAgents(gAgents, {
 			allowGrouped = false,
 			rejectGrouped = false,
+			allowVirtual = false,
 		} = {}) {
+			/* jshint -W074 */ // agent validity checking requires several steps
 			gAgents.forEach((gAgent) => {
 				const state = this.getGAgentState(gAgent);
 				if(state.covered) {
@@ -348,6 +367,9 @@ define(['core/ArrayUtilities'], (array) => {
 				}
 				if(state.blocked && (!allowGrouped || state.group === null)) {
 					throw new Error('Duplicate agent name: ' + gAgent.id);
+				}
+				if(!allowVirtual && gAgent.isVirtualSource) {
+					throw new Error('cannot use message source here');
 				}
 				if(gAgent.id.startsWith('__')) {
 					throw new Error(gAgent.id + ' is a reserved name');
@@ -442,12 +464,18 @@ define(['core/ArrayUtilities'], (array) => {
 			this.replaceGAgentState(rightGAgent, AgentState.LOCKED);
 			this.nesting.push(this.currentNest);
 
-			return {gAgents, stages};
+			return {stages};
 		}
 
 		nextBlockName() {
-			const name = '__BLOCK' + this.blockCount;
-			++ this.blockCount;
+			const name = '__BLOCK' + this.nextID;
+			++ this.nextID;
+			return name;
+		}
+
+		nextVirtualAgentName() {
+			const name = '__' + this.nextID;
+			++ this.nextID;
 			return name;
 		}
 
@@ -651,9 +679,13 @@ define(['core/ArrayUtilities'], (array) => {
 			let ind1 = GAgent.indexOf(this.gAgents, gAgents1[0]);
 			let ind2 = GAgent.indexOf(this.gAgents, gAgents2[0]);
 			if(ind1 === -1) {
-				ind1 = this.gAgents.length;
+				// Virtual sources written as '* -> Ref' will spawn to the left,
+				// not the right (as non-virtual agents would)
+				ind1 = gAgents1[0].isVirtualSource ? -1 : this.gAgents.length;
 			}
 			if(ind2 === -1) {
+				// Virtual and non-virtual agents written as 'Ref -> *' will
+				// spawn to the right
 				ind2 = this.gAgents.length;
 			}
 			if(ind1 === ind2) {
@@ -700,21 +732,79 @@ define(['core/ArrayUtilities'], (array) => {
 			return {beginGAgents, endGAgents, startGAgents, stopGAgents};
 		}
 
+		makeVirtualAgent(anchorRight) {
+			const virtualGAgent = GAgent.make(this.nextVirtualAgentName(), {
+				anchorRight,
+				isVirtualSource: true,
+			});
+			this.replaceGAgentState(virtualGAgent, AgentState.LOCKED);
+			return virtualGAgent;
+		}
+
+		addNearbyAgent(gAgentReference, gAgent, offset) {
+			GAgent.addNearby(
+				this.currentNest.gAgents,
+				gAgentReference,
+				gAgent,
+				offset
+			);
+			GAgent.addNearby(
+				this.gAgents,
+				gAgentReference,
+				gAgent,
+				offset
+			);
+		}
+
+		expandVirtualSourceAgents(gAgents) {
+			if(gAgents[0].isVirtualSource) {
+				if(gAgents[1].isVirtualSource) {
+					throw new Error('Cannot connect found messages');
+				}
+				if(SPECIAL_AGENT_IDS.includes(gAgents[1].id)) {
+					throw new Error(
+						'Cannot connect found messages to special agents'
+					);
+				}
+				const virtualGAgent = this.makeVirtualAgent(true);
+				this.addNearbyAgent(gAgents[1], virtualGAgent, 0);
+				return [virtualGAgent, gAgents[1]];
+			}
+			if(gAgents[1].isVirtualSource) {
+				if(SPECIAL_AGENT_IDS.includes(gAgents[0].id)) {
+					throw new Error(
+						'Cannot connect found messages to special agents'
+					);
+				}
+				const virtualGAgent = this.makeVirtualAgent(false);
+				this.addNearbyAgent(gAgents[0], virtualGAgent, 1);
+				return [gAgents[0], virtualGAgent];
+			}
+			return gAgents;
+		}
+
 		handleConnect({agents, label, options}) {
 			const flags = this.filterConnectFlags(agents);
 
 			let gAgents = agents.map(this.toGAgent);
-			this.validateGAgents(gAgents, {allowGrouped: true});
+			this.validateGAgents(gAgents, {
+				allowGrouped: true,
+				allowVirtual: true,
+			});
 
 			const allGAgents = array.flatMap(gAgents, this.expandGroupedGAgent);
-			this.defineGAgents(allGAgents);
+			this.defineGAgents(allGAgents
+				.filter((gAgent) => !gAgent.isVirtualSource)
+			);
 
 			gAgents = this.expandGroupedGAgentConnection(gAgents);
+			gAgents = this.expandVirtualSourceAgents(gAgents);
 			const agentIDs = gAgents.map((gAgent) => gAgent.id);
 
 			const implicitBeginGAgents = (agents
 				.filter(PAgent.hasFlag('begin', false))
 				.map(this.toGAgent)
+				.filter((gAgent) => !gAgent.isVirtualSource)
 			);
 			this.addStage(this.setGAgentVis(implicitBeginGAgents, true, 'box'));
 
@@ -811,7 +901,7 @@ define(['core/ArrayUtilities'], (array) => {
 			this.agentAliases.clear();
 			this.activeGroups.clear();
 			this.gAgents.length = 0;
-			this.blockCount = 0;
+			this.nextID = 0;
 			this.nesting.length = 0;
 			this.labelPattern = [{token: 'label'}];
 		}

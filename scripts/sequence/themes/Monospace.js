@@ -157,6 +157,19 @@ define([
 					'line-height': LINE_HEIGHT,
 				},
 			},
+			source: {
+				radius: 2,
+				render: ({x, y, radius}) => {
+					return svg.make('circle', {
+						'cx': x,
+						'cy': y,
+						'r': radius,
+						'fill': '#000000',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					});
+				},
+			},
 			mask: {
 				padding: {
 					top: 0,

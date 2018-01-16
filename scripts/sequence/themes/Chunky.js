@@ -160,6 +160,19 @@ define([
 					'line-height': LINE_HEIGHT,
 				},
 			},
+			source: {
+				radius: 5,
+				render: ({x, y, radius}) => {
+					return svg.make('circle', {
+						'cx': x,
+						'cy': y,
+						'r': radius,
+						'fill': '#000000',
+						'stroke': '#000000',
+						'stroke-width': 3,
+					});
+				},
+			},
 			mask: {
 				padding: {
 					top: 1,

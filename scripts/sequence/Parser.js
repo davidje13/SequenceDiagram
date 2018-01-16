@@ -67,10 +67,10 @@ define([
 	})());
 
 	const CONNECT_AGENT_FLAGS = {
-		'*': 'begin',
-		'+': 'start',
-		'-': 'stop',
-		'!': 'end',
+		'*': {flag: 'begin', allowBlankName: true, blankNameFlag: 'source'},
+		'+': {flag: 'start'},
+		'-': {flag: 'stop'},
+		'!': {flag: 'end'},
 	};
 
 	const TERMINATOR_TYPES = [
@@ -182,7 +182,7 @@ define([
 		return -1;
 	}
 
-	function readAgentAlias(line, start, end, enableAlias) {
+	function readAgentAlias(line, start, end, {enableAlias, allowBlankName}) {
 		let aliasSep = -1;
 		if(enableAlias) {
 			aliasSep = findToken(line, 'as', start);
@@ -190,7 +190,7 @@ define([
 		if(aliasSep === -1 || aliasSep >= end) {
 			aliasSep = end;
 		}
-		if(start >= aliasSep) {
+		if(start >= aliasSep && !allowBlankName) {
 			throw makeError('Missing agent name', errToken(line, start));
 		}
 		return {
@@ -204,25 +204,31 @@ define([
 		aliases = false,
 	} = {}) {
 		const flags = [];
+		const blankNameFlags = [];
 		let p = start;
+		let allowBlankName = false;
 		for(; p < end; ++ p) {
 			const token = line[p];
 			const rawFlag = tokenKeyword(token);
 			const flag = flagTypes[rawFlag];
-			if(flag) {
-				if(flags.includes(flag)) {
-					throw makeError('Duplicate agent flag: ' + rawFlag, token);
-				}
-				flags.push(flag);
-			} else {
+			if(!flag) {
 				break;
 			}
+			if(flags.includes(flag.flag)) {
+				throw makeError('Duplicate agent flag: ' + rawFlag, token);
+			}
+			allowBlankName = allowBlankName || Boolean(flag.allowBlankName);
+			flags.push(flag.flag);
+			blankNameFlags.push(flag.blankNameFlag);
 		}
-		const {name, alias} = readAgentAlias(line, p, end, aliases);
+		const {name, alias} = readAgentAlias(line, p, end, {
+			enableAlias: aliases,
+			allowBlankName,
+		});
 		return {
 			name,
 			alias,
-			flags,
+			flags: name ? flags : blankNameFlags,
 		};
 	}
 

@@ -185,6 +185,38 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			));
 		});
 
+		it('parses source agents', () => {
+			const parsed = parser.parse('A -> *');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'connect',
+					ln: jasmine.anything(),
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: '', alias: '', flags: ['source']},
+					],
+					label: jasmine.anything(),
+					options: jasmine.anything(),
+				},
+			]);
+		});
+
+		it('parses source agents with labels', () => {
+			const parsed = parser.parse('A -> *: foo');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'connect',
+					ln: jasmine.anything(),
+					agents: [
+						{name: 'A', alias: '', flags: []},
+						{name: '', alias: '', flags: ['source']},
+					],
+					label: 'foo',
+					options: jasmine.anything(),
+				},
+			]);
+		});
+
 		it('converts multiple entries', () => {
 			const parsed = parser.parse('A -> B\nB -> A');
 			expect(parsed.stages).toEqual([

@@ -57,6 +57,10 @@
 				code: '{Agent1} -> {Agent1}: {Message}',
 			},
 			{
+				title: 'Found message',
+				code: '* -> {Agent1}: {Message}',
+			},
+			{
 				title: 'Request/response pair',
 				code: (
 					'{Agent1} -> +{Agent2}: {Request}\n' +

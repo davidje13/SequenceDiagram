@@ -1,8 +1,10 @@
 define([
+	'core/ArrayUtilities',
 	'./BaseComponent',
 	'svg/SVGUtilities',
 	'svg/SVGShapes',
 ], (
+	array,
 	BaseComponent,
 	svg,
 	SVGShapes
@@ -106,6 +108,18 @@ define([
 	];
 
 	class Connect extends BaseComponent {
+		separationPre({agentIDs}, env) {
+			const r = env.theme.connect.source.radius;
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
+				if(!agentInfo.isVirtualSource) {
+					return;
+				}
+				agentInfo.currentRad = r;
+				agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
+			});
+		}
+
 		separation({label, agentIDs, options}, env) {
 			const config = env.theme.connect;
 
@@ -147,6 +161,8 @@ define([
 					) * 2
 				);
 			}
+
+			array.mergeSets(env.momentaryAgentIDs, agentIDs);
 		}
 
 		renderSelfConnect({label, agentIDs, options}, env) {
@@ -224,13 +240,58 @@ define([
 			);
 		}
 
+		renderSimpleLine(x0, x1, options, env) {
+			const dir = (x0 < x1) ? 1 : -1;
+
+			const config = env.theme.connect;
+			const line = config.line[options.line];
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
+
+			const rendered = line.renderFlat(line.attrs, {
+				x1: x0,
+				dx1: lArrow.lineGap(env.theme, line.attrs) * dir,
+				x2: x1,
+				dx2: -rArrow.lineGap(env.theme, line.attrs) * dir,
+				y: env.primaryY,
+			});
+			env.shapeLayer.appendChild(rendered.shape);
+			return rendered;
+		}
+
+		renderSimpleArrowheads(options, renderedLine, env, dir) {
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
+
+			lArrow.render(env.shapeLayer, env.theme, renderedLine.p1, dir);
+			rArrow.render(env.shapeLayer, env.theme, renderedLine.p2, -dir);
+
+			return {lArrow, rArrow};
+		}
+
+		renderVirtualSources(from, to, renderedLine, env) {
+			const config = env.theme.connect.source;
+
+			if(from.isVirtualSource) {
+				env.shapeLayer.appendChild(config.render({
+					x: renderedLine.p1.x - config.radius,
+					y: renderedLine.p1.y,
+					radius: config.radius,
+				}));
+			}
+			if(to.isVirtualSource) {
+				env.shapeLayer.appendChild(config.render({
+					x: renderedLine.p2.x + config.radius,
+					y: renderedLine.p2.y,
+					radius: config.radius,
+				}));
+			}
+		}
+
 		renderSimpleConnect({label, agentIDs, options}, env) {
 			const config = env.theme.connect;
 			const from = env.agentInfos.get(agentIDs[0]);
 			const to = env.agentInfos.get(agentIDs[1]);
-
-			const lArrow = ARROWHEADS[options.left];
-			const rArrow = ARROWHEADS[options.right];
 
 			const dir = (from.x < to.x) ? 1 : -1;
 
@@ -257,18 +318,12 @@ define([
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
-			const line = config.line[options.line];
-			const rendered = line.renderFlat(line.attrs, {
-				x1: x0,
-				dx1: lArrow.lineGap(env.theme, line.attrs) * dir,
-				x2: x1,
-				dx2: -rArrow.lineGap(env.theme, line.attrs) * dir,
-				y,
-			});
-			env.shapeLayer.appendChild(rendered.shape);
-
-			lArrow.render(env.shapeLayer, env.theme, rendered.p1, dir);
-			rArrow.render(env.shapeLayer, env.theme, rendered.p2, -dir);
+			const rendered = this.renderSimpleLine(x0, x1, options, env);
+			const {
+				lArrow,
+				rArrow
+			} = this.renderSimpleArrowheads(options, rendered, env, dir);
+			this.renderVirtualSources(from, to, rendered, env);
 
 			const arrowSpread = Math.max(
 				lArrow.height(env.theme),

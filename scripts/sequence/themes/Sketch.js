@@ -139,6 +139,19 @@ define([
 					'line-height': LINE_HEIGHT,
 				},
 			},
+			source: {
+				radius: 1,
+				render: ({x, y, radius}) => {
+					return svg.make('circle', {
+						'cx': x,
+						'cy': y,
+						'r': radius,
+						'fill': '#000000',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					});
+				},
+			},
 			mask: {
 				padding: {
 					top: 0,
@@ -574,7 +587,7 @@ define([
 			);
 			return {
 				shape: svg.make('path', Object.assign({'d': ln.nodes}, attrs)),
-				p1: {x: ln.p1.x - dx1, y: ln.p2.y},
+				p1: {x: ln.p1.x - dx1, y: ln.p1.y},
 				p2: {x: ln.p2.x - dx2, y: ln.p2.y},
 			};
 		}

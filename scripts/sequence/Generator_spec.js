@@ -110,6 +110,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	};
 
 	const GENERATED = {
+		agent: (id, {
+			formattedLabel = any(),
+			anchorRight = any(),
+			isVirtualSource = any(),
+		} = {}) => {
+			return {id, formattedLabel, anchorRight, isVirtualSource};
+		},
+
 		beginAgents: (agentIDs, {
 			mode = any(),
 			ln = any(),
@@ -264,8 +272,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		it('includes implicit hidden left/right agents', () => {
 			const sequence = invoke([]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('[', {anchorRight: true}),
+				GENERATED.agent(']', {anchorRight: false}),
 			]);
 		});
 
@@ -296,13 +304,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['E']),
 			]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: 'E', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('D'),
+				GENERATED.agent('E'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -311,10 +319,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 			]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: any()},
-				{id: 'A', formattedLabel: 'A!', anchorRight: any()},
-				{id: 'B', formattedLabel: 'B!', anchorRight: any()},
-				{id: ']', formattedLabel: any(), anchorRight: any()},
+				GENERATED.agent('['),
+				GENERATED.agent('A', {formattedLabel: 'A!'}),
+				GENERATED.agent('B', {formattedLabel: 'B!'}),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -323,9 +331,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect([']', 'B']),
 			]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('B'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -335,10 +343,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 			]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('B'),
+				GENERATED.agent('A'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -348,10 +356,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 			]);
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'Baz', formattedLabel: any(), anchorRight: false},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('Baz'),
+				GENERATED.agent('A'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -417,6 +425,119 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				}),
 				any(),
 			]);
+		});
+
+		it('converts source agents into virtual agents', () => {
+			const sequence = invoke([
+				PARSED.connect([
+					'A',
+					{name: '', alias: '', flags: ['source']},
+				]),
+			]);
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__0', {
+					anchorRight: false,
+					isVirtualSource: true,
+				}),
+				GENERATED.agent(']'),
+			]);
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				GENERATED.connect(['A', '__0']),
+				GENERATED.endAgents(['A']),
+			]);
+		});
+
+		it('converts sources into distinct virtual agents', () => {
+			const sequence = invoke([
+				PARSED.connect([
+					'A',
+					{name: '', alias: '', flags: ['source']},
+				]),
+				PARSED.connect([
+					'A',
+					{name: '', alias: '', flags: ['source']},
+				]),
+			]);
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__1'),
+				GENERATED.agent('__0'),
+				GENERATED.agent(']'),
+			]);
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				GENERATED.connect(['A', '__0']),
+				GENERATED.connect(['A', '__1']),
+				GENERATED.endAgents(['A']),
+			]);
+		});
+
+		it('places source agents near the connected agent', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.connect([
+					'B',
+					{name: '', alias: '', flags: ['source']},
+				]),
+			]);
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__0', {
+					anchorRight: false,
+					isVirtualSource: true,
+				}),
+				GENERATED.agent('C'),
+				GENERATED.agent(']'),
+			]);
+		});
+
+		it('places source agents left when connections are reversed', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.connect([
+					{name: '', alias: '', flags: ['source']},
+					'B',
+				]),
+			]);
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__0', {
+					anchorRight: true,
+					isVirtualSource: true,
+				}),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent(']'),
+			]);
+		});
+
+		it('rejects connections between virtual agents', () => {
+			expect(() => invoke([
+				PARSED.connect([
+					{name: '', alias: '', flags: ['source']},
+					{name: '', alias: '', flags: ['source']},
+				]),
+			])).toThrow(new Error(
+				'Cannot connect found messages at line 1'
+			));
+		});
+
+		it('rejects connections between virtual agents and sides', () => {
+			expect(() => invoke([
+				PARSED.connect([
+					{name: '', alias: '', flags: ['source']},
+					']',
+				]),
+			])).toThrow(new Error(
+				'Cannot connect found messages to special agents at line 1'
+			));
 		});
 
 		it('uses label patterns for connections', () => {
@@ -819,12 +940,12 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK0[', {anchorRight: true}),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK0]', {anchorRight: false}),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -841,20 +962,40 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1[', formattedLabel: any(), anchorRight: true},
-				{id: 'E', formattedLabel: any(), anchorRight: false},
-				{id: 'F', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1]', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: 'G', formattedLabel: any(), anchorRight: false},
-				{id: 'H', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('C'),
+				GENERATED.agent('D'),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('E'),
+				GENERATED.agent('F'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('G'),
+				GENERATED.agent('H'),
+				GENERATED.agent(']'),
+			]);
+		});
+
+		it('ignores side agents when calculating block bounds', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['[', 'B']),
+				PARSED.connect(['B', ']']),
+				PARSED.blockEnd(),
+			]);
+
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('C'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -916,15 +1057,15 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK1[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1]', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent(']'),
 			]);
 
 			const bounds0 = {
@@ -955,14 +1096,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK1[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1]', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent(']'),
 			]);
 
 			const bounds0 = {
@@ -1051,12 +1192,12 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			};
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent(']'),
 			]);
 
 			expect(sequence.stages).toEqual([
@@ -1116,14 +1257,14 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('D'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -1135,15 +1276,15 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequence.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: 'E', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('D'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('E'),
+				GENERATED.agent(']'),
 			]);
 		});
 
@@ -1342,16 +1483,16 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequenceR.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1]', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('__BLOCK0[', {anchorRight: true}),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK0]', {anchorRight: false}),
+				GENERATED.agent('D'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent(']'),
 			]);
 
 			const sequenceL = invoke([
@@ -1364,16 +1505,51 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 
 			expect(sequenceL.agents).toEqual([
-				{id: '[', formattedLabel: any(), anchorRight: true},
-				{id: '__BLOCK1[', formattedLabel: any(), anchorRight: true},
-				{id: 'A', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0[', formattedLabel: any(), anchorRight: true},
-				{id: 'B', formattedLabel: any(), anchorRight: false},
-				{id: 'C', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK0]', formattedLabel: any(), anchorRight: false},
-				{id: '__BLOCK1]', formattedLabel: any(), anchorRight: false},
-				{id: 'D', formattedLabel: any(), anchorRight: false},
-				{id: ']', formattedLabel: any(), anchorRight: false},
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent('D'),
+				GENERATED.agent(']'),
+			]);
+		});
+
+		it('allows connections between sources and references', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
+				PARSED.connect([
+					{name: '', alias: '', flags: ['source']},
+					'Bar',
+				]),
+				PARSED.connect([
+					'Bar',
+					{name: '', alias: '', flags: ['source']},
+				]),
+				PARSED.endAgents(['Bar']),
+			]);
+
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__1', {
+					anchorRight: true,
+					isVirtualSource: true,
+				}),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('__2', {
+					anchorRight: false,
+					isVirtualSource: true,
+				}),
+				GENERATED.agent('D'),
+				GENERATED.agent(']'),
 			]);
 		});
 
