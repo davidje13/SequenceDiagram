@@ -196,7 +196,7 @@ note over Foo, Bar: "Foo and Bar
 on multiple lines"
 note between Foo, Bar: Link
 
-text right: 'Comments\nOver here!'
+text right: "Comments\nOver here!"
 
 state over Foo: Foo is ponderous
 </pre>
@@ -235,19 +235,19 @@ A <- ]: Profit!
 
 <h3 id="MultilineText">Multiline Text</h3>
 <pre class="example" data-lang="sequence">
-title 'My Multiline
-Title'
+title "My Multiline
+Title"
 
-note over Foo: 'Also possible\nwith escapes'
+note over Foo: "Also possible\nwith escapes"
 
-Foo -> Bar: 'Lines of text\non this arrow'
+Foo -> Bar: "Lines of text\non this arrow"
 
-if 'Even multiline\ninside conditions like this'
-  Foo -> 'Multiline\nagent'
+if "Even multiline\ninside conditions like this"
+  Foo -> "Multiline\nagent"
 end
 
-state over Foo: 'Newlines here,
-too!'
+state over Foo: "Newlines here,
+too!"
 </pre>
 
 <h3 id="Themes">Themes</h3>
@@ -305,13 +305,13 @@ A <- B: than writing the whole name
 
 <h3 id="Markdown">Markdown</h3>
 <pre class="example" data-lang="sequence">
-define 'Name with
-**bold** and _italic_' as A
-define 'Also `code`
-and ~strikeout~' as B
+define "Name with
+**bold** and _italic_" as A
+define "Also `code`
+and ~strikeout~" as B
 
-A -> B: '_**basic markdown
-is supported!**_'
+A -> B: "_**basic markdown
+is supported!**_"
 </pre>
 
 <h3 id="AlternativeAgentOrdering">Alternative Agent Ordering</h3>

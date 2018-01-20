@@ -22,7 +22,7 @@ Goblin -> Bowie: What babe?
 Bowie -> Goblin: The babe with the power
 Goblin -> Bowie: What power?
 note right of Bowie, Goblin: Most people get muddled here!
-Bowie -> Goblin: 'The power of voodoo'
+Bowie -> Goblin: "The power of voodoo"
 Goblin -> Bowie: "Who-do?"
 Bowie -> Goblin: You do!
 Goblin -> Bowie: Do what?
@@ -85,7 +85,7 @@ note over Foo, Bar: "Foo and Bar
 on multiple lines"
 note between Foo, Bar: Link
 
-text right: 'Comments\nOver here!'
+text right: "Comments\nOver here!"
 
 state over Foo: Foo is ponderous
 ```
@@ -133,19 +133,19 @@ A <- ]: Profit!
 <img src="screenshots/MultilineText.png" alt="Multiline Text preview" width="200" align="right" />
 
 ```
-title 'My Multiline
-Title'
+title "My Multiline
+Title"
 
-note over Foo: 'Also possible\nwith escapes'
+note over Foo: "Also possible\nwith escapes"
 
-Foo -> Bar: 'Lines of text\non this arrow'
+Foo -> Bar: "Lines of text\non this arrow"
 
-if 'Even multiline\ninside conditions like this'
-  Foo -> 'Multiline\nagent'
+if "Even multiline\ninside conditions like this"
+  Foo -> "Multiline\nagent"
 end
 
-state over Foo: 'Newlines here,
-too!'
+state over Foo: "Newlines here,
+too!"
 ```
 
 ### Themes
@@ -206,13 +206,13 @@ A <- B: than writing the whole name
 <img src="screenshots/Markdown.png" alt="Markdown preview" width="200" align="right" />
 
 ```
-define 'Name with
-**bold** and _italic_' as A
-define 'Also `code`
-and ~strikeout~' as B
+define "Name with
+**bold** and _italic_" as A
+define "Also `code`
+and ~strikeout~" as B
 
-A -> B: '_**basic markdown
-is supported!**_'
+A -> B: "_**basic markdown
+is supported!**_"
 ```
 
 ### Alternative Agent Ordering
@@ -270,17 +270,16 @@ Comments begin with a `#` and end at the next newline:
 Meta data can be provided with particular keywords:
 
 ```
-title 'My title here'
+title "My title here"
 ```
 
 Quoting strings is usually optional, for example these are the same:
 
 ```
-title 'My title here'
 title "My title here"
 title My title here
 title "My title" here
-title "My" 'title' "here"
+title "My" "title" "here"
 ```
 
 Each non-metadata line represents a step in the sequence, in order.
@@ -293,7 +292,7 @@ Foo Bar -> Zig Zag: Do a thing
 
 # With quotes, this is the same as:
 
-'Foo Bar' -> 'Zig Zag': 'Do a thing'
+"Foo Bar" -> "Zig Zag": "Do a thing"
 ```
 
 Blocks surround steps, and can nest:

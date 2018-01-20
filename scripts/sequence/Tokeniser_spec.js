@@ -102,12 +102,22 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 		});
 
 		it('parses quoted strings as single tokens', () => {
-			const input = 'foo "zig zag" \'abc def\'';
+			const input = 'foo "zig zag" "abc def"';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
 				token({s: '', v: 'foo', q: false}),
 				token({s: ' ', v: 'zig zag', q: true}),
 				token({s: ' ', v: 'abc def', q: true}),
+			]);
+		});
+
+		it('does not consider single quotes as quotes', () => {
+			const input = 'foo \'zig zag\'';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({s: '', v: 'foo', q: false}),
+				token({s: ' ', v: '\'zig', q: false}),
+				token({s: ' ', v: 'zag\'', q: false}),
 			]);
 		});
 
@@ -130,7 +140,7 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 		});
 
 		it('ignores quotes within comments', () => {
-			const input = 'foo # bar "\'baz\nzig';
+			const input = 'foo # bar "baz\nzig';
 			const tokens = tokeniser.tokenise(input);
 			expect(tokens).toEqual([
 				token({s: '', v: 'foo'}),

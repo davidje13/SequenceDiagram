@@ -23,14 +23,6 @@ define(['./CodeMirrorMode'], (CMMode) => {
 			escapeWith: unescape,
 			baseToken: {q: true},
 		},
-		{
-			start: /'/y,
-			end: /'/y,
-			escape: /\\(.)/y,
-			escapeWith:
-			unescape,
-			baseToken: {q: true},
-		},
 		{start: /(?=[^ \t\r\n:+\-~*!<>,])/y, end: /(?=[ \t\r\n:+\-~*!<>,])|$/y},
 		{
 			start: /(?=[\-~<])/y,

@@ -21,7 +21,7 @@
 			'Bowie -> Goblin: The babe with the power\n' +
 			'Goblin -> Bowie: What power?\n' +
 			'note right of Bowie, Goblin: Most people get muddled here!\n' +
-			'Bowie -> Goblin: \'The power of voodoo\'\n' +
+			'Bowie -> Goblin: "The power of voodoo"\n' +
 			'Goblin -> Bowie: "Who-do?"\n' +
 			'Bowie -> Goblin: You do!\n' +
 			'Goblin -> Bowie: Do what?\n' +

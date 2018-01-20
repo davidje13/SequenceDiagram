@@ -3,6 +3,15 @@ define(['core/ArrayUtilities'], (array) => {
 
 	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
 
+	function suggestionsEqual(a, b) {
+		return (
+			(a.v === b.v) &&
+			(a.prefix === b.prefix) &&
+			(a.suffix === b.suffix) &&
+			(a.q === b.q)
+		);
+	}
+
 	const makeCommands = ((() => {
 		// The order of commands inside "then" blocks directly influences the
 		// order they are displayed to the user in autocomplete menus.
@@ -279,9 +288,9 @@ define(['core/ArrayUtilities'], (array) => {
 
 	function cmCappedToken(token, current) {
 		if(Object.keys(current.then).length > 0) {
-			return token + ' ';
+			return {v: token, suffix: ' ', q: false};
 		} else {
-			return token + '\n';
+			return {v: token, suffix: '\n', q: false};
 		}
 	}
 
@@ -304,9 +313,9 @@ define(['core/ArrayUtilities'], (array) => {
 		} else if(current.suggest === true) {
 			return [cmCappedToken(token, current)];
 		} else if(Array.isArray(current.suggest)) {
-			return current.suggest;
+			return current.suggest.map((v) => ({v, q: false}));
 		} else if(current.suggest) {
-			return [current.suggest];
+			return [{v: current.suggest, q: false}];
 		} else {
 			return null;
 		}
@@ -322,7 +331,8 @@ define(['core/ArrayUtilities'], (array) => {
 			}
 			array.mergeSets(
 				comp,
-				cmGetSuggestions(state, token, current, next)
+				cmGetSuggestions(state, token, current, next),
+				suggestionsEqual
 			);
 		});
 		return comp;
@@ -336,7 +346,8 @@ define(['core/ArrayUtilities'], (array) => {
 				}
 				array.mergeSets(
 					state['known' + locals.type],
-					[locals.value + ' ']
+					[{v: locals.value, suffix: ' ', q: true}],
+					suggestionsEqual
 				);
 				locals.type = '';
 				locals.value = '';
