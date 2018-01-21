@@ -478,7 +478,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(parsed.stages).toEqual([{
 				type: 'divider',
 				ln: jasmine.anything(),
-				mode: 'space',
+				mode: 'line',
 				height: 6,
 				label: '',
 			}]);
@@ -486,8 +486,8 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts different divider types', () => {
 			const parsed = parser.parse(
-				'divider space\n' +
 				'divider line\n' +
+				'divider space\n' +
 				'divider delay\n' +
 				'divider tear\n'
 			);
@@ -495,14 +495,14 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				{
 					type: 'divider',
 					ln: jasmine.anything(),
-					mode: 'space',
+					mode: 'line',
 					height: 6,
 					label: jasmine.anything(),
 				},
 				{
 					type: 'divider',
 					ln: jasmine.anything(),
-					mode: 'line',
+					mode: 'space',
 					height: 6,
 					label: jasmine.anything(),
 				},
@@ -532,7 +532,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				{
 					type: 'divider',
 					ln: jasmine.anything(),
-					mode: 'space',
+					mode: 'line',
 					height: 40,
 					label: '',
 				},

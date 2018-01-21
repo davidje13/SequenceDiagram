@@ -109,8 +109,8 @@ define([
 	};
 
 	const DIVIDER_TYPES = {
-		'space': {defaultHeight: 6},
 		'line': {defaultHeight: 6},
+		'space': {defaultHeight: 6},
 		'delay': {defaultHeight: 30},
 		'tear': {defaultHeight: 6},
 	};
@@ -338,7 +338,7 @@ define([
 				orEnd: true,
 			});
 
-			const mode = joinLabel(line, 1, heightSep) || 'space';
+			const mode = joinLabel(line, 1, heightSep) || 'line';
 			if(!DIVIDER_TYPES[mode]) {
 				throw makeError('Unknown divider type', line[1]);
 			}

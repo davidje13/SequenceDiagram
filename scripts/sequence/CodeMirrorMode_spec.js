@@ -436,8 +436,8 @@ defineDescribe('Code Mirror Mode', [
 			cm.getDoc().setValue('divider ');
 			const hints = getHintTexts({line: 0, ch: 8});
 			expect(hints).toEqual([
-				'space ',
 				'line ',
+				'space ',
 				'delay ',
 				'tear ',
 				'\n',

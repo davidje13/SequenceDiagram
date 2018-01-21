@@ -257,8 +257,8 @@ define(['core/ArrayUtilities'], (array) => {
 				'bar': {type: 'keyword', suggest: true, then: {}},
 			}},
 			'divider': {type: 'keyword', suggest: true, then: Object.assign({
-				'space': {type: 'keyword', suggest: true, then: divider},
 				'line': {type: 'keyword', suggest: true, then: divider},
+				'space': {type: 'keyword', suggest: true, then: divider},
 				'delay': {type: 'keyword', suggest: true, then: divider},
 				'tear': {type: 'keyword', suggest: true, then: divider},
 			}, divider)},
