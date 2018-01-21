@@ -13,6 +13,7 @@ define([
 	'sequence/LabelPatternParser_spec',
 	'sequence/Generator_spec',
 	'sequence/Renderer_spec',
+	'sequence/CodeMirrorMode_spec',
 	'sequence/themes/Basic_spec',
 	'sequence/themes/Monospace_spec',
 	'sequence/themes/Chunky_spec',

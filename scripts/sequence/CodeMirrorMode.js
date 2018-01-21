@@ -23,32 +23,44 @@ define(['core/ArrayUtilities'], (array) => {
 		const end = {type: '', suggest: '\n', then: {}};
 		const hiddenEnd = {type: '', then: {}};
 
-		function textTo(exit) {
-			return {type: 'string', then: Object.assign({'': 0}, exit)};
+		function textTo(exit, suggest) {
+			return {
+				type: 'string',
+				suggest,
+				then: Object.assign({'': 0}, exit),
+			};
 		}
 
 		const textToEnd = textTo({'\n': end});
-		const aliasListToEnd = {type: 'variable', suggest: 'Agent', then: {
-			'': 0,
-			'\n': end,
-			',': {type: 'operator', suggest: true, then: {'': 1}},
-			'as': {type: 'keyword', suggest: true, then: {
-				'': {type: 'variable', suggest: 'Agent', then: {
-					'': 0,
-					',': {type: 'operator', suggest: true, then: {'': 3}},
-					'\n': end,
+		const aliasListToEnd = {
+			type: 'variable',
+			suggest: {known: 'Agent'},
+			then: {
+				'': 0,
+				'\n': end,
+				',': {type: 'operator', suggest: true, then: {'': 1}},
+				'as': {type: 'keyword', suggest: true, then: {
+					'': {type: 'variable', suggest: {known: 'Agent'}, then: {
+						'': 0,
+						',': {type: 'operator', suggest: true, then: {'': 3}},
+						'\n': end,
+					}},
 				}},
-			}},
-		}};
+			},
+		};
 
 		function agentListTo(exit) {
-			return {type: 'variable', suggest: 'Agent', then: Object.assign({},
-				exit,
-				{
-					'': 0,
-					',': {type: 'operator', suggest: true, then: {'': 1}},
-				}
-			)};
+			return {
+				type: 'variable',
+				suggest: {known: 'Agent'},
+				then: Object.assign({},
+					exit,
+					{
+						'': 0,
+						',': {type: 'operator', suggest: true, then: {'': 1}},
+					}
+				),
+			};
 		}
 
 		const colonTextToEnd = {
@@ -59,32 +71,50 @@ define(['core/ArrayUtilities'], (array) => {
 		const agentListToText = agentListTo({
 			':': colonTextToEnd,
 		});
-		const agentList2ToText = {type: 'variable', suggest: 'Agent', then: {
-			'': 0,
-			',': {type: 'operator', suggest: true, then: {'': agentListToText}},
-			':': CM_ERROR,
-		}};
-		const singleAgentToText = {type: 'variable', suggest: 'Agent', then: {
-			'': 0,
-			',': CM_ERROR,
-			':': colonTextToEnd,
-		}};
-		const agentToOptText = {type: 'variable', suggest: 'Agent', then: {
-			'': 0,
-			':': {type: 'operator', suggest: true, then: {
-				'': textToEnd,
-				'\n': hiddenEnd,
-			}},
-			'\n': end,
-		}};
+		const agentList2ToText = {
+			type: 'variable',
+			suggest: {known: 'Agent'},
+			then: {
+				'': 0,
+				',': {type: 'operator', suggest: true, then: {
+					'': agentListToText,
+				}},
+				':': CM_ERROR,
+			},
+		};
+		const singleAgentToText = {
+			type: 'variable',
+			suggest: {known: 'Agent'},
+			then: {
+				'': 0,
+				',': CM_ERROR,
+				':': colonTextToEnd,
+			},
+		};
+		const agentToOptText = {
+			type: 'variable',
+			suggest: {known: 'Agent'},
+			then: {
+				'': 0,
+				':': {type: 'operator', suggest: true, then: {
+					'': textToEnd,
+					'\n': hiddenEnd,
+				}},
+				'\n': end,
+			},
+		};
 		const referenceName = {
 			':': {type: 'operator', suggest: true, then: {
 				'': textTo({
 					'as': {type: 'keyword', suggest: true, then: {
-						'': {type: 'variable', suggest: 'Agent', then: {
-							'': 0,
-							'\n': end,
-						}},
+						'': {
+							type: 'variable',
+							suggest: {known: 'Agent'},
+							then: {
+								'': 0,
+								'\n': end,
+							},
+						},
 					}},
 				}),
 			}},
@@ -171,7 +201,7 @@ define(['core/ArrayUtilities'], (array) => {
 				then: {},
 			};
 			return makeOpBlock(
-				{type: 'variable', suggest: 'Agent', then},
+				{type: 'variable', suggest: {known: 'Agent'}, then},
 				then
 			);
 		}
@@ -265,12 +295,16 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'autolabel': {type: 'keyword', suggest: true, then: {
 				'off': {type: 'keyword', suggest: true, then: {}},
-				'': textToEnd,
+				'': textTo({'\n': end}, [
+					{v: '<label>', suffix: '\n', q: true},
+					{v: '[<inc>] <label>', suffix: '\n', q: true},
+					{v: '[<inc 1,0.01>] <label>', suffix: '\n', q: true},
+				]),
 			}},
 			'simultaneously': {type: 'keyword', suggest: true, then: {
 				':': {type: 'operator', suggest: true, then: {}},
 				'with': {type: 'keyword', suggest: true, then: {
-					'': {type: 'variable', suggest: 'Label', then: {
+					'': {type: 'variable', suggest: {known: 'Label'}, then: {
 						'': 0,
 						':': {type: 'operator', suggest: true, then: {}},
 					}},
@@ -294,31 +328,27 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 	}
 
-	function cmGetVarSuggestions(state, previous, current) {
-		if(typeof current.suggest === 'object' && current.suggest.global) {
-			return [current.suggest];
+	function cmGetSuggestions(state, token, current) {
+		let suggestions = current.suggest;
+		if(!Array.isArray(suggestions)) {
+			suggestions = [suggestions];
 		}
-		if(
-			typeof current.suggest !== 'string' ||
-			previous.suggest === current.suggest
-		) {
-			return null;
-		}
-		return state['known' + current.suggest];
-	}
 
-	function cmGetSuggestions(state, token, previous, current) {
-		if(token === '') {
-			return cmGetVarSuggestions(state, previous, current);
-		} else if(current.suggest === true) {
-			return [cmCappedToken(token, current)];
-		} else if(Array.isArray(current.suggest)) {
-			return current.suggest.map((v) => ({v, q: false}));
-		} else if(current.suggest) {
-			return [{v: current.suggest, q: false}];
-		} else {
-			return null;
-		}
+		return array.flatMap(suggestions, (suggest) => {
+			if(suggest === true) {
+				return [cmCappedToken(token, current)];
+			} else if(typeof suggest === 'object') {
+				if(suggest.known) {
+					return state['known' + suggest.known] || [];
+				} else {
+					return [suggest];
+				}
+			} else if(typeof suggest === 'string' && suggest) {
+				return [{v: suggest, q: (token === '')}];
+			} else {
+				return [];
+			}
+		});
 	}
 
 	function cmMakeCompletions(state, path) {
@@ -331,7 +361,7 @@ define(['core/ArrayUtilities'], (array) => {
 			}
 			array.mergeSets(
 				comp,
-				cmGetSuggestions(state, token, current, next),
+				cmGetSuggestions(state, token, next),
 				suggestionsEqual
 			);
 		});
@@ -339,22 +369,24 @@ define(['core/ArrayUtilities'], (array) => {
 	}
 
 	function updateSuggestion(state, locals, token, {suggest, override}) {
-		if(locals.type) {
-			if(suggest !== locals.type) {
-				if(override) {
-					locals.type = override;
-				}
-				array.mergeSets(
-					state['known' + locals.type],
-					[{v: locals.value, suffix: ' ', q: true}],
-					suggestionsEqual
-				);
-				locals.type = '';
-				locals.value = '';
-			}
+		let known = null;
+		if(typeof suggest === 'object' && suggest.known) {
+			known = suggest.known;
 		}
-		if(typeof suggest === 'string' && state['known' + suggest]) {
-			locals.type = suggest;
+		if(locals.type && known !== locals.type) {
+			if(override) {
+				locals.type = override;
+			}
+			array.mergeSets(
+				state['known' + locals.type],
+				[{v: locals.value, suffix: ' ', q: true}],
+				suggestionsEqual
+			);
+			locals.type = '';
+			locals.value = '';
+		}
+		if(known) {
+			locals.type = known;
 			if(locals.value) {
 				locals.value += token.s;
 			}
@@ -375,7 +407,13 @@ define(['core/ArrayUtilities'], (array) => {
 				state.completions = cmMakeCompletions(state, path);
 			}
 			const keywordToken = token.q ? '' : token.v;
-			const found = current.then[keywordToken] || current.then[''];
+			let found = current.then[keywordToken];
+			if(found === undefined) {
+				found = current.then[''];
+				state.isVar = true;
+			} else {
+				state.isVar = token.q;
+			}
 			if(typeof found === 'number') {
 				path.length -= found;
 			} else {
@@ -422,6 +460,7 @@ define(['core/ArrayUtilities'], (array) => {
 				completions: [],
 				nextCompletions: [],
 				valid: true,
+				isVar: true,
 				line: [],
 				indent: 0,
 			};
@@ -516,6 +555,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 		token(stream, state) {
 			state.completions = state.nextCompletions;
+			state.isVar = true;
 			if(stream.sol() && state.currentType === -1) {
 				state.line.length = 0;
 			}
