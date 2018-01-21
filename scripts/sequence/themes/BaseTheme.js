@@ -21,10 +21,11 @@ define([
 	}
 
 	class BaseTheme {
-		constructor({name, settings, blocks, notes}) {
+		constructor({name, settings, blocks, notes, dividers}) {
 			this.name = name;
 			this.blocks = deepCopy(blocks);
 			this.notes = deepCopy(notes);
+			this.dividers = deepCopy(dividers);
 			Object.assign(this, deepCopy(settings));
 		}
 
@@ -40,6 +41,10 @@ define([
 
 		getNote(type) {
 			return this.notes[type] || this.notes[''];
+		}
+
+		getDivider(type) {
+			return this.dividers[type] || this.dividers[''];
 		}
 
 		renderAgentLine({x, y0, y1, width, className}) {
@@ -171,6 +176,145 @@ define([
 			p1: {x: xL, y: y1},
 			p2: {x: xL, y: y2},
 		};
+	};
+
+	BaseTheme.renderLineDivider = (
+		{lineAttrs},
+		{x, y, labelWidth, width, height}
+	) => {
+		let shape = null;
+		const yPos = y + height / 2;
+		if(labelWidth > 0) {
+			shape = svg.make('g');
+			shape.appendChild(svg.make('line', Object.assign({
+				'x1': x,
+				'y1': yPos,
+				'x2': x + (width - labelWidth) / 2,
+				'y2': yPos,
+				'fill': 'none',
+			}, lineAttrs)));
+			shape.appendChild(svg.make('line', Object.assign({
+				'x1': x + (width + labelWidth) / 2,
+				'y1': yPos,
+				'x2': x + width,
+				'y2': yPos,
+				'fill': 'none',
+			}, lineAttrs)));
+		} else {
+			shape = svg.make('line', Object.assign({
+				'x1': x,
+				'y1': yPos,
+				'x2': x + width,
+				'y2': yPos,
+				'fill': 'none',
+			}, lineAttrs));
+		}
+		return {shape};
+	};
+
+	BaseTheme.renderDelayDivider = (
+		{dotSize, gapSize},
+		{x, y, width, height}
+	) => {
+		const mask = svg.make('g');
+		for(let i = 0; i + gapSize <= height; i += dotSize + gapSize) {
+			mask.appendChild(svg.make('rect', {
+				'x': x,
+				'y': y + i,
+				'width': width,
+				'height': gapSize,
+				'fill': '#000000',
+			}));
+		}
+		return {mask};
+	};
+
+	BaseTheme.renderTearDivider = (
+		{fadeBegin, fadeSize, pattern, zigWidth, zigHeight, lineAttrs},
+		{x, y, labelWidth, labelHeight, width, height, env}
+	) => {
+		const maskGradID = env.addDef('tear-grad', () => {
+			const px = 100 / width;
+			const grad = svg.make('linearGradient');
+			grad.appendChild(svg.make('stop', {
+				'offset': (fadeBegin * px) + '%',
+				'stop-color': '#000000',
+			}));
+			grad.appendChild(svg.make('stop', {
+				'offset': ((fadeBegin + fadeSize) * px) + '%',
+				'stop-color': '#FFFFFF',
+			}));
+			grad.appendChild(svg.make('stop', {
+				'offset': (100 - (fadeBegin + fadeSize) * px) + '%',
+				'stop-color': '#FFFFFF',
+			}));
+			grad.appendChild(svg.make('stop', {
+				'offset': (100 - fadeBegin * px) + '%',
+				'stop-color': '#000000',
+			}));
+			return grad;
+		});
+		const shapeMask = svg.make('mask', {
+			'maskUnits': 'userSpaceOnUse',
+		});
+		const shapeMaskID = env.addDef(shapeMask);
+		const shape = svg.make('g', {
+			'mask': 'url(#' + shapeMaskID + ')',
+		});
+
+		shapeMask.appendChild(svg.make('rect', {
+			'x': x,
+			'y': y - 5,
+			'width': width,
+			'height': height + 10,
+			'fill': 'url(#' + maskGradID + ')',
+		}));
+		if(labelWidth > 0) {
+			shapeMask.appendChild(svg.make('rect', {
+				'x': x + (width - labelWidth) / 2,
+				'y': y + (height - labelHeight) / 2 - 1,
+				'width': labelWidth,
+				'height': labelHeight + 2,
+				'rx': 2,
+				'ry': 2,
+				'fill': '#000000',
+			}));
+		}
+
+		if(!pattern) {
+			pattern = new BaseTheme.WavePattern(
+				zigWidth,
+				[zigHeight, -zigHeight]
+			);
+		}
+		let mask = null;
+
+		const pathTop = new SVGShapes.PatternedLine(pattern)
+			.move(x, y)
+			.line(x + width, y);
+		shape.appendChild(svg.make('path', Object.assign({
+			'd': pathTop.asPath(),
+			'fill': 'none',
+		}, lineAttrs)));
+
+		if(height > 0) {
+			const pathBase = new SVGShapes.PatternedLine(pattern)
+				.move(x, y + height)
+				.line(x + width, y + height);
+			shape.appendChild(svg.make('path', Object.assign({
+				'd': pathBase.asPath(),
+				'fill': 'none',
+			}, lineAttrs)));
+			pathTop
+				.line(pathBase.x, pathBase.y, {patterned: false})
+				.cap();
+			pathTop.points.push(...pathBase.points.reverse());
+			mask = svg.make('path', {
+				'd': pathTop.asPath(),
+				'fill': '#000000',
+			});
+		}
+		return {shape, mask};
 	};
 
 	return BaseTheme;

@@ -203,6 +203,38 @@
 				),
 			},
 			{
+				title: 'Vertical space divider',
+				code: 'divider space with height 10: {message}',
+				preview: (
+					'begin A, B, C, D, E, F\n' +
+					'divider space with height 30: message'
+				),
+			},
+			{
+				title: 'Line divider',
+				code: 'divider line with height 10: {message}',
+				preview: (
+					'begin A, B, C, D, E, F\n' +
+					'divider line with height 30: message'
+				),
+			},
+			{
+				title: 'Delay divider',
+				code: 'divider delay with height 10: {message}',
+				preview: (
+					'begin A, B, C, D, E, F\n' +
+					'divider delay with height 30: message'
+				),
+			},
+			{
+				title: 'Tear divider',
+				code: 'divider tear with height 10: {message}',
+				preview: (
+					'begin A, B, C, D, E, F\n' +
+					'divider tear with height 30: message'
+				),
+			},
+			{
 				title: 'Title',
 				code: 'title {Title}',
 				preview: 'headers box\ntitle Title\nA -> B',

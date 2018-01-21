@@ -253,6 +253,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'agent define': this.handleAgentDefine.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
+				'divider': this.handleDivider.bind(this),
 				'label pattern': this.handleLabelPattern.bind(this),
 				'connect': this.handleConnect.bind(this),
 				'note over': this.handleNote.bind(this),
@@ -625,6 +626,15 @@ define(['core/ArrayUtilities'], (array) => {
 		handleMark({name}) {
 			this.markers.add(name);
 			this.addStage({type: 'mark', name}, false);
+		}
+
+		handleDivider({mode, height, label}) {
+			this.addStage({
+				type: 'divider',
+				mode,
+				height,
+				formattedLabel: this.textFormatter(label),
+			}, false);
 		}
 
 		handleAsync({target}) {

@@ -325,6 +325,63 @@ define([
 		},
 	};
 
+	const DIVIDER_LABEL_ATTRS = {
+		'font-family': FONT,
+		'font-size': 8,
+		'line-height': LINE_HEIGHT,
+		'text-anchor': 'middle',
+	};
+
+	const DIVIDERS = {
+		'': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: () => ({}),
+		},
+		'line': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 10,
+			margin: 0,
+			render: BaseTheme.renderLineDivider.bind(null, {
+				lineAttrs: {
+					'stroke': '#000000',
+					'stroke-width': 2,
+					'stroke-linecap': 'round',
+				},
+			}),
+		},
+		'delay': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: BaseTheme.renderDelayDivider.bind(null, {
+				dotSize: 3,
+				gapSize: 3,
+			}),
+		},
+		'tear': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 10,
+			margin: 10,
+			render: BaseTheme.renderTearDivider.bind(null, {
+				fadeBegin: 5,
+				fadeSize: 10,
+				zigWidth: 6,
+				zigHeight: 1,
+				lineAttrs: {
+					'stroke': '#000000',
+					'stroke-width': 2,
+					'stroke-linejoin': 'round',
+				},
+			}),
+		},
+	};
+
 	return class ChunkyTheme extends BaseTheme {
 		constructor() {
 			super({
@@ -332,6 +389,7 @@ define([
 				settings: SETTINGS,
 				blocks: BLOCKS,
 				notes: NOTES,
+				dividers: DIVIDERS,
 			});
 		}
 	};

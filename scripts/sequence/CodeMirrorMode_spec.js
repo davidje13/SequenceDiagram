@@ -351,6 +351,20 @@ defineDescribe('Code Mirror Mode', [
 			cm.getDoc().setValue('state over A, B: hi');
 			expect(getTokens(0)[3].type).toContain('line-error');
 		});
+
+		it('highlights divider statements', () => {
+			cm.getDoc().setValue('divider tear with height 60: stuff');
+
+			expect(getTokens(0)).toEqual([
+				{v: 'divider', type: 'keyword'},
+				{v: ' tear', type: 'keyword'},
+				{v: ' with', type: 'keyword'},
+				{v: ' height', type: 'keyword'},
+				{v: ' 60', type: 'number'},
+				{v: ':', type: 'operator'},
+				{v: ' stuff', type: 'string'},
+			]);
+		});
 	});
 
 	describe('autocomplete', () => {
@@ -372,6 +386,7 @@ defineDescribe('Code Mirror Mode', [
 			expect(hints).toContain('title ');
 			expect(hints).toContain('headers ');
 			expect(hints).toContain('terminators ');
+			expect(hints).toContain('divider ');
 			expect(hints).toContain('define ');
 			expect(hints).toContain('begin ');
 			expect(hints).toContain('end ');
@@ -414,6 +429,29 @@ defineDescribe('Code Mirror Mode', [
 				'box\n',
 				'fade\n',
 				'bar\n',
+			]);
+		});
+
+		it('suggests divider types', () => {
+			cm.getDoc().setValue('divider ');
+			const hints = getHintTexts({line: 0, ch: 8});
+			expect(hints).toEqual([
+				'space ',
+				'line ',
+				'delay ',
+				'tear ',
+				'\n',
+				': ',
+				'with height ',
+			]);
+		});
+
+		it('suggests divider sizes', () => {
+			cm.getDoc().setValue('divider space with height ');
+			const hints = getHintTexts({line: 0, ch: 26});
+			expect(hints).toEqual([
+				'6 ',
+				'30 ',
 			]);
 		});
 

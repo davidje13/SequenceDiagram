@@ -39,8 +39,8 @@ define(() => {
 			return this;
 		}
 
-		line(x, y) {
-			if(this.pattern) {
+		line(x, y, {patterned = true} = {}) {
+			if(this.pattern && patterned) {
 				const len = Math.sqrt(
 					(x - this.x) * (x - this.x) +
 					(y - this.y) * (y - this.y)

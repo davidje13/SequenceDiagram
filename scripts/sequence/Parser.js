@@ -32,45 +32,47 @@ define([
 		},
 	};
 
-	const CONNECT_TYPES = ((() => {
-		const lTypes = [
-			{tok: '', type: 0},
-			{tok: '<', type: 1},
-			{tok: '<<', type: 2},
-		];
-		const mTypes = [
-			{tok: '-', type: 'solid'},
-			{tok: '--', type: 'dash'},
-			{tok: '~', type: 'wave'},
-		];
-		const rTypes = [
-			{tok: '', type: 0},
-			{tok: '>', type: 1},
-			{tok: '>>', type: 2},
-			{tok: 'x', type: 3},
-		];
-		const arrows = (array.combine([lTypes, mTypes, rTypes])
-			.filter((arrow) => (arrow[0].type !== 0 || arrow[2].type !== 0))
-		);
+	const CONNECT = {
+		types: ((() => {
+			const lTypes = [
+				{tok: '', type: 0},
+				{tok: '<', type: 1},
+				{tok: '<<', type: 2},
+			];
+			const mTypes = [
+				{tok: '-', type: 'solid'},
+				{tok: '--', type: 'dash'},
+				{tok: '~', type: 'wave'},
+			];
+			const rTypes = [
+				{tok: '', type: 0},
+				{tok: '>', type: 1},
+				{tok: '>>', type: 2},
+				{tok: 'x', type: 3},
+			];
+			const arrows = (array.combine([lTypes, mTypes, rTypes])
+				.filter((arrow) => (arrow[0].type !== 0 || arrow[2].type !== 0))
+			);
 
-		const types = new Map();
+			const types = new Map();
 
-		arrows.forEach((arrow) => {
-			types.set(arrow.map((part) => part.tok).join(''), {
-				line: arrow[1].type,
-				left: arrow[0].type,
-				right: arrow[2].type,
+			arrows.forEach((arrow) => {
+				types.set(arrow.map((part) => part.tok).join(''), {
+					line: arrow[1].type,
+					left: arrow[0].type,
+					right: arrow[2].type,
+				});
 			});
-		});
 
-		return types;
-	})());
+			return types;
+		})()),
 
-	const CONNECT_AGENT_FLAGS = {
-		'*': {flag: 'begin', allowBlankName: true, blankNameFlag: 'source'},
-		'+': {flag: 'start'},
-		'-': {flag: 'stop'},
-		'!': {flag: 'end'},
+		agentFlags: {
+			'*': {flag: 'begin', allowBlankName: true, blankNameFlag: 'source'},
+			'+': {flag: 'start'},
+			'-': {flag: 'stop'},
+			'!': {flag: 'end'},
+		},
 	};
 
 	const TERMINATOR_TYPES = [
@@ -104,6 +106,13 @@ define([
 				'over': {type: 'note over', skip: [], min: 1, max: 1},
 			},
 		},
+	};
+
+	const DIVIDER_TYPES = {
+		'space': {defaultHeight: 6},
+		'line': {defaultHeight: 6},
+		'delay': {defaultHeight: 30},
+		'tear': {defaultHeight: 6},
 	};
 
 	const AGENT_MANIPULATION_TYPES = {
@@ -148,6 +157,11 @@ define([
 		return result;
 	}
 
+	function readNumber(line, begin = 0, end = null, def = Number.NAN) {
+		const text = joinLabel(line, begin, end);
+		return Number(text || def);
+	}
+
 	function tokenKeyword(token) {
 		if(!token || token.q) {
 			return null;
@@ -173,19 +187,29 @@ define([
 		return start + skip.length;
 	}
 
-	function findToken(line, token, start = 0) {
-		for(let i = start; i < line.length; ++ i) {
-			if(tokenKeyword(line[i]) === token) {
+	function findToken(line, tokens, {
+		start = 0,
+		limit = null,
+		orEnd = false,
+	} = {}) {
+		if(limit === null) {
+			limit = line.length;
+		}
+		if(!Array.isArray(tokens)) {
+			tokens = [tokens];
+		}
+		for(let i = start; i <= limit - tokens.length; ++ i) {
+			if(skipOver(line, i, tokens) !== i) {
 				return i;
 			}
 		}
-		return -1;
+		return orEnd ? limit : -1;
 	}
 
 	function readAgentAlias(line, start, end, {enableAlias, allowBlankName}) {
 		let aliasSep = -1;
 		if(enableAlias) {
-			aliasSep = findToken(line, 'as', start);
+			aliasSep = findToken(line, 'as', {start});
 		}
 		if(aliasSep === -1 || aliasSep >= end) {
 			aliasSep = end;
@@ -301,6 +325,40 @@ define([
 			}
 			meta.headers = type;
 			return true;
+		},
+
+		(line) => { // divider
+			if(tokenKeyword(line[0]) !== 'divider') {
+				return null;
+			}
+
+			const labelSep = findToken(line, ':', {orEnd: true});
+			const heightSep = findToken(line, ['with', 'height'], {
+				limit: labelSep,
+				orEnd: true,
+			});
+
+			const mode = joinLabel(line, 1, heightSep) || 'space';
+			if(!DIVIDER_TYPES[mode]) {
+				throw makeError('Unknown divider type', line[1]);
+			}
+
+			const height = readNumber(
+				line,
+				heightSep + 2,
+				labelSep,
+				DIVIDER_TYPES[mode].defaultHeight
+			);
+			if(Number.isNaN(height) || height < 0) {
+				throw makeError('Invalid divider height', line[heightSep+2]);
+			}
+
+			return {
+				type: 'divider',
+				mode,
+				height,
+				label: joinLabel(line, labelSep + 1),
+			};
 		},
 
 		(line) => { // autolabel
@@ -440,7 +498,7 @@ define([
 			let typePos = -1;
 			let options = null;
 			for(let j = 0; j < line.length; ++ j) {
-				const opts = CONNECT_TYPES.get(tokenKeyword(line[j]));
+				const opts = CONNECT.types.get(tokenKeyword(line[j]));
 				if(opts) {
 					typePos = j;
 					options = opts;
@@ -451,7 +509,7 @@ define([
 				return null;
 			}
 			const readAgentOpts = {
-				flagTypes: CONNECT_AGENT_FLAGS,
+				flagTypes: CONNECT.agentFlags,
 			};
 			return {
 				type: 'connect',
@@ -500,7 +558,7 @@ define([
 	return class Parser {
 		getCodeMirrorMode() {
 			return SHARED_TOKENISER.getCodeMirrorMode(
-				Array.from(CONNECT_TYPES.keys())
+				Array.from(CONNECT.types.keys())
 			);
 		}
 

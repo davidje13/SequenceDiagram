@@ -316,6 +316,59 @@ define([
 		},
 	};
 
+	const DIVIDER_LABEL_ATTRS = {
+		'font-family': FONT,
+		'font-size': 8,
+		'line-height': LINE_HEIGHT,
+		'text-anchor': 'middle',
+	};
+
+	const DIVIDERS = {
+		'': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: () => ({}),
+		},
+		'line': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 8,
+			margin: 0,
+			render: BaseTheme.renderLineDivider.bind(null, {
+				lineAttrs: {
+					'stroke': '#000000',
+				},
+			}),
+		},
+		'delay': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: BaseTheme.renderDelayDivider.bind(null, {
+				dotSize: 2,
+				gapSize: 2,
+			}),
+		},
+		'tear': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 8,
+			margin: 8,
+			render: BaseTheme.renderTearDivider.bind(null, {
+				fadeBegin: 4,
+				fadeSize: 4,
+				zigWidth: 4,
+				zigHeight: 1,
+				lineAttrs: {
+					'stroke': '#000000',
+				},
+			}),
+		},
+	};
+
 	return class MonospaceTheme extends BaseTheme {
 		constructor() {
 			super({
@@ -323,6 +376,7 @@ define([
 				settings: SETTINGS,
 				blocks: BLOCKS,
 				notes: NOTES,
+				dividers: DIVIDERS,
 			});
 		}
 	};

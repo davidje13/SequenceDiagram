@@ -71,6 +71,30 @@ Foo <- ]: From the right
 # (etc.)
 ```
 
+### Dividers
+
+<img src="screenshots/Dividers.png" alt="Dividers preview" width="200" align="right" />
+
+```
+title Dividers
+
+begin Foo, Bar, Baz
+
+Foo -> +Bar
+
+divider
+
+Bar -> +Baz
+
+divider delay: This takes a while
+
+-Baz --> Bar
+
+divider tear with height 20: Lots of stuff happens
+
+-Bar --> Foo
+```
+
 ### Notes & State
 
 <img src="screenshots/NotesAndState.png" alt="Notes and State preview" width="200" align="right" />

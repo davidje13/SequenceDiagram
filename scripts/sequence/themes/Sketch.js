@@ -17,17 +17,18 @@ define([
 	const MAX_CHAOS = 5;
 
 	const PENCIL = {
-		'stroke': 'rgba(0,0,0,0.7)',
-		'stroke-width': 0.8,
-		'stroke-linejoin': 'round',
-		'stroke-linecap': 'round',
-	};
-
-	const THICK_PENCIL = {
-		'stroke': 'rgba(0,0,0,0.8)',
-		'stroke-width': 1.2,
-		'stroke-linejoin': 'round',
-		'stroke-linecap': 'round',
+		normal: {
+			'stroke': 'rgba(0,0,0,0.7)',
+			'stroke-width': 0.8,
+			'stroke-linejoin': 'round',
+			'stroke-linecap': 'round',
+		},
+		thick: {
+			'stroke': 'rgba(0,0,0,0.8)',
+			'stroke-width': 1.2,
+			'stroke-linejoin': 'round',
+			'stroke-linecap': 'round',
+		},
 	};
 
 	const SETTINGS = {
@@ -79,7 +80,7 @@ define([
 				'solid': {
 					attrs: Object.assign({
 						'fill': 'none',
-					}, PENCIL),
+					}, PENCIL.normal),
 					renderFlat: null,
 					renderRev: null,
 				},
@@ -87,7 +88,7 @@ define([
 					attrs: Object.assign({
 						'fill': 'none',
 						'stroke-dasharray': '4, 2',
-					}, PENCIL),
+					}, PENCIL.normal),
 					renderFlat: null,
 					renderRev: null,
 				},
@@ -96,7 +97,7 @@ define([
 						'fill': 'none',
 						'stroke-linejoin': 'round',
 						'stroke-linecap': 'round',
-					}, PENCIL),
+					}, PENCIL.normal),
 					renderFlat: null,
 					renderRev: null,
 				},
@@ -107,7 +108,7 @@ define([
 					height: 6,
 					attrs: Object.assign({
 						'fill': 'rgba(0,0,0,0.9)',
-					}, PENCIL),
+					}, PENCIL.normal),
 					render: null,
 				},
 				'double': {
@@ -115,7 +116,7 @@ define([
 					height: 8,
 					attrs: Object.assign({
 						'fill': 'none',
-					}, PENCIL),
+					}, PENCIL.normal),
 					render: null,
 				},
 				'cross': {
@@ -266,6 +267,47 @@ define([
 		},
 	};
 
+	const DIVIDER_LABEL_ATTRS = {
+		'font-family': FONT_FAMILY,
+		'font-size': 8,
+		'line-height': LINE_HEIGHT,
+		'text-anchor': 'middle',
+	};
+
+	const DIVIDERS = {
+		'': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: () => ({}),
+		},
+		'line': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 10,
+			margin: 0,
+			render: null,
+		},
+		'delay': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 0,
+			margin: 0,
+			render: BaseTheme.renderDelayDivider.bind(null, {
+				dotSize: 1,
+				gapSize: 2,
+			}),
+		},
+		'tear': {
+			labelAttrs: DIVIDER_LABEL_ATTRS,
+			padding: {top: 2, left: 5, right: 5, bottom: 2},
+			extend: 10,
+			margin: 10,
+			render: null,
+		},
+	};
+
 	class Random {
 		// xorshift+ 64-bit random generator
 		// https://en.wikipedia.org/wiki/Xorshift
@@ -339,6 +381,7 @@ define([
 				settings: SETTINGS,
 				blocks: BLOCKS,
 				notes: NOTES,
+				dividers: DIVIDERS,
 			});
 
 			if(handedness === RIGHT) {
@@ -355,6 +398,7 @@ define([
 			this._assignConnectFunctions();
 			this._assignNoteFunctions();
 			this._assignBlockFunctions();
+			this._assignDividerFunctions();
 		}
 
 		_assignCapFunctions() {
@@ -398,6 +442,16 @@ define([
 			this.blocks.ref.section.tag.boxRenderer = this.renderTag;
 			this.blocks[''].section.tag.boxRenderer = this.renderTag;
 			this.blocks[''].sepRenderer = this.renderSeparator.bind(this);
+		}
+
+		_assignDividerFunctions() {
+			this.dividers.line.render = this.renderLineDivider.bind(this);
+			this.dividers.tear.render = BaseTheme.renderTearDivider.bind(null, {
+				fadeBegin: 5,
+				fadeSize: 10,
+				pattern: this.wave,
+				lineAttrs: PENCIL.normal,
+			});
 		}
 
 		reset() {
@@ -488,7 +542,7 @@ define([
 				'd': line.nodes,
 				'fill': 'none',
 				'stroke-dasharray': lineOptions.dash ? '6, 5' : 'none',
-			}, lineOptions.thick ? THICK_PENCIL : PENCIL));
+			}, lineOptions.thick ? PENCIL.thick : PENCIL.normal));
 			return shape;
 		}
 
@@ -517,7 +571,7 @@ define([
 			const shape = svg.make('path', Object.assign({
 				'd': lT.nodes + lR.nodes + lB.nodes + lL.nodes,
 				'fill': fill || '#FFFFFF',
-			}, thick ? THICK_PENCIL : PENCIL));
+			}, thick ? PENCIL.thick : PENCIL.normal));
 
 			return shape;
 		}
@@ -570,13 +624,38 @@ define([
 					lL.nodes
 				),
 				'fill': '#FFFFFF',
-			}, PENCIL)));
+			}, PENCIL.normal)));
 			g.appendChild(svg.make('path', Object.assign({
 				'd': lF1.nodes + lF2.nodes,
 				'fill': 'none',
-			}, PENCIL)));
+			}, PENCIL.normal)));
 
 			return g;
+		}
+
+		renderLineDivider({x, y, labelWidth, width, height}) {
+			let shape = null;
+			const yPos = y + height / 2;
+			if(labelWidth > 0) {
+				shape = svg.make('g');
+				shape.appendChild(this.renderLine(
+					{x, y: yPos},
+					{x: x + (width - labelWidth) / 2, y: yPos},
+					{}
+				));
+				shape.appendChild(this.renderLine(
+					{x: x + (width + labelWidth) / 2, y: yPos},
+					{x: x + width, y: yPos},
+					{}
+				));
+			} else {
+				shape = this.renderLine(
+					{x, y: yPos},
+					{x: x + width, y: yPos},
+					{}
+				);
+			}
+			return {shape};
 		}
 
 		renderFlatConnector(attrs, {x1, dx1, x2, dx2, y}) {
@@ -726,7 +805,7 @@ define([
 					'Z'
 				),
 				'fill': '#FFFFFF',
-			}, PENCIL));
+			}, PENCIL.normal));
 		}
 
 		renderRefBlock({x, y, width, height}) {
@@ -770,7 +849,7 @@ define([
 			g.appendChild(svg.make('path', Object.assign({
 				'd': line,
 				'fill': '#FFFFFF',
-			}, PENCIL)));
+			}, PENCIL.normal)));
 
 			return g;
 		}
@@ -804,7 +883,7 @@ define([
 			return svg.make('path', Object.assign({
 				'd': l1.nodes + l2.nodes,
 				'fill': 'none',
-			}, PENCIL));
+			}, PENCIL.normal));
 		}
 
 		renderAgentLine({x, y0, y1, width, className}) {

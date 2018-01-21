@@ -185,6 +185,27 @@ Foo <- ]: From the right
 # (etc.)
 </pre>
 
+<h3 id="Dividers">Dividers</h3>
+<pre class="example" data-lang="sequence">
+title Dividers
+
+begin Foo, Bar, Baz
+
+Foo -> +Bar
+
+divider
+
+Bar -> +Baz
+
+divider delay: This takes a while
+
+-Baz --> Bar
+
+divider tear with height 20: Lots of stuff happens
+
+-Bar --> Foo
+</pre>
+
 <h3 id="NotesState">Notes &amp; State</h3>
 <pre class="example" data-lang="sequence">
 title Note Placements

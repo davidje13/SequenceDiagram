@@ -12,6 +12,7 @@ define([
 	'./components/AgentHighlight',
 	'./components/Connect',
 	'./components/Note',
+	'./components/Divider',
 ], (
 	array,
 	EventObject,
@@ -147,6 +148,12 @@ define([
 		}
 
 		addDef(name, generator) {
+			if(typeof generator !== 'function') {
+				const o = name;
+				name = 'P' + this.knownDefs.size;
+				generator = () => o;
+			}
+
 			const namespacedName = this.namespace + name;
 			if(this.knownDefs.has(name)) {
 				return namespacedName;

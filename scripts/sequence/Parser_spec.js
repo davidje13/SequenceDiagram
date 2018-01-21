@@ -473,6 +473,110 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('converts dividers', () => {
+			const parsed = parser.parse('divider');
+			expect(parsed.stages).toEqual([{
+				type: 'divider',
+				ln: jasmine.anything(),
+				mode: 'space',
+				height: 6,
+				label: '',
+			}]);
+		});
+
+		it('converts different divider types', () => {
+			const parsed = parser.parse(
+				'divider space\n' +
+				'divider line\n' +
+				'divider delay\n' +
+				'divider tear\n'
+			);
+			expect(parsed.stages).toEqual([
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'space',
+					height: 6,
+					label: jasmine.anything(),
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'line',
+					height: 6,
+					label: jasmine.anything(),
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'delay',
+					height: 30,
+					label: jasmine.anything(),
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'tear',
+					height: 6,
+					label: jasmine.anything(),
+				},
+			]);
+		});
+
+		it('converts explicit divider heights', () => {
+			const parsed = parser.parse(
+				'divider with height 40\n' +
+				'divider delay with height 0\n'
+			);
+			expect(parsed.stages).toEqual([
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'space',
+					height: 40,
+					label: '',
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: 'delay',
+					height: 0,
+					label: '',
+				},
+			]);
+		});
+
+		it('converts divider labels', () => {
+			const parsed = parser.parse(
+				'divider: message 1\n' +
+				'divider tear: message 2\n' +
+				'divider delay with height 40: message 3\n'
+			);
+			expect(parsed.stages).toEqual([
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: jasmine.anything(),
+					height: jasmine.anything(),
+					label: 'message 1',
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: jasmine.anything(),
+					height: jasmine.anything(),
+					label: 'message 2',
+				},
+				{
+					type: 'divider',
+					ln: jasmine.anything(),
+					mode: jasmine.anything(),
+					height: jasmine.anything(),
+					label: 'message 3',
+				},
+			]);
+		});
+
 		it('converts reference commands', () => {
 			const parsed = parser.parse(
 				'begin reference: Foo bar as baz\n' +
@@ -654,6 +758,28 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('rejects invalid notes', () => {
 			expect(() => parser.parse('note huh A: hello')).toThrow();
+		});
+
+		it('rejects unknown divider types', () => {
+			expect(() => parser.parse('divider foo')).toThrow(new Error(
+				'Unknown divider type at line 1, character 8'
+			));
+		});
+
+		it('rejects negative divider heights', () => {
+			expect(() => parser.parse(
+				'divider with height -5'
+			)).toThrow(new Error(
+				'Invalid divider height at line 1, character 20'
+			));
+		});
+
+		it('rejects invalid divider heights', () => {
+			expect(() => parser.parse(
+				'divider with height a'
+			)).toThrow(new Error(
+				'Invalid divider height at line 1, character 20'
+			));
 		});
 	});
 });

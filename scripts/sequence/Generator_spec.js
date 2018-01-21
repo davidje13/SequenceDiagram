@@ -290,6 +290,23 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('passes dividers through', () => {
+			const sequence = invoke([{
+				type: 'divider',
+				mode: 'foo',
+				height: 7,
+				label: 'woo',
+				ln: 0,
+			}]);
+			expect(sequence.stages).toEqual([{
+				type: 'divider',
+				mode: 'foo',
+				height: 7,
+				formattedLabel: 'woo!',
+				ln: 0,
+			}]);
+		});
+
 		it('rejects attempts to jump to markers not yet defined', () => {
 			expect(() => invoke([
 				{type: 'async', target: 'foo', ln: 10},

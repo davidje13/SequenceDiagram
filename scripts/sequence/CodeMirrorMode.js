@@ -125,6 +125,25 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 		}, referenceName)};
 
+		const divider = {
+			'\n': end,
+			':': {type: 'operator', suggest: true, then: {
+				'': textToEnd,
+				'\n': hiddenEnd,
+			}},
+			'with': {type: 'keyword', suggest: ['with height '], then: {
+				'height': {type: 'keyword', suggest: true, then: {
+					'': {type: 'number', suggest: ['6 ', '30 '], then: {
+						'\n': end,
+						':': {type: 'operator', suggest: true, then: {
+							'': textToEnd,
+							'\n': hiddenEnd,
+						}},
+					}},
+				}},
+			}},
+		};
+
 		function makeSideNote(side) {
 			return {
 				type: 'keyword',
@@ -237,6 +256,12 @@ define(['core/ArrayUtilities'], (array) => {
 				'fade': {type: 'keyword', suggest: true, then: {}},
 				'bar': {type: 'keyword', suggest: true, then: {}},
 			}},
+			'divider': {type: 'keyword', suggest: true, then: Object.assign({
+				'space': {type: 'keyword', suggest: true, then: divider},
+				'line': {type: 'keyword', suggest: true, then: divider},
+				'delay': {type: 'keyword', suggest: true, then: divider},
+				'tear': {type: 'keyword', suggest: true, then: divider},
+			}, divider)},
 			'define': {type: 'keyword', suggest: true, then: {
 				'': aliasListToEnd,
 				'as': CM_ERROR,
