@@ -386,6 +386,13 @@ defineDescribe('Code Mirror Mode', [
 			expect(hints).toContain('simultaneously ');
 		});
 
+		it('ignores indentation', () => {
+			cm.getDoc().setValue('  ');
+			const hints = getHintTexts({line: 0, ch: 2});
+			expect(hints).toContain('theme ');
+			expect(hints).toContain('title ');
+		});
+
 		it('suggests known header types', () => {
 			cm.getDoc().setValue('headers ');
 			const hints = getHintTexts({line: 0, ch: 8});
@@ -491,6 +498,16 @@ defineDescribe('Code Mirror Mode', [
 			expect(hints).toContain('Zig Zag ');
 			expect(hints).toContain('Meh ');
 			expect(hints).toContain('Foo Bar ');
+		});
+
+		it('suggests quoted agent names if a quote is typed', () => {
+			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> "');
+			const hints = getHintTexts({line: 1, ch: 12});
+			expect(hints).toEqual([
+				'"Zig Zag" ',
+				'"Meh" ',
+				'"Foo Bar" ',
+			]);
 		});
 
 		it('suggests filtered multi-word agents', () => {
