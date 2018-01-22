@@ -80,7 +80,7 @@ define(() => {
 				document.body.appendChild(safariHackaround);
 			}
 
-			img.addEventListener('load', () => {
+			const render = () => {
 				this.canvas.width = width;
 				this.canvas.height = height;
 				this.context.drawImage(img, 0, 0);
@@ -88,6 +88,15 @@ define(() => {
 					document.body.removeChild(safariHackaround);
 				}
 				this.canvas.toBlob(callback, 'image/png');
+			};
+
+			img.addEventListener('load', () => {
+				if(safariHackaround) {
+					// Wait for custom fonts to load (Safari takes a moment)
+					setTimeout(render, 50);
+				} else {
+					render();
+				}
 			}, {once: true});
 
 			img.src = this.getSVGURL(renderer, {width, height});
