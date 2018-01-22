@@ -22,6 +22,7 @@ define([
 	'sequence/components/AgentHighlight_spec',
 	'sequence/components/Block_spec',
 	'sequence/components/Connect_spec',
+	'sequence/components/Divider_spec',
 	'sequence/components/Marker_spec',
 	'sequence/components/Note_spec',
 	'sequence/components/Parallel_spec',
