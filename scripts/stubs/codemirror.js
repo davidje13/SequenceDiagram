@@ -7,7 +7,10 @@ define([], () => {
 			container,
 			options,
 		};
-		spy.doc = jasmine.createSpyObj('CodeMirror document', ['getValue']);
+		spy.doc = jasmine.createSpyObj('CodeMirror document', [
+			'getValue',
+			'setSelection',
+		]);
 		spy.getDoc = () => spy.doc;
 		return spy;
 	}

@@ -30,6 +30,19 @@ define(['require'], (require) => {
 		events.forEach((event) => element.addEventListener(event, fn));
 	}
 
+	function findPos(content, index) {
+		let p = 0;
+		let line = 0;
+		while(true) {
+			const nextLn = content.indexOf('\n', p) + 1;
+			if(index < nextLn || nextLn === 0) {
+				return {line, ch: index - p};
+			}
+			p = nextLn;
+			++ line;
+		}
+	}
+
 	function simplifyPreview(code) {
 		code = code.replace(/\{Agent([0-9]*)\}/g, (match, num) => {
 			if(num === undefined) {
@@ -492,8 +505,13 @@ define(['require'], (require) => {
 			], (CodeMirror) => {
 				this.diagram.registerCodeMirrorMode(CodeMirror);
 
+				const selBegin = this.code.selectionStart;
+				const selEnd = this.code.selectionEnd;
+				const value = this.code.value;
+				const focussed = this.code === document.activeElement;
+
 				const code = new CodeMirror(this.code.parentNode, {
-					value: this.code.value,
+					value,
 					mode: 'sequence',
 					globals: {
 						themes: this.diagram.getThemeNames(),
@@ -511,6 +529,10 @@ define(['require'], (require) => {
 					},
 				});
 				this.code.parentNode.removeChild(this.code);
+				code.getDoc().setSelection(
+					findPos(value, selBegin),
+					findPos(value, selEnd)
+				);
 
 				let lastKey = 0;
 				code.on('keydown', (cm, event) => {
@@ -538,6 +560,10 @@ define(['require'], (require) => {
 					const to = code.getCursor('to').line;
 					this.diagram.setHighlight(Math.min(from, to));
 				});
+
+				if(focussed) {
+					code.focus();
+				}
 
 				this.code = code;
 			});
