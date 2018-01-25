@@ -82,6 +82,7 @@ define([
 				'width': right.x - left.x + config.extend * 2,
 				'height': fullHeight,
 				'fill': 'transparent',
+				'class': 'vis',
 			}), clickable.firstChild);
 
 			return env.primaryY + fullHeight + env.theme.actionMargin;

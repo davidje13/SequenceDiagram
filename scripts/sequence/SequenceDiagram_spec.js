@@ -121,7 +121,7 @@ defineDescribe('SequenceDiagram', [
 			'<path d="M20.5 26L48.5 26"'
 		);
 		expect(content).toContain(
-			'<polygon points="46 21 51 26 46 31"'
+			'<polygon points="46 31 51 26 46 21"'
 		);
 	});
 

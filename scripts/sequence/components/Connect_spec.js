@@ -9,6 +9,11 @@ defineDescribe('Connect', [
 
 	it('registers itself with the component store', () => {
 		const components = BaseComponent.getComponents();
-		expect(components.get('connect')).toEqual(jasmine.any(Connect));
+		expect(components.get('connect'))
+			.toEqual(jasmine.any(Connect.Connect));
+		expect(components.get('connect-delay-begin'))
+			.toEqual(jasmine.any(Connect.ConnectDelayBegin));
+		expect(components.get('connect-delay-end'))
+			.toEqual(jasmine.any(Connect.ConnectDelayEnd));
 	});
 });

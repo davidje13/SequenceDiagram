@@ -139,13 +139,23 @@ defineDescribe('Code Mirror Mode', [
 			]);
 		});
 
-		it('recognises agent flags', () => {
+		it('recognises agent flags on the right', () => {
 			cm.getDoc().setValue('Foo -> *Bar');
 			expect(getTokens(0)).toEqual([
 				{v: 'Foo', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
 				{v: ' *', type: 'operator'},
 				{v: 'Bar', type: 'variable'},
+			]);
+		});
+
+		it('recognises agent flags on the left', () => {
+			cm.getDoc().setValue('*Foo -> Bar');
+			expect(getTokens(0)).toEqual([
+				{v: '*', type: 'operator'},
+				{v: 'Foo', type: 'variable'},
+				{v: ' ->', type: 'keyword'},
+				{v: ' Bar', type: 'variable'},
 			]);
 		});
 
@@ -195,6 +205,30 @@ defineDescribe('Code Mirror Mode', [
 			expect(getTokens(0)[3].type).toContain('line-error');
 
 			cm.getDoc().setValue('Foo -> +*-Bar');
+			expect(getTokens(0)[4].type).toContain('line-error');
+		});
+
+		it('highlights delayed message syntax', () => {
+			cm.getDoc().setValue('A -> ...x\n...x -> B: hello');
+			expect(getTokens(0)).toEqual([
+				{v: 'A', type: 'variable'},
+				{v: ' ->', type: 'keyword'},
+				{v: ' ...', type: 'operator'},
+				{v: 'x', type: 'variable'},
+			]);
+
+			expect(getTokens(1)).toEqual([
+				{v: '...', type: 'operator'},
+				{v: 'x', type: 'variable'},
+				{v: ' ->', type: 'keyword'},
+				{v: ' B', type: 'variable'},
+				{v: ':', type: 'operator'},
+				{v: ' hello', type: 'string'},
+			]);
+		});
+
+		it('recognises invalid delayed messages', () => {
+			cm.getDoc().setValue('A -> ...x: hello');
 			expect(getTokens(0)[4].type).toContain('line-error');
 		});
 
@@ -491,6 +525,7 @@ defineDescribe('Code Mirror Mode', [
 				'* ',
 				'! ',
 				'Foo ',
+				'... ',
 			]);
 		});
 
@@ -572,5 +607,10 @@ defineDescribe('Code Mirror Mode', [
 			expect(hints).not.toContain('"Zig -> Zag" ');
 		});
 
+		it('suggests known delayed agents', () => {
+			cm.getDoc().setValue('A -> ...woo\n... ');
+			const hints = getHintTexts({line: 1, ch: 4});
+			expect(hints).toEqual(['woo ']);
+		});
 	});
 });

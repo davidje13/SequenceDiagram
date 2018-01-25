@@ -113,7 +113,7 @@ define([
 				'single': {
 					width: 10,
 					height: 12,
-					render: BaseTheme.renderHorizArrowHead,
+					render: BaseTheme.renderArrowHead,
 					attrs: {
 						'fill': '#000000',
 						'stroke': '#000000',
@@ -124,7 +124,7 @@ define([
 				'double': {
 					width: 10,
 					height: 12,
-					render: BaseTheme.renderHorizArrowHead,
+					render: BaseTheme.renderArrowHead,
 					attrs: {
 						'fill': 'none',
 						'stroke': '#000000',

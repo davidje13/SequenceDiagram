@@ -658,23 +658,23 @@ define([
 			return {shape};
 		}
 
-		renderFlatConnector(attrs, {x1, dx1, x2, dx2, y}) {
+		renderFlatConnector(attrs, {x1, y1, x2, y2}) {
 			const ln = this.lineNodes(
-				{x: x1 + dx1, y},
-				{x: x2 + dx2, y},
+				{x: x1, y: y1},
+				{x: x2, y: y2},
 				{varX: 0.3}
 			);
 			return {
 				shape: svg.make('path', Object.assign({'d': ln.nodes}, attrs)),
-				p1: {x: ln.p1.x - dx1, y: ln.p1.y},
-				p2: {x: ln.p2.x - dx2, y: ln.p2.y},
+				p1: ln.p1,
+				p2: ln.p2,
 			};
 		}
 
-		renderRevConnector(attrs, {xL, dx1, dx2, y1, y2, xR}) {
-			const variance = Math.min((xR - xL) * 0.06, 3);
-			const overshoot = Math.min((xR - xL) * 0.5, 6);
-			const p1x = xL + dx1 + this.vary(variance, -1);
+		renderRevConnector(attrs, {x1, y1, x2, y2, xR}) {
+			const variance = Math.min((xR - x1) * 0.06, 3);
+			const overshoot = Math.min((xR - x1) * 0.5, 6);
+			const p1x = x1 + this.vary(variance, -1);
 			const p1y = y1 + this.vary(variance, -1);
 			const b1x = xR - overshoot * this.vary(0.2, 1);
 			const b1y = y1 - this.vary(1, 2);
@@ -682,7 +682,7 @@ define([
 			const p2y = y1 + this.vary(1, 1);
 			const b2x = xR;
 			const b2y = y2 + this.vary(2);
-			const p3x = xL + dx2 + this.vary(variance, -1);
+			const p3x = x2 + this.vary(variance, -1);
 			const p3y = y2 + this.vary(variance, -1);
 
 			return {
@@ -696,41 +696,21 @@ define([
 						',' + p3x + ' ' + p3y
 					),
 				}, attrs)),
-				p1: {x: p1x - dx1, y: p1y},
-				p2: {x: p3x - dx2, y: p3y},
+				p1: {x: p1x, y: p1y},
+				p2: {x: p3x, y: p3y},
 			};
 		}
 
-		renderFlatConnectorWave(attrs, {x1, dx1, x2, dx2, y}) {
+		renderFlatConnectorWave(attrs, {x1, y1, x2, y2}) {
 			const x1v = x1 + this.vary(0.3);
 			const x2v = x2 + this.vary(0.3);
-			const y1v = y + this.vary(1);
-			const y2v = y + this.vary(1);
-			return {
-				shape: svg.make('path', Object.assign({
-					d: new SVGShapes.PatternedLine(this.wave)
-						.move(x1v + dx1, y1v)
-						.line(x2v + dx2, y2v)
-						.cap()
-						.asPath(),
-				}, attrs)),
-				p1: {x: x1v, y: y1v},
-				p2: {x: x2v, y: y2v},
-			};
-		}
-
-		renderRevConnectorWave(attrs, {xL, dx1, dx2, y1, y2, xR}) {
-			const x1v = xL + this.vary(0.3);
-			const x2v = xL + this.vary(0.3);
 			const y1v = y1 + this.vary(1);
 			const y2v = y2 + this.vary(1);
 			return {
 				shape: svg.make('path', Object.assign({
 					d: new SVGShapes.PatternedLine(this.wave)
-						.move(x1v + dx1, y1v)
-						.line(xR, y1)
-						.arc(xR, (y1 + y2) / 2, Math.PI)
-						.line(x2v + dx2, y2v)
+						.move(x1v, y1v)
+						.line(x2v, y2v)
 						.cap()
 						.asPath(),
 				}, attrs)),
@@ -739,17 +719,41 @@ define([
 			};
 		}
 
-		renderArrowHead(attrs, {x, y, dx, dy}) {
-			const w = dx * this.vary(0.2, 1);
-			const h = dy * this.vary(0.3, 1);
+		renderRevConnectorWave(attrs, {x1, y1, x2, y2, xR}) {
+			const x1v = x1 + this.vary(0.3);
+			const x2v = x2 + this.vary(0.3);
+			const y1v = y1 + this.vary(1);
+			const y2v = y2 + this.vary(1);
+			return {
+				shape: svg.make('path', Object.assign({
+					d: new SVGShapes.PatternedLine(this.wave)
+						.move(x1v, y1v)
+						.line(xR, y1)
+						.arc(xR, (y1 + y2) / 2, Math.PI)
+						.line(x2v, y2v)
+						.cap()
+						.asPath(),
+				}, attrs)),
+				p1: {x: x1v, y: y1v},
+				p2: {x: x2v, y: y2v},
+			};
+		}
+
+		renderArrowHead(attrs, {x, y, width, height, dir}) {
+			const w = width * this.vary(0.2, 1);
+			const h = height * this.vary(0.3, 1);
+			const wx = w * dir.dx;
+			const wy = w * dir.dy;
+			const hy = h * 0.5 * dir.dx;
+			const hx = -h * 0.5 * dir.dy;
 			const l1 = this.lineNodes(
-				{x: x + w, y: y - h},
+				{x: x + wx - hx, y: y + wy - hy},
 				{x, y},
 				{var1: 2.0, var2: 0.2}
 			);
 			const l2 = this.lineNodes(
 				l1.p2,
-				{x: x + w, y: y + h},
+				{x: x + wx + hx, y: y + wy + hy},
 				{var1: 0, var2: 2.0, move: false}
 			);
 			const l3 = (attrs.fill === 'none') ? {nodes: ''} : this.lineNodes(

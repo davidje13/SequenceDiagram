@@ -2,8 +2,11 @@ define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
 	const TRIMMER = /^([ \t]*)(.*)$/;
-	const SQUASH_START = /^[ \t\r\n:,]/;
-	const SQUASH_END = /[ \t\r\n]$/;
+	const SQUASH = {
+		start: /^[ \t\r\n:,]/,
+		end: /[ \t\r\n]$/,
+		after: '.!+', // cannot squash after * or - in all cases
+	};
 	const ONGOING_QUOTE = /^"(\\.|[^"])*$/;
 	const REQUIRED_QUOTED = /[\r\n:,"<>\-~]/;
 	const QUOTE_ESCAPE = /["\\]/g;
@@ -24,6 +27,9 @@ define(['core/ArrayUtilities'], (array) => {
 			squash: {line: line, ch: chFrom},
 		};
 		if(chFrom > 0 && ln[chFrom - 1] === ' ') {
+			if(SQUASH.after.includes(ln[chFrom - 2])) {
+				ranges.word.ch --;
+			}
 			ranges.squash.ch --;
 		}
 		return ranges;
@@ -69,8 +75,8 @@ define(['core/ArrayUtilities'], (array) => {
 				text: quoted,
 				displayText: quoted.trim(),
 				className: null,
-				from: SQUASH_START.test(quoted) ? from.squash : from.word,
-				to: SQUASH_END.test(quoted) ? ranges.to.squash : ranges.to.word,
+				from: SQUASH.start.test(quoted) ? from.squash : from.word,
+				to: SQUASH.end.test(quoted) ? ranges.to.squash : ranges.to.word,
 				displayFrom: from.word,
 			};
 		}

@@ -77,6 +77,7 @@ define([
 				'width': agentInfoR.x - agentInfoL.x,
 				'height': labelHeight,
 				'fill': 'transparent',
+				'class': 'vis',
 			}), clickable.firstChild);
 
 			if(!first) {

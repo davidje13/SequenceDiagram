@@ -328,6 +328,43 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('converts delayed connections', () => {
+			const parsed = parser.parse('+A <- ...foo\n...foo -> -B: woo');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'connect-delay-begin',
+					ln: jasmine.anything(),
+					tag: 'foo',
+					agent: {
+						name: 'A',
+						alias: '',
+						flags: ['start'],
+					},
+					options: {
+						line: 'solid',
+						left: 1,
+						right: 0,
+					},
+				},
+				{
+					type: 'connect-delay-end',
+					ln: jasmine.anything(),
+					tag: 'foo',
+					agent: {
+						name: 'B',
+						alias: '',
+						flags: ['stop'],
+					},
+					label: 'woo',
+					options: {
+						line: 'solid',
+						left: 0,
+						right: 1,
+					},
+				},
+			]);
+		});
+
 		it('converts notes', () => {
 			const parsed = parser.parse('note over A: hello there');
 			expect(parsed.stages).toEqual([{
@@ -720,6 +757,13 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(() => parser.parse('-> A')).toThrow();
 			expect(() => parser.parse('A ->')).toThrow();
 			expect(() => parser.parse('A -> : hello')).toThrow();
+		});
+
+		it('rejects messages on delayed connections', () => {
+			expect(() => parser.parse('A -> ...a: nope')).toThrow(new Error(
+				'Cannot label beginning of delayed connection' +
+				' at line 1, character 9'
+			));
 		});
 
 		it('rejects invalid terminators', () => {

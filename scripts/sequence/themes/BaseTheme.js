@@ -68,14 +68,18 @@ define([
 		}
 	}
 
-	BaseTheme.renderHorizArrowHead = (attrs, {x, y, dx, dy}) => {
+	BaseTheme.renderArrowHead = (attrs, {x, y, width, height, dir}) => {
+		const wx = width * dir.dx;
+		const wy = width * dir.dy;
+		const hy = height * 0.5 * dir.dx;
+		const hx = -height * 0.5 * dir.dy;
 		return svg.make(
 			attrs.fill === 'none' ? 'polyline' : 'polygon',
 			Object.assign({
 				'points': (
-					(x + dx) + ' ' + (y - dy) + ' ' +
+					(x + wx - hx) + ' ' + (y + wy - hy) + ' ' +
 					x + ' ' + y + ' ' +
-					(x + dx) + ' ' + (y + dy)
+					(x + wx + hx) + ' ' + (y + wy + hy)
 				),
 			}, attrs)
 		);
@@ -144,37 +148,50 @@ define([
 		}
 	};
 
-	BaseTheme.renderFlatConnector = (pattern, attrs, {x1, dx1, x2, dx2, y}) => {
+	BaseTheme.renderFlatConnector = (
+		pattern,
+		attrs,
+		{x1, y1, x2, y2}
+	) => {
 		return {
 			shape: svg.make('path', Object.assign({
 				d: new SVGShapes.PatternedLine(pattern)
-					.move(x1 + dx1, y)
-					.line(x2 + dx2, y)
+					.move(x1, y1)
+					.line(x2, y2)
 					.cap()
 					.asPath(),
 			}, attrs)),
-			p1: {x: x1, y},
-			p2: {x: x2, y},
+			p1: {x: x1, y: y1},
+			p2: {x: x2, y: y2},
 		};
 	};
 
 	BaseTheme.renderRevConnector = (
 		pattern,
 		attrs,
-		{xL, dx1, dx2, y1, y2, xR}
+		{x1, y1, x2, y2, xR, rad}
 	) => {
+		const maxRad = (y2 - y1) / 2;
+		const line = new SVGShapes.PatternedLine(pattern)
+			.move(x1, y1)
+			.line(xR, y1);
+		if(rad < maxRad) {
+			line
+				.arc(xR, y1 + rad, Math.PI / 2)
+				.line(xR + rad, y2 - rad)
+				.arc(xR, y2 - rad, Math.PI / 2);
+		} else {
+			line.arc(xR, (y1 + y2) / 2, Math.PI);
+		}
 		return {
 			shape: svg.make('path', Object.assign({
-				d: new SVGShapes.PatternedLine(pattern)
-					.move(xL + dx1, y1)
-					.line(xR, y1)
-					.arc(xR, (y1 + y2) / 2, Math.PI)
-					.line(xL + dx2, y2)
+				d: line
+					.line(x2, y2)
 					.cap()
 					.asPath(),
 			}, attrs)),
-			p1: {x: xL, y: y1},
-			p2: {x: xL, y: y2},
+			p1: {x: x1, y: y1},
+			p2: {x: x2, y: y2},
 		};
 	};
 

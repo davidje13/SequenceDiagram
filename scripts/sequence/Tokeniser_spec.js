@@ -69,6 +69,20 @@ defineDescribe('Sequence Tokeniser', ['./Tokeniser'], (Tokeniser) => {
 			]);
 		});
 
+		it('parses special characters as tokens', () => {
+			const input = ',:!+*...abc';
+			const tokens = tokeniser.tokenise(input);
+			expect(tokens).toEqual([
+				token({s: '', v: ','}),
+				token({s: '', v: ':'}),
+				token({s: '', v: '!'}),
+				token({s: '', v: '+'}),
+				token({s: '', v: '*'}),
+				token({s: '', v: '...'}),
+				token({s: '', v: 'abc'}),
+			]);
+		});
+
 		it('stores line numbers', () => {
 			const input = 'foo bar\nbaz';
 			const tokens = tokeniser.tokenise(input);

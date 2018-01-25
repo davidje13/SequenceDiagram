@@ -256,6 +256,8 @@ define(['core/ArrayUtilities'], (array) => {
 				'divider': this.handleDivider.bind(this),
 				'label pattern': this.handleLabelPattern.bind(this),
 				'connect': this.handleConnect.bind(this),
+				'connect-delay-begin': this.handleConnectDelayBegin.bind(this),
+				'connect-delay-end': this.handleConnectDelayEnd.bind(this),
 				'note over': this.handleNote.bind(this),
 				'note left': this.handleNote.bind(this),
 				'note right': this.handleNote.bind(this),
@@ -436,23 +438,39 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
+		_makeSection(header, stages) {
+			return {
+				header,
+				delayedConnections: new Map(),
+				stages,
+			};
+		}
+
+		_checkSectionEnd() {
+			const dcs = this.currentSection.delayedConnections;
+			if(dcs.size > 0) {
+				const dc = dcs.values().next().value;
+				throw new Error(
+					'Unused delayed connection "' + dc.tag +
+					'" at line ' + (dc.ln + 1)
+				);
+			}
+		}
+
 		beginNested(blockType, {tag, label, name, ln}) {
 			const leftGAgent = GAgent.make(name + '[', {anchorRight: true});
 			const rightGAgent = GAgent.make(name + ']');
 			const gAgents = [leftGAgent, rightGAgent];
 			const stages = [];
-			this.currentSection = {
-				header: {
-					type: 'block begin',
-					blockType,
-					tag: this.textFormatter(tag),
-					label: this.textFormatter(label),
-					left: leftGAgent.id,
-					right: rightGAgent.id,
-					ln,
-				},
-				stages,
-			};
+			this.currentSection = this._makeSection({
+				type: 'block begin',
+				blockType,
+				tag: this.textFormatter(tag),
+				label: this.textFormatter(label),
+				left: leftGAgent.id,
+				right: rightGAgent.id,
+				ln,
+			}, stages);
 			this.currentNest = {
 				blockType,
 				gAgents,
@@ -496,18 +514,16 @@ define(['core/ArrayUtilities'], (array) => {
 					this.currentNest.blockType + ')'
 				);
 			}
-			this.currentSection = {
-				header: {
-					type: 'block split',
-					blockType,
-					tag: this.textFormatter(tag),
-					label: this.textFormatter(label),
-					left: this.currentNest.leftGAgent.id,
-					right: this.currentNest.rightGAgent.id,
-					ln,
-				},
-				stages: [],
-			};
+			this._checkSectionEnd();
+			this.currentSection = this._makeSection({
+				type: 'block split',
+				blockType,
+				tag: this.textFormatter(tag),
+				label: this.textFormatter(label),
+				left: this.currentNest.leftGAgent.id,
+				right: this.currentNest.rightGAgent.id,
+				ln,
+			}, []);
 			this.currentNest.sections.push(this.currentSection);
 		}
 
@@ -515,6 +531,7 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.nesting.length <= 1) {
 				throw new Error('Invalid block nesting (too many "end"s)');
 			}
+			this._checkSectionEnd();
 			const nested = this.nesting.pop();
 			this.currentNest = array.last(this.nesting);
 			this.currentSection = array.last(this.currentNest.sections);
@@ -793,23 +810,19 @@ define(['core/ArrayUtilities'], (array) => {
 			return gAgents;
 		}
 
-		handleConnect({agents, label, options}) {
+		_handlePartialConnect(agents) {
 			const flags = this.filterConnectFlags(agents);
 
-			let gAgents = agents.map(this.toGAgent);
+			const gAgents = agents.map(this.toGAgent);
 			this.validateGAgents(gAgents, {
 				allowGrouped: true,
 				allowVirtual: true,
 			});
 
-			const allGAgents = array.flatMap(gAgents, this.expandGroupedGAgent);
-			this.defineGAgents(allGAgents
+			this.defineGAgents(array
+				.flatMap(gAgents, this.expandGroupedGAgent)
 				.filter((gAgent) => !gAgent.isVirtualSource)
 			);
-
-			gAgents = this.expandGroupedGAgentConnection(gAgents);
-			gAgents = this.expandVirtualSourceAgents(gAgents);
-			const agentIDs = gAgents.map((gAgent) => gAgent.id);
 
 			const implicitBeginGAgents = (agents
 				.filter(PAgent.hasFlag('begin', false))
@@ -818,20 +831,105 @@ define(['core/ArrayUtilities'], (array) => {
 			);
 			this.addStage(this.setGAgentVis(implicitBeginGAgents, true, 'box'));
 
-			const connectStage = {
-				type: 'connect',
-				agentIDs,
-				label: this.textFormatter(this.applyLabelPattern(label)),
-				options,
-			};
+			return {flags, gAgents};
+		}
 
-			this.addParallelStages([
+		_makeConnectParallelStages(flags, connectStage) {
+			return [
 				this.setGAgentVis(flags.beginGAgents, true, 'box', true),
 				this.setGAgentHighlight(flags.startGAgents, true, true),
 				connectStage,
 				this.setGAgentHighlight(flags.stopGAgents, false, true),
 				this.setGAgentVis(flags.endGAgents, false, 'cross', true),
+			];
+		}
+
+		handleConnect({agents, label, options}) {
+			let {flags, gAgents} = this._handlePartialConnect(agents);
+
+			gAgents = this.expandGroupedGAgentConnection(gAgents);
+			gAgents = this.expandVirtualSourceAgents(gAgents);
+
+			const connectStage = {
+				type: 'connect',
+				agentIDs: gAgents.map((gAgent) => gAgent.id),
+				label: this.textFormatter(this.applyLabelPattern(label)),
+				options,
+			};
+
+			this.addParallelStages(this._makeConnectParallelStages(
+				flags,
+				connectStage
+			));
+		}
+
+		handleConnectDelayBegin({agent, tag, options, ln}) {
+			const dcs = this.currentSection.delayedConnections;
+			if(dcs.has(tag)) {
+				throw new Error('Duplicate delayed connection "' + tag + '"');
+			}
+
+			const {flags, gAgents} = this._handlePartialConnect([agent]);
+			const uniqueTag = this.nextVirtualAgentName();
+
+			const connectStage = {
+				type: 'connect-delay-begin',
+				tag: uniqueTag,
+				agentIDs: null,
+				label: null,
+				options,
+			};
+
+			dcs.set(tag, {tag, uniqueTag, ln, gAgents, connectStage});
+
+			this.addParallelStages(this._makeConnectParallelStages(
+				flags,
+				connectStage
+			));
+		}
+
+		handleConnectDelayEnd({agent, tag, label, options}) {
+			const dcs = this.currentSection.delayedConnections;
+			const dcInfo = dcs.get(tag);
+			if(!dcInfo) {
+				throw new Error('Unknown delayed connection "' + tag + '"');
+			}
+
+			let {flags, gAgents} = this._handlePartialConnect([agent]);
+
+			gAgents = this.expandGroupedGAgentConnection([
+				...dcInfo.gAgents,
+				...gAgents,
 			]);
+			gAgents = this.expandVirtualSourceAgents(gAgents);
+
+			let combinedOptions = dcInfo.connectStage.options;
+			if(combinedOptions.line !== options.line) {
+				throw new Error('Mismatched delayed connection arrows');
+			}
+			if(options.right) {
+				combinedOptions = Object.assign({}, combinedOptions, {
+					right: options.right,
+				});
+			}
+
+			Object.assign(dcInfo.connectStage, {
+				agentIDs: gAgents.map((gAgent) => gAgent.id),
+				label: this.textFormatter(this.applyLabelPattern(label)),
+				options: combinedOptions,
+			});
+
+			const connectEndStage = {
+				type: 'connect-delay-end',
+				tag: dcInfo.uniqueTag,
+			};
+
+			this.addParallelStages(this._makeConnectParallelStages(
+				flags,
+				connectEndStage
+			));
+
+			dcs.delete(tag);
 		}
 
 		handleNote({type, agents, mode, label}) {
@@ -951,6 +1049,8 @@ define(['core/ArrayUtilities'], (array) => {
 			if(this.activeGroups.size > 0) {
 				throw new Error('Unterminated group');
 			}
+
+			this._checkSectionEnd();
 
 			const terminators = meta.terminators || 'none';
 			this.addParallelStages([

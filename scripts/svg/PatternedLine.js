@@ -73,7 +73,7 @@ define(() => {
 				(cx - this.x) * (cx - this.x) +
 				(cy - this.y) * (cy - this.y)
 			);
-			const theta1 = Math.atan2(cx - this.x, cy - this.y);
+			const theta1 = Math.atan2(this.x - cx, cy - this.y);
 			const nextX = cx + Math.sin(theta1 + theta) * radius;
 			const nextY = cy - Math.cos(theta1 + theta) * radius;
 
@@ -93,8 +93,8 @@ define(() => {
 				this.points.push(
 					this.x + ' ' + this.y +
 					'A' + radius + ' ' + radius + ' 0 ' +
+					((Math.abs(theta) >= Math.PI) ? '1 ' : '0 ') +
 					((theta < 0) ? '0 ' : '1 ') +
-					'1 ' +
 					nextX + ' ' + nextY
 				);
 				this.disconnect = 0;

@@ -57,6 +57,15 @@
 				code: '{Agent1} -> {Agent1}: {Message}',
 			},
 			{
+				title: 'Asynchronous message',
+				code: '{Agent1} -> ...{id}\n...{id} -> {Agent2}: {Message}',
+				preview: (
+					'begin A, B\n' +
+					'A -> ...x\n' +
+					'...x -> B: Message'
+				),
+			},
+			{
 				title: 'Found message',
 				code: '* -> {Agent1}: {Message}',
 			},

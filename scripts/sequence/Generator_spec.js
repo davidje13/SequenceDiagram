@@ -94,6 +94,49 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			};
 		},
 
+		connectDelayBegin: (agentID, {
+			label = '',
+			tag = '',
+			line = '',
+			left = 0,
+			right = 0,
+			ln = 0,
+		} = {}) => {
+			return {
+				type: 'connect-delay-begin',
+				ln,
+				tag,
+				agent: makeParsedAgents([agentID])[0],
+				options: {
+					line,
+					left,
+					right,
+				},
+			};
+		},
+
+		connectDelayEnd: (agentID, {
+			label = '',
+			tag = '',
+			line = '',
+			left = 0,
+			right = 0,
+			ln = 0,
+		} = {}) => {
+			return {
+				type: 'connect-delay-end',
+				ln,
+				tag,
+				agent: makeParsedAgents([agentID])[0],
+				label,
+				options: {
+					line,
+					left,
+					right,
+				},
+			};
+		},
+
 		note: (type, agentIDs, {
 			mode = '',
 			label = '',
@@ -207,6 +250,39 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					left,
 					right,
 				},
+				ln,
+			};
+		},
+
+		connectDelayBegin: (agentIDs, {
+			label = any(),
+			tag = any(),
+			line = any(),
+			left = any(),
+			right = any(),
+			ln = any(),
+		} = {}) => {
+			return {
+				type: 'connect-delay-begin',
+				agentIDs,
+				label,
+				tag,
+				options: {
+					line,
+					left,
+					right,
+				},
+				ln,
+			};
+		},
+
+		connectDelayEnd: ({
+			tag = any(),
+			ln = any(),
+		} = {}) => {
+			return {
+				type: 'connect-delay-end',
+				tag,
 				ln,
 			};
 		},
@@ -605,6 +681,183 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				}),
 				any(),
 			]);
+		});
+
+		it('aggregates delayed connect information in the first entry', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+					line: 'solid',
+					left: 0,
+					right: 1,
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 1,
+					tag: 'foo',
+					label: 'woo',
+					line: 'solid',
+					left: 0,
+					right: 1,
+				}),
+			]);
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.connectDelayBegin(['A', 'B'], {
+					label: 'woo!',
+					tag: '__0',
+					line: 'solid',
+					left: 0,
+					right: 1,
+					ln: 0,
+				}),
+				GENERATED.connectDelayEnd({
+					tag: '__0',
+					ln: 1,
+				}),
+				any(),
+			]);
+		});
+
+		it('merges delayed connect arrows', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.connectDelayBegin('A', {
+					tag: 'foo',
+					line: 'solid',
+					left: 1,
+					right: 0,
+				}),
+				PARSED.connectDelayEnd('B', {
+					tag: 'foo',
+					line: 'solid',
+					left: 0,
+					right: 1,
+				}),
+			]);
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.connectDelayBegin(['A', 'B'], {
+					line: 'solid',
+					left: 1,
+					right: 1,
+				}),
+				any(),
+				any(),
+			]);
+		});
+
+		it('rejects conflicting delayed message arrows', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.connectDelayBegin('A', {
+					tag: 'foo',
+					line: 'abc',
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 1,
+					tag: 'foo',
+					line: 'def',
+				}),
+			])).toThrow(new Error(
+				'Mismatched delayed connection arrows at line 2'
+			));
+		});
+
+		it('implicitly begins agents in delayed connections', () => {
+			const sequence = invoke([
+				PARSED.connectDelayBegin('A', {tag: 'foo'}),
+				PARSED.connectDelayEnd('B', {tag: 'foo'}),
+			]);
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				GENERATED.connectDelayBegin(['A', 'B']),
+				GENERATED.beginAgents(['B']),
+				GENERATED.connectDelayEnd(),
+				GENERATED.endAgents(['A', 'B']),
+			]);
+		});
+
+		it('rejects unknown delayed connections', () => {
+			expect(() => invoke([
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 1,
+					tag: 'foo',
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 2,
+					tag: 'bar',
+				}),
+			])).toThrow(new Error(
+				'Unknown delayed connection "bar" at line 3'
+			));
+		});
+
+		it('rejects overused delayed connections', () => {
+			expect(() => invoke([
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 1,
+					tag: 'foo',
+				}),
+				PARSED.connectDelayEnd('B', {
+					ln: 2,
+					tag: 'foo',
+				}),
+			])).toThrow(new Error(
+				'Unknown delayed connection "foo" at line 3'
+			));
+		});
+
+		it('rejects unused delayed connections', () => {
+			expect(() => invoke([
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+				}),
+			])).toThrow(new Error(
+				'Unused delayed connection "foo" at line 1'
+			));
+		});
+
+		it('rejects duplicate delayed connection names', () => {
+			expect(() => invoke([
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+				}),
+				PARSED.connectDelayBegin('B', {
+					ln: 1,
+					tag: 'foo',
+				}),
+			])).toThrow(new Error(
+				'Duplicate delayed connection "foo" at line 2'
+			));
+		});
+
+		it('rejects delayed connections passing block boundaries', () => {
+			expect(() => invoke([
+				PARSED.connectDelayBegin('A', {
+					ln: 0,
+					tag: 'foo',
+				}),
+				PARSED.blockBegin('if', ''),
+				PARSED.connectDelayEnd('B', {
+					ln: 1,
+					tag: 'foo',
+				}),
+				PARSED.blockEnd(),
+			])).toThrow(new Error(
+				'Unknown delayed connection "foo" at line 2'
+			));
 		});
 
 		it('creates implicit end stages for all remaining agents', () => {

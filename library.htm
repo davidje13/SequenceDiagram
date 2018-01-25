@@ -343,6 +343,25 @@ Foo -> Bar
 Bar -> Baz
 </pre>
 
+<h3 id="AsynchronousCommunication">Asynchronous Communication</h3>
+<pre class="example" data-lang="sequence">
+begin Initiator as I, Receiver as R
+
+# the '...id' syntax allows connections to span multiple lines
+
+I -> ...fin1
+...fin1 -> R: FIN
+
+# they can even inter-mix!
+R -> ...ack1
+R -> ...fin2
+...ack1 -> I: ACK
+...fin2 -> I: FIN
+
+!I -> ...ack2
+...ack2 -> !R: ACK
+</pre>
+
 <h3 id="LanguageMore">More</h3>
 
 <p>

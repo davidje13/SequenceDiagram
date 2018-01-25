@@ -132,17 +132,6 @@ define([
 		return new Error(message + suffix);
 	}
 
-	function errToken(line, pos) {
-		if(pos < line.length) {
-			return line[pos];
-		}
-		const last = array.last(line);
-		if(!last) {
-			return null;
-		}
-		return {b: last.e};
-	}
-
 	function joinLabel(line, begin = 0, end = null) {
 		if(end === null) {
 			end = line.length;
@@ -206,6 +195,19 @@ define([
 		return orEnd ? limit : -1;
 	}
 
+	function findFirstToken(line, tokenMap, {start = 0, limit = null} = {}) {
+		if(limit === null) {
+			limit = line.length;
+		}
+		for(let pos = start; pos < limit; ++ pos) {
+			const value = tokenMap.get(tokenKeyword(line[pos]));
+			if(value) {
+				return {pos, value};
+			}
+		}
+		return null;
+	}
+
 	function readAgentAlias(line, start, end, {enableAlias, allowBlankName}) {
 		let aliasSep = -1;
 		if(enableAlias) {
@@ -215,7 +217,11 @@ define([
 			aliasSep = end;
 		}
 		if(start >= aliasSep && !allowBlankName) {
-			throw makeError('Missing agent name', errToken(line, start));
+			let errPosToken = line[start];
+			if(!errPosToken) {
+				errPosToken = {b: array.last(line).e};
+			}
+			throw makeError('Missing agent name', errPosToken);
 		}
 		return {
 			name: joinLabel(line, start, aliasSep),
@@ -491,35 +497,54 @@ define([
 		},
 
 		(line) => { // connect
-			let labelSep = findToken(line, ':');
-			if(labelSep === -1) {
-				labelSep = line.length;
-			}
-			let typePos = -1;
-			let options = null;
-			for(let j = 0; j < line.length; ++ j) {
-				const opts = CONNECT.types.get(tokenKeyword(line[j]));
-				if(opts) {
-					typePos = j;
-					options = opts;
-					break;
-				}
-			}
-			if(typePos <= 0 || typePos >= labelSep - 1) {
+			const labelSep = findToken(line, ':', {orEnd: true});
+			const connectionToken = findFirstToken(
+				line,
+				CONNECT.types,
+				{start: 0, limit: labelSep - 1}
+			);
+			if(!connectionToken) {
 				return null;
 			}
-			const readAgentOpts = {
+
+			const connectPos = connectionToken.pos;
+
+			const readOpts = {
 				flagTypes: CONNECT.agentFlags,
 			};
-			return {
-				type: 'connect',
-				agents: [
-					readAgent(line, 0, typePos, readAgentOpts),
-					readAgent(line, typePos + 1, labelSep, readAgentOpts),
-				],
-				label: joinLabel(line, labelSep + 1),
-				options,
-			};
+
+			if(tokenKeyword(line[0]) === '...') {
+				return {
+					type: 'connect-delay-end',
+					tag: joinLabel(line, 1, connectPos),
+					agent: readAgent(line, connectPos + 1, labelSep, readOpts),
+					label: joinLabel(line, labelSep + 1),
+					options: connectionToken.value,
+				};
+			} else if(tokenKeyword(line[connectPos + 1]) === '...') {
+				if(labelSep !== line.length) {
+					throw makeError(
+						'Cannot label beginning of delayed connection',
+						line[labelSep]
+					);
+				}
+				return {
+					type: 'connect-delay-begin',
+					tag: joinLabel(line, connectPos + 2, labelSep),
+					agent: readAgent(line, 0, connectPos, readOpts),
+					options: connectionToken.value,
+				};
+			} else {
+				return {
+					type: 'connect',
+					agents: [
+						readAgent(line, 0, connectPos, readOpts),
+						readAgent(line, connectPos + 1, labelSep, readOpts),
+					],
+					label: joinLabel(line, labelSep + 1),
+					options: connectionToken.value,
+				};
+			}
 		},
 
 		(line) => { // marker

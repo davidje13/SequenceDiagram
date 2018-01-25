@@ -250,6 +250,28 @@ Foo -> Bar
 Bar -> Baz
 ```
 
+### Asynchronous Communication
+
+<img src="screenshots/AsynchronousCommunication.png" alt="Asynchronous Communication preview" width="200" align="right" />
+
+```
+begin Initiator as I, Receiver as R
+
+# the '...id' syntax allows connections to span multiple lines
+
+I -> ...fin1
+...fin1 -> R: FIN
+
+# they can even inter-mix!
+R -> ...ack1
+R -> ...fin2
+...ack1 -> I: ACK
+...fin2 -> I: FIN
+
+!I -> ...ack2
+...ack2 -> !R: ACK
+```
+
 ### Simultaneous Actions (Beta!)
 
 This is a work-in-progress feature. There are situations where this can

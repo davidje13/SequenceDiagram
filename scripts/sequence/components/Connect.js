@@ -37,11 +37,13 @@ define([
 
 		render(layer, theme, pt, dir) {
 			const config = this.getConfig(theme);
+			const short = this.short(theme);
 			layer.appendChild(config.render(config.attrs, {
-				x: pt.x + this.short(theme) * dir,
-				y: pt.y,
-				dx: config.width * dir,
-				dy: config.height / 2,
+				x: pt.x + short * dir.dx,
+				y: pt.y + short * dir.dy,
+				width: config.width,
+				height: config.height,
+				dir,
 			}));
 		}
 
@@ -75,8 +77,8 @@ define([
 		render(layer, theme, pt, dir) {
 			const config = this.getConfig(theme);
 			layer.appendChild(config.render({
-				x: pt.x + config.short * dir,
-				y: pt.y,
+				x: pt.x + config.short * dir.dx,
+				y: pt.y + config.short * dir.dy,
 				radius: config.radius,
 			}));
 		}
@@ -165,13 +167,42 @@ define([
 			array.mergeSets(env.momentaryAgentIDs, agentIDs);
 		}
 
-		renderSelfConnect({label, agentIDs, options}, env) {
-			/* jshint -W071 */ // TODO: find appropriate abstractions
+		renderRevArrowLine({x1, y1, x2, y2, xR}, options, env) {
 			const config = env.theme.connect;
-			const from = env.agentInfos.get(agentIDs[0]);
+			const line = config.line[options.line];
+			const lArrow = ARROWHEADS[options.left];
+			const rArrow = ARROWHEADS[options.right];
+
+			const dx1 = lArrow.lineGap(env.theme, line.attrs);
+			const dx2 = rArrow.lineGap(env.theme, line.attrs);
+			const rendered = line.renderRev(line.attrs, {
+				x1: x1 + dx1,
+				y1,
+				x2: x2 + dx2,
+				y2,
+				xR,
+				rad: config.loopbackRadius,
+			});
+			env.shapeLayer.appendChild(rendered.shape);
+
+			lArrow.render(env.shapeLayer, env.theme, {
+				x: rendered.p1.x - dx1,
+				y: rendered.p1.y,
+			}, {dx: 1, dy: 0});
+
+			rArrow.render(env.shapeLayer, env.theme, {
+				x: rendered.p2.x - dx2,
+				y: rendered.p2.y,
+			}, {dx: 1, dy: 0});
+		}
+
+		renderSelfConnect({label, agentIDs, options}, env, from, yBegin) {
+			const config = env.theme.connect;
 
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
+
+			const to = env.agentInfos.get(agentIDs[1]);
 
 			const height = label ? (
 				env.textSizer.measureHeight(config.label.attrs, label) +
@@ -179,10 +210,8 @@ define([
 				config.label.margin.bottom
 			) : 0;
 
-			const lineX = from.x + from.currentMaxRad;
-			const y0 = env.primaryY;
-			const x0 = (
-				lineX +
+			const xL = (
+				from.x + from.currentMaxRad +
 				lArrow.width(env.theme) +
 				(label ? config.label.padding : 0)
 			);
@@ -190,8 +219,8 @@ define([
 			const clickable = env.makeRegion();
 
 			const renderedText = SVGShapes.renderBoxedText(label, {
-				x: x0 - config.mask.padding.left,
-				y: y0 - height + config.label.margin.top,
+				x: xL - config.mask.padding.left,
+				y: yBegin - height + config.label.margin.top,
 				padding: config.mask.padding,
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.label.loopbackAttrs,
@@ -205,68 +234,74 @@ define([
 				config.mask.padding.left -
 				config.mask.padding.right
 			) : 0);
-			const r = config.loopbackRadius;
-			const x1 = Math.max(lineX + rArrow.width(env.theme), x0 + labelW);
-			const y1 = y0 + r * 2;
 
-			const line = config.line[options.line];
-			const rendered = line.renderRev(line.attrs, {
-				xL: lineX,
-				dx1: lArrow.lineGap(env.theme, line.attrs),
-				dx2: rArrow.lineGap(env.theme, line.attrs),
-				y1: y0,
-				y2: y1,
-				xR: x1,
-			});
-			env.shapeLayer.appendChild(rendered.shape);
+			const xR = Math.max(
+				to.x + to.currentMaxRad + rArrow.width(env.theme),
+				xL + labelW
+			);
+			const y2 = Math.max(
+				yBegin + config.loopbackRadius * 2,
+				env.primaryY
+			);
 
-			lArrow.render(env.shapeLayer, env.theme, rendered.p1, 1);
-			rArrow.render(env.shapeLayer, env.theme, rendered.p2, 1);
+			this.renderRevArrowLine({
+				x1: from.x + from.currentMaxRad,
+				y1: yBegin,
+				x2: to.x + to.currentMaxRad,
+				y2,
+				xR,
+			}, options, env);
 
 			const raise = Math.max(height, lArrow.height(env.theme) / 2);
 			const arrowDip = rArrow.height(env.theme) / 2;
 
 			clickable.insertBefore(svg.make('rect', {
-				'x': lineX,
-				'y': y0 - raise,
-				'width': x1 + r - lineX,
-				'height': raise + r * 2 + arrowDip,
+				'x': from.x,
+				'y': yBegin - raise,
+				'width': xR + config.loopbackRadius - from.x,
+				'height': raise + y2 - yBegin + arrowDip,
 				'fill': 'transparent',
+				'class': 'vis',
 			}), clickable.firstChild);
 
-			return y1 + Math.max(
-				arrowDip + env.theme.minActionMargin,
-				env.theme.actionMargin
-			);
+			return y2 + Math.max(arrowDip, 0) + env.theme.actionMargin;
 		}
 
-		renderSimpleLine(x0, x1, options, env) {
-			const dir = (x0 < x1) ? 1 : -1;
-
+		renderArrowLine({x1, y1, x2, y2}, options, env) {
 			const config = env.theme.connect;
 			const line = config.line[options.line];
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
 
+			const len = Math.sqrt(
+				(x2 - x1) * (x2 - x1) +
+				(y2 - y1) * (y2 - y1)
+			);
+			const d1 = lArrow.lineGap(env.theme, line.attrs);
+			const d2 = rArrow.lineGap(env.theme, line.attrs);
+			const dx = (x2 - x1) / len;
+			const dy = (y2 - y1) / len;
+
 			const rendered = line.renderFlat(line.attrs, {
-				x1: x0,
-				dx1: lArrow.lineGap(env.theme, line.attrs) * dir,
-				x2: x1,
-				dx2: -rArrow.lineGap(env.theme, line.attrs) * dir,
-				y: env.primaryY,
+				x1: x1 + d1 * dx,
+				y1: y1 + d1 * dy,
+				x2: x2 - d2 * dx,
+				y2: y2 - d2 * dy,
 			});
 			env.shapeLayer.appendChild(rendered.shape);
-			return rendered;
-		}
 
-		renderSimpleArrowheads(options, renderedLine, env, dir) {
-			const lArrow = ARROWHEADS[options.left];
-			const rArrow = ARROWHEADS[options.right];
+			const p1 = {x: rendered.p1.x - d1 * dx, y: rendered.p1.y - d1 * dy};
+			const p2 = {x: rendered.p2.x + d2 * dx, y: rendered.p2.y + d2 * dy};
 
-			lArrow.render(env.shapeLayer, env.theme, renderedLine.p1, dir);
-			rArrow.render(env.shapeLayer, env.theme, renderedLine.p2, -dir);
+			lArrow.render(env.shapeLayer, env.theme, p1, {dx, dy});
+			rArrow.render(env.shapeLayer, env.theme, p2, {dx: -dx, dy: -dy});
 
-			return {lArrow, rArrow};
+			return {
+				p1,
+				p2,
+				lArrow,
+				rArrow,
+			};
 		}
 
 		renderVirtualSources(from, to, renderedLine, env) {
@@ -288,9 +323,41 @@ define([
 			}
 		}
 
-		renderSimpleConnect({label, agentIDs, options}, env) {
+		renderSimpleLabel(label, {layer, x1, x2, y1, y2, height}, env) {
 			const config = env.theme.connect;
-			const from = env.agentInfos.get(agentIDs[0]);
+
+			const midX = (x1 + x2) / 2;
+			const midY = (y1 + y2) / 2;
+
+			let labelLayer = layer;
+			const boxAttrs = {'fill': '#000000'};
+			if(y1 !== y2) {
+				const angle = Math.atan((y2 - y1) / (x2 - x1));
+				const transform = (
+					'rotate(' +
+					(angle * 180 / Math.PI) +
+					' ' + midX + ',' + midY +
+					')'
+				);
+				boxAttrs.transform = transform;
+				labelLayer = svg.make('g', {'transform': transform});
+				layer.appendChild(labelLayer);
+			}
+
+			SVGShapes.renderBoxedText(label, {
+				x: midX,
+				y: midY + config.label.margin.top - height,
+				padding: config.mask.padding,
+				boxAttrs,
+				labelAttrs: config.label.attrs,
+				boxLayer: env.maskLayer,
+				labelLayer,
+				SVGTextBlockClass: env.SVGTextBlockClass,
+			});
+		}
+
+		renderSimpleConnect({label, agentIDs, options}, env, from, yBegin) {
+			const config = env.theme.connect;
 			const to = env.agentInfos.get(agentIDs[1]);
 
 			const dir = (from.x < to.x) ? 1 : -1;
@@ -301,44 +368,49 @@ define([
 				config.label.margin.bottom
 			);
 
-			const x0 = from.x + from.currentMaxRad * dir;
-			const x1 = to.x - to.currentMaxRad * dir;
-			const y = env.primaryY;
+			const x1 = from.x + from.currentMaxRad * dir;
+			const x2 = to.x - to.currentMaxRad * dir;
 
 			const clickable = env.makeRegion();
 
-			SVGShapes.renderBoxedText(label, {
-				x: (x0 + x1) / 2,
-				y: y - height + config.label.margin.top,
-				padding: config.mask.padding,
-				boxAttrs: {'fill': '#000000'},
-				labelAttrs: config.label.attrs,
-				boxLayer: env.maskLayer,
-				labelLayer: clickable,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-			});
-
-			const rendered = this.renderSimpleLine(x0, x1, options, env);
-			const {
-				lArrow,
-				rArrow
-			} = this.renderSimpleArrowheads(options, rendered, env, dir);
-			this.renderVirtualSources(from, to, rendered, env);
+			const rendered = this.renderArrowLine({
+				x1,
+				y1: yBegin,
+				x2,
+				y2: env.primaryY,
+			}, options, env);
 
 			const arrowSpread = Math.max(
-				lArrow.height(env.theme),
-				rArrow.height(env.theme)
+				rendered.lArrow.height(env.theme),
+				rendered.rArrow.height(env.theme)
 			) / 2;
 
-			clickable.insertBefore(svg.make('rect', {
-				'x': Math.min(x0, x1),
-				'y': y - Math.max(height, arrowSpread),
-				'width': Math.abs(x1 - x0),
-				'height': Math.max(height, arrowSpread) + arrowSpread,
-				'fill': 'transparent',
-			}), clickable.firstChild);
+			const lift = Math.max(height, arrowSpread);
 
-			return y + Math.max(
+			this.renderVirtualSources(from, to, rendered, env);
+
+			clickable.appendChild(svg.make('path', {
+				'd': (
+					'M' + x1 + ',' + (yBegin - lift) +
+					'L' + x2 + ',' + (env.primaryY - lift) +
+					'L' + x2 + ',' + (env.primaryY + arrowSpread) +
+					'L' + x1 + ',' + (yBegin + arrowSpread) +
+					'Z'
+				),
+				'fill': 'transparent',
+				'class': 'vis',
+			}));
+
+			this.renderSimpleLabel(label, {
+				layer: clickable,
+				x1,
+				y1: yBegin,
+				x2,
+				y2: env.primaryY,
+				height,
+			}, env);
+
+			return env.primaryY + Math.max(
 				arrowSpread + env.theme.minActionMargin,
 				env.theme.actionMargin
 			);
@@ -367,16 +439,77 @@ define([
 			};
 		}
 
-		render(stage, env) {
+		render(stage, env, from = null, yBegin = null) {
+			if(from === null) {
+				from = env.agentInfos.get(stage.agentIDs[0]);
+				yBegin = env.primaryY;
+			}
 			if(stage.agentIDs[0] === stage.agentIDs[1]) {
-				return this.renderSelfConnect(stage, env);
+				return this.renderSelfConnect(stage, env, from, yBegin);
 			} else {
-				return this.renderSimpleConnect(stage, env);
+				return this.renderSimpleConnect(stage, env, from, yBegin);
 			}
 		}
 	}
 
-	BaseComponent.register('connect', new Connect());
+	class ConnectDelayBegin extends Connect {
+		makeState(state) {
+			state.delayedConnections = new Map();
+		}
 
-	return Connect;
+		resetState(state) {
+			state.delayedConnections.clear();
+		}
+
+		separation(stage, env) {
+			super.separation(stage, env);
+			array.mergeSets(env.momentaryAgentIDs, [stage.agentIDs[0]]);
+		}
+
+		renderPre(stage, env) {
+			return Object.assign(super.renderPre(stage, env), {
+				agentIDs: [stage.agentIDs[0]],
+			});
+		}
+
+		render(stage, env) {
+			const dc = env.state.delayedConnections;
+			dc.set(stage.tag, {
+				stage,
+				from: Object.assign({}, env.agentInfos.get(stage.agentIDs[0])),
+				y: env.primaryY,
+			});
+			return env.primaryY + env.theme.actionMargin;
+		}
+	}
+
+	class ConnectDelayEnd extends Connect {
+		separationPre() {}
+
+		separation() {}
+
+		renderPre({tag}, env) {
+			const dc = env.state.delayedConnections;
+			const beginStage = dc.get(tag).stage;
+			return Object.assign(super.renderPre(beginStage, env), {
+				agentIDs: [beginStage.agentIDs[1]],
+			});
+		}
+
+		render({tag}, env) {
+			const dc = env.state.delayedConnections;
+			const begin = dc.get(tag);
+			return super.render(begin.stage, env, begin.from, begin.y);
+		}
+	}
+
+	BaseComponent.register('connect', new Connect());
+	BaseComponent.register('connect-delay-begin', new ConnectDelayBegin());
+	BaseComponent.register('connect-delay-end', new ConnectDelayEnd());
+
+	return {
+		Connect,
+		ConnectDelayBegin,
+		ConnectDelayEnd,
+	};
 });

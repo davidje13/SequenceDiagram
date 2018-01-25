@@ -205,24 +205,67 @@ define(['core/ArrayUtilities'], (array) => {
 			const connect = {
 				type: 'keyword',
 				suggest: true,
-				then: makeOpBlock(agentToOptText, {
+				then: Object.assign({}, makeOpBlock(agentToOptText, {
 					':': colonTextToEnd,
 					'\n': hiddenEnd,
+				}), {
+					'...': {type: 'operator', suggest: true, then: {
+						'': {
+							type: 'variable',
+							suggest: {known: 'DelayedAgent'},
+							then: {
+								'': 0,
+								':': CM_ERROR,
+								'\n': end,
+							},
+						},
+					}},
 				}),
 			};
 
-			const then = {'': 0};
-			arrows.forEach((arrow) => (then[arrow] = connect));
-			then[':'] = {
+			const connectors = {};
+			arrows.forEach((arrow) => (connectors[arrow] = connect));
+
+			const labelIndicator = {
 				type: 'operator',
 				suggest: true,
 				override: 'Label',
 				then: {},
 			};
-			return makeOpBlock(
-				{type: 'variable', suggest: {known: 'Agent'}, then},
-				then
-			);
+
+			const hiddenLabelIndicator = {
+				type: 'operator',
+				suggest: false,
+				override: 'Label',
+				then: {},
+			};
+
+			const firstAgent = {
+				type: 'variable',
+				suggest: {known: 'Agent'},
+				then: Object.assign({
+					'': 0,
+					':': labelIndicator,
+				}, connectors),
+			};
+
+			const firstAgentDelayed = {
+				type: 'variable',
+				suggest: {known: 'DelayedAgent'},
+				then: Object.assign({
+					'': 0,
+					':': hiddenLabelIndicator,
+				}, connectors),
+			};
+
+			return Object.assign({
+				'...': {type: 'operator', suggest: true, then: {
+					'': firstAgentDelayed,
+				}},
+			}, makeOpBlock(firstAgent, Object.assign({
+				'': firstAgent,
+				':': hiddenLabelIndicator,
+			}, connectors)));
 		}
 
 		const BASE_THEN = {
@@ -480,6 +523,7 @@ define(['core/ArrayUtilities'], (array) => {
 				currentSpace: '',
 				currentQuoted: false,
 				knownAgent: [],
+				knownDelayedAgent: [],
 				knownLabel: [],
 				beginCompletions: cmMakeCompletions({}, [this.commands]),
 				completions: [],

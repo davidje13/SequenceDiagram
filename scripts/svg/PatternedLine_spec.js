@@ -30,6 +30,26 @@ defineDescribe('PatternedLine', ['./PatternedLine'], (PatternedLine) => {
 			);
 		});
 
+		it('supports quarter arcs', () => {
+			const ln = new PatternedLine()
+				.move(10, 20)
+				.arc(10, 30, Math.PI / 2)
+				.arc(10, 30, Math.PI / 2)
+				.arc(10, 30, Math.PI / 2)
+				.arc(10, 30, Math.PI / 2);
+
+			expect(simplify(ln.asPath(), 0)).toEqual(
+				'M10 20' +
+				'A10 10 0 0 1 20 30' +
+				'L20 30' +
+				'A10 10 0 0 1 10 40' +
+				'L10 40' +
+				'A10 10 0 0 1 0 30' +
+				'L0 30' +
+				'A10 10 0 0 1 10 20'
+			);
+		});
+
 		it('can combine lines and arcs', () => {
 			const ln = new PatternedLine()
 				.move(10, 20)
