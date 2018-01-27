@@ -57,7 +57,7 @@ define([
 				'width': width,
 				'height': height,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}), clickable.firstChild);
 
 			return {
@@ -95,7 +95,7 @@ define([
 				'width': d * 2,
 				'height': d * 2,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}));
 
 			return {
@@ -150,7 +150,7 @@ define([
 				'width': width,
 				'height': height,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}));
 
 			return {
@@ -211,7 +211,7 @@ define([
 				'width': config.width,
 				'height': config.height,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}));
 
 			return {
@@ -246,7 +246,7 @@ define([
 				'width': w,
 				'height': config.height,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}));
 
 			return {

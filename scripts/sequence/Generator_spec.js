@@ -20,6 +20,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	const any = () => jasmine.anything();
 
 	const PARSED = {
+		sourceAgent: {name: '', alias: '', flags: ['source']},
+
 		blockBegin: (tag, label, {ln = 0} = {}) => {
 			return {type: 'block begin', blockType: tag, tag, label, ln};
 		},
@@ -522,10 +524,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('converts source agents into virtual agents', () => {
 			const sequence = invoke([
-				PARSED.connect([
-					'A',
-					{name: '', alias: '', flags: ['source']},
-				]),
+				PARSED.connect(['A', PARSED.sourceAgent]),
 			]);
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
@@ -545,14 +544,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('converts sources into distinct virtual agents', () => {
 			const sequence = invoke([
-				PARSED.connect([
-					'A',
-					{name: '', alias: '', flags: ['source']},
-				]),
-				PARSED.connect([
-					'A',
-					{name: '', alias: '', flags: ['source']},
-				]),
+				PARSED.connect(['A', PARSED.sourceAgent]),
+				PARSED.connect(['A', PARSED.sourceAgent]),
 			]);
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
@@ -572,10 +565,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		it('places source agents near the connected agent', () => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'B', 'C']),
-				PARSED.connect([
-					'B',
-					{name: '', alias: '', flags: ['source']},
-				]),
+				PARSED.connect(['B', PARSED.sourceAgent]),
 			]);
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
@@ -593,10 +583,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		it('places source agents left when connections are reversed', () => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'B', 'C']),
-				PARSED.connect([
-					{name: '', alias: '', flags: ['source']},
-					'B',
-				]),
+				PARSED.connect([PARSED.sourceAgent, 'B']),
 			]);
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
@@ -613,10 +600,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('rejects connections between virtual agents', () => {
 			expect(() => invoke([
-				PARSED.connect([
-					{name: '', alias: '', flags: ['source']},
-					{name: '', alias: '', flags: ['source']},
-				]),
+				PARSED.connect([PARSED.sourceAgent, PARSED.sourceAgent]),
 			])).toThrow(new Error(
 				'Cannot connect found messages at line 1'
 			));
@@ -624,10 +608,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('rejects connections between virtual agents and sides', () => {
 			expect(() => invoke([
-				PARSED.connect([
-					{name: '', alias: '', flags: ['source']},
-					']',
-				]),
+				PARSED.connect([PARSED.sourceAgent, ']']),
 			])).toThrow(new Error(
 				'Cannot connect found messages to special agents at line 1'
 			));
@@ -716,6 +697,55 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					tag: '__0',
 					ln: 1,
 				}),
+				any(),
+			]);
+		});
+
+		it('converts self connections into delayed connections', () => {
+			const sequence = invoke([
+				PARSED.connect(['A', 'A'], {
+					ln: 0,
+					label: 'woo',
+					line: 'solid',
+					left: 0,
+					right: 1,
+				}),
+			]);
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.connectDelayBegin(['A', 'A'], {
+					label: 'woo!',
+					tag: '__0',
+					line: 'solid',
+					left: 0,
+					right: 1,
+					ln: 0,
+				}),
+				GENERATED.connectDelayEnd({
+					tag: '__0',
+					ln: 0,
+				}),
+				any(),
+			]);
+		});
+
+		it('adds parallel highlighting stages to self connections', () => {
+			const sequence = invoke([
+				PARSED.connect([
+					{name: 'A', alias: '', flags: ['start']},
+					{name: 'A', alias: '', flags: ['stop']},
+				], {label: 'woo'}),
+			]);
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.parallel([
+					GENERATED.highlight(['A'], true),
+					GENERATED.connectDelayBegin(['A', 'A'], {label: 'woo!'}),
+				]),
+				GENERATED.parallel([
+					GENERATED.connectDelayEnd(),
+					GENERATED.highlight(['A'], false),
+				]),
 				any(),
 			]);
 		});
@@ -1125,26 +1155,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 			expect(() => invoke([
 				PARSED.connect([
-					{name: 'A', alias: '', flags: ['start']},
-					{name: 'A', alias: '', flags: ['stop']},
-				]),
-			])).toThrow(new Error(
-				'Cannot set agent highlighting multiple times at line 1'
-			));
-
-			expect(() => invoke([
-				PARSED.connect([
 					'A',
 					{name: 'B', alias: '', flags: ['begin', 'end']},
-				]),
-			])).toThrow(new Error(
-				'Cannot set agent visibility multiple times at line 1'
-			));
-
-			expect(() => invoke([
-				PARSED.connect([
-					{name: 'A', alias: '', flags: ['begin']},
-					{name: 'A', alias: '', flags: ['end']},
 				]),
 			])).toThrow(new Error(
 				'Cannot set agent visibility multiple times at line 1'
@@ -1640,8 +1652,10 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
-				GENERATED.connect(['__BLOCK0]', '__BLOCK0]']),
-				GENERATED.connect(['__BLOCK0]', '__BLOCK0]']),
+				GENERATED.connectDelayBegin(['__BLOCK0]', '__BLOCK0]']),
+				GENERATED.connectDelayEnd(),
+				GENERATED.connectDelayBegin(['__BLOCK0]', '__BLOCK0]']),
+				GENERATED.connectDelayEnd(),
 				any(),
 				any(),
 			]);
@@ -1792,14 +1806,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'B', 'C', 'D']),
 				PARSED.groupBegin('Bar', ['B', 'C'], {label: 'Foo'}),
-				PARSED.connect([
-					{name: '', alias: '', flags: ['source']},
-					'Bar',
-				]),
-				PARSED.connect([
-					'Bar',
-					{name: '', alias: '', flags: ['source']},
-				]),
+				PARSED.connect([PARSED.sourceAgent, 'Bar']),
+				PARSED.connect(['Bar', PARSED.sourceAgent]),
 				PARSED.endAgents(['Bar']),
 			]);
 

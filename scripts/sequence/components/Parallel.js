@@ -20,8 +20,9 @@ define([
 	function mergeResults(a, b) {
 		array.mergeSets(a.agentIDs, b.agentIDs);
 		return {
-			topShift: Math.max(a.topShift, b.topShift),
 			agentIDs: a.agentIDs,
+			topShift: Math.max(a.topShift, b.topShift),
+			y: nullableMax(a.y, b.y),
 			asynchronousY: nullableMax(a.asynchronousY, b.asynchronousY),
 		};
 	}

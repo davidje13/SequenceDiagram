@@ -239,16 +239,12 @@ define([
 				to.x + to.currentMaxRad + rArrow.width(env.theme),
 				xL + labelW
 			);
-			const y2 = Math.max(
-				yBegin + config.loopbackRadius * 2,
-				env.primaryY
-			);
 
 			this.renderRevArrowLine({
 				x1: from.x + from.currentMaxRad,
 				y1: yBegin,
 				x2: to.x + to.currentMaxRad,
-				y2,
+				y2: env.primaryY,
 				xR,
 			}, options, env);
 
@@ -259,12 +255,16 @@ define([
 				'x': from.x,
 				'y': yBegin - raise,
 				'width': xR + config.loopbackRadius - from.x,
-				'height': raise + y2 - yBegin + arrowDip,
+				'height': raise + env.primaryY - yBegin + arrowDip,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}), clickable.firstChild);
 
-			return y2 + Math.max(arrowDip, 0) + env.theme.actionMargin;
+			return (
+				env.primaryY +
+				Math.max(arrowDip, 0) +
+				env.theme.actionMargin
+			);
 		}
 
 		renderArrowLine({x1, y1, x2, y2}, options, env) {
@@ -398,7 +398,7 @@ define([
 					'Z'
 				),
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}));
 
 			this.renderSimpleLabel(label, {
@@ -489,11 +489,21 @@ define([
 		separation() {}
 
 		renderPre({tag}, env) {
+			const config = env.theme.connect;
+
 			const dc = env.state.delayedConnections;
-			const beginStage = dc.get(tag).stage;
-			return Object.assign(super.renderPre(beginStage, env), {
-				agentIDs: [beginStage.agentIDs[1]],
-			});
+			const begin = dc.get(tag);
+			const beginStage = begin.stage;
+			const agentIDs = [beginStage.agentIDs[1]];
+
+			if(beginStage.agentIDs[0] === beginStage.agentIDs[1]) {
+				return {
+					agentIDs,
+					y: begin.y + config.loopbackRadius * 2,
+				};
+			}
+
+			return Object.assign(super.renderPre(beginStage, env), {agentIDs});
 		}
 
 		render({tag}, env) {

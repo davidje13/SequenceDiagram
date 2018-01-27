@@ -36,7 +36,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 
 	const OPTS_TEST = Object.assign({}, jshintConfig, {
 		predef: PREDEF_TEST,
-		maxstatements: 100, // allow lots of tests
+		maxstatements: 200, // allow lots of tests
 	});
 
 	function formatError(error) {

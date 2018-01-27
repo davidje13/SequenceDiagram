@@ -301,7 +301,7 @@ define([
 			};
 			const component = this.components.get(stage.type);
 			const result = component.renderPre(stage, envPre);
-			const {topShift, agentIDs, asynchronousY} =
+			const {agentIDs, topShift, asynchronousY} =
 				BaseComponent.cleanRenderPreResult(result, this.currentY);
 
 			const topY = this.checkAgentRange(agentIDs, asynchronousY);

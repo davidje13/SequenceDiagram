@@ -153,17 +153,17 @@ html, body {
 	height: 100%;
 }
 
-.pane-view .region:hover .vis {
+.pane-view .region:hover .outline {
 	stroke-width: 5px;
 	stroke: rgba(255, 255, 0, 0.5);
 }
 
-.pane-view .region.focus .vis {
+.pane-view .region.focus .outline {
 	stroke-width: 5px;
 	stroke: rgba(255, 128, 0, 0.5);
 }
 
-.pane-view .region.focus:hover .vis {
+.pane-view .region.focus:hover .outline {
 	stroke-width: 5px;
 	stroke: rgba(255, 192, 0, 0.5);
 }

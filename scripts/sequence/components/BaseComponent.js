@@ -65,13 +65,18 @@ define(() => {
 	}
 
 	BaseComponent.cleanRenderPreResult = ({
-		topShift = 0,
 		agentIDs = [],
+		topShift = 0,
+		y = null,
 		asynchronousY = null,
 	} = {}, currentY = null) => {
+		if(y !== null && currentY !== null) {
+			topShift = Math.max(topShift, y - currentY);
+		}
 		return {
-			topShift,
 			agentIDs,
+			topShift,
+			y,
 			asynchronousY: (asynchronousY !== null) ? asynchronousY : currentY,
 		};
 	};

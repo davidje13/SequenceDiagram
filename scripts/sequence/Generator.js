@@ -844,7 +844,36 @@ define(['core/ArrayUtilities'], (array) => {
 			];
 		}
 
+		_isSelfConnect(agents) {
+			const gAgents = agents.map(this.toGAgent);
+			const expandedGAgents = this.expandGroupedGAgentConnection(gAgents);
+			if(expandedGAgents[0].id !== expandedGAgents[1].id) {
+				return false;
+			}
+			if(expandedGAgents.some((gAgent) => gAgent.isVirtualSource)) {
+				return false;
+			}
+			return true;
+		}
+
 		handleConnect({agents, label, options}) {
+			if(this._isSelfConnect(agents)) {
+				const tag = {};
+				this.handleConnectDelayBegin({
+					agent: agents[0],
+					tag,
+					options,
+					ln: 0,
+				});
+				this.handleConnectDelayEnd({
+					agent: agents[1],
+					tag,
+					label,
+					options,
+				});
+				return;
+			}
+
 			let {flags, gAgents} = this._handlePartialConnect(agents);
 
 			gAgents = this.expandGroupedGAgentConnection(gAgents);

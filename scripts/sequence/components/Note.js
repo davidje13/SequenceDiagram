@@ -92,7 +92,7 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				'width': x1 - x0,
 				'height': fullH,
 				'fill': 'transparent',
-				'class': 'vis',
+				'class': 'outline',
 			}), clickable.firstChild);
 
 			return (
