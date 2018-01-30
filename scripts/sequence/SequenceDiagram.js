@@ -128,6 +128,16 @@ define([
 			});
 		}
 
+		getCanvas({resolution = 1, size = null} = {}) {
+			if(size) {
+				this.renderer.width = size.width;
+				this.renderer.height = size.height;
+			}
+			return new Promise((resolve) => {
+				this.exporter.getCanvas(this.renderer, resolution, resolve);
+			});
+		}
+
 		getPNG({resolution = 1, size = null} = {}) {
 			if(size) {
 				this.renderer.width = size.width;

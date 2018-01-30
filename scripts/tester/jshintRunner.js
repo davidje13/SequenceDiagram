@@ -20,6 +20,7 @@ define(['jshintConfig', 'specs'], (jshintConfig) => {
 
 	const PREDEF_TEST = [
 		'jasmine',
+		'beforeAll',
 		'beforeEach',
 		'afterEach',
 		'spyOn',

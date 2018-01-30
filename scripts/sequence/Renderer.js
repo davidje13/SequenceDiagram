@@ -433,17 +433,18 @@ define([
 			const y0 = titleY - margin;
 			const y1 = stagesHeight + margin;
 
+			this.width = x1 - x0;
+			this.height = y1 - y0;
+
 			this.maskReveal.setAttribute('x', x0);
 			this.maskReveal.setAttribute('y', y0);
-			this.maskReveal.setAttribute('width', x1 - x0);
-			this.maskReveal.setAttribute('height', y1 - y0);
+			this.maskReveal.setAttribute('width', this.width);
+			this.maskReveal.setAttribute('height', this.height);
 
 			this.base.setAttribute('viewBox', (
 				x0 + ' ' + y0 + ' ' +
-				(x1 - x0) + ' ' + (y1 - y0)
+				this.width + ' ' + this.height
 			));
-			this.width = (x1 - x0);
-			this.height = (y1 - y0);
 		}
 
 		_resetState() {

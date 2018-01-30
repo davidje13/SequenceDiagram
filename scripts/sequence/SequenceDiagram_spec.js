@@ -124,31 +124,4 @@ defineDescribe('SequenceDiagram', [
 			'<polygon points="46 31 51 26 46 21"'
 		);
 	});
-
-	const SAMPLE_REGEX = new RegExp(
-		/```(?!shell).*\n([^]+?)```/g
-	);
-
-	function findSamples(content) {
-		SAMPLE_REGEX.lastIndex = 0;
-		const results = [];
-		while(true) {
-			const match = SAMPLE_REGEX.exec(content);
-			if(!match) {
-				break;
-			}
-			results.push(match[1]);
-		}
-		return results;
-	}
-
-	return (fetch('README.md')
-		.then((response) => response.text())
-		.then(findSamples)
-		.then((samples) => samples.forEach((code, i) => {
-			it('Renders readme example #' + (i + 1) + ' without error', () => {
-				expect(() => diagram.set(code)).not.toThrow();
-			});
-		}))
-	);
 });

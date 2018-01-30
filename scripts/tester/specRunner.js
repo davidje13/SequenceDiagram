@@ -9,6 +9,30 @@
 		urlArgs: String(Math.random()), // Prevent cache
 	}, window.getRequirejsCDN()));
 
+	const matchers = {
+		toBeNear: () => {
+			return {
+				compare: (actual, expected, range) => {
+					if(
+						typeof expected !== 'number' ||
+						typeof range !== 'number' ||
+						range < 0
+					) {
+						throw new Error(
+							'Invalid toBeNear(' + expected + ',' + range + ')'
+						);
+					}
+					if(typeof actual !== 'number') {
+						throw new Error('Expected a number, got ' + actual);
+					}
+					return {
+						pass: Math.abs(actual - expected) <= range,
+					};
+				},
+			};
+		},
+	};
+
 	requirejs(['jasmineBoot'], () => {
 		// Slightly hacky way of making jasmine work with asynchronously loaded
 		// tests while keeping features of jasmine-boot
@@ -25,6 +49,10 @@
 				describe(name, () => fn.apply(null, args));
 			});
 		};
+
+		beforeAll(() => {
+			jasmine.addMatchers(matchers);
+		});
 
 		requirejs(['tester/jshintRunner'], (promise) => promise.then(runner));
 	});

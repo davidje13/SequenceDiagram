@@ -77,11 +77,14 @@ The current state of automated testing is:
 
 * Utilities have a good level of testing
 * `Parser` and `Generator` stages have a good level of testing
-* Rendering methods (SVG generation) have a poor level of testing;
+* Rendering methods (SVG generation) have a minimal level of testing;
   there are some high-level tests in
-  `/scripts/sequence/SequenceDiagram_spec.js` but many component types
-  are not tested at all during rendering beyond ensuring that they can
-  be used without throwing exceptions. The same applies to themes.
+  `/scripts/sequence/SequenceDiagram_spec.js`, and a series of image
+  comparison tests in `/scripts/sequence/Readme_spec.js` (testing that
+  the readme screenshots roughly match the current behaviour). Finally
+  `/scripts/sequence/SequenceDiagram_visual_spec.js` uses coarse image
+  comparison to test components and interactions using baseline SVGs
+  from `test-images`.
 * The editor has a minimal level of testing.
 
 If you suspect a failing test is not related to your changes, you can

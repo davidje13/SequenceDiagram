@@ -17,7 +17,7 @@
 		return o;
 	}
 
-	const PNG_RESOLUTION = 4;
+	const RESOLUTION = 4;
 
 	const FAVICON_SRC = (
 		'theme chunky\n' +
@@ -95,7 +95,7 @@
 
 			document.body.appendChild(hold);
 
-			diagram.getPNG({resolution: PNG_RESOLUTION, size}).then(({url}) => {
+			diagram.getPNG({resolution: RESOLUTION, size}).then(({url}) => {
 				raster.setAttribute('src', url);
 				downloadPNG.setAttribute('href', url);
 			});

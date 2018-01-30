@@ -4,9 +4,6 @@ define(() => {
 	// Thanks, https://stackoverflow.com/a/23522755/1180785
 	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-	// Thanks, https://stackoverflow.com/a/9851769/1180785
-	const firefox = (typeof window.InstallTrigger !== 'undefined');
-
 	return class Exporter {
 		constructor() {
 			this.latestSVG = null;
@@ -18,45 +15,38 @@ define(() => {
 			this.latestPNG = null;
 		}
 
-		getSVGContent(renderer, size = null) {
+		getSVGContent(renderer) {
 			let code = renderer.svg().outerHTML;
-			if(firefox && size) {
-				// Firefox fails to render SVGs unless they have size
-				// attributes on the <svg> tag
-				code = code.replace(
-					/^<svg/,
-					'<svg width="' + size.width +
-					'" height="' + size.height + '" '
-				);
-			}
+
+			// Firefox fails to render SVGs as <img> unless they have size
+			// attributes on the <svg> tag, so we must set this when
+			// exporting from any environment, in case it is opened in FireFox
+			code = code.replace(
+				/^<svg/,
+				'<svg width="' + renderer.width +
+				'" height="' + renderer.height + '" '
+			);
+
 			return code;
 		}
 
-		getSVGBlob(renderer, size = null) {
+		getSVGBlob(renderer) {
 			return new Blob(
-				[this.getSVGContent(renderer, size)],
+				[this.getSVGContent(renderer)],
 				{type: 'image/svg+xml'}
 			);
 		}
 
-		getSVGURL(renderer, size = null) {
-			const blob = this.getSVGBlob(renderer, size);
-			if(size) {
-				if(this.latestInternalSVG) {
-					URL.revokeObjectURL(this.latestInternalSVG);
-				}
-				this.latestInternalSVG = URL.createObjectURL(blob);
-				return this.latestInternalSVG;
-			} else {
-				if(this.latestSVG) {
-					URL.revokeObjectURL(this.latestSVG);
-				}
-				this.latestSVG = URL.createObjectURL(blob);
-				return this.latestSVG;
+		getSVGURL(renderer) {
+			const blob = this.getSVGBlob(renderer);
+			if(this.latestSVG) {
+				URL.revokeObjectURL(this.latestSVG);
 			}
+			this.latestSVG = URL.createObjectURL(blob);
+			return this.latestSVG;
 		}
 
-		getPNGBlob(renderer, resolution, callback) {
+		getCanvas(renderer, resolution, callback) {
 			if(!this.canvas) {
 				window.devicePixelRatio = 1;
 				this.canvas = document.createElement('canvas');
@@ -83,11 +73,11 @@ define(() => {
 			const render = () => {
 				this.canvas.width = width;
 				this.canvas.height = height;
-				this.context.drawImage(img, 0, 0);
+				this.context.drawImage(img, 0, 0, width, height);
 				if(safariHackaround) {
 					document.body.removeChild(safariHackaround);
 				}
-				this.canvas.toBlob(callback, 'image/png');
+				callback(this.canvas);
 			};
 
 			img.addEventListener('load', () => {
@@ -99,7 +89,13 @@ define(() => {
 				}
 			}, {once: true});
 
-			img.src = this.getSVGURL(renderer, {width, height});
+			img.src = this.getSVGURL(renderer);
+		}
+
+		getPNGBlob(renderer, resolution, callback) {
+			this.getCanvas(renderer, resolution, (canvas) => {
+				canvas.toBlob(callback, 'image/png');
+			});
 		}
 
 		getPNGURL(renderer, resolution, callback) {
