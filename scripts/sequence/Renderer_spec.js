@@ -77,6 +77,20 @@ defineDescribe('Sequence Renderer', [
 			expect(title.innerHTML).toEqual('Title');
 		});
 
+		it('adds the code as metadata', () => {
+			renderer.render({
+				meta: {title: [], code: 'hello'},
+				agents: [
+					{id: '[', formattedLabel: null, anchorRight: true},
+					{id: ']', formattedLabel: null, anchorRight: false},
+				],
+				stages: [],
+			});
+			const element = renderer.svg();
+			const metadata = element.getElementsByTagName('metadata')[0];
+			expect(metadata.innerHTML).toEqual('hello');
+		});
+
 		it('positions agent lines', () => {
 			/*
 				A -> B

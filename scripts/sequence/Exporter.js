@@ -23,8 +23,8 @@ define(() => {
 			// exporting from any environment, in case it is opened in FireFox
 			code = code.replace(
 				/^<svg/,
-				'<svg width="' + renderer.width +
-				'" height="' + renderer.height + '" '
+				'<svg width="' + (renderer.width || 1) +
+				'" height="' + (renderer.height || 1) + '" '
 			);
 
 			return code;
@@ -53,8 +53,8 @@ define(() => {
 				this.context = this.canvas.getContext('2d');
 			}
 
-			const width = renderer.width * resolution;
-			const height = renderer.height * resolution;
+			const width = (renderer.width || 1) * resolution;
+			const height = (renderer.height || 1) * resolution;
 			const img = new Image(width, height);
 			let safariHackaround = null;
 			if(safari) {

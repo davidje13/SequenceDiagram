@@ -1,22 +1,32 @@
 define(['./ImageRegion', './Blur', './Composition'], (ImageRegion) => {
 	'use strict';
 
-	const VALUE_THRESH = 0.05;
-
-	function calcDiff(region1, region2, {
-		pixelThresh = 5,
-		temp = null,
+	function getThresholds({
+		pixelThresh = 2,
+		valueThresh = 0.6,
 	} = {}) {
+		const blurSize = pixelThresh * 2;
+		const norm1D = 1 / (blurSize * Math.sqrt(Math.PI * 2));
+
+		return {
+			blurSize,
+			valueThresh: valueThresh * norm1D,
+		};
+	}
+
+	function calcDiff(region1, region2, options = {}) {
 		region1.checkCompatible(region2);
-		temp = region1.checkOrMakeTarget(temp);
-		const b1 = region1.blur(pixelThresh, {temp});
-		const b2 = region2.blur(pixelThresh, {temp});
+		const {blurSize} = getThresholds(options);
+		const temp = region1.checkOrMakeTarget(options.temp);
+		const b1 = region1.blur(blurSize, {temp});
+		const b2 = region2.blur(blurSize, {temp});
 		return b1.difference(b2, {target: b1});
 	}
 
-	function isSimilar(region1, region2, options = {}) {
+	function isSimilar(region1, region2, options) {
+		const {valueThresh} = getThresholds(options);
 		const diff = calcDiff(region1, region2, options);
-		return diff.max() < (options.valueThresh || VALUE_THRESH);
+		return diff.max() < valueThresh;
 	}
 
 	ImageRegion.prototype.isSimilar = function(b, options) {
@@ -24,6 +34,7 @@ define(['./ImageRegion', './Blur', './Composition'], (ImageRegion) => {
 	};
 
 	function makeImageComparison(actual, expected, options, message) {
+		const {valueThresh} = getThresholds(options);
 		const o = document.createElement('div');
 
 		const cActual = actual.asCanvas();
@@ -35,14 +46,14 @@ define(['./ImageRegion', './Blur', './Composition'], (ImageRegion) => {
 		const diff = calcDiff(actual, expected, options);
 		const cDiff = diff.asCanvas({
 			rangeLow: 0,
-			rangeHigh: options.valueThresh || VALUE_THRESH,
+			rangeHigh: valueThresh,
 		});
 		cDiff.setAttribute('title', 'difference');
 
 		const diffSharp = actual.difference(expected);
 		const cDiffSharp = diffSharp.asCanvas({
 			rangeLow: 0,
-			rangeHigh: options.valueThresh || VALUE_THRESH,
+			rangeHigh: valueThresh,
 		});
 		cDiffSharp.setAttribute('title', 'sharp difference');
 
@@ -71,13 +82,13 @@ define(['./ImageRegion', './Blur', './Composition'], (ImageRegion) => {
 					));
 
 					const details = (options.details ?
-						'; details: ' + options.details : ''
+						' Details: ' + options.details : ''
 					);
 
 					return {
 						pass: false,
-						message: 'Expected images to be similar; ' +
-							'see below for comparison' + details,
+						message: 'Expected images to be similar ' +
+							'(see below for comparison).' + details,
 					};
 				},
 
@@ -94,13 +105,13 @@ define(['./ImageRegion', './Blur', './Composition'], (ImageRegion) => {
 					));
 
 					const details = (options.details ?
-						'; details: ' + options.details : ''
+						' Details: ' + options.details : ''
 					);
 
 					return {
 						pass: false,
-						message: 'Expected images to differ; ' +
-							'see below for comparison' + details,
+						message: 'Expected images to differ ' +
+							'(see below for comparison).' + details,
 					};
 				},
 			};

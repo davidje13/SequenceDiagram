@@ -75,6 +75,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				meta: {
 					title: '',
 					theme: '',
+					code: '',
 					terminators: 'none',
 					headers: 'box',
 					textFormatter: jasmine.anything(),
@@ -91,6 +92,11 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 		it('reads theme metadata', () => {
 			const parsed = parser.parse('theme foo');
 			expect(parsed.meta.theme).toEqual('foo');
+		});
+
+		it('propagates original source as metadata', () => {
+			const parsed = parser.parse('theme foo');
+			expect(parsed.meta.code).toEqual('theme foo');
 		});
 
 		it('reads terminators metadata', () => {

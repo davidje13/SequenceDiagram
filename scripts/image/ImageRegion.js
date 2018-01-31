@@ -465,5 +465,15 @@ define(() => {
 		});
 	};
 
+	ImageRegion.loadSVG = (svg, size = {}) => {
+		const blob = new Blob([svg], {type: 'image/svg+xml'});
+		const url = URL.createObjectURL(blob);
+		return ImageRegion.loadURL(url, size)
+			.then((region) => {
+				URL.revokeObjectURL(url);
+				return region;
+			});
+	};
+
 	return ImageRegion;
 });

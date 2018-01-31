@@ -587,11 +587,12 @@ define([
 			);
 		}
 
-		parseLines(lines) {
+		parseLines(lines, src) {
 			const result = {
 				meta: {
 					title: '',
 					theme: '',
+					code: src,
 					terminators: 'none',
 					headers: 'box',
 					textFormatter: markdownParser,
@@ -607,7 +608,7 @@ define([
 		parse(src) {
 			const tokens = SHARED_TOKENISER.tokenise(src);
 			const lines = SHARED_TOKENISER.splitLines(tokens);
-			return this.parseLines(lines);
+			return this.parseLines(lines, src);
 		}
 	};
 });

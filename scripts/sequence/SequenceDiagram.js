@@ -200,6 +200,15 @@ define([
 		}
 	}
 
+	function extractCodeFromSVG(svg) {
+		const dom = new DOMParser().parseFromString(svg, 'image/svg+xml');
+		const meta = dom.querySelector('metadata');
+		if(!meta) {
+			return '';
+		}
+		return meta.textContent;
+	}
+
 	function convert(element, code = null, options = {}) {
 		if(element.tagName === 'svg') {
 			return null;
@@ -254,6 +263,7 @@ define([
 		themes,
 		addTheme,
 		registerCodeMirrorMode,
+		extractCodeFromSVG,
 		convert,
 		convertAll,
 	});

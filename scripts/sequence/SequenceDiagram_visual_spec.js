@@ -1,9 +1,11 @@
 defineDescribe('SequenceDiagram Visuals', [
 	'./SequenceDiagram',
+	'./test-images/list',
 	'image/ImageRegion',
 	'image/ImageSimilarity',
 ], (
 	SequenceDiagram,
+	TESTS,
 	ImageRegion,
 	ImageSimilarity
 ) => {
@@ -13,39 +15,39 @@ defineDescribe('SequenceDiagram Visuals', [
 
 	const IMAGE_BASE_PATH = 'scripts/sequence/test-images/';
 
-	const TESTS = {
-		'Connect.svg': 'A -> B',
-		'Reference.svg': (
-			'begin A, B, C, D\n' +
-			'begin reference over B, C: My ref as E\n' +
-			'* -> A\n' +
-			'A -> E\n' +
-			'E -> +D\n' +
-			'-D -> E\n' +
-			'E -> A\n' +
-			'end E\n'
-		),
-	};
+	function loadAndRenderSVG(svg, size = {resolution: RESOLUTION}) {
+		const code = SequenceDiagram.extractCodeFromSVG(svg);
 
-	Object.entries(TESTS).forEach(([image, code]) => {
+		const diagram = new SequenceDiagram(code);
+
+		return Promise.all([
+			diagram.getCanvas(size).then(ImageRegion.fromCanvas),
+			ImageRegion.loadSVG(svg, size),
+		]).then(([actual, expected]) => {
+			return {actual, expected, code};
+		});
+	}
+
+	function loadAndRenderURL(url, size) {
+		return fetch(url)
+			.then((response) => response.text())
+			.then((svg) => loadAndRenderSVG(svg, size));
+	}
+
+	function testImageMatches({actual, expected, code}) {
+		const widthSm = Math.min(Math.round(actual.width / 4), 150);
+		const actualSm = actual.resize({width: widthSm});
+		expect(actualSm).toLookLike(expected.resize(actualSm), {
+			details: 'Code is:\n\n' + code,
+		});
+	}
+
+	TESTS.forEach((image) => {
 		it('renders ' + image + ' as expected', (done) => {
 			jasmine.addMatchers(ImageSimilarity.matchers);
-			let actual = null;
-			new SequenceDiagram(code)
-				.getCanvas({resolution: RESOLUTION})
-				.then((c) => {
-					actual = ImageRegion.fromCanvas(c).resize({width: 150});
-				})
-				.then(() => ImageRegion.loadURL(IMAGE_BASE_PATH + image, {
-					width: actual.width,
-					height: actual.height,
-					resolution: RESOLUTION,
-				}))
-				.then((expected) => {
-					expect(actual).toLookLike(expected, {
-						details: 'Code is: \n' + code,
-					});
-				})
+
+			loadAndRenderURL(IMAGE_BASE_PATH + image)
+				.then(testImageMatches)
 				.catch(fail)
 				.then(done);
 		});

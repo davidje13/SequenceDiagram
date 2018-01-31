@@ -1095,6 +1095,7 @@ define(['core/ArrayUtilities'], (array) => {
 				meta: {
 					title: this.textFormatter(meta.title),
 					theme: meta.theme,
+					code: meta.code,
 				},
 				agents: this.gAgents.slice(),
 				stages: globals.stages,

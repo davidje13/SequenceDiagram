@@ -108,6 +108,13 @@ define([
 			this.themes.set(theme.name, theme);
 		}
 
+		buildMetadata() {
+			this.metaCode = svg.makeText();
+			const metadata = svg.make('metadata');
+			metadata.appendChild(this.metaCode);
+			return metadata;
+		}
+
 		buildStaticElements() {
 			this.base = svg.makeContainer();
 
@@ -124,6 +131,7 @@ define([
 			this.blocks = svg.make('g');
 			this.actionShapes = svg.make('g');
 			this.actionLabels = svg.make('g');
+			this.base.appendChild(this.buildMetadata());
 			this.base.appendChild(this.themeDefs);
 			this.base.appendChild(this.defs);
 			this.base.appendChild(this.agentLines);
@@ -504,6 +512,7 @@ define([
 			this._reset(themeChanged);
 
 			this.theme.reset();
+			this.metaCode.nodeValue = sequence.meta.code;
 			this.theme.addDefs(this.addThemeDef);
 
 			this.title.set({

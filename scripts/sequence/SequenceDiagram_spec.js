@@ -50,6 +50,7 @@ defineDescribe('SequenceDiagram', [
 
 		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-5 -5 10 10">' +
+			'<metadata></metadata>' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
@@ -66,6 +67,7 @@ defineDescribe('SequenceDiagram', [
 
 		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-11.5 -16 23 21">' +
+			'<metadata>title My title here</metadata>' +
 			'<defs>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
 			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
