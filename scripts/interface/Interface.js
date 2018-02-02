@@ -86,7 +86,7 @@ define(['require'], (require) => {
 				direction: 'vertical',
 				cursor: (options.direction === 'vertical') ?
 					'row-resize' : 'col-resize',
-				gutterSize: 1,
+				gutterSize: 0,
 				onDragStart: () => {
 					oldCursor = document.body.style.cursor;
 					document.body.style.cursor = resolvedOptions.cursor;
@@ -352,7 +352,7 @@ define(['require'], (require) => {
 					direction: 'vertical',
 					snapOffset: 5,
 					sizes: [70, 30],
-					minSize: [100, 0],
+					minSize: [100, 5],
 				});
 			}
 
