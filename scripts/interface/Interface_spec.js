@@ -28,7 +28,10 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 		});
 		sequenceDiagram.getSize.and.returnValue({width: 10, height: 20});
 		sequenceDiagram.dom.and.returnValue(document.createElement('svg'));
-		container = jasmine.createSpyObj('container', ['appendChild']);
+		container = jasmine.createSpyObj('container', [
+			'appendChild',
+			'addEventListener',
+		]);
 
 		ui = new Interface({
 			sequenceDiagram,

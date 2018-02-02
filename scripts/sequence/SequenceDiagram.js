@@ -51,6 +51,15 @@ define([
 		themes.push(theme);
 	}
 
+	function extractCodeFromSVG(svg) {
+		const dom = new DOMParser().parseFromString(svg, 'image/svg+xml');
+		const meta = dom.querySelector('metadata');
+		if(!meta) {
+			return '';
+		}
+		return meta.textContent;
+	}
+
 	class SequenceDiagram extends EventObject {
 		constructor(code = null, options = {}) {
 			super();
@@ -195,18 +204,13 @@ define([
 			}
 		}
 
+		extractCodeFromSVG(svg) {
+			return extractCodeFromSVG(svg);
+		}
+
 		dom() {
 			return this.renderer.svg();
 		}
-	}
-
-	function extractCodeFromSVG(svg) {
-		const dom = new DOMParser().parseFromString(svg, 'image/svg+xml');
-		const meta = dom.querySelector('metadata');
-		if(!meta) {
-			return '';
-		}
-		return meta.textContent;
 	}
 
 	function convert(element, code = null, options = {}) {

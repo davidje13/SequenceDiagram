@@ -101,6 +101,39 @@ define(['require'], (require) => {
 		});
 	}
 
+	function hasDroppedFile(event, mime) {
+		if(!event.dataTransfer.items && event.dataTransfer.files.length === 0) {
+			// Work around Safari not supporting dataTransfer.items
+			return [...event.dataTransfer.types].includes('Files');
+		}
+
+		const items = (event.dataTransfer.items || event.dataTransfer.files);
+		return (items.length === 1 && items[0].type === mime);
+	}
+
+	function getDroppedFile(event, mime) {
+		const items = (event.dataTransfer.items || event.dataTransfer.files);
+		if(items.length !== 1 || items[0].type !== mime) {
+			return null;
+		}
+		const item = items[0];
+		if(item.getAsFile) {
+			return item.getAsFile();
+		} else {
+			return item;
+		}
+	}
+
+	function getFileContent(file) {
+		return new Promise((resolve) => {
+			const reader = new FileReader();
+			reader.addEventListener('loadend', () => {
+				resolve(reader.result);
+			}, {once: true});
+			reader.readAsText(file);
+		});
+	}
+
 	return class Interface {
 		constructor({
 			sequenceDiagram,
@@ -127,6 +160,8 @@ define(['require'], (require) => {
 			this._downloadSVGClick = this._downloadSVGClick.bind(this);
 			this._downloadPNGClick = this._downloadPNGClick.bind(this);
 			this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
+			this._showDropStyle = this._showDropStyle.bind(this);
+			this._hideDropStyle = this._hideDropStyle.bind(this);
 
 			this._enhanceEditor();
 		}
@@ -221,6 +256,28 @@ define(['require'], (require) => {
 					this.code.focus();
 				}
 			});
+
+			this.container.addEventListener('dragover', (event) => {
+				event.preventDefault();
+				if(hasDroppedFile(event, 'image/svg+xml')) {
+					event.dataTransfer.dropEffect = 'copy';
+					this._showDropStyle();
+				} else {
+					event.dataTransfer.dropEffect = 'none';
+				}
+			});
+
+			this.container.addEventListener('dragleave', this._hideDropStyle);
+			this.container.addEventListener('dragend', this._hideDropStyle);
+
+			this.container.addEventListener('drop', (event) => {
+				event.preventDefault();
+				this._hideDropStyle();
+				const file = getDroppedFile(event, 'image/svg+xml');
+				if(file) {
+					this.loadFile(file);
+				}
+			});
 		}
 
 		buildLibrary(container) {
@@ -303,6 +360,7 @@ define(['require'], (require) => {
 		}
 
 		build(container) {
+			this.container = container;
 			const hold = makeNode('div', {'class': 'pane-hold'});
 			const lPane = makeNode('div', {'class': 'pane-side'});
 			hold.appendChild(lPane);
@@ -421,6 +479,27 @@ define(['require'], (require) => {
 			}
 		}
 
+		setValue(code) {
+			if(this.code.getDoc) {
+				const doc = this.code.getDoc();
+				doc.setValue(code);
+				doc.clearHistory();
+			} else {
+				this.code.value = code;
+			}
+			this.update(true);
+			this.diagram.setHighlight(null);
+		}
+
+		loadFile(file) {
+			return getFileContent(file).then((svg) => {
+				const code = this.diagram.extractCodeFromSVG(svg);
+				if(code) {
+					this.setValue(code);
+				}
+			});
+		}
+
 		update(immediate = true) {
 			const src = this.value();
 			this.saveCode(src);
@@ -474,6 +553,14 @@ define(['require'], (require) => {
 					}
 				});
 			return true;
+		}
+
+		_showDropStyle() {
+			this.container.setAttribute('class', 'drop-target');
+		}
+
+		_hideDropStyle() {
+			this.container.setAttribute('class', '');
 		}
 
 		_downloadPNGFocus() {

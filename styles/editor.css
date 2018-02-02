@@ -36,6 +36,24 @@ html, body {
 	margin: 0 10px 10px;
 }
 
+.drop-target:after {
+	content: 'Drop SVG to Load Code';
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	right: 5px;
+	bottom: 5px;
+	background: rgba(255, 255, 255, 0.6);
+	text-shadow: 0 0 3px #FFFFFF;
+	font-size: 3em;
+	padding-top: 100px;
+	text-align: center;
+	border: 5px solid #88CC66;
+	border-radius: 20px;
+	pointer-events: none;
+	z-index: 99999;
+}
+
 .pane-hold {
 	position: absolute;
 	left: 0;
