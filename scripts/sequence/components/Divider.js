@@ -24,6 +24,12 @@ define([
 			env.addSpacing(']', {left: 0, right: config.extend});
 		}
 
+		renderPre() {
+			return {
+				agentIDs: ['[', ']'],
+			};
+		}
+
 		render({mode, height, formattedLabel}, env) {
 			const config = env.theme.getDivider(mode);
 
