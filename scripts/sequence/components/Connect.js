@@ -167,7 +167,7 @@ define([
 			array.mergeSets(env.momentaryAgentIDs, agentIDs);
 		}
 
-		renderRevArrowLine({x1, y1, x2, y2, xR}, options, env) {
+		renderRevArrowLine({x1, y1, x2, y2, xR}, options, env, clickable) {
 			const config = env.theme.connect;
 			const line = config.line[options.line];
 			const lArrow = ARROWHEADS[options.left];
@@ -183,14 +183,14 @@ define([
 				xR,
 				rad: config.loopbackRadius,
 			});
-			env.shapeLayer.appendChild(rendered.shape);
+			clickable.appendChild(rendered.shape);
 
-			lArrow.render(env.shapeLayer, env.theme, {
+			lArrow.render(clickable, env.theme, {
 				x: rendered.p1.x - dx1,
 				y: rendered.p1.y,
 			}, {dx: 1, dy: 0});
 
-			rArrow.render(env.shapeLayer, env.theme, {
+			rArrow.render(clickable, env.theme, {
 				x: rendered.p2.x - dx2,
 				y: rendered.p2.y,
 			}, {dx: 1, dy: 0});
@@ -224,7 +224,7 @@ define([
 				padding: config.mask.padding,
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.label.loopbackAttrs,
-				boxLayer: env.maskLayer,
+				boxLayer: env.lineMaskLayer,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
@@ -246,7 +246,7 @@ define([
 				x2: to.x + to.currentMaxRad,
 				y2: env.primaryY,
 				xR,
-			}, options, env);
+			}, options, env, clickable);
 
 			const raise = Math.max(height, lArrow.height(env.theme) / 2);
 			const arrowDip = rArrow.height(env.theme) / 2;
@@ -267,7 +267,7 @@ define([
 			);
 		}
 
-		renderArrowLine({x1, y1, x2, y2}, options, env) {
+		renderArrowLine({x1, y1, x2, y2}, options, env, clickable) {
 			const config = env.theme.connect;
 			const line = config.line[options.line];
 			const lArrow = ARROWHEADS[options.left];
@@ -288,13 +288,13 @@ define([
 				x2: x2 - d2 * dx,
 				y2: y2 - d2 * dy,
 			});
-			env.shapeLayer.appendChild(rendered.shape);
+			clickable.appendChild(rendered.shape);
 
 			const p1 = {x: rendered.p1.x - d1 * dx, y: rendered.p1.y - d1 * dy};
 			const p2 = {x: rendered.p2.x + d2 * dx, y: rendered.p2.y + d2 * dy};
 
-			lArrow.render(env.shapeLayer, env.theme, p1, {dx, dy});
-			rArrow.render(env.shapeLayer, env.theme, p2, {dx: -dx, dy: -dy});
+			lArrow.render(clickable, env.theme, p1, {dx, dy});
+			rArrow.render(clickable, env.theme, p2, {dx: -dx, dy: -dy});
 
 			return {
 				p1,
@@ -304,20 +304,20 @@ define([
 			};
 		}
 
-		renderVirtualSources(from, to, renderedLine, env) {
+		renderVirtualSources({from, to, rendered}, env, clickable) {
 			const config = env.theme.connect.source;
 
 			if(from.isVirtualSource) {
-				env.shapeLayer.appendChild(config.render({
-					x: renderedLine.p1.x - config.radius,
-					y: renderedLine.p1.y,
+				clickable.appendChild(config.render({
+					x: rendered.p1.x - config.radius,
+					y: rendered.p1.y,
 					radius: config.radius,
 				}));
 			}
 			if(to.isVirtualSource) {
-				env.shapeLayer.appendChild(config.render({
-					x: renderedLine.p2.x + config.radius,
-					y: renderedLine.p2.y,
+				clickable.appendChild(config.render({
+					x: rendered.p2.x + config.radius,
+					y: rendered.p2.y,
 					radius: config.radius,
 				}));
 			}
@@ -350,7 +350,7 @@ define([
 				padding: config.mask.padding,
 				boxAttrs,
 				labelAttrs: config.label.attrs,
-				boxLayer: env.maskLayer,
+				boxLayer: env.lineMaskLayer,
 				labelLayer,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
@@ -378,7 +378,7 @@ define([
 				y1: yBegin,
 				x2,
 				y2: env.primaryY,
-			}, options, env);
+			}, options, env, clickable);
 
 			const arrowSpread = Math.max(
 				rendered.lArrow.height(env.theme),
@@ -387,7 +387,7 @@ define([
 
 			const lift = Math.max(height, arrowSpread);
 
-			this.renderVirtualSources(from, to, rendered, env);
+			this.renderVirtualSources({from, to, rendered}, env, clickable);
 
 			clickable.appendChild(svg.make('path', {
 				'd': (

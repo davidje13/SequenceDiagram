@@ -50,8 +50,6 @@ define(() => {
 			primaryY,
 			fillLayer,
 			blockLayer,
-			shapeLayer,
-			labelLayer,
 			theme,
 			agentInfos,
 			textSizer,

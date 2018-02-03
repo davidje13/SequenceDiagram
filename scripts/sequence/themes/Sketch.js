@@ -616,40 +616,40 @@ define([
 				{var1: 0, move: false}
 			);
 
-			const g = svg.make('g');
-			g.appendChild(svg.make('path', Object.assign({
-				'd': (
-					lT.nodes +
-					lF.nodes +
-					lR.nodes +
-					lB.nodes +
-					lL.nodes
-				),
-				'fill': '#FFFFFF',
-			}, PENCIL.normal)));
-			g.appendChild(svg.make('path', Object.assign({
-				'd': lF1.nodes + lF2.nodes,
-				'fill': 'none',
-			}, PENCIL.normal)));
-
-			return g;
+			return svg.make('g', {}, [
+				svg.make('path', Object.assign({
+					'd': (
+						lT.nodes +
+						lF.nodes +
+						lR.nodes +
+						lB.nodes +
+						lL.nodes
+					),
+					'fill': '#FFFFFF',
+				}, PENCIL.normal)),
+				svg.make('path', Object.assign({
+					'd': lF1.nodes + lF2.nodes,
+					'fill': 'none',
+				}, PENCIL.normal)),
+			]);
 		}
 
 		renderLineDivider({x, y, labelWidth, width, height}) {
 			let shape = null;
 			const yPos = y + height / 2;
 			if(labelWidth > 0) {
-				shape = svg.make('g');
-				shape.appendChild(this.renderLine(
-					{x, y: yPos},
-					{x: x + (width - labelWidth) / 2, y: yPos},
-					{}
-				));
-				shape.appendChild(this.renderLine(
-					{x: x + (width + labelWidth) / 2, y: yPos},
-					{x: x + width, y: yPos},
-					{}
-				));
+				shape = svg.make('g', {}, [
+					this.renderLine(
+						{x, y: yPos},
+						{x: x + (width - labelWidth) / 2, y: yPos},
+						{}
+					),
+					this.renderLine(
+						{x: x + (width + labelWidth) / 2, y: yPos},
+						{x: x + width, y: yPos},
+						{}
+					),
+				]);
 			} else {
 				shape = this.renderLine(
 					{x, y: yPos},
@@ -853,19 +853,16 @@ define([
 
 			const line = l1.nodes + l2.nodes;
 
-			const g = svg.make('g');
-
-			g.appendChild(svg.make('path', {
-				'd': line + 'L' + x + ' ' + y,
-				'fill': '#FFFFFF',
-			}));
-
-			g.appendChild(svg.make('path', Object.assign({
-				'd': line,
-				'fill': '#FFFFFF',
-			}, PENCIL.normal)));
-
-			return g;
+			return svg.make('g', {}, [
+				svg.make('path', {
+					'd': line + 'L' + x + ' ' + y,
+					'fill': '#FFFFFF',
+				}),
+				svg.make('path', Object.assign({
+					'd': line,
+					'fill': '#FFFFFF',
+				}, PENCIL.normal)),
+			]);
 		}
 
 		renderSeparator({x1, y1, x2, y2}) {

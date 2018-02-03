@@ -30,7 +30,7 @@ define([
 			const left = env.agentInfos.get('[');
 			const right = env.agentInfos.get(']');
 
-			const clickable = env.makeRegion();
+			const clickable = env.makeRegion({unmasked: true});
 
 			let labelWidth = 0;
 			let labelHeight = 0;
@@ -54,7 +54,7 @@ define([
 					padding: config.padding,
 					boxAttrs: {'fill': '#000000'},
 					labelAttrs: config.labelAttrs,
-					boxLayer: env.maskLayer,
+					boxLayer: env.fullMaskLayer,
 					labelLayer: clickable,
 					SVGTextBlockClass: env.SVGTextBlockClass,
 				});
@@ -74,7 +74,7 @@ define([
 				clickable.insertBefore(shape, clickable.firstChild);
 			}
 			if(mask) {
-				env.maskLayer.appendChild(mask);
+				env.fullMaskLayer.appendChild(mask);
 			}
 			clickable.insertBefore(svg.make('rect', {
 				'x': left.x - config.extend,

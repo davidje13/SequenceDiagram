@@ -110,9 +110,7 @@ define([
 
 		buildMetadata() {
 			this.metaCode = svg.makeText();
-			const metadata = svg.make('metadata');
-			metadata.appendChild(this.metaCode);
-			return metadata;
+			return svg.make('metadata', {}, [this.metaCode]);
 		}
 
 		buildStaticElements() {
@@ -120,26 +118,37 @@ define([
 
 			this.themeDefs = svg.make('defs');
 			this.defs = svg.make('defs');
-			this.mask = svg.make('mask', {
+			this.fullMask = svg.make('mask', {
+				'id': this.namespace + 'FullMask',
+				'maskUnits': 'userSpaceOnUse',
+			});
+			this.lineMask = svg.make('mask', {
 				'id': this.namespace + 'LineMask',
 				'maskUnits': 'userSpaceOnUse',
 			});
-			this.maskReveal = svg.make('rect', {'fill': '#FFFFFF'});
+			this.fullMaskReveal = svg.make('rect', {'fill': '#FFFFFF'});
+			this.lineMaskReveal = svg.make('rect', {'fill': '#FFFFFF'});
 			this.backgroundFills = svg.make('g');
 			this.agentLines = svg.make('g', {
 				'mask': 'url(#' + this.namespace + 'LineMask)',
 			});
 			this.blocks = svg.make('g');
-			this.actionShapes = svg.make('g');
-			this.actionLabels = svg.make('g');
+			this.shapes = svg.make('g');
+			this.unmaskedShapes = svg.make('g');
 			this.base.appendChild(this.buildMetadata());
 			this.base.appendChild(this.themeDefs);
 			this.base.appendChild(this.defs);
 			this.base.appendChild(this.backgroundFills);
-			this.base.appendChild(this.agentLines);
-			this.base.appendChild(this.blocks);
-			this.base.appendChild(this.actionShapes);
-			this.base.appendChild(this.actionLabels);
+			this.base.appendChild(
+				svg.make('g', {
+					'mask': 'url(#' + this.namespace + 'FullMask)',
+				}, [
+					this.agentLines,
+					this.blocks,
+					this.shapes,
+				])
+			);
+			this.base.appendChild(this.unmaskedShapes);
 			this.title = new this.SVGTextBlockClass(this.base);
 
 			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
@@ -320,10 +329,11 @@ define([
 				this.trigger('mouseout');
 			};
 
-			const makeRegion = (o, stageOverride = null) => {
-				if(!o) {
-					o = svg.make('g');
-				}
+			const makeRegion = ({
+				stageOverride = null,
+				unmasked = false,
+			} = {}) => {
+				const o = svg.make('g');
 				const targetStage = (stageOverride || stage);
 				this.addHighlightObject(targetStage.ln, o);
 				o.setAttribute('class', 'region');
@@ -334,7 +344,7 @@ define([
 				o.addEventListener('click', () => {
 					this.trigger('click', [targetStage]);
 				});
-				this.actionLabels.appendChild(o);
+				(unmasked ? this.unmaskedShapes : this.shapes).appendChild(o);
 				return o;
 			};
 
@@ -343,9 +353,8 @@ define([
 				primaryY: topY + topShift,
 				fillLayer: this.backgroundFills,
 				blockLayer: this.blocks,
-				shapeLayer: this.actionShapes,
-				labelLayer: this.actionLabels,
-				maskLayer: this.mask,
+				fullMaskLayer: this.fullMask,
+				lineMaskLayer: this.lineMask,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
 				textSizer: this.sizer,
@@ -447,10 +456,15 @@ define([
 			this.width = x1 - x0;
 			this.height = y1 - y0;
 
-			this.maskReveal.setAttribute('x', x0);
-			this.maskReveal.setAttribute('y', y0);
-			this.maskReveal.setAttribute('width', this.width);
-			this.maskReveal.setAttribute('height', this.height);
+			this.fullMaskReveal.setAttribute('x', x0);
+			this.fullMaskReveal.setAttribute('y', y0);
+			this.fullMaskReveal.setAttribute('width', this.width);
+			this.fullMaskReveal.setAttribute('height', this.height);
+
+			this.lineMaskReveal.setAttribute('x', x0);
+			this.lineMaskReveal.setAttribute('y', y0);
+			this.lineMaskReveal.setAttribute('width', this.width);
+			this.lineMaskReveal.setAttribute('height', this.height);
 
 			this.base.setAttribute('viewBox', (
 				x0 + ' ' + y0 + ' ' +
@@ -475,14 +489,17 @@ define([
 			this.highlights.clear();
 			this.currentHighlight = -1;
 			svg.empty(this.defs);
-			svg.empty(this.mask);
+			svg.empty(this.fullMask);
+			svg.empty(this.lineMask);
 			svg.empty(this.backgroundFills);
 			svg.empty(this.agentLines);
 			svg.empty(this.blocks);
-			svg.empty(this.actionShapes);
-			svg.empty(this.actionLabels);
-			this.mask.appendChild(this.maskReveal);
-			this.defs.appendChild(this.mask);
+			svg.empty(this.shapes);
+			svg.empty(this.unmaskedShapes);
+			this.fullMask.appendChild(this.fullMaskReveal);
+			this.lineMask.appendChild(this.lineMaskReveal);
+			this.defs.appendChild(this.fullMask);
+			this.defs.appendChild(this.lineMask);
 			this._resetState();
 		}
 

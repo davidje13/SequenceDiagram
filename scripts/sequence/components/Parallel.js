@@ -58,8 +58,10 @@ define([
 			const originalMakeRegion = env.makeRegion;
 			let bottomY = 0;
 			stage.stages.forEach((subStage) => {
-				env.makeRegion = (o, stageOverride = null) => {
-					return originalMakeRegion(o, stageOverride || subStage);
+				env.makeRegion = (options = {}) => {
+					return originalMakeRegion(Object.assign({
+						stageOverride: subStage,
+					}, options));
 				};
 
 				const component = env.components.get(subStage.type);

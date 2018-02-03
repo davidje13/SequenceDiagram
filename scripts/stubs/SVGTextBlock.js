@@ -5,7 +5,7 @@ define(['svg/SVGUtilities'], (svg) => {
 	// 1x1 px squares for repeatable renders in all browsers
 
 	function merge(state, newState) {
-		for(let k in state) {
+		for(const k in state) {
 			if(state.hasOwnProperty(k)) {
 				if(newState[k] !== null && newState[k] !== undefined) {
 					state[k] = newState[k];
@@ -38,9 +38,8 @@ define(['svg/SVGUtilities'], (svg) => {
 				}, this.state.attrs);
 
 				while(this.nodes.length < count) {
-					const element = svg.make('text', attrs);
 					const text = svg.makeText();
-					element.appendChild(text);
+					const element = svg.make('text', attrs, [text]);
 					this.container.appendChild(element);
 					this.nodes.push({element, text});
 				}

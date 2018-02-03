@@ -14,7 +14,7 @@ define(['./SVGUtilities'], (svg) => {
 	}
 
 	function merge(state, newState) {
-		for(let k in state) {
+		for(const k in state) {
 			if(state.hasOwnProperty(k)) {
 				if(newState[k] !== null && newState[k] !== undefined) {
 					state[k] = newState[k];
@@ -30,8 +30,7 @@ define(['./SVGUtilities'], (svg) => {
 		formattedLine.forEach(({text, attrs}) => {
 			const textNode = svg.makeText(text);
 			if(attrs) {
-				const span = svg.make('tspan', attrs);
-				span.appendChild(textNode);
+				const span = svg.make('tspan', attrs, [textNode]);
 				node.appendChild(span);
 			} else {
 				node.appendChild(textNode);

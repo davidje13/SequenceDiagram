@@ -7,12 +7,15 @@
 		return document.createTextNode(text);
 	}
 
-	function makeNode(type, attrs = {}) {
+	function makeNode(type, attrs = {}, children = []) {
 		const o = document.createElement(type);
-		for(let k in attrs) {
+		for(const k in attrs) {
 			if(attrs.hasOwnProperty(k)) {
 				o.setAttribute(k, attrs[k]);
 			}
+		}
+		for(const c of children) {
+			o.appendChild(c);
 		}
 		return o;
 	}
@@ -64,36 +67,34 @@
 	}
 
 	requirejs(['sequence/SequenceDiagram'], (SequenceDiagram) => {
-		const status = makeNode('div', {'class': 'status'});
 		const statusText = makeText('Loading\u2026');
-		status.appendChild(statusText);
+		const status = makeNode('div', {'class': 'status'}, [statusText]);
 		document.body.appendChild(status);
 
 		function renderSample({file, code, size}) {
-			const hold = makeNode('div', {'class': 'hold'});
-			const diagram = new SequenceDiagram(code, {container: hold});
+			const diagram = new SequenceDiagram(code);
 
 			const raster = makeNode('img', {
 				'src': '',
 				'class': 'raster',
 				'title': 'new',
 			});
-			hold.appendChild(raster);
-
-			hold.appendChild(makeNode('img', {
-				'src': file,
-				'class': 'original',
-				'title': 'original',
-			}));
 
 			const downloadPNG = makeNode('a', {
 				'href': '#',
 				'download': filename(file),
-			});
-			downloadPNG.appendChild(makeText('Download PNG'));
-			hold.appendChild(downloadPNG);
+			}, [makeText('Download PNG')]);
 
-			document.body.appendChild(hold);
+			document.body.appendChild(makeNode('div', {'class': 'hold'}, [
+				diagram.dom(),
+				raster,
+				makeNode('img', {
+					'src': file,
+					'class': 'original',
+					'title': 'original',
+				}),
+				downloadPNG,
+			]));
 
 			diagram.getPNG({resolution: RESOLUTION, size}).then(({url}) => {
 				raster.setAttribute('src', url);

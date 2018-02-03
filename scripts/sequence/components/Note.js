@@ -79,13 +79,6 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				break;
 			}
 
-			env.shapeLayer.appendChild(config.boxRenderer({
-				x: x0,
-				y: env.topY + config.margin.top,
-				width: x1 - x0,
-				height: fullH,
-			}));
-
 			clickable.insertBefore(svg.make('rect', {
 				'x': x0,
 				'y': env.topY + config.margin.top,
@@ -93,6 +86,13 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				'height': fullH,
 				'fill': 'transparent',
 				'class': 'outline',
+			}), clickable.firstChild);
+
+			clickable.insertBefore(config.boxRenderer({
+				x: x0,
+				y: env.topY + config.margin.top,
+				width: x1 - x0,
+				height: fullH,
 			}), clickable.firstChild);
 
 			return (

@@ -9,12 +9,15 @@ define(['require'], (require) => {
 		return document.createTextNode(text);
 	}
 
-	function makeNode(type, attrs = {}) {
+	function makeNode(type, attrs = {}, children = []) {
 		const o = document.createElement(type);
-		for(let k in attrs) {
+		for(const k in attrs) {
 			if(attrs.hasOwnProperty(k)) {
 				o.setAttribute(k, attrs[k]);
 			}
+		}
+		for(const c of children) {
+			o.appendChild(c);
 		}
 		return o;
 	}
@@ -169,12 +172,10 @@ define(['require'], (require) => {
 		buildOptionsLinks() {
 			const options = makeNode('div', {'class': 'options links'});
 			this.links.forEach((link) => {
-				const linkNode = makeNode('a', {
+				options.appendChild(makeNode('a', {
 					'href': link.href,
 					'target': '_blank',
-				});
-				linkNode.appendChild(makeText(link.label));
-				options.appendChild(linkNode);
+				}, [makeText(link.label)]));
 			});
 			return options;
 		}
@@ -183,8 +184,7 @@ define(['require'], (require) => {
 			this.downloadPNG = makeNode('a', {
 				'href': '#',
 				'download': 'SequenceDiagram.png',
-			});
-			this.downloadPNG.appendChild(makeText('Download PNG'));
+			}, [makeText('Download PNG')]);
 			on(this.downloadPNG, [
 				'focus',
 				'mouseover',
@@ -195,14 +195,13 @@ define(['require'], (require) => {
 			this.downloadSVG = makeNode('a', {
 				'href': '#',
 				'download': 'SequenceDiagram.svg',
-			});
-			this.downloadSVG.appendChild(makeText('SVG'));
+			}, [makeText('SVG')]);
 			on(this.downloadSVG, ['click'], this._downloadSVGClick);
 
-			const options = makeNode('div', {'class': 'options downloads'});
-			options.appendChild(this.downloadPNG);
-			options.appendChild(this.downloadSVG);
-			return options;
+			return makeNode('div', {'class': 'options downloads'}, [
+				this.downloadPNG,
+				this.downloadSVG,
+			]);
 		}
 
 		buildEditor(container) {
@@ -282,13 +281,12 @@ define(['require'], (require) => {
 
 		buildLibrary(container) {
 			this.library.forEach((lib) => {
-				const hold = makeNode('div', {
-					'class': 'library-item',
-				});
 				const holdInner = makeNode('div', {
 					'title': lib.title || lib.code,
 				});
-				hold.appendChild(holdInner);
+				const hold = makeNode('div', {
+					'class': 'library-item',
+				}, [holdInner]);
 				hold.addEventListener(
 					'click',
 					this.addCodeBlock.bind(this, lib.code)
@@ -308,26 +306,22 @@ define(['require'], (require) => {
 		}
 
 		buildErrorReport() {
-			this.errorMsg = makeNode('div', {'class': 'msg-error'});
 			this.errorText = makeText();
-			this.errorMsg.appendChild(this.errorText);
+			this.errorMsg = makeNode('div', {'class': 'msg-error'}, [
+				this.errorText,
+			]);
 			return this.errorMsg;
 		}
 
 		buildViewPane() {
-			const viewPane = makeNode('div', {'class': 'pane-view'});
-			const viewPaneScroller = makeNode('div', {
-				'class': 'pane-view-scroller',
-			});
-			this.viewPaneInner = makeNode('div', {
-				'class': 'pane-view-inner',
-			});
+			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
 
-			viewPane.appendChild(viewPaneScroller);
-			viewPaneScroller.appendChild(this.viewPaneInner);
-			viewPane.appendChild(this.buildErrorReport());
-
-			return viewPane;
+			return makeNode('div', {'class': 'pane-view'}, [
+				makeNode('div', {'class': 'pane-view-scroller'}, [
+					this.viewPaneInner,
+				]),
+				this.buildErrorReport(),
+			]);
 		}
 
 		buildLeftPanes(container) {
@@ -336,15 +330,14 @@ define(['require'], (require) => {
 			let libPane = null;
 
 			if(this.library.length > 0) {
-				libPane = makeNode('div', {'class': 'pane-library'});
-				const libPaneScroller = makeNode('div', {
-					'class': 'pane-library-scroller',
-				});
 				const libPaneInner = makeNode('div', {
 					'class': 'pane-library-inner',
 				});
-				libPaneScroller.appendChild(libPaneInner);
-				libPane.appendChild(libPaneScroller);
+				libPane = makeNode('div', {'class': 'pane-library'}, [
+					makeNode('div', {'class': 'pane-library-scroller'}, [
+						libPaneInner,
+					]),
+				]);
 				container.appendChild(libPane);
 				this.buildLibrary(libPaneInner);
 
@@ -361,17 +354,17 @@ define(['require'], (require) => {
 
 		build(container) {
 			this.container = container;
-			const hold = makeNode('div', {'class': 'pane-hold'});
-			const lPane = makeNode('div', {'class': 'pane-side'});
-			hold.appendChild(lPane);
-			container.appendChild(hold);
-			const {codePane} = this.buildLeftPanes(lPane);
 
 			const viewPane = this.buildViewPane();
-			hold.appendChild(viewPane);
 
-			hold.appendChild(this.buildOptionsLinks());
-			hold.appendChild(this.buildOptionsDownloads());
+			const lPane = makeNode('div', {'class': 'pane-side'});
+			const hold = makeNode('div', {'class': 'pane-hold'}, [
+				lPane,
+				viewPane,
+				this.buildOptionsLinks(),
+				this.buildOptionsDownloads(),
+			]);
+			container.appendChild(hold);
 
 			makeSplit([lPane, viewPane], {
 				direction: 'horizontal',
@@ -380,6 +373,7 @@ define(['require'], (require) => {
 				minSize: [10, 10],
 			});
 
+			const {codePane} = this.buildLeftPanes(lPane);
 			this.code = this.buildEditor(codePane);
 			this.viewPaneInner.appendChild(this.diagram.dom());
 

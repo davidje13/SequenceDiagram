@@ -40,30 +40,30 @@ define([
 		render(y, {x, formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const clickable = env.makeRegion();
-			const {width, height} = SVGShapes.renderBoxedText(formattedLabel, {
+			const text = SVGShapes.renderBoxedText(formattedLabel, {
 				x,
 				y,
 				padding: config.padding,
 				boxAttrs: config.boxAttrs,
 				boxRenderer: config.boxRenderer,
 				labelAttrs: config.labelAttrs,
-				boxLayer: env.shapeLayer,
+				boxLayer: clickable,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 			clickable.insertBefore(svg.make('rect', {
-				'x': x - width / 2,
+				'x': x - text.width / 2,
 				'y': y,
-				'width': width,
-				'height': height,
+				'width': text.width,
+				'height': text.height,
 				'fill': 'transparent',
 				'class': 'outline',
-			}), clickable.firstChild);
+			}), text.label.firstLine());
 
 			return {
 				lineTop: 0,
-				lineBottom: height,
-				height,
+				lineBottom: text.height,
+				height: text.height,
 			};
 		}
 	}
@@ -87,9 +87,10 @@ define([
 			const config = env.theme.agentCap.cross;
 			const d = config.size / 2;
 
-			env.shapeLayer.appendChild(config.render({x, y: y + d, radius: d}));
+			const clickable = env.makeRegion();
 
-			env.makeRegion().appendChild(svg.make('rect', {
+			clickable.appendChild(config.render({x, y: y + d, radius: d}));
+			clickable.appendChild(svg.make('rect', {
 				'x': x - d,
 				'y': y,
 				'width': d * 2,
@@ -137,14 +138,14 @@ define([
 			);
 			const height = barCfg.height;
 
-			env.shapeLayer.appendChild(barCfg.render({
+			const clickable = env.makeRegion();
+			clickable.appendChild(barCfg.render({
 				x: x - width / 2,
 				y,
 				width,
 				height,
 			}));
-
-			env.makeRegion().appendChild(svg.make('rect', {
+			clickable.appendChild(svg.make('rect', {
 				'x': x - width / 2,
 				'y': y,
 				'width': width,
@@ -180,24 +181,24 @@ define([
 			const ratio = config.height / (config.height + config.extend);
 
 			const gradID = env.addDef(isBegin ? 'FadeIn' : 'FadeOut', () => {
-				const grad = svg.make('linearGradient', {
+				return svg.make('linearGradient', {
 					'x1': '0%',
 					'y1': isBegin ? '100%' : '0%',
 					'x2': '0%',
 					'y2': isBegin ? '0%' : '100%',
-				});
-				grad.appendChild(svg.make('stop', {
-					'offset': '0%',
-					'stop-color': '#FFFFFF',
-				}));
-				grad.appendChild(svg.make('stop', {
-					'offset': (100 * ratio).toFixed(3) + '%',
-					'stop-color': '#000000',
-				}));
-				return grad;
+				}, [
+					svg.make('stop', {
+						'offset': '0%',
+						'stop-color': '#FFFFFF',
+					}),
+					svg.make('stop', {
+						'offset': (100 * ratio).toFixed(3) + '%',
+						'stop-color': '#000000',
+					}),
+				]);
 			});
 
-			env.maskLayer.appendChild(svg.make('rect', {
+			env.lineMaskLayer.appendChild(svg.make('rect', {
 				'x': x - config.width / 2,
 				'y': y - (isBegin ? config.extend : 0),
 				'width': config.width,

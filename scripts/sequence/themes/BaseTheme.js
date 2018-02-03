@@ -12,7 +12,7 @@ define([
 			return o;
 		}
 		const r = {};
-		for(let k in o) {
+		for(const k in o) {
 			if(o.hasOwnProperty(k)) {
 				r[k] = deepCopy(o[k]);
 			}
@@ -217,21 +217,22 @@ define([
 		let shape = null;
 		const yPos = y + height / 2;
 		if(labelWidth > 0) {
-			shape = svg.make('g');
-			shape.appendChild(svg.make('line', Object.assign({
-				'x1': x,
-				'y1': yPos,
-				'x2': x + (width - labelWidth) / 2,
-				'y2': yPos,
-				'fill': 'none',
-			}, lineAttrs)));
-			shape.appendChild(svg.make('line', Object.assign({
-				'x1': x + (width + labelWidth) / 2,
-				'y1': yPos,
-				'x2': x + width,
-				'y2': yPos,
-				'fill': 'none',
-			}, lineAttrs)));
+			shape = svg.make('g', {}, [
+				svg.make('line', Object.assign({
+					'x1': x,
+					'y1': yPos,
+					'x2': x + (width - labelWidth) / 2,
+					'y2': yPos,
+					'fill': 'none',
+				}, lineAttrs)),
+				svg.make('line', Object.assign({
+					'x1': x + (width + labelWidth) / 2,
+					'y1': yPos,
+					'x2': x + width,
+					'y2': yPos,
+					'fill': 'none',
+				}, lineAttrs)),
+			]);
 		} else {
 			shape = svg.make('line', Object.assign({
 				'x1': x,
@@ -267,40 +268,38 @@ define([
 	) => {
 		const maskGradID = env.addDef('tear-grad', () => {
 			const px = 100 / width;
-			const grad = svg.make('linearGradient');
-			grad.appendChild(svg.make('stop', {
-				'offset': (fadeBegin * px) + '%',
-				'stop-color': '#000000',
-			}));
-			grad.appendChild(svg.make('stop', {
-				'offset': ((fadeBegin + fadeSize) * px) + '%',
-				'stop-color': '#FFFFFF',
-			}));
-			grad.appendChild(svg.make('stop', {
-				'offset': (100 - (fadeBegin + fadeSize) * px) + '%',
-				'stop-color': '#FFFFFF',
-			}));
-			grad.appendChild(svg.make('stop', {
-				'offset': (100 - fadeBegin * px) + '%',
-				'stop-color': '#000000',
-			}));
-			return grad;
+			return svg.make('linearGradient', {}, [
+				svg.make('stop', {
+					'offset': (fadeBegin * px) + '%',
+					'stop-color': '#000000',
+				}),
+				svg.make('stop', {
+					'offset': ((fadeBegin + fadeSize) * px) + '%',
+					'stop-color': '#FFFFFF',
+				}),
+				svg.make('stop', {
+					'offset': (100 - (fadeBegin + fadeSize) * px) + '%',
+					'stop-color': '#FFFFFF',
+				}),
+				svg.make('stop', {
+					'offset': (100 - fadeBegin * px) + '%',
+					'stop-color': '#000000',
+				}),
+			]);
 		});
 		const shapeMask = svg.make('mask', {
 			'maskUnits': 'userSpaceOnUse',
-		});
+		}, [
+			svg.make('rect', {
+				'x': x,
+				'y': y - 5,
+				'width': width,
+				'height': height + 10,
+				'fill': 'url(#' + maskGradID + ')',
+			}),
+		]);
 		const shapeMaskID = env.addDef(shapeMask);
-		const shape = svg.make('g', {
-			'mask': 'url(#' + shapeMaskID + ')',
-		});
 
-		shapeMask.appendChild(svg.make('rect', {
-			'x': x,
-			'y': y - 5,
-			'width': width,
-			'height': height + 10,
-			'fill': 'url(#' + maskGradID + ')',
-		}));
 		if(labelWidth > 0) {
 			shapeMask.appendChild(svg.make('rect', {
 				'x': x + (width - labelWidth) / 2,
@@ -324,10 +323,15 @@ define([
 		const pathTop = new SVGShapes.PatternedLine(pattern)
 			.move(x, y)
 			.line(x + width, y);
-		shape.appendChild(svg.make('path', Object.assign({
-			'd': pathTop.asPath(),
-			'fill': 'none',
-		}, lineAttrs)));
+
+		const shape = svg.make('g', {
+			'mask': 'url(#' + shapeMaskID + ')',
+		}, [
+			svg.make('path', Object.assign({
+				'd': pathTop.asPath(),
+				'fill': 'none',
+			}, lineAttrs)),
+		]);
 
 		if(height > 0) {
 			const pathBase = new SVGShapes.PatternedLine(pattern)

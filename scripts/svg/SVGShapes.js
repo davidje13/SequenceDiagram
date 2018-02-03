@@ -18,32 +18,30 @@ define([
 	}
 
 	function renderNote(attrs, flickAttrs, position) {
-		const g = svg.make('g');
 		const x0 = position.x;
 		const x1 = position.x + position.width;
 		const y0 = position.y;
 		const y1 = position.y + position.height;
 		const flick = 7;
 
-		g.appendChild(svg.make('polygon', Object.assign({
-			'points': (
-				x0 + ' ' + y0 + ' ' +
-				(x1 - flick) + ' ' + y0 + ' ' +
-				x1 + ' ' + (y0 + flick) + ' ' +
-				x1 + ' ' + y1 + ' ' +
-				x0 + ' ' + y1
-			),
-		}, attrs)));
-
-		g.appendChild(svg.make('polyline', Object.assign({
-			'points': (
-				(x1 - flick) + ' ' + y0 + ' ' +
-				(x1 - flick) + ' ' + (y0 + flick) + ' ' +
-				x1 + ' ' + (y0 + flick)
-			),
-		}, flickAttrs)));
-
-		return g;
+		return svg.make('g', {}, [
+			svg.make('polygon', Object.assign({
+				'points': (
+					x0 + ' ' + y0 + ' ' +
+					(x1 - flick) + ' ' + y0 + ' ' +
+					x1 + ' ' + (y0 + flick) + ' ' +
+					x1 + ' ' + y1 + ' ' +
+					x0 + ' ' + y1
+				),
+			}, attrs)),
+			svg.make('polyline', Object.assign({
+				'points': (
+					(x1 - flick) + ' ' + y0 + ' ' +
+					(x1 - flick) + ' ' + (y0 + flick) + ' ' +
+					x1 + ' ' + (y0 + flick)
+				),
+			}, flickAttrs)),
+		]);
 	}
 
 	function calculateAnchor(x, attrs, padding) {

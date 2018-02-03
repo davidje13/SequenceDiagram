@@ -64,7 +64,7 @@ define([
 				padding: config.section.label.padding,
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.section.label.labelAttrs,
-				boxLayer: env.maskLayer,
+				boxLayer: env.lineMaskLayer,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
@@ -180,7 +180,7 @@ define([
 				env.fillLayer.appendChild(shapes.fill);
 			}
 			if(shapes.mask) {
-				env.maskLayer.appendChild(shapes.mask);
+				env.lineMaskLayer.appendChild(shapes.mask);
 			}
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
