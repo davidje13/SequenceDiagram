@@ -6,6 +6,7 @@ define([
 	'svg/SVGShapes_spec',
 	'svg/PatternedLine_spec',
 	'interface/Interface_spec',
+	'interface/ComponentsLibrary_spec',
 	'image/ImageRegion_spec',
 	'image/Blur_spec',
 	'image/Composition_spec',
