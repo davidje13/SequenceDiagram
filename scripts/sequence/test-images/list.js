@@ -5,5 +5,6 @@ define([], [
 	'Asynchronous.svg',
 	'Block.svg',
 	'Reference.svg',
+	'ReferenceLayering.svg',
 	'Markdown.svg',
 ]);

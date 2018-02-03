@@ -248,7 +248,7 @@ define([
 				top: 0,
 				bottom: 0,
 			},
-			boxRenderer: SVGShapes.renderBox.bind(null, {
+			boxRenderer: BaseTheme.renderRef.bind(null, {
 				'fill': '#FFFFFF',
 				'stroke': '#000000',
 				'stroke-width': 4,

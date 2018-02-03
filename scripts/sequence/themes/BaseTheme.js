@@ -124,6 +124,21 @@ define([
 		}, attrs));
 	};
 
+	BaseTheme.renderRef = (options, position) => {
+		return {
+			shape: SVGShapes.renderBox(Object.assign({}, options, {
+				'fill': 'none',
+			}), position),
+			mask: SVGShapes.renderBox(Object.assign({}, options, {
+				'fill': '#000000',
+				'stroke': 'none',
+			}), position),
+			fill: SVGShapes.renderBox(Object.assign({}, options, {
+				'stroke': 'none',
+			}), position),
+		};
+	};
+
 	BaseTheme.WavePattern = class WavePattern {
 		constructor(width, height) {
 			if(Array.isArray(height)) {

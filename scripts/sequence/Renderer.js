@@ -125,6 +125,7 @@ define([
 				'maskUnits': 'userSpaceOnUse',
 			});
 			this.maskReveal = svg.make('rect', {'fill': '#FFFFFF'});
+			this.backgroundFills = svg.make('g');
 			this.agentLines = svg.make('g', {
 				'mask': 'url(#' + this.namespace + 'LineMask)',
 			});
@@ -134,6 +135,7 @@ define([
 			this.base.appendChild(this.buildMetadata());
 			this.base.appendChild(this.themeDefs);
 			this.base.appendChild(this.defs);
+			this.base.appendChild(this.backgroundFills);
 			this.base.appendChild(this.agentLines);
 			this.base.appendChild(this.blocks);
 			this.base.appendChild(this.actionShapes);
@@ -339,6 +341,7 @@ define([
 			const env = {
 				topY,
 				primaryY: topY + topShift,
+				fillLayer: this.backgroundFills,
 				blockLayer: this.blocks,
 				shapeLayer: this.actionShapes,
 				labelLayer: this.actionLabels,
@@ -473,6 +476,7 @@ define([
 			this.currentHighlight = -1;
 			svg.empty(this.defs);
 			svg.empty(this.mask);
+			svg.empty(this.backgroundFills);
 			svg.empty(this.agentLines);
 			svg.empty(this.blocks);
 			svg.empty(this.actionShapes);

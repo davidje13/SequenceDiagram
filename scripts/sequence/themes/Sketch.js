@@ -546,7 +546,7 @@ define([
 			return shape;
 		}
 
-		renderBox({x, y, width, height}, {fill = null, thick = false} = {}) {
+		boxNodes({x, y, width, height}) {
 			const lT = this.lineNodes(
 				{x, y},
 				{x: x + width, y},
@@ -568,12 +568,14 @@ define([
 				{var1: 0, var2: 0.3, move: false}
 			);
 
-			const shape = svg.make('path', Object.assign({
-				'd': lT.nodes + lR.nodes + lB.nodes + lL.nodes,
+			return lT.nodes + lR.nodes + lB.nodes + lL.nodes;
+		}
+
+		renderBox(position, {fill = null, thick = false} = {}) {
+			return svg.make('path', Object.assign({
+				'd': this.boxNodes(position),
 				'fill': fill || '#FFFFFF',
 			}, thick ? PENCIL.thick : PENCIL.normal));
-
-			return shape;
 		}
 
 		renderNote({x, y, width, height}) {
@@ -812,18 +814,26 @@ define([
 			}, PENCIL.normal));
 		}
 
-		renderRefBlock({x, y, width, height}) {
-			return this.renderBox(
-				{x, y, width, height},
-				{fill: '#FFFFFF', thick: true}
-			);
+		renderRefBlock(position) {
+			const nodes = this.boxNodes(position);
+			return {
+				shape: svg.make('path', Object.assign({
+					'd': nodes,
+					'fill': 'none',
+				}, PENCIL.thick)),
+				mask: svg.make('path', {
+					'd': nodes,
+					'fill': '#000000',
+				}),
+				fill: svg.make('path', {
+					'd': nodes,
+					'fill': '#FFFFFF',
+				}),
+			};
 		}
 
-		renderBlock({x, y, width, height}) {
-			return this.renderBox(
-				{x, y, width, height},
-				{fill: 'none', thick: true}
-			);
+		renderBlock(position) {
+			return this.renderBox(position, {fill: 'none', thick: true});
 		}
 
 		renderTag({x, y, width, height}) {

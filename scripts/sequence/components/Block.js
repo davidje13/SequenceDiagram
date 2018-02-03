@@ -165,12 +165,23 @@ define([
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
 
-			blockInfo.hold.appendChild(config.boxRenderer({
+			let shapes = config.boxRenderer({
 				x: agentInfoL.x,
 				y: blockInfo.startY,
 				width: agentInfoR.x - agentInfoL.x,
 				height: env.primaryY - blockInfo.startY,
-			}));
+			});
+			if(!shapes.shape) {
+				shapes = {shape: shapes};
+			}
+
+			blockInfo.hold.appendChild(shapes.shape);
+			if(shapes.fill) {
+				env.fillLayer.appendChild(shapes.fill);
+			}
+			if(shapes.mask) {
+				env.maskLayer.appendChild(shapes.mask);
+			}
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
 		}

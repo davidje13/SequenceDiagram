@@ -48,6 +48,7 @@ define(() => {
 		render(/*stage, {
 			topY,
 			primaryY,
+			fillLayer,
 			blockLayer,
 			shapeLayer,
 			labelLayer,
