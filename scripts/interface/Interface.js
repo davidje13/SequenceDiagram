@@ -216,6 +216,11 @@ define(['require'], (require) => {
 		registerListeners() {
 			this.code.addEventListener('input', () => this.update(false));
 
+			this.diagram.addEventListener('render', () => {
+				this.updateMinSize(this.diagram.getSize());
+				this.pngDirty = true;
+			});
+
 			this.diagram.addEventListener('mouseover', (element) => {
 				if(this.marker) {
 					this.marker.clear();
@@ -254,6 +259,10 @@ define(['require'], (require) => {
 					);
 					this.code.focus();
 				}
+			});
+
+			this.diagram.addEventListener('dblclick', (element) => {
+				this.diagram.toggleCollapsed(element.ln);
 			});
 
 			this.container.addEventListener('dragover', (event) => {
@@ -423,10 +432,8 @@ define(['require'], (require) => {
 		redraw(sequence) {
 			clearTimeout(this.debounced);
 			this.debounced = null;
-			this.pngDirty = true;
 			this.renderedSeq = sequence;
 			this.diagram.render(sequence);
-			this.updateMinSize(this.diagram.getSize());
 		}
 
 		saveCode(src) {
@@ -481,6 +488,7 @@ define(['require'], (require) => {
 			} else {
 				this.code.value = code;
 			}
+			this.diagram.expandAll({render: false});
 			this.update(true);
 			this.diagram.setHighlight(null);
 		}

@@ -87,6 +87,12 @@ define([
 					'x2': agentInfoR.x,
 					'y2': y,
 				}));
+			} else if(blockInfo.canHide) {
+				clickable.setAttribute(
+					'class',
+					clickable.getAttribute('class') +
+					(blockInfo.hide ? ' collapsed' : ' expanded')
+				);
 			}
 
 			return y + labelHeight + config.section.padding.top;
@@ -103,8 +109,11 @@ define([
 		}
 
 		storeBlockInfo(stage, env) {
+			const canHide = stage.canHide;
 			const blockInfo = {
 				type: stage.blockType,
+				canHide,
+				hide: canHide && env.renderer.isCollapsed(stage.ln),
 				hold: null,
 				startY: null,
 			};
@@ -142,6 +151,14 @@ define([
 
 			return super.render(stage, env, true);
 		}
+
+		shouldHide({left}, env) {
+			const blockInfo = env.state.blocks.get(left);
+			return {
+				self: false,
+				nest: blockInfo.hide ? 1 : 0,
+			};
+		}
 	}
 
 	class BlockEnd extends BaseComponent {
@@ -165,7 +182,12 @@ define([
 			const agentInfoL = env.agentInfos.get(left);
 			const agentInfoR = env.agentInfos.get(right);
 
-			let shapes = config.boxRenderer({
+			let renderFn = config.boxRenderer;
+			if(blockInfo.hide) {
+				renderFn = config.collapsedBoxRenderer || renderFn;
+			}
+
+			let shapes = renderFn({
 				x: agentInfoL.x,
 				y: blockInfo.startY,
 				width: agentInfoR.x - agentInfoL.x,
@@ -184,6 +206,14 @@ define([
 			}
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
+		}
+
+		shouldHide({left}, env) {
+			const blockInfo = env.state.blocks.get(left);
+			return {
+				self: false,
+				nest: blockInfo.hide ? -1 : 0,
+			};
 		}
 	}
 

@@ -15,10 +15,31 @@ defineDescribe('SequenceDiagram Visuals', [
 
 	const IMAGE_BASE_PATH = 'scripts/sequence/test-images/';
 
+	const COLLAPSE_REGEX = new RegExp(/# collapse/g);
+
+	function findCollapseLines(code) {
+		const results = [];
+		let p = 0;
+		let ln = -1;
+		while(true) {
+			const match = COLLAPSE_REGEX.exec(code);
+			if(!match) {
+				break;
+			}
+			while(p !== -1 && p <= match.index) {
+				p = code.indexOf('\n', p) + 1;
+				++ ln;
+			}
+			results.push(ln);
+		}
+		return results;
+	}
+
 	function loadAndRenderSVG(svg, size = {resolution: RESOLUTION}) {
 		const code = SequenceDiagram.extractCodeFromSVG(svg);
 
 		const diagram = new SequenceDiagram(code);
+		diagram.collapse(findCollapseLines(code));
 
 		return Promise.all([
 			diagram.getCanvas(size).then(ImageRegion.fromCanvas),

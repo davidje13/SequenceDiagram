@@ -77,8 +77,13 @@ define([
 			this.renderer = new Renderer(Object.assign({themes}, options));
 			this.exporter = new Exporter();
 			this.renderer.addEventForwarding(this);
+			this.latestProcessed = null;
+			this.isInteractive = false;
 			if(options.container) {
 				options.container.appendChild(this.dom());
+			}
+			if(options.interactive) {
+				this.addInteractivity();
 			}
 			if(typeof this.code === 'string') {
 				this.render();
@@ -92,6 +97,7 @@ define([
 				themes: this.renderer.getThemes(),
 				namespace: null,
 				components: this.renderer.components,
+				interactive: this.isInteractive,
 				SVGTextBlockClass: this.renderer.SVGTextBlockClass,
 			}, options));
 		}
@@ -114,8 +120,38 @@ define([
 			this.renderer.addTheme(theme);
 		}
 
-		setHighlight(line = null) {
+		setHighlight(line) {
 			this.renderer.setHighlight(line);
+		}
+
+		isCollapsed(line) {
+			return this.renderer.isCollapsed(line);
+		}
+
+		setCollapsed(line, collapsed = true, {render = true} = {}) {
+			if(!this.renderer.setCollapsed(line, collapsed)) {
+				return false;
+			}
+			if(render && this.latestProcessed) {
+				this.render(this.latestProcessed);
+			}
+			return true;
+		}
+
+		collapse(line, options) {
+			return this.setCollapsed(line, true, options);
+		}
+
+		expand(line, options) {
+			return this.setCollapsed(line, false, options);
+		}
+
+		toggleCollapsed(line, options) {
+			return this.setCollapsed(line, !this.isCollapsed(line), options);
+		}
+
+		expandAll(options) {
+			return this.setCollapsed(null, false, options);
 		}
 
 		getThemeNames() {
@@ -184,6 +220,8 @@ define([
 					processed = this.process(this.code);
 				}
 				this.renderer.render(processed);
+				this.latestProcessed = processed;
+				this.trigger('render', [this]);
 			} finally {
 				if(dom.parentNode !== originalParent) {
 					document.body.removeChild(dom);
@@ -204,6 +242,17 @@ define([
 			}
 		}
 
+		addInteractivity() {
+			if(this.isInteractive) {
+				return;
+			}
+			this.isInteractive = true;
+
+			this.addEventListener('click', (element) => {
+				this.toggleCollapsed(element.ln);
+			});
+		}
+
 		extractCodeFromSVG(svg) {
 			return extractCodeFromSVG(svg);
 		}
@@ -211,6 +260,17 @@ define([
 		dom() {
 			return this.renderer.svg();
 		}
+	}
+
+	function datasetBoolean(value) {
+		return value !== undefined && value !== 'false';
+	}
+
+	function parseTagOptions(element) {
+		return {
+			namespace: element.dataset.sdNamespace || null,
+			interactive: datasetBoolean(element.dataset.sdInteractive),
+		};
 	}
 
 	function convert(element, code = null, options = {}) {
@@ -224,7 +284,13 @@ define([
 			options = code;
 			code = options.code;
 		}
-		const diagram = new SequenceDiagram(code, options);
+
+		const tagOptions = parseTagOptions(element);
+
+		const diagram = new SequenceDiagram(
+			code,
+			Object.assign(tagOptions, options)
+		);
 		const newElement = diagram.dom();
 		element.parentNode.insertBefore(newElement, element);
 		element.parentNode.removeChild(element);

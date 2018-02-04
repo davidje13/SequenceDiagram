@@ -5,6 +5,7 @@ define([], [
 	'DividerMasking.svg',
 	'Asynchronous.svg',
 	'Block.svg',
+	'CollapsedBlocks.svg',
 	'Reference.svg',
 	'ReferenceLayering.svg',
 	'Markdown.svg',

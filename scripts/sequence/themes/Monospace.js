@@ -261,6 +261,11 @@ define([
 				'stroke': '#000000',
 				'stroke-width': 2,
 			}),
+			collapsedBoxRenderer: BaseTheme.renderRef.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 2,
+			}),
 			section: SHARED_BLOCK_SECTION,
 			sepRenderer: SVGShapes.renderLine.bind(null, {
 				'stroke': '#000000',

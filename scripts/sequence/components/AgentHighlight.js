@@ -31,6 +31,10 @@ define(['./BaseComponent'], (BaseComponent) => {
 			});
 			return env.primaryY + env.theme.actionMargin;
 		}
+
+		renderHidden(stage, env) {
+			this.render(stage, env);
+		}
 	}
 
 	BaseComponent.register('agent highlight', new AgentHighlight());

@@ -190,6 +190,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 		blockBegin: (blockType, {
 			tag = any(),
 			label = any(),
+			canHide = any(),
 			left = any(),
 			right = any(),
 			ln = any(),
@@ -199,6 +200,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				blockType,
 				tag,
 				label,
+				canHide,
 				left,
 				right,
 				ln,
@@ -1298,7 +1300,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			expect(sequence.stages).toEqual([
 				GENERATED.blockBegin(
 					'if',
-					{tag: 'if!', label: 'abc!', ln: 10}
+					{tag: 'if!', label: 'abc!', canHide: true, ln: 10}
 				),
 				any(),
 				any(),
@@ -1492,6 +1494,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.blockBegin('ref', {
 					tag: 'ref!',
 					label: 'Foo!',
+					canHide: false,
 					left: bounds.left,
 					right: bounds.right,
 				}),

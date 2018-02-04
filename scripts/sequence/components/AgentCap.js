@@ -332,6 +332,12 @@ define([
 			});
 			return maxEnd + env.theme.actionMargin;
 		}
+
+		renderHidden({agentIDs}, env) {
+			agentIDs.forEach((id) => {
+				env.drawAgentLine(id, env.topY, !this.begin);
+			});
+		}
 	}
 
 	BaseComponent.register('agent begin', new AgentCap(true));

@@ -258,6 +258,13 @@ define([
 				'rx': 2,
 				'ry': 2,
 			}),
+			collapsedBoxRenderer: BaseTheme.renderRef.bind(null, {
+				'fill': '#FFFFFF',
+				'stroke': '#000000',
+				'stroke-width': 1.5,
+				'rx': 2,
+				'ry': 2,
+			}),
 			section: SHARED_BLOCK_SECTION,
 			sepRenderer: SVGShapes.renderLine.bind(null, {
 				'stroke': '#000000',

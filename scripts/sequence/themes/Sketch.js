@@ -230,6 +230,7 @@ define([
 				bottom: 0,
 			},
 			boxRenderer: null,
+			collapsedBoxRenderer: null,
 			section: SHARED_BLOCK_SECTION,
 			sepRenderer: null,
 		},
@@ -439,6 +440,8 @@ define([
 
 			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
 			this.blocks[''].boxRenderer = this.renderBlock.bind(this);
+			this.blocks[''].collapsedBoxRenderer =
+				this.renderCollapsedBlock.bind(this);
 			this.blocks.ref.section.tag.boxRenderer = this.renderTag;
 			this.blocks[''].section.tag.boxRenderer = this.renderTag;
 			this.blocks[''].sepRenderer = this.renderSeparator.bind(this);
@@ -834,6 +837,10 @@ define([
 
 		renderBlock(position) {
 			return this.renderBox(position, {fill: 'none', thick: true});
+		}
+
+		renderCollapsedBlock(position) {
+			return this.renderRefBlock(position);
 		}
 
 		renderTag({x, y, width, height}) {

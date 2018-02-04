@@ -13,6 +13,10 @@ define(['./BaseComponent'], (BaseComponent) => {
 		render({name}, {topY, state}) {
 			state.marks.set(name, topY);
 		}
+
+		renderHidden(stage, env) {
+			this.render(stage, env);
+		}
 	}
 
 	class Async extends BaseComponent {

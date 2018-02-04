@@ -10,6 +10,7 @@ define(() => {
 		}
 
 		separationPre(/*stage, {
+			renderer,
 			theme,
 			agentInfos,
 			visibleAgentIDs,
@@ -23,6 +24,7 @@ define(() => {
 		}
 
 		separation(/*stage, {
+			renderer,
 			theme,
 			agentInfos,
 			visibleAgentIDs,
@@ -36,6 +38,7 @@ define(() => {
 		}
 
 		renderPre(/*stage, {
+			renderer,
 			theme,
 			agentInfos,
 			textSizer,
@@ -46,6 +49,7 @@ define(() => {
 		}
 
 		render(/*stage, {
+			renderer,
 			topY,
 			primaryY,
 			fillLayer,
@@ -60,6 +64,22 @@ define(() => {
 			components,
 		}*/) {
 			// return bottom Y coordinate
+		}
+
+		renderHidden(/*stage, {
+			(same args as render, with primaryY = topY)
+		}*/) {
+		}
+
+		shouldHide(/*stage, {
+			renderer,
+			theme,
+			agentInfos,
+			textSizer,
+			state,
+			components,
+		}*/) {
+			// return {self, nest}
 		}
 	}
 

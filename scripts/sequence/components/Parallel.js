@@ -71,6 +71,27 @@ define([
 			env.makeRegion = originalMakeRegion;
 			return bottomY;
 		}
+
+		renderHidden(stage, env) {
+			stage.stages.forEach((subStage) => {
+				const component = env.components.get(subStage.type);
+				component.renderHidden(subStage, env);
+			});
+		}
+
+		shouldHide(stage, env) {
+			const result = {
+				self: false,
+				nest: 0,
+			};
+			stage.stages.forEach((subStage) => {
+				const component = env.components.get(subStage.type);
+				const hide = component.shouldHide(subStage, env) || {};
+				result.self = (result.self || Boolean(hide.self));
+				result.nest += (hide.nest || 0);
+			});
+			return result;
+		}
 	}
 
 	BaseComponent.register('parallel', new Parallel());

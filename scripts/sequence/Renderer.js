@@ -89,6 +89,7 @@ define([
 			this.knownThemeDefs = new Set();
 			this.knownDefs = new Set();
 			this.highlights = new Map();
+			this.collapsed = new Set();
 			this.currentHighlight = -1;
 			this.buildStaticElements();
 			this.components.forEach((component) => {
@@ -99,7 +100,6 @@ define([
 		_bindMethods() {
 			this.separationStage = this.separationStage.bind(this);
 			this.renderStage = this.renderStage.bind(this);
-			this.addSeparation = this.addSeparation.bind(this);
 			this.addThemeDef = this.addThemeDef.bind(this);
 			this.addDef = this.addDef.bind(this);
 		}
@@ -195,9 +195,37 @@ define([
 			info2.separations.set(agentID1, Math.max(d2, dist));
 		}
 
+		checkHidden(stage) {
+			const component = this.components.get(stage.type);
+			const env = {
+				renderer: this,
+				theme: this.theme,
+				agentInfos: this.agentInfos,
+				textSizer: this.sizer,
+				state: this.state,
+				components: this.components,
+			};
+
+			const hide = component.shouldHide(stage, env) || {};
+
+			const wasHidden = (this.hideNest > 0);
+			this.hideNest += hide.nest || 0;
+			const isHidden = (this.hideNest > 0);
+
+			if(this.hideNest < 0) {
+				throw new Error('Unexpected nesting in ' + stage.type);
+			}
+			if(wasHidden === isHidden) {
+				return isHidden;
+			} else {
+				return Boolean(hide.self);
+			}
+		}
+
 		separationStage(stage) {
 			const agentSpaces = new Map();
 			const agentIDs = this.visibleAgentIDs.slice();
+			const seps = [];
 
 			const addSpacing = (agentID, {left, right}) => {
 				const current = agentSpaces.get(agentID);
@@ -205,29 +233,46 @@ define([
 				current.right = Math.max(current.right, right);
 			};
 
+			const addSeparation = (agentID1, agentID2, dist) => {
+				seps.push({agentID1, agentID2, dist});
+			};
+
 			this.agentInfos.forEach((agentInfo) => {
 				const rad = agentInfo.currentRad;
 				agentInfo.currentMaxRad = rad;
 				agentSpaces.set(agentInfo.id, {left: rad, right: rad});
 			});
+
 			const env = {
+				renderer: this,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
 				visibleAgentIDs: this.visibleAgentIDs,
 				momentaryAgentIDs: agentIDs,
 				textSizer: this.sizer,
 				addSpacing,
-				addSeparation: this.addSeparation,
+				addSeparation,
 				state: this.state,
 				components: this.components,
 			};
+
 			const component = this.components.get(stage.type);
 			if(!component) {
 				throw new Error('Unknown component: ' + stage.type);
 			}
+
 			component.separationPre(stage, env);
 			component.separation(stage, env);
+
+			if(this.checkHidden(stage)) {
+				return;
+			}
+
 			array.mergeSets(agentIDs, this.visibleAgentIDs);
+
+			seps.forEach(({agentID1, agentID2, dist}) => {
+				this.addSeparation(agentID1, agentID2, dist);
+			});
 
 			agentIDs.forEach((agentIDR) => {
 				const infoR = this.agentInfos.get(agentIDR);
@@ -305,6 +350,13 @@ define([
 			list.push(o);
 		}
 
+		forwardEvent(source, sourceEvent, forwardEvent, forwardArgs) {
+			source.addEventListener(
+				sourceEvent,
+				this.trigger.bind(this, forwardEvent, forwardArgs)
+			);
+		}
+
 		renderStage(stage) {
 			this.agentInfos.forEach((agentInfo) => {
 				const rad = agentInfo.currentRad;
@@ -312,6 +364,7 @@ define([
 			});
 
 			const envPre = {
+				renderer: this,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
 				textSizer: this.sizer,
@@ -325,10 +378,6 @@ define([
 
 			const topY = this.checkAgentRange(agentIDs, asynchronousY);
 
-			const eventOut = () => {
-				this.trigger('mouseout');
-			};
-
 			const makeRegion = ({
 				stageOverride = null,
 				unmasked = false,
@@ -337,18 +386,16 @@ define([
 				const targetStage = (stageOverride || stage);
 				this.addHighlightObject(targetStage.ln, o);
 				o.setAttribute('class', 'region');
-				o.addEventListener('mouseenter', () => {
-					this.trigger('mouseover', [targetStage]);
-				});
-				o.addEventListener('mouseleave', eventOut);
-				o.addEventListener('click', () => {
-					this.trigger('click', [targetStage]);
-				});
+				this.forwardEvent(o, 'mouseenter', 'mouseover', [targetStage]);
+				this.forwardEvent(o, 'mouseleave', 'mouseout', [targetStage]);
+				this.forwardEvent(o, 'click', 'click', [targetStage]);
+				this.forwardEvent(o, 'dblclick', 'dblclick', [targetStage]);
 				(unmasked ? this.unmaskedShapes : this.shapes).appendChild(o);
 				return o;
 			};
 
 			const env = {
+				renderer: this,
 				topY,
 				primaryY: topY + topShift,
 				fillLayer: this.backgroundFills,
@@ -370,9 +417,15 @@ define([
 				components: this.components,
 			};
 
-			const bottomY = Math.max(topY, component.render(stage, env) || 0);
-			this.markAgentRange(agentIDs, bottomY);
+			let bottomY = topY;
+			if(this.checkHidden(stage)) {
+				env.primaryY = topY;
+				component.renderHidden(stage, env);
+			} else {
+				bottomY = Math.max(bottomY, component.render(stage, env) || 0);
+			}
 
+			this.markAgentRange(agentIDs, bottomY);
 			this.currentY = bottomY;
 		}
 
@@ -477,6 +530,7 @@ define([
 				component.resetState(this.state);
 			});
 			this.currentY = 0;
+			this.hideNest = 0;
 		}
 
 		_reset(theme) {
@@ -521,6 +575,49 @@ define([
 				});
 			}
 			this.currentHighlight = line;
+		}
+
+		isCollapsed(line) {
+			return this.collapsed.has(line);
+		}
+
+		setCollapseAll(collapsed) {
+			if(collapsed) {
+				throw new Error('Cannot collapse all');
+			} else {
+				if(this.collapsed.size === 0) {
+					return false;
+				}
+				this.collapsed.clear();
+			}
+			return true;
+		}
+
+		_setCollapsed(line, collapsed) {
+			if(typeof line !== 'number') {
+				return false;
+			}
+			if(collapsed === this.isCollapsed(line)) {
+				return false;
+			}
+			if(collapsed) {
+				this.collapsed.add(line);
+			} else {
+				this.collapsed.delete(line);
+			}
+			return true;
+		}
+
+		setCollapsed(line, collapsed = true) {
+			if(line === null) {
+				return this.setCollapseAll(collapsed);
+			}
+			if(Array.isArray(line)) {
+				return line
+					.map((ln) => this._setCollapsed(ln, collapsed))
+					.some((changed) => changed);
+			}
+			return this._setCollapsed(line, collapsed);
 		}
 
 		render(sequence) {

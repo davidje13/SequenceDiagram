@@ -481,6 +481,10 @@ define([
 			});
 			return env.primaryY + env.theme.actionMargin;
 		}
+
+		renderHidden(stage, env) {
+			this.render(stage, env);
+		}
 	}
 
 	class ConnectDelayEnd extends Connect {

@@ -94,6 +94,17 @@ a:hover, a:active {
 	stroke: rgba(255, 128, 0, 0.5);
 }
 
+.sequence-diagram[data-sd-interactive] .region.collapsed,
+.sequence-diagram[data-sd-interactive] .region.expanded {
+	cursor: pointer;
+	user-select: none;
+}
+
+.sequence-diagram[data-sd-interactive] .region.collapsed:hover .outline,
+.sequence-diagram[data-sd-interactive] .region.expanded:hover .outline {
+	fill: rgba(255, 128, 0, 0.5);
+}
+
 pre {
 	background: #EEEEEE;
 	margin: 5px 0;

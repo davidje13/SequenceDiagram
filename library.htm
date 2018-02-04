@@ -409,10 +409,17 @@ diagram = new SequenceDiagram();
 Creates a new SequenceDiagram object. Options is an object which can contain:
 </p>
 <ul>
-<li><code>code</code>: Alternative way of specifying code, instead of using a separate argument.</li>
-<li><code>container</code>: DOM node to append the diagram to (defaults to null).</li>
-<li><code>themes</code>: List of themes to make available to the diagram (defaults to globally registered themes).</li>
-<li><code>namespace</code>: Each diagram on a page must have a unique namespace. By default a unique namespace is generated, but if you want something specific, enter it here.</li>
+<li><code>code</code>: Alternative way of specifying code, instead of using a
+separate argument.</li>
+<li><code>container</code>: DOM node to append the diagram to (defaults to
+null).</li>
+<li><code>themes</code>: List of themes to make available to the diagram
+(defaults to globally registered themes).</li>
+<li><code>namespace</code>: Each diagram on a page must have a unique namespace.
+By default a unique namespace is generated, but if you want something specific,
+enter it here.</li>
+<li><code>interactive</code>: If <code>true</code>, will automatically call
+<code>addInteractivity</code> when constructing the diagram.</li>
 </ul>
 
 <h3 id="API_clone">.clone</h3>
@@ -502,6 +509,58 @@ themes = diagram.getThemes();
 <p>
 Returns a list of themes which are available to this diagram.
 </p>
+
+<h3 id="API_addInteractivity">.addInteractivity</h3>
+
+<div class="right">
+<pre class="sequence-diagram" data-lang="sequence" data-sd-interactive>
+  begin A, B
+  if bored
+    A -> +B
+    -B --> A
+  end
+  if still bored
+    A -> +B
+    -B --> A
+  end
+</pre>
+</div>
+
+<pre data-lang="javascript">
+diagram.addInteractivity();
+</pre>
+
+<p>
+Makes the rendered diagram interactive. Currently this means adding a click
+listener to any groups which causes them to collapse / expand. Try clicking on
+the example to the right.
+</p>
+
+<p>The example here has CSS styling applied:</p>
+
+<pre data-lang="css">
+.region.collapsed,
+.region.expanded {
+	cursor: pointer;
+	user-select: none;
+}
+
+.region.collapsed:hover .outline,
+.region.expanded:hover .outline {
+	fill: rgba(255, 128, 0, 0.5);
+}
+</pre>
+
+<p>It is also possible to enable interactivity using a HTML attribute:</p>
+
+<pre data-lang="text/html">
+&lt;pre class="sequence-diagram" data-sd-interactive&gt;
+  A -&gt; +B
+  if something
+    -B --&gt; A
+  end
+&lt;/pre&gt;
+</pre>
 
 <h3 id="API_getSVGSynchronous">.getSVGSynchronous</h3>
 
@@ -608,6 +667,87 @@ example:
 }
 </pre>
 
+<h3 id="API_setCollapsed">.setCollapsed</h3>
+
+<pre data-lang="javascript">
+diagram.setCollapsed(line, collapsed, options);
+diagram.setCollapsed(line, collapsed);
+</pre>
+
+<p>
+Marks the given line as collapsed or non-collapsed. If an element defined at
+that line can be collapsed, it will be modified during the next render. Returns
+true if a change occurred, or false if the line already had the requested state.
+</p>
+<p><code>line</code> can also be an array of lines.</p>
+<p>
+By default, calling this method will trigger an automatic render (unless called
+as a no-op). This can be disabled by passing <code>{render: false}</code> in the
+options argument.
+</p>
+
+<h3 id="API_isCollapsed">.isCollapsed</h3>
+
+<pre data-lang="javascript">
+collapsed = diagram.isCollapsed(line);
+</pre>
+
+<p>
+Returns true if the given line is marked as collapsed, regardless of whether
+that line being collapsed has a meaningful impact on the rendered document.
+</p>
+
+<h3 id="API_collapse">.collapse</h3>
+
+<pre data-lang="javascript">
+diagram.collapse(line, options);
+diagram.collapse(line);
+</pre>
+
+<p>
+Shorthand for <code>.setCollapsed(line, true, options)</code>.
+</p>
+
+<h3 id="API_expand">.expand</h3>
+
+<pre data-lang="javascript">
+diagram.expand(line, options);
+diagram.expand(line);
+</pre>
+
+<p>
+Shorthand for <code>.setCollapsed(line, false, options)</code>.
+</p>
+
+<h3 id="API_toggleCollapsed">.toggleCollapsed</h3>
+
+<pre data-lang="javascript">
+diagram.toggleCollapsed(line, options);
+diagram.toggleCollapsed(line);
+</pre>
+
+<p>
+Toggles the given line&rsquo;s collapsed status by calling
+<code>.setCollapsed</code>.
+</p>
+
+<h3 id="API_expandAll">.expandAll</h3>
+
+<pre data-lang="javascript">
+diagram.expandAll(options);
+diagram.expandAll();
+</pre>
+
+<p>
+Marks all lines as non-collapsed. Returns true if a change occurred, or false
+if all lines were already non-collapsed.
+</p>
+<p>
+By default, calling this method will trigger an automatic render (unless called
+as a no-op). This can be disabled by passing <code>{render: false}</code> in the
+options argument.
+</p>
+
 <h3 id="API_addEventListener">.addEventListener</h3>
 
 <pre data-lang="javascript">
@@ -623,9 +763,13 @@ Registers an event listener. The available events are:</p>
 diagram.</li>
 <li><code>click</code>: called when the user clicks on a region of the
 diagram.</li>
+<li><code>dblclick</code>: called when the user double-clicks on a region of the
+diagram.</li>
+<li><code>render</code>: called when the diagram finishes rendering. Receives
+the sequence diagram object as an argument.</li>
 </ul>
-<p><code>mouseover</code> and <code>click</code> are invoked with a single
-parameter: the element. This object contains:</p>
+<p>All mouse events are invoked with a single parameter: the element. This
+object contains:</p>
 <ul>
 <li><code>ln</code>: the line number of the source code which defined the
 element.</li>
