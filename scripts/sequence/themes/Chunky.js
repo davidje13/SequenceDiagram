@@ -227,11 +227,12 @@ define([
 			},
 		},
 		label: {
+			minHeight: 5,
 			padding: {
 				top: 2,
 				left: 5,
 				right: 3,
-				bottom: 0,
+				bottom: 1,
 			},
 			labelAttrs: {
 				'font-family': FONT,

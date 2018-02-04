@@ -142,6 +142,20 @@ define([], [
 		),
 	},
 	{
+		title: 'Group',
+		code: (
+			'group {Label}\n' +
+			'  {Agent1} -> {Agent2}\n' +
+			'end'
+		),
+		preview: (
+			'begin A, B\n' +
+			'group Label\n' +
+			'  A -> B\n' +
+			'end'
+		),
+	},
+	{
 		title: 'Note over agent',
 		code: 'note over {Agent1}: {Message}',
 	},

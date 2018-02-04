@@ -223,6 +223,7 @@ define([
 			},
 		},
 		label: {
+			minHeight: 8,
 			padding: {
 				top: 2,
 				left: 8,

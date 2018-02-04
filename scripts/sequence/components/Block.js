@@ -69,7 +69,10 @@ define([
 				SVGTextBlockClass: env.SVGTextBlockClass,
 			});
 
-			const labelHeight = Math.max(tagRender.height, labelRender.height);
+			const labelHeight = Math.max(
+				Math.max(tagRender.height, labelRender.height),
+				config.section.label.minHeight
+			);
 
 			clickable.insertBefore(svg.make('rect', {
 				'x': agentInfoL.x,

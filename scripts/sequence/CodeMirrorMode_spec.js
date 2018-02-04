@@ -239,7 +239,8 @@ defineDescribe('Code Mirror Mode', [
 				'else if another thing\n' +
 				'else\n' +
 				'end\n' +
-				'repeat a few times'
+				'repeat a few times\n' +
+				'group foo\n'
 			);
 
 			expect(getTokens(0)).toEqual([
@@ -271,6 +272,11 @@ defineDescribe('Code Mirror Mode', [
 				{v: ' a', type: 'string'},
 				{v: ' few', type: 'string'},
 				{v: ' times', type: 'string'},
+			]);
+
+			expect(getTokens(6)).toEqual([
+				{v: 'group', type: 'keyword'},
+				{v: ' foo', type: 'string'},
 			]);
 		});
 
@@ -428,6 +434,7 @@ defineDescribe('Code Mirror Mode', [
 			expect(hints).toContain('else\n');
 			expect(hints).toContain('else if: ');
 			expect(hints).toContain('repeat ');
+			expect(hints).toContain('group ');
 			expect(hints).toContain('note ');
 			expect(hints).toContain('state over ');
 			expect(hints).toContain('text ');

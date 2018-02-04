@@ -749,6 +749,17 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('converts group blocks', () => {
+			const parsed = parser.parse('group something');
+			expect(parsed.stages).toEqual([
+				PARSED.blockBegin({
+					blockType: 'group',
+					tag: '',
+					label: 'something',
+				}),
+			]);
+		});
+
 		it('rejects quoted keywords', () => {
 			expect(() => parser.parse('"repeat" until something')).toThrow();
 		});

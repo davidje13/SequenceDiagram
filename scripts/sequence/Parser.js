@@ -30,6 +30,12 @@ define([
 			tag: 'repeat',
 			skip: [],
 		},
+		'group': {
+			type: 'block begin',
+			blockType: 'group',
+			tag: '',
+			skip: [],
+		},
 	};
 
 	const CONNECT = {

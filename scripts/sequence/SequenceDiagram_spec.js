@@ -145,11 +145,11 @@ defineDescribe('SequenceDiagram', [
 
 		const content = getSimplifiedContent(diagram);
 
-		expect(content).toContain('<svg viewBox="-5 -5 60 37">');
+		expect(content).toContain('<svg viewBox="-5 -5 60 39">');
 
-		expect(content).toContain('<line x1="20" y1="5" x2="20" y2="27"');
-		expect(content).toContain('<line x1="30" y1="5" x2="30" y2="27"');
-		expect(content).toContain('<rect x="10" y="0" width="30" height="7"');
+		expect(content).toContain('<line x1="20" y1="7" x2="20" y2="29"');
+		expect(content).toContain('<line x1="30" y1="7" x2="30" y2="29"');
+		expect(content).toContain('<rect x="10" y="0" width="30" height="9"');
 		expect(content).toContain('<g class="region collapsed"');
 	});
 

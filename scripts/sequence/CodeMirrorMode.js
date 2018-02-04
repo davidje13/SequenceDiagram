@@ -268,6 +268,14 @@ define(['core/ArrayUtilities'], (array) => {
 			}, connectors)));
 		}
 
+		const group = {type: 'keyword', suggest: true, then: {
+			'': textToEnd,
+			':': {type: 'operator', suggest: true, then: {
+				'': textToEnd,
+			}},
+			'\n': end,
+		}};
+
 		const BASE_THEN = {
 			'title': {type: 'keyword', suggest: true, then: {
 				'': textToEnd,
@@ -319,13 +327,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'as': CM_ERROR,
 				'\n': end,
 			}},
-			'if': {type: 'keyword', suggest: true, then: {
-				'': textToEnd,
-				':': {type: 'operator', suggest: true, then: {
-					'': textToEnd,
-				}},
-				'\n': end,
-			}},
+			'if': group,
 			'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
 				'if': {type: 'keyword', suggest: 'if: ', then: {
 					'': textToEnd,
@@ -335,13 +337,8 @@ define(['core/ArrayUtilities'], (array) => {
 				}},
 				'\n': end,
 			}},
-			'repeat': {type: 'keyword', suggest: true, then: {
-				'': textToEnd,
-				':': {type: 'operator', suggest: true, then: {
-					'': textToEnd,
-				}},
-				'\n': end,
-			}},
+			'repeat': group,
+			'group': group,
 			'note': {type: 'keyword', suggest: true, then: {
 				'over': {type: 'keyword', suggest: true, then: {
 					'': agentListToText,
