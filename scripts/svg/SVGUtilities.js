@@ -7,13 +7,17 @@ define(() => {
 		return document.createTextNode(text);
 	}
 
-	function make(type, attrs = {}, children = []) {
-		const o = document.createElementNS(NS, type);
+	function setAttributes(target, attrs) {
 		for(const k in attrs) {
 			if(attrs.hasOwnProperty(k)) {
-				o.setAttribute(k, attrs[k]);
+				target.setAttribute(k, attrs[k]);
 			}
 		}
+	}
+
+	function make(type, attrs = {}, children = []) {
+		const o = document.createElementNS(NS, type);
+		setAttributes(o, attrs);
 		for(const c of children) {
 			o.appendChild(c);
 		}
@@ -37,6 +41,7 @@ define(() => {
 		makeText,
 		make,
 		makeContainer,
+		setAttributes,
 		empty,
 	};
 });

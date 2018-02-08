@@ -50,6 +50,7 @@ define([
 				boxLayer: clickable,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
+				textSizer: env.textSizer,
 			});
 			clickable.insertBefore(svg.make('rect', {
 				'x': x - text.width / 2,

@@ -74,6 +74,7 @@ define([
 		labelLayer,
 		boxRenderer = null,
 		SVGTextBlockClass = SVGTextBlock,
+		textSizer,
 	}) {
 		if(!formatted || !formatted.length) {
 			return {width: 0, height: 0, label: null, box: null};
@@ -88,20 +89,21 @@ define([
 			y: y + padding.top,
 		});
 
-		const width = (label.width + padding.left + padding.right);
-		const height = (label.height + padding.top + padding.bottom);
+		const size = textSizer.measure(label);
+		const width = (size.width + padding.left + padding.right);
+		const height = (size.height + padding.top + padding.bottom);
 
 		let box = null;
 		if(boxRenderer) {
 			box = boxRenderer({
-				'x': anchorX - label.width * shift - padding.left,
+				'x': anchorX - size.width * shift - padding.left,
 				'y': y,
 				'width': width,
 				'height': height,
 			});
 		} else {
 			box = renderBox(boxAttrs, {
-				'x': anchorX - label.width * shift - padding.left,
+				'x': anchorX - size.width * shift - padding.left,
 				'y': y,
 				'width': width,
 				'height': height,

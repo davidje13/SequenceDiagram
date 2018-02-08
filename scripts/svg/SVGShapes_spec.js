@@ -54,8 +54,17 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 	});
 
 	describe('renderBoxedText', () => {
+		let o = null;
+		let sizer = null;
+
+		beforeEach(() => {
+			o = document.createElement('p');
+			sizer = {
+				measure: () => ({width: 64, height: 128}),
+			};
+		});
+
 		it('renders a label', () => {
-			const o = document.createElement('p');
 			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
@@ -64,6 +73,7 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 				labelAttrs: {'font-size': 10, 'line-height': 1.5, 'foo': 'bar'},
 				boxLayer: o,
 				labelLayer: o,
+				textSizer: sizer,
 			});
 			expect(rendered.label.state.formatted).toEqual([[{text: 'foo'}]]);
 			expect(rendered.label.state.x).toEqual(5);
@@ -72,7 +82,6 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 		});
 
 		it('positions a box beneath the rendered label', () => {
-			const o = document.createElement('p');
 			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
@@ -81,16 +90,19 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 				labelAttrs: {'font-size': 10, 'line-height': 1.5},
 				boxLayer: o,
 				labelLayer: o,
+				textSizer: sizer,
 			});
 			expect(rendered.box.getAttribute('x')).toEqual('1');
 			expect(rendered.box.getAttribute('y')).toEqual('2');
-			expect(rendered.box.getAttribute('height')).toEqual('55');
+			expect(rendered.box.getAttribute('width'))
+				.toEqual(String(4 + 16 + 64));
+			expect(rendered.box.getAttribute('height'))
+				.toEqual(String(8 + 32 + 128));
 			expect(rendered.box.getAttribute('foo')).toEqual('bar');
 			expect(rendered.box.parentNode).toEqual(o);
 		});
 
 		it('returns the size of the rendered box', () => {
-			const o = document.createElement('p');
 			const rendered = SVGShapes.renderBoxedText([[{text: 'foo'}]], {
 				x: 1,
 				y: 2,
@@ -99,9 +111,10 @@ defineDescribe('SVGShapes', ['./SVGShapes'], (SVGShapes) => {
 				labelAttrs: {'font-size': 10, 'line-height': 1.5},
 				boxLayer: o,
 				labelLayer: o,
+				textSizer: sizer,
 			});
-			expect(rendered.width).toBeGreaterThan(20 - 1);
-			expect(rendered.height).toEqual(55);
+			expect(rendered.width).toEqual(4 + 16 + 64);
+			expect(rendered.height).toEqual(8 + 32 + 128);
 		});
 	});
 });

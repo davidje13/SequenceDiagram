@@ -42,15 +42,16 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				formatted: label,
 				y,
 			});
+			const size = env.textSizer.measure(labelNode);
 
 			const fullW = (
-				labelNode.width +
+				size.width +
 				config.padding.left +
 				config.padding.right
 			);
 			const fullH = (
 				config.padding.top +
-				labelNode.height +
+				size.height +
 				config.padding.bottom
 			);
 			if(x0 === null && xMid !== null) {

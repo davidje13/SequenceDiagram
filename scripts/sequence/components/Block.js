@@ -56,6 +56,7 @@ define([
 				boxLayer: blockInfo.hold,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
+				textSizer: env.textSizer,
 			});
 
 			const labelRender = SVGShapes.renderBoxedText(label, {
@@ -67,6 +68,7 @@ define([
 				boxLayer: env.lineMaskLayer,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
+				textSizer: env.textSizer,
 			});
 
 			const labelHeight = Math.max(

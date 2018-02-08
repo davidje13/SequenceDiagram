@@ -68,12 +68,6 @@ defineDescribe('SVGTextBlock', [
 			expect(hold.children[1].innerHTML).toEqual('bar');
 		});
 
-		it('populates width and height with the size of the text', () => {
-			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			expect(block.width).toBeGreaterThan(0);
-			expect(block.height).toEqual(30);
-		});
-
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			const line0 = hold.children[0];
@@ -129,8 +123,7 @@ defineDescribe('SVGTextBlock', [
 			block.set({formatted: []});
 			expect(hold.children.length).toEqual(0);
 			expect(block.state.formatted).toEqual([]);
-			expect(block.width).toEqual(0);
-			expect(block.height).toEqual(0);
+			expect(block.lines.length).toEqual(0);
 		});
 	});
 
@@ -144,6 +137,13 @@ defineDescribe('SVGTextBlock', [
 		describe('.measure', () => {
 			it('calculates the size of the formatted text', () => {
 				const size = tester.measure(attrs, [[{text: 'foo'}]]);
+				expect(size.width).toBeGreaterThan(0);
+				expect(size.height).toEqual(15);
+			});
+
+			it('calculates the size of text blocks', () => {
+				block.set({formatted: [[{text: 'foo'}]]});
+				const size = tester.measure(block);
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(15);
 			});

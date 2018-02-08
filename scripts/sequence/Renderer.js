@@ -494,12 +494,13 @@ define([
 
 		updateBounds(stagesHeight) {
 			const cx = (this.minX + this.maxX) / 2;
-			const titleY = ((this.title.height > 0) ?
-				(-this.theme.titleMargin - this.title.height) : 0
+			const titleSize = this.sizer.measure(this.title);
+			const titleY = ((titleSize.height > 0) ?
+				(-this.theme.titleMargin - titleSize.height) : 0
 			);
 			this.title.set({x: cx, y: titleY});
 
-			const halfTitleWidth = this.title.width / 2;
+			const halfTitleWidth = titleSize.width / 2;
 			const margin = this.theme.outerMargin;
 			const x0 = Math.min(this.minX, cx - halfTitleWidth) - margin;
 			const x1 = Math.max(this.maxX, cx + halfTitleWidth) + margin;
@@ -509,15 +510,15 @@ define([
 			this.width = x1 - x0;
 			this.height = y1 - y0;
 
-			this.fullMaskReveal.setAttribute('x', x0);
-			this.fullMaskReveal.setAttribute('y', y0);
-			this.fullMaskReveal.setAttribute('width', this.width);
-			this.fullMaskReveal.setAttribute('height', this.height);
+			const fullSize = {
+				'x': x0,
+				'y': y0,
+				'width': this.width,
+				'height': this.height,
+			};
 
-			this.lineMaskReveal.setAttribute('x', x0);
-			this.lineMaskReveal.setAttribute('y', y0);
-			this.lineMaskReveal.setAttribute('width', this.width);
-			this.lineMaskReveal.setAttribute('height', this.height);
+			svg.setAttributes(this.fullMaskReveal, fullSize);
+			svg.setAttributes(this.lineMaskReveal, fullSize);
 
 			this.base.setAttribute('viewBox', (
 				x0 + ' ' + y0 + ' ' +

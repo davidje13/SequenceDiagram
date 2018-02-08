@@ -1,4 +1,4 @@
-defineDescribe('Readme', [
+define([
 	'./SequenceDiagram',
 	'image/ImageRegion',
 	'image/ImageSimilarity',
@@ -70,6 +70,8 @@ defineDescribe('Readme', [
 	return (fetch('README.md')
 		.then((response) => response.text())
 		.then(findSamples)
-		.then((samples) => samples.forEach(makeSampleTests))
+		.then((samples) => describe('Readme', () => {
+			samples.forEach(makeSampleTests);
+		}))
 	);
 });

@@ -25,8 +25,6 @@ define(['svg/SVGUtilities'], (svg) => {
 				x: 0,
 				y: 0,
 			};
-			this.width = 0;
-			this.height = 0;
 			this.nodes = [];
 			this.set(initialState);
 		}
@@ -53,8 +51,6 @@ define(['svg/SVGUtilities'], (svg) => {
 
 		_reset() {
 			this._rebuildNodes(0);
-			this.width = 0;
-			this.height = 0;
 		}
 
 		_renderText() {
@@ -66,13 +62,10 @@ define(['svg/SVGUtilities'], (svg) => {
 			const formatted = this.state.formatted;
 			this._rebuildNodes(formatted.length);
 
-			let maxWidth = 0;
 			this.nodes.forEach(({text, element}, i) => {
 				const ln = formatted[i].reduce((v, pt) => v + pt.text, '');
 				text.nodeValue = ln;
-				maxWidth = Math.max(maxWidth, ln.length);
 			});
-			this.width = maxWidth;
 		}
 
 		_updateX() {
@@ -85,7 +78,6 @@ define(['svg/SVGUtilities'], (svg) => {
 			this.nodes.forEach(({element}, i) => {
 				element.setAttribute('y', this.state.y + i);
 			});
-			this.height = this.nodes.length;
 		}
 
 		firstLine() {
@@ -123,6 +115,11 @@ define(['svg/SVGUtilities'], (svg) => {
 
 	class SizeTester {
 		measure(attrs, formatted) {
+			if(attrs.state) {
+				formatted = attrs.state.formatted;
+				attrs = attrs.state.attrs;
+			}
+
 			if(!formatted || !formatted.length) {
 				return {width: 0, height: 0};
 			}

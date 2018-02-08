@@ -63,6 +63,7 @@ define([
 					boxLayer: env.fullMaskLayer,
 					labelLayer: clickable,
 					SVGTextBlockClass: env.SVGTextBlockClass,
+					textSizer: env.textSizer,
 				});
 				labelWidth = boxed.width;
 			}

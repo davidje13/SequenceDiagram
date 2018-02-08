@@ -227,6 +227,7 @@ define([
 				boxLayer: env.lineMaskLayer,
 				labelLayer: clickable,
 				SVGTextBlockClass: env.SVGTextBlockClass,
+				textSizer: env.textSizer,
 			});
 			const labelW = (label ? (
 				renderedText.width +
@@ -353,6 +354,7 @@ define([
 				boxLayer: env.lineMaskLayer,
 				labelLayer,
 				SVGTextBlockClass: env.SVGTextBlockClass,
+				textSizer: env.textSizer,
 			});
 		}
 

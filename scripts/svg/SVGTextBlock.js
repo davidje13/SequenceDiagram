@@ -38,6 +38,27 @@ define(['./SVGUtilities'], (svg) => {
 		});
 	}
 
+	function measureLine(tester, line) {
+		if(!line.length) {
+			return 0;
+		}
+
+		const labelKey = JSON.stringify(line);
+		const knownWidth = tester.widths.get(labelKey);
+		if(knownWidth !== undefined) {
+			return knownWidth;
+		}
+
+		// getComputedTextLength forces a reflow, so only call it if nothing
+		// else can tell us the length
+
+		svg.empty(tester.node);
+		populateSvgTextLine(tester.node, line);
+		const width = tester.node.getComputedTextLength();
+		tester.widths.set(labelKey, width);
+		return width;
+	}
+
 	const EMPTY = [];
 
 	class SVGTextBlock {
@@ -49,8 +70,6 @@ define(['./SVGUtilities'], (svg) => {
 				x: 0,
 				y: 0,
 			};
-			this.width = 0;
-			this.height = 0;
 			this.lines = [];
 			this.set(initialState);
 		}
@@ -76,8 +95,6 @@ define(['./SVGUtilities'], (svg) => {
 
 		_reset() {
 			this._rebuildLines(0);
-			this.width = 0;
-			this.height = 0;
 		}
 
 		_renderText() {
@@ -93,7 +110,6 @@ define(['./SVGUtilities'], (svg) => {
 
 			this._rebuildLines(formatted.length);
 
-			let maxWidth = 0;
 			this.lines.forEach((ln, i) => {
 				const id = JSON.stringify(formatted[i]);
 				if(id !== ln.latest) {
@@ -101,9 +117,7 @@ define(['./SVGUtilities'], (svg) => {
 					populateSvgTextLine(ln.node, formatted[i]);
 					ln.latest = id;
 				}
-				maxWidth = Math.max(maxWidth, ln.node.getComputedTextLength());
 			});
-			this.width = maxWidth;
 		}
 
 		_updateX() {
@@ -117,7 +131,6 @@ define(['./SVGUtilities'], (svg) => {
 			this.lines.forEach(({node}, i) => {
 				node.setAttribute('y', this.state.y + i * lineHeight + size);
 			});
-			this.height = lineHeight * this.lines.length;
 		}
 
 		firstLine() {
@@ -164,47 +177,62 @@ define(['./SVGUtilities'], (svg) => {
 			this.cache = new Map();
 		}
 
-		measure(attrs, formatted) {
-			if(!formatted || !formatted.length) {
-				return {width: 0, height: 0};
-			}
-			if(!Array.isArray(formatted)) {
-				throw new Error('Invalid formatted text: ' + formatted);
+		_measureHeight({attrs, formatted}) {
+			return formatted.length * fontDetails(attrs).lineHeight;
+		}
+
+		_measureWidth({attrs, formatted}) {
+			if(!formatted.length) {
+				return 0;
 			}
 
-			let tester = this.cache.get(attrs);
+			const attrKey = JSON.stringify(attrs);
+			let tester = this.cache.get(attrKey);
 			if(!tester) {
-				tester = svg.make('text', attrs);
-				this.testers.appendChild(tester);
-				this.cache.set(attrs, tester);
+				const node = svg.make('text', attrs);
+				this.testers.appendChild(node);
+				tester = {
+					node,
+					widths: new Map(),
+				};
+				this.cache.set(attrKey, tester);
 			}
 
 			if(!this.testers.parentNode) {
 				this.container.appendChild(this.testers);
 			}
 
-			let width = 0;
-			formatted.forEach((line) => {
-				svg.empty(tester);
-				populateSvgTextLine(tester, line);
-				width = Math.max(width, tester.getComputedTextLength());
-			});
+			return (formatted
+				.map((line) => measureLine(tester, line))
+				.reduce((a, b) => Math.max(a, b), 0)
+			);
+		}
 
+		_getMeasurementOpts(attrs, formatted) {
+			if(!formatted) {
+				if(typeof attrs === 'object' && attrs.state) {
+					formatted = attrs.state.formatted || [];
+					attrs = attrs.state.attrs;
+				} else {
+					formatted = [];
+				}
+			} else if(!Array.isArray(formatted)) {
+				throw new Error('Invalid formatted text: ' + formatted);
+			}
+			return {attrs, formatted};
+		}
+
+		measure(attrs, formatted) {
+			const opts = this._getMeasurementOpts(attrs, formatted);
 			return {
-				width,
-				height: formatted.length * fontDetails(attrs).lineHeight,
+				width: this._measureWidth(opts),
+				height: this._measureHeight(opts),
 			};
 		}
 
 		measureHeight(attrs, formatted) {
-			if(!formatted) {
-				return 0;
-			}
-			if(!Array.isArray(formatted)) {
-				throw new Error('Invalid formatted text: ' + formatted);
-			}
-
-			return formatted.length * fontDetails(attrs).lineHeight;
+			const opts = this._getMeasurementOpts(attrs, formatted);
+			return this._measureHeight(opts);
 		}
 
 		resetCache() {
