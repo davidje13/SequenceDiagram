@@ -45,10 +45,10 @@ define([
 			},
 			database: {
 				padding: {
-					top: 15,
+					top: 12,
 					left: 10,
 					right: 10,
-					bottom: 5,
+					bottom: 3,
 				},
 				arrowBottom: 5 + 12 * 1.3 / 2,
 				boxRenderer: BaseTheme.renderDB.bind(null, {

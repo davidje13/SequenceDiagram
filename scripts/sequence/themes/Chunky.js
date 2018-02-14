@@ -48,12 +48,12 @@ define([
 			},
 			database: {
 				padding: {
-					top: 5,
+					top: 4,
 					left: 3,
 					right: 3,
-					bottom: 1,
+					bottom: 0,
 				},
-				arrowBottom: 1 + 12 * 1.3 / 2,
+				arrowBottom: 2 + 14 * 1.3 / 2,
 				boxRenderer: BaseTheme.renderDB.bind(null, {
 					'fill': '#FFFFFF',
 					'stroke': '#000000',
