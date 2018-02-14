@@ -575,7 +575,7 @@ define(['core/ArrayUtilities'], (array) => {
 				GAgent.make(alias),
 				{blocked: true, group: alias}
 			);
-			this.defineGAgents(gAgents);
+			this.defineGAgents([...gAgents, leftGAgent, rightGAgent]);
 			const {indexL, indexR} = addBounds(
 				this.gAgents,
 				leftGAgent,

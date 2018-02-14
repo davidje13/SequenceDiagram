@@ -1611,6 +1611,29 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('surrounds references with block bounds', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.blockBegin('if', ''),
+				PARSED.groupBegin('Bar', ['B', 'C']),
+				PARSED.endAgents(['Bar']),
+				PARSED.blockEnd(),
+			]);
+
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('A'),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('__BLOCK1['),
+				GENERATED.agent('B'),
+				GENERATED.agent('C'),
+				GENERATED.agent('__BLOCK1]'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('D'),
+				GENERATED.agent(']'),
+			]);
+		});
+
 		it('implicitly adds contained agents to groups', () => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'B', 'C', 'D', 'E']),
