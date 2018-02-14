@@ -58,6 +58,15 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			};
 		},
 
+		agentOptions: (agentID, options, {ln = 0} = {}) => {
+			return {
+				type: 'agent options',
+				agent: makeParsedAgents([agentID])[0],
+				options,
+				ln,
+			};
+		},
+
 		beginAgents: (agentIDs, {mode = 'box', ln = 0} = {}) => {
 			return {
 				type: 'agent begin',
@@ -159,8 +168,9 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			formattedLabel = any(),
 			anchorRight = any(),
 			isVirtualSource = any(),
+			options = any(),
 		} = {}) => {
-			return {id, formattedLabel, anchorRight, isVirtualSource};
+			return {id, formattedLabel, anchorRight, isVirtualSource, options};
 		},
 
 		beginAgents: (agentIDs, {
@@ -449,6 +459,31 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.agent('B'),
 				GENERATED.agent('A'),
 				GENERATED.agent(']'),
+			]);
+		});
+
+		it('applies options to agents', () => {
+			const sequence = invoke([
+				PARSED.agentOptions('A', ['foo']),
+			]);
+			expect(sequence.agents).toEqual([
+				any(),
+				GENERATED.agent('A', {options: ['foo']}),
+				any(),
+			]);
+		});
+
+		it('combines agent options', () => {
+			const sequence = invoke([
+				PARSED.agentOptions('A', ['foo', 'bar']),
+				PARSED.agentOptions('B', ['zig']),
+				PARSED.agentOptions('A', ['zag', 'bar']),
+			]);
+			expect(sequence.agents).toEqual([
+				any(),
+				GENERATED.agent('A', {options: ['foo', 'bar', 'zag']}),
+				GENERATED.agent('B', {options: ['zig']}),
+				any(),
 			]);
 		});
 
@@ -1268,6 +1303,24 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('ignores defines when setting block bounds', () => {
+			const sequence = invoke([
+				PARSED.blockBegin('if', 'abc'),
+				PARSED.connect(['A', 'B']),
+				PARSED.defineAgents(['C']),
+				PARSED.blockEnd(),
+			]);
+			expect(sequence.agents).toEqual([
+				GENERATED.agent('['),
+				GENERATED.agent('__BLOCK0['),
+				GENERATED.agent('A'),
+				GENERATED.agent('B'),
+				GENERATED.agent('__BLOCK0]'),
+				GENERATED.agent('C'),
+				GENERATED.agent(']'),
+			]);
+		});
+
 		it('ignores side agents when calculating block bounds', () => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'B', 'C']),
@@ -1755,12 +1808,44 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			]);
 		});
 
+		it('rejects interactions with agents involved in references', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.groupBegin('Bar', ['A', 'C']),
+				PARSED.endAgents(['A']),
+				PARSED.endAgents(['Bar']),
+			])).toThrow(new Error('Agent A is in a group at line 1'));
+		});
+
+		it('rejects flags on agents involved in references', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('Bar', ['A', 'C']),
+				PARSED.connect([{name: 'A', alias: '', flags: ['start']}, 'D']),
+				PARSED.endAgents(['Bar']),
+			])).toThrow(new Error('Agent A is in a group at line 1'));
+		});
+
 		it('rejects interactions with agents hidden beneath references', () => {
 			expect(() => invoke([
 				PARSED.beginAgents(['A', 'B', 'C', 'D']),
 				PARSED.groupBegin('AC', ['A', 'C'], {label: 'Foo'}),
 				PARSED.connect(['B', 'D']),
 				PARSED.endAgents(['AC']),
+			])).toThrow(new Error('Agent B is hidden behind group at line 1'));
+
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.groupBegin('Bar', ['A', 'C']),
+				PARSED.endAgents(['B']),
+				PARSED.endAgents(['Bar']),
+			])).toThrow(new Error('Agent B is hidden behind group at line 1'));
+
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.groupBegin('Bar', ['A', 'C']),
+				PARSED.note('note over', ['B']),
+				PARSED.endAgents(['Bar']),
 			])).toThrow(new Error('Agent B is hidden behind group at line 1'));
 		});
 

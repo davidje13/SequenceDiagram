@@ -12,8 +12,16 @@ define([
 	'use strict';
 
 	class CapBox {
-		separation({formattedLabel}, env) {
-			const config = env.theme.agentCap.box;
+		getConfig(options, env) {
+			let config = null;
+			if(options.includes('database')) {
+				config = env.theme.agentCap.database;
+			}
+			return config || env.theme.agentCap.box;
+		}
+
+		separation({formattedLabel, options}, env) {
+			const config = this.getConfig(options, env);
 			const width = (
 				env.textSizer.measure(config.labelAttrs, formattedLabel).width +
 				config.padding.left +
@@ -27,8 +35,8 @@ define([
 			};
 		}
 
-		topShift({formattedLabel}, env) {
-			const config = env.theme.agentCap.box;
+		topShift({formattedLabel, options}, env) {
+			const config = this.getConfig(options, env);
 			const height = (
 				env.textSizer.measureHeight(config.labelAttrs, formattedLabel) +
 				config.padding.top +
@@ -37,8 +45,8 @@ define([
 			return Math.max(0, height - config.arrowBottom);
 		}
 
-		render(y, {x, formattedLabel}, env) {
-			const config = env.theme.agentCap.box;
+		render(y, {x, formattedLabel, options}, env) {
+			const config = this.getConfig(options, env);
 			const clickable = env.makeRegion();
 			const text = SVGShapes.renderBoxedText(formattedLabel, {
 				x,
@@ -84,13 +92,18 @@ define([
 			return config.size / 2;
 		}
 
-		render(y, {x}, env) {
+		render(y, {x, options}, env) {
 			const config = env.theme.agentCap.cross;
 			const d = config.size / 2;
 
 			const clickable = env.makeRegion();
 
-			clickable.appendChild(config.render({x, y: y + d, radius: d}));
+			clickable.appendChild(config.render({
+				x,
+				y: y + d,
+				radius: d,
+				options,
+			}));
 			clickable.appendChild(svg.make('rect', {
 				'x': x - d,
 				'y': y,
@@ -129,7 +142,7 @@ define([
 			return config.height / 2;
 		}
 
-		render(y, {x, formattedLabel}, env) {
+		render(y, {x, formattedLabel, options}, env) {
 			const boxCfg = env.theme.agentCap.box;
 			const barCfg = env.theme.agentCap.bar;
 			const width = (
@@ -145,6 +158,7 @@ define([
 				y,
 				width,
 				height,
+				options,
 			}));
 			clickable.appendChild(svg.make('rect', {
 				'x': x - width / 2,

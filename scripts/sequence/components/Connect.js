@@ -24,7 +24,7 @@ define([
 			const arrow = this.getConfig(theme);
 			const join = arrow.attrs['stroke-linejoin'] || 'miter';
 			const t = arrow.attrs['stroke-width'] * 0.5;
-			const lineStroke = theme.agentLineAttrs['stroke-width'] * 0.5;
+			const lineStroke = theme.agentLineAttrs['']['stroke-width'] * 0.5;
 			if(join === 'round') {
 				return lineStroke + t;
 			} else {

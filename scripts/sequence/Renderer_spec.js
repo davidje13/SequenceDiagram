@@ -56,18 +56,22 @@ defineDescribe('Sequence Renderer', [
 						id: '[',
 						formattedLabel: null,
 						anchorRight: true,
+						options: [],
 					}, {
 						id: 'Col 1',
 						formattedLabel: format('Col 1!'),
 						anchorRight: false,
+						options: [],
 					}, {
 						id: 'Col 2',
 						formattedLabel: format('Col 2!'),
 						anchorRight: false,
+						options: [],
 					}, {
 						id: ']',
 						formattedLabel: null,
 						anchorRight: false,
+						options: [],
 					},
 				],
 				stages: [],
@@ -81,8 +85,17 @@ defineDescribe('Sequence Renderer', [
 			renderer.render({
 				meta: {title: [], code: 'hello'},
 				agents: [
-					{id: '[', formattedLabel: null, anchorRight: true},
-					{id: ']', formattedLabel: null, anchorRight: false},
+					{
+						id: '[',
+						formattedLabel: null,
+						anchorRight: true,
+						options: [],
+					}, {
+						id: ']',
+						formattedLabel: null,
+						anchorRight: false,
+						options: [],
+					},
 				],
 				stages: [],
 			});
@@ -99,10 +112,27 @@ defineDescribe('Sequence Renderer', [
 			renderer.render({
 				meta: {title: []},
 				agents: [
-					{id: '[', formattedLabel: null, anchorRight: true},
-					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
-					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
-					{id: ']', formattedLabel: null, anchorRight: false},
+					{
+						id: '[',
+						formattedLabel: null,
+						anchorRight: true,
+						options: [],
+					}, {
+						id: 'A',
+						formattedLabel: format('A!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'B',
+						formattedLabel: format('B!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: ']',
+						formattedLabel: null,
+						anchorRight: false,
+						options: [],
+					},
 				],
 				stages: [
 					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},
@@ -129,11 +159,32 @@ defineDescribe('Sequence Renderer', [
 			renderer.render({
 				meta: {title: []},
 				agents: [
-					{id: '[', formattedLabel: null, anchorRight: true},
-					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
-					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
-					{id: 'C', formattedLabel: format('C!'), anchorRight: false},
-					{id: ']', formattedLabel: null, anchorRight: false},
+					{
+						id: '[',
+						formattedLabel: null,
+						anchorRight: true,
+						options: [],
+					}, {
+						id: 'A',
+						formattedLabel: format('A!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'B',
+						formattedLabel: format('B!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'C',
+						formattedLabel: format('C!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: ']',
+						formattedLabel: null,
+						anchorRight: false,
+						options: [],
+					},
 				],
 				stages: [
 					{
@@ -178,12 +229,37 @@ defineDescribe('Sequence Renderer', [
 			renderer.render({
 				meta: {title: []},
 				agents: [
-					{id: '[', formattedLabel: null, anchorRight: true},
-					{id: 'A', formattedLabel: format('A!'), anchorRight: false},
-					{id: 'B', formattedLabel: format('B!'), anchorRight: false},
-					{id: 'C', formattedLabel: format('C!'), anchorRight: false},
-					{id: 'D', formattedLabel: format('D!'), anchorRight: false},
-					{id: ']', formattedLabel: null, anchorRight: false},
+					{
+						id: '[',
+						formattedLabel: null,
+						anchorRight: true,
+						options: [],
+					}, {
+						id: 'A',
+						formattedLabel: format('A!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'B',
+						formattedLabel: format('B!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'C',
+						formattedLabel: format('C!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: 'D',
+						formattedLabel: format('D!'),
+						anchorRight: false,
+						options: [],
+					}, {
+						id: ']',
+						formattedLabel: null,
+						anchorRight: false,
+						options: [],
+					},
 				],
 				stages: [
 					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},

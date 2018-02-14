@@ -9,4 +9,5 @@ define([], [
 	'Reference.svg',
 	'ReferenceLayering.svg',
 	'Markdown.svg',
+	'AgentOptions.svg',
 ]);

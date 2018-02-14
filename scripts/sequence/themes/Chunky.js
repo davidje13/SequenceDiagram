@@ -46,6 +46,28 @@ define([
 					'text-anchor': 'middle',
 				},
 			},
+			database: {
+				padding: {
+					top: 5,
+					left: 3,
+					right: 3,
+					bottom: 1,
+				},
+				arrowBottom: 1 + 12 * 1.3 / 2,
+				boxRenderer: BaseTheme.renderDB.bind(null, {
+					'fill': '#FFFFFF',
+					'stroke': '#000000',
+					'stroke-width': 3,
+					'db-z': 2,
+				}),
+				labelAttrs: {
+					'font-family': FONT,
+					'font-weight': 'bold',
+					'font-size': 14,
+					'line-height': LINE_HEIGHT,
+					'text-anchor': 'middle',
+				},
+			},
 			cross: {
 				size: 20,
 				render: BaseTheme.renderCross.bind(null, {
@@ -193,9 +215,14 @@ define([
 		},
 
 		agentLineAttrs: {
-			'fill': 'none',
-			'stroke': '#000000',
-			'stroke-width': 3,
+			'': {
+				'fill': 'none',
+				'stroke': '#000000',
+				'stroke-width': 3,
+			},
+			'red': {
+				'stroke': '#DD0000',
+			},
 		},
 	};
 

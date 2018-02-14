@@ -142,6 +142,57 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			]);
 		});
 
+		it('propagates agent options', () => {
+			const parsed = parser.parse('Foo bar is zig zag');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'agent options',
+					ln: jasmine.anything(),
+					agent: {
+						name: 'Foo bar',
+						alias: '',
+						flags: [],
+					},
+					options: ['zig', 'zag'],
+				},
+			]);
+		});
+
+		it('ignores indefinite articles in agent options', () => {
+			const parsed = parser.parse('Foo is a zig\nBar is an oom');
+			expect(parsed.stages).toEqual([
+				{
+					type: 'agent options',
+					ln: jasmine.anything(),
+					agent: {
+						name: 'Foo',
+						alias: '',
+						flags: [],
+					},
+					options: ['zig'],
+				},
+				{
+					type: 'agent options',
+					ln: jasmine.anything(),
+					agent: {
+						name: 'Bar',
+						alias: '',
+						flags: [],
+					},
+					options: ['oom'],
+				},
+			]);
+		});
+
+		it('rejects empty agent options', () => {
+			expect(() => parser.parse('Foo is')).toThrow(new Error(
+				'Empty agent options at line 1, character 6'
+			));
+			expect(() => parser.parse('Foo is a')).toThrow(new Error(
+				'Empty agent options at line 1, character 8'
+			));
+		});
+
 		it('respects spacing within agent names', () => {
 			const parsed = parser.parse('A+B -> C  D');
 			expect(parsed.stages).toEqual([

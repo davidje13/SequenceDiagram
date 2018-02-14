@@ -562,6 +562,31 @@ define([
 				name: joinLabel(line, 0, line.length - 1),
 			};
 		},
+
+		(line) => { // options
+			const sepPos = findToken(line, 'is');
+			if(sepPos < 1) {
+				return null;
+			}
+			const indefiniteArticles = ['a', 'an'];
+			let optionsBegin = sepPos + 1;
+			if(indefiniteArticles.includes(tokenKeyword(line[optionsBegin]))) {
+				++ optionsBegin;
+			}
+			if(optionsBegin === line.length) {
+				throw makeError('Empty agent options', {b: array.last(line).e});
+			}
+			const agent = readAgent(line, 0, sepPos);
+			const options = [];
+			for(let i = optionsBegin; i < line.length; ++ i) {
+				options.push(line[i].v);
+			}
+			return {
+				type: 'agent options',
+				agent,
+				options,
+			};
+		},
 	];
 
 	function parseLine(line, {meta, stages}) {

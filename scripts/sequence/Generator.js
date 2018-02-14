@@ -37,7 +37,7 @@ define(['core/ArrayUtilities'], (array) => {
 			return a.id === b.id;
 		},
 		make: (id, {anchorRight = false, isVirtualSource = false} = {}) => {
-			return {id, anchorRight, isVirtualSource};
+			return {id, anchorRight, isVirtualSource, options: []};
 		},
 		indexOf: (list, gAgent) => {
 			return array.indexOf(list, gAgent, GAgent.equals);
@@ -251,6 +251,7 @@ define(['core/ArrayUtilities'], (array) => {
 				'mark': this.handleMark.bind(this),
 				'async': this.handleAsync.bind(this),
 				'agent define': this.handleAgentDefine.bind(this),
+				'agent options': this.handleAgentOptions.bind(this),
 				'agent begin': this.handleAgentBegin.bind(this),
 				'agent end': this.handleAgentEnd.bind(this),
 				'divider': this.handleDivider.bind(this),
@@ -354,22 +355,22 @@ define(['core/ArrayUtilities'], (array) => {
 
 		validateGAgents(gAgents, {
 			allowGrouped = false,
-			rejectGrouped = false,
+			allowCovered = false,
 			allowVirtual = false,
 		} = {}) {
-			/* jshint -W074 */ // agent validity checking requires several steps
 			gAgents.forEach((gAgent) => {
 				const state = this.getGAgentState(gAgent);
-				if(state.covered) {
+				if(state.blocked && state.group === null) {
+					// used to be a group alias; can never be reused
+					throw new Error('Duplicate agent name: ' + gAgent.id);
+				}
+				if(!allowCovered && state.covered) {
 					throw new Error(
 						'Agent ' + gAgent.id + ' is hidden behind group'
 					);
 				}
-				if(rejectGrouped && state.group !== null) {
+				if(!allowGrouped && state.group !== null) {
 					throw new Error('Agent ' + gAgent.id + ' is in a group');
-				}
-				if(state.blocked && (!allowGrouped || state.group === null)) {
-					throw new Error('Duplicate agent name: ' + gAgent.id);
 				}
 				if(!allowVirtual && gAgent.isVirtualSource) {
 					throw new Error('cannot use message source here');
@@ -561,7 +562,7 @@ define(['core/ArrayUtilities'], (array) => {
 
 		makeGroupDetails(pAgents, alias) {
 			const gAgents = pAgents.map(this.toGAgent);
-			this.validateGAgents(gAgents, {rejectGrouped: true});
+			this.validateGAgents(gAgents);
 			if(this.agentStates.has(alias)) {
 				throw new Error('Duplicate agent name: ' + alias);
 			}
@@ -992,8 +993,27 @@ define(['core/ArrayUtilities'], (array) => {
 
 		handleAgentDefine({agents}) {
 			const gAgents = agents.map(this.toGAgent);
-			this.validateGAgents(gAgents);
-			this.defineGAgents(gAgents);
+			this.validateGAgents(gAgents, {
+				allowGrouped: true,
+				allowCovered: true,
+			});
+			array.mergeSets(this.gAgents, gAgents, GAgent.equals);
+		}
+
+		handleAgentOptions({agent, options}) {
+			const gAgent = this.toGAgent(agent);
+			const gAgents = [gAgent];
+			this.validateGAgents(gAgents, {
+				allowGrouped: true,
+				allowCovered: true,
+			});
+			array.mergeSets(this.gAgents, gAgents, GAgent.equals);
+
+			this.gAgents
+				.filter(({id}) => (id === gAgent.id))
+				.forEach((storedGAgent) => {
+					array.mergeSets(storedGAgent.options, options);
+				});
 		}
 
 		handleAgentBegin({agents, mode}) {

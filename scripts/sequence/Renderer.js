@@ -338,6 +338,7 @@ define([
 				y1: toY,
 				width: agentInfo.currentRad * 2,
 				className: 'agent-' + agentInfo.index + '-line',
+				options: agentInfo.options,
 			}));
 		}
 
@@ -474,6 +475,7 @@ define([
 					formattedLabel: agent.formattedLabel,
 					anchorRight: agent.anchorRight,
 					isVirtualSource: agent.isVirtualSource,
+					options: agent.options,
 					index,
 					x: null,
 					latestYStart: null,

@@ -405,6 +405,22 @@ defineDescribe('Code Mirror Mode', [
 				{v: ' stuff', type: 'string'},
 			]);
 		});
+
+		it('highlights agent info statements', () => {
+			cm.getDoc().setValue('A is a red database');
+			expect(getTokens(0)).toEqual([
+				{v: 'A', type: 'variable'},
+				{v: ' is', type: 'keyword'},
+				{v: ' a', type: 'keyword'},
+				{v: ' red', type: 'keyword'},
+				{v: ' database', type: 'keyword'},
+			]);
+		});
+
+		it('rejects unknown info statements', () => {
+			cm.getDoc().setValue('A is a foobar');
+			expect(getTokens(0)[3].type).toContain('line-error');
+		});
 	});
 
 	describe('autocomplete', () => {
@@ -618,6 +634,32 @@ defineDescribe('Code Mirror Mode', [
 			cm.getDoc().setValue('A -> ...woo\n... ');
 			const hints = getHintTexts({line: 1, ch: 4});
 			expect(hints).toEqual(['woo ']);
+		});
+
+		it('suggests agent properties', () => {
+			cm.getDoc().setValue('A is a ');
+			const hints = getHintTexts({line: 0, ch: 7});
+			expect(hints).toContain('database ');
+			expect(hints).toContain('red ');
+			expect(hints).not.toContain('\n');
+		});
+
+		it('suggests indefinite articles for agent properties', () => {
+			cm.getDoc().setValue('A is ');
+			const hints = getHintTexts({line: 0, ch: 5});
+			expect(hints).toContain('database ');
+			expect(hints).toContain('a ');
+			expect(hints).toContain('an ');
+			expect(hints).not.toContain('\n');
+		});
+
+		it('suggests more agent properties after the first', () => {
+			cm.getDoc().setValue('A is a red ');
+			const hints = getHintTexts({line: 0, ch: 11});
+			expect(hints).toContain('database ');
+			expect(hints).toContain('\n');
+			expect(hints).not.toContain('a ');
+			expect(hints).not.toContain('an ');
 		});
 	});
 });

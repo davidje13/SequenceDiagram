@@ -56,6 +56,25 @@ define([
 				},
 				boxRenderer: null,
 			},
+			database: {
+				padding: {
+					top: 15,
+					left: 10,
+					right: 10,
+					bottom: 5,
+				},
+				arrowBottom: 5 + 12 * 1.3 / 2,
+				boxRenderer: BaseTheme.renderDB.bind(null, Object.assign({
+					'fill': '#FFFFFF',
+					'db-z': 5,
+				}, PENCIL.normal)),
+				labelAttrs: {
+					'font-family': FONT,
+					'font-size': 12,
+					'line-height': LINE_HEIGHT,
+					'text-anchor': 'middle',
+				},
+			},
 			cross: {
 				size: 15,
 				render: null,
@@ -172,9 +191,12 @@ define([
 		},
 
 		agentLineAttrs: {
-			'fill': 'none',
-			'stroke': '#000000',
-			'stroke-width': 1,
+			'': Object.assign({
+				'fill': 'none',
+			}, PENCIL.normal),
+			'red': {
+				'stroke': 'rgba(200,40,0,0.8)',
+			},
 		},
 	};
 
@@ -546,7 +568,9 @@ define([
 				'd': line.nodes,
 				'fill': 'none',
 				'stroke-dasharray': lineOptions.dash ? '6, 5' : 'none',
-			}, lineOptions.thick ? PENCIL.thick : PENCIL.normal));
+			}, lineOptions.attrs || (
+				lineOptions.thick ? PENCIL.thick : PENCIL.normal
+			)));
 			return shape;
 		}
 
@@ -575,11 +599,11 @@ define([
 			return lT.nodes + lR.nodes + lB.nodes + lL.nodes;
 		}
 
-		renderBox(position, {fill = null, thick = false} = {}) {
+		renderBox(position, {fill = null, thick = false, attrs = null} = {}) {
 			return svg.make('path', Object.assign({
 				'd': this.boxNodes(position),
 				'fill': fill || '#FFFFFF',
-			}, thick ? PENCIL.thick : PENCIL.normal));
+			}, attrs || (thick ? PENCIL.thick : PENCIL.normal)));
 		}
 
 		renderNote({x, y, width, height}) {
@@ -905,21 +929,22 @@ define([
 			}, PENCIL.normal));
 		}
 
-		renderAgentLine({x, y0, y1, width, className}) {
+		renderAgentLine({x, y0, y1, width, className, options}) {
+			const attrs = this.optionsAttributes(this.agentLineAttrs, options);
 			if(width > 0) {
 				const shape = this.renderBox({
 					x: x - width / 2,
 					y: y0,
 					width,
 					height: y1 - y0,
-				}, {fill: 'none'});
+				}, {fill: 'none', attrs});
 				shape.setAttribute('class', className);
 				return shape;
 			} else {
 				const shape = this.renderLine(
 					{x, y: y0},
 					{x, y: y1},
-					{varY: 0.3}
+					{varY: 0.3, attrs}
 				);
 				shape.setAttribute('class', className);
 				return shape;

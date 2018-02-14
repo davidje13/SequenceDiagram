@@ -250,6 +250,16 @@ define([], [
 		preview: 'A -> B: `mono`',
 	},
 	{
+		title: 'Red agent line',
+		code: '{Agent} is red',
+		preview: 'headers box\nA is red\nbegin A',
+	},
+	{
+		title: 'Database indicator',
+		code: '{Agent} is a database',
+		preview: 'headers box\nA is a database\nbegin A',
+	},
+	{
 		title: 'Monospace theme',
 		code: 'theme monospace',
 		preview: 'headers box\ntitle mono\ntheme monospace\nA -> B',

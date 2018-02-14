@@ -1,7 +1,15 @@
 define(['core/ArrayUtilities'], (array) => {
 	'use strict';
 
-	const CM_ERROR = {type: 'error line-error', then: {'': 0}};
+	const CM_ERROR = {type: 'error line-error', suggest: false, then: {'': 0}};
+
+	function textTo(exit, suggest = false) {
+		return {
+			type: 'string',
+			suggest,
+			then: Object.assign({'': 0}, exit),
+		};
+	}
 
 	function suggestionsEqual(a, b) {
 		return (
@@ -12,6 +20,11 @@ define(['core/ArrayUtilities'], (array) => {
 		);
 	}
 
+	const AGENT_INFO_TYPES = [
+		'database',
+		'red',
+	];
+
 	const makeCommands = ((() => {
 		// The order of commands inside "then" blocks directly influences the
 		// order they are displayed to the user in autocomplete menus.
@@ -20,36 +33,7 @@ define(['core/ArrayUtilities'], (array) => {
 		// to use Map objects instead for strict compliance, at the cost of
 		// extra syntax.
 
-		const end = {type: '', suggest: '\n', then: {}};
-		const hiddenEnd = {type: '', then: {}};
-
-		function textTo(exit, suggest) {
-			return {
-				type: 'string',
-				suggest,
-				then: Object.assign({'': 0}, exit),
-			};
-		}
-
-		const textToEnd = textTo({'\n': end});
-		const aliasListToEnd = {
-			type: 'variable',
-			suggest: {known: 'Agent'},
-			then: {
-				'': 0,
-				'\n': end,
-				',': {type: 'operator', suggest: true, then: {'': 1}},
-				'as': {type: 'keyword', suggest: true, then: {
-					'': {type: 'variable', suggest: {known: 'Agent'}, then: {
-						'': 0,
-						',': {type: 'operator', suggest: true, then: {'': 3}},
-						'\n': end,
-					}},
-				}},
-			},
-		};
-
-		function agentListTo(exit) {
+		function agentListTo(exit, next = 1) {
 			return {
 				type: 'variable',
 				suggest: {known: 'Agent'},
@@ -57,46 +41,37 @@ define(['core/ArrayUtilities'], (array) => {
 					exit,
 					{
 						'': 0,
-						',': {type: 'operator', suggest: true, then: {'': 1}},
+						',': {type: 'operator', then: {'': next}},
 					}
 				),
 			};
 		}
 
+		const end = {type: '', suggest: '\n', then: {}};
+		const hiddenEnd = {type: '', suggest: false, then: {}};
+		const textToEnd = textTo({'\n': end});
 		const colonTextToEnd = {
 			type: 'operator',
-			suggest: true,
 			then: {'': textToEnd, '\n': hiddenEnd},
 		};
-		const agentListToText = agentListTo({
-			':': colonTextToEnd,
-		});
-		const agentList2ToText = {
-			type: 'variable',
-			suggest: {known: 'Agent'},
-			then: {
-				'': 0,
-				',': {type: 'operator', suggest: true, then: {
-					'': agentListToText,
+		const aliasListToEnd = agentListTo({
+			'\n': end,
+			'as': {type: 'keyword', then: {
+				'': {type: 'variable', suggest: {known: 'Agent'}, then: {
+					'': 0,
+					',': {type: 'operator', then: {'': 3}},
+					'\n': end,
 				}},
-				':': CM_ERROR,
-			},
-		};
-		const singleAgentToText = {
-			type: 'variable',
-			suggest: {known: 'Agent'},
-			then: {
-				'': 0,
-				',': CM_ERROR,
-				':': colonTextToEnd,
-			},
-		};
+			}},
+		});
+		const agentListToText = agentListTo({':': colonTextToEnd});
+
 		const agentToOptText = {
 			type: 'variable',
 			suggest: {known: 'Agent'},
 			then: {
 				'': 0,
-				':': {type: 'operator', suggest: true, then: {
+				':': {type: 'operator', then: {
 					'': textToEnd,
 					'\n': hiddenEnd,
 				}},
@@ -104,9 +79,9 @@ define(['core/ArrayUtilities'], (array) => {
 			},
 		};
 		const referenceName = {
-			':': {type: 'operator', suggest: true, then: {
+			':': {type: 'operator', then: {
 				'': textTo({
-					'as': {type: 'keyword', suggest: true, then: {
+					'as': {type: 'keyword', then: {
 						'': {
 							type: 'variable',
 							suggest: {known: 'Agent'},
@@ -119,23 +94,23 @@ define(['core/ArrayUtilities'], (array) => {
 				}),
 			}},
 		};
-		const refDef = {type: 'keyword', suggest: true, then: Object.assign({
-			'over': {type: 'keyword', suggest: true, then: {
+		const refDef = {type: 'keyword', then: Object.assign({
+			'over': {type: 'keyword', then: {
 				'': agentListTo(referenceName),
 			}},
 		}, referenceName)};
 
 		const divider = {
 			'\n': end,
-			':': {type: 'operator', suggest: true, then: {
+			':': {type: 'operator', then: {
 				'': textToEnd,
 				'\n': hiddenEnd,
 			}},
 			'with': {type: 'keyword', suggest: ['with height '], then: {
-				'height': {type: 'keyword', suggest: true, then: {
+				'height': {type: 'keyword', then: {
 					'': {type: 'number', suggest: ['6 ', '30 '], then: {
 						'\n': end,
-						':': {type: 'operator', suggest: true, then: {
+						':': {type: 'operator', then: {
 							'': textToEnd,
 							'\n': hiddenEnd,
 						}},
@@ -144,15 +119,41 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 		};
 
+		function simpleList(type, keywords, exit) {
+			const first = {};
+			const recur = Object.assign({}, exit);
+
+			keywords.forEach((keyword) => {
+				first[keyword] = {type, then: recur};
+				recur[keyword] = 0;
+			});
+
+			return first;
+		}
+
+		function optionalKeywords(type, keywords, then) {
+			const result = Object.assign({}, then);
+			keywords.forEach((keyword) => {
+				result[keyword] = {type, then};
+			});
+			return result;
+		}
+
+		const agentInfoList = optionalKeywords(
+			'keyword',
+			['a', 'an'],
+			simpleList('keyword', AGENT_INFO_TYPES, {'\n': end})
+		);
+
 		function makeSideNote(side) {
 			return {
 				type: 'keyword',
 				suggest: [side + ' of ', side + ': '],
 				then: {
-					'of': {type: 'keyword', suggest: true, then: {
+					'of': {type: 'keyword', then: {
 						'': agentListToText,
 					}},
-					':': {type: 'operator', suggest: true, then: {
+					':': {type: 'operator', then: {
 						'': textToEnd,
 					}},
 					'': agentListToText,
@@ -160,8 +161,8 @@ define(['core/ArrayUtilities'], (array) => {
 			};
 		}
 
-		function makeOpBlock(exit, sourceExit) {
-			const op = {type: 'operator', suggest: true, then: {
+		function makeOpBlock({exit, sourceExit, blankExit}) {
+			const op = {type: 'operator', then: {
 				'+': CM_ERROR,
 				'-': CM_ERROR,
 				'*': CM_ERROR,
@@ -169,14 +170,14 @@ define(['core/ArrayUtilities'], (array) => {
 				'': exit,
 			}};
 			return {
-				'+': {type: 'operator', suggest: true, then: {
+				'+': {type: 'operator', then: {
 					'+': CM_ERROR,
 					'-': CM_ERROR,
 					'*': op,
 					'!': CM_ERROR,
 					'': exit,
 				}},
-				'-': {type: 'operator', suggest: true, then: {
+				'-': {type: 'operator', then: {
 					'+': CM_ERROR,
 					'-': CM_ERROR,
 					'*': op,
@@ -189,27 +190,29 @@ define(['core/ArrayUtilities'], (array) => {
 					}},
 					'': exit,
 				}},
-				'*': {type: 'operator', suggest: true, then: Object.assign({
+				'*': {type: 'operator', then: Object.assign({
 					'+': op,
 					'-': op,
 					'*': CM_ERROR,
 					'!': CM_ERROR,
 					'': exit,
-				}, sourceExit)},
+				}, sourceExit || exit)},
 				'!': op,
-				'': exit,
+				'': blankExit || exit,
 			};
 		}
 
 		function makeCMConnect(arrows) {
 			const connect = {
 				type: 'keyword',
-				suggest: true,
-				then: Object.assign({}, makeOpBlock(agentToOptText, {
-					':': colonTextToEnd,
-					'\n': hiddenEnd,
+				then: Object.assign({}, makeOpBlock({
+					exit: agentToOptText,
+					sourceExit: {
+						':': colonTextToEnd,
+						'\n': hiddenEnd,
+					},
 				}), {
-					'...': {type: 'operator', suggest: true, then: {
+					'...': {type: 'operator', then: {
 						'': {
 							type: 'variable',
 							suggest: {known: 'DelayedAgent'},
@@ -228,7 +231,6 @@ define(['core/ArrayUtilities'], (array) => {
 
 			const labelIndicator = {
 				type: 'operator',
-				suggest: true,
 				override: 'Label',
 				then: {},
 			};
@@ -245,8 +247,9 @@ define(['core/ArrayUtilities'], (array) => {
 				suggest: {known: 'Agent'},
 				then: Object.assign({
 					'': 0,
+				}, connectors, {
 					':': labelIndicator,
-				}, connectors),
+				}),
 			};
 
 			const firstAgentDelayed = {
@@ -258,29 +261,39 @@ define(['core/ArrayUtilities'], (array) => {
 				}, connectors),
 			};
 
+			const firstAgentNoFlags = Object.assign({}, firstAgent, {
+				then: Object.assign({}, firstAgent.then, {
+					'is': {type: 'keyword', then: agentInfoList},
+				}),
+			});
+
 			return Object.assign({
-				'...': {type: 'operator', suggest: true, then: {
+				'...': {type: 'operator', then: {
 					'': firstAgentDelayed,
 				}},
-			}, makeOpBlock(firstAgent, Object.assign({
-				'': firstAgent,
-				':': hiddenLabelIndicator,
-			}, connectors)));
+			}, makeOpBlock({
+				exit: firstAgent,
+				sourceExit: Object.assign({
+					'': firstAgent,
+					':': hiddenLabelIndicator,
+				}, connectors),
+				blankExit: firstAgentNoFlags,
+			}));
 		}
 
-		const group = {type: 'keyword', suggest: true, then: {
+		const group = {type: 'keyword', then: {
 			'': textToEnd,
-			':': {type: 'operator', suggest: true, then: {
+			':': {type: 'operator', then: {
 				'': textToEnd,
 			}},
 			'\n': end,
 		}};
 
 		const BASE_THEN = {
-			'title': {type: 'keyword', suggest: true, then: {
+			'title': {type: 'keyword', then: {
 				'': textToEnd,
 			}},
-			'theme': {type: 'keyword', suggest: true, then: {
+			'theme': {type: 'keyword', then: {
 				'': {
 					type: 'string',
 					suggest: {
@@ -293,36 +306,36 @@ define(['core/ArrayUtilities'], (array) => {
 					},
 				},
 			}},
-			'headers': {type: 'keyword', suggest: true, then: {
-				'none': {type: 'keyword', suggest: true, then: {}},
-				'cross': {type: 'keyword', suggest: true, then: {}},
-				'box': {type: 'keyword', suggest: true, then: {}},
-				'fade': {type: 'keyword', suggest: true, then: {}},
-				'bar': {type: 'keyword', suggest: true, then: {}},
+			'headers': {type: 'keyword', then: {
+				'none': {type: 'keyword', then: {}},
+				'cross': {type: 'keyword', then: {}},
+				'box': {type: 'keyword', then: {}},
+				'fade': {type: 'keyword', then: {}},
+				'bar': {type: 'keyword', then: {}},
 			}},
-			'terminators': {type: 'keyword', suggest: true, then: {
-				'none': {type: 'keyword', suggest: true, then: {}},
-				'cross': {type: 'keyword', suggest: true, then: {}},
-				'box': {type: 'keyword', suggest: true, then: {}},
-				'fade': {type: 'keyword', suggest: true, then: {}},
-				'bar': {type: 'keyword', suggest: true, then: {}},
+			'terminators': {type: 'keyword', then: {
+				'none': {type: 'keyword', then: {}},
+				'cross': {type: 'keyword', then: {}},
+				'box': {type: 'keyword', then: {}},
+				'fade': {type: 'keyword', then: {}},
+				'bar': {type: 'keyword', then: {}},
 			}},
-			'divider': {type: 'keyword', suggest: true, then: Object.assign({
-				'line': {type: 'keyword', suggest: true, then: divider},
-				'space': {type: 'keyword', suggest: true, then: divider},
-				'delay': {type: 'keyword', suggest: true, then: divider},
-				'tear': {type: 'keyword', suggest: true, then: divider},
+			'divider': {type: 'keyword', then: Object.assign({
+				'line': {type: 'keyword', then: divider},
+				'space': {type: 'keyword', then: divider},
+				'delay': {type: 'keyword', then: divider},
+				'tear': {type: 'keyword', then: divider},
 			}, divider)},
-			'define': {type: 'keyword', suggest: true, then: {
+			'define': {type: 'keyword', then: {
 				'': aliasListToEnd,
 				'as': CM_ERROR,
 			}},
-			'begin': {type: 'keyword', suggest: true, then: {
+			'begin': {type: 'keyword', then: {
 				'': aliasListToEnd,
 				'reference': refDef,
 				'as': CM_ERROR,
 			}},
-			'end': {type: 'keyword', suggest: true, then: {
+			'end': {type: 'keyword', then: {
 				'': aliasListToEnd,
 				'as': CM_ERROR,
 				'\n': end,
@@ -331,7 +344,7 @@ define(['core/ArrayUtilities'], (array) => {
 			'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
 				'if': {type: 'keyword', suggest: 'if: ', then: {
 					'': textToEnd,
-					':': {type: 'operator', suggest: true, then: {
+					':': {type: 'operator', then: {
 						'': textToEnd,
 					}},
 				}},
@@ -339,39 +352,47 @@ define(['core/ArrayUtilities'], (array) => {
 			}},
 			'repeat': group,
 			'group': group,
-			'note': {type: 'keyword', suggest: true, then: {
-				'over': {type: 'keyword', suggest: true, then: {
+			'note': {type: 'keyword', then: {
+				'over': {type: 'keyword', then: {
 					'': agentListToText,
 				}},
 				'left': makeSideNote('left'),
 				'right': makeSideNote('right'),
-				'between': {type: 'keyword', suggest: true, then: {
-					'': agentList2ToText,
+				'between': {type: 'keyword', then: {
+					'': agentListTo({':': CM_ERROR}, agentListToText),
 				}},
 			}},
 			'state': {type: 'keyword', suggest: 'state over ', then: {
-				'over': {type: 'keyword', suggest: true, then: {
-					'': singleAgentToText,
+				'over': {type: 'keyword', then: {
+					'': {
+						type: 'variable',
+						suggest: {known: 'Agent'},
+						then: {
+							'': 0,
+							',': CM_ERROR,
+							':': colonTextToEnd,
+						},
+					},
 				}},
 			}},
-			'text': {type: 'keyword', suggest: true, then: {
+			'text': {type: 'keyword', then: {
 				'left': makeSideNote('left'),
 				'right': makeSideNote('right'),
 			}},
-			'autolabel': {type: 'keyword', suggest: true, then: {
-				'off': {type: 'keyword', suggest: true, then: {}},
+			'autolabel': {type: 'keyword', then: {
+				'off': {type: 'keyword', then: {}},
 				'': textTo({'\n': end}, [
 					{v: '<label>', suffix: '\n', q: true},
 					{v: '[<inc>] <label>', suffix: '\n', q: true},
 					{v: '[<inc 1,0.01>] <label>', suffix: '\n', q: true},
 				]),
 			}},
-			'simultaneously': {type: 'keyword', suggest: true, then: {
-				':': {type: 'operator', suggest: true, then: {}},
-				'with': {type: 'keyword', suggest: true, then: {
+			'simultaneously': {type: 'keyword', then: {
+				':': {type: 'operator', then: {}},
+				'with': {type: 'keyword', then: {
 					'': {type: 'variable', suggest: {known: 'Label'}, then: {
 						'': 0,
-						':': {type: 'operator', suggest: true, then: {}},
+						':': {type: 'operator', then: {}},
 					}},
 				}},
 			}},
@@ -400,8 +421,8 @@ define(['core/ArrayUtilities'], (array) => {
 		}
 
 		return array.flatMap(suggestions, (suggest) => {
-			if(suggest === true) {
-				return [cmCappedToken(token, current)];
+			if(suggest === false) {
+				return [];
 			} else if(typeof suggest === 'object') {
 				if(suggest.known) {
 					return state['known' + suggest.known] || [];
@@ -411,7 +432,7 @@ define(['core/ArrayUtilities'], (array) => {
 			} else if(typeof suggest === 'string' && suggest) {
 				return [{v: suggest, q: (token === '')}];
 			} else {
-				return [];
+				return [cmCappedToken(token, current)];
 			}
 		});
 	}

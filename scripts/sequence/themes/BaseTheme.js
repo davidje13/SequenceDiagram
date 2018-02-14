@@ -20,6 +20,14 @@ define([
 		return r;
 	}
 
+	function optionsAttributes(attributes, options) {
+		let attrs = Object.assign({}, attributes['']);
+		options.forEach((opt) => {
+			Object.assign(attrs, attributes[opt] || {});
+		});
+		return attrs;
+	}
+
 	class BaseTheme {
 		constructor({name, settings, blocks, notes, dividers}) {
 			this.name = name;
@@ -47,7 +55,12 @@ define([
 			return this.dividers[type] || this.dividers[''];
 		}
 
-		renderAgentLine({x, y0, y1, width, className}) {
+		optionsAttributes(attributes, options) {
+			return optionsAttributes(attributes, options);
+		}
+
+		renderAgentLine({x, y0, y1, width, className, options}) {
+			const attrs = this.optionsAttributes(this.agentLineAttrs, options);
 			if(width > 0) {
 				return svg.make('rect', Object.assign({
 					'x': x - width / 2,
@@ -55,7 +68,7 @@ define([
 					'width': width,
 					'height': y1 - y0,
 					'class': className,
-				}, this.agentLineAttrs));
+				}, attrs));
 			} else {
 				return svg.make('line', Object.assign({
 					'x1': x,
@@ -63,7 +76,7 @@ define([
 					'x2': x,
 					'y2': y1,
 					'class': className,
-				}, this.agentLineAttrs));
+				}, attrs));
 			}
 		}
 	}
@@ -111,6 +124,27 @@ define([
 		}
 
 		return g;
+	};
+
+	BaseTheme.renderDB = (attrs, {x, y, width, height}) => {
+		const z = attrs['db-z'];
+		return svg.make('g', {}, [
+			svg.make('rect', Object.assign({
+				'x': x,
+				'y': y,
+				'width': width,
+				'height': height,
+				'rx': width / 2,
+				'ry': z,
+			}, attrs)),
+			svg.make('path', Object.assign({
+				'd': (
+					'M' + x + ' ' + (y + z) +
+					'a' + (width / 2) + ' ' + z +
+					' 0 0 0 ' + width + ' 0'
+				),
+			}, attrs, {'fill': 'none'})),
+		]);
 	};
 
 	BaseTheme.renderCross = (attrs, {x, y, radius}) => {
