@@ -16,6 +16,7 @@ define(() => {
 		let start = 1;
 		let inc = 1;
 		let dp = 0;
+
 		if(args[0]) {
 			start = Number(args[0]);
 			dp = Math.max(dp, countDP(args[0]));
@@ -24,6 +25,11 @@ define(() => {
 			inc = Number(args[1]);
 			dp = Math.max(dp, countDP(args[1]));
 		}
+
+		if(Number.isNaN(start) || Number.isNaN(inc)) {
+			return null;
+		}
+
 		return {start, inc, dp};
 	}
 
@@ -43,11 +49,12 @@ define(() => {
 			args = token.substr(p + 1).split(',');
 		}
 
+		let result = null;
 		if(type === 'inc') {
-			return parseCounter(args);
+			result = parseCounter(args);
 		}
 
-		return '<' + token + '>';
+		return result || ('<' + token + '>');
 	}
 
 	function parsePattern(raw) {

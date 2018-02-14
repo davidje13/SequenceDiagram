@@ -73,6 +73,15 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 		]);
 	});
 
+	it('passes invalid counters through unchanged', () => {
+		expect(parser('<inc abc>')).toEqual([
+			'<inc abc>',
+		]);
+		expect(parser('<inc 1, abc>')).toEqual([
+			'<inc 1, abc>',
+		]);
+	});
+
 	it('assigns decimal places to counters by their written precision', () => {
 		const parsed = parser('<inc 5.0, 2.00><inc 2.00, 1.0>');
 		expect(parsed).toEqual([
