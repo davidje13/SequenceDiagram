@@ -110,6 +110,15 @@ define([
 	];
 
 	class Connect extends BaseComponent {
+		prepareMeasurements({agentIDs, label}, env) {
+			const config = env.theme.connect;
+			const loopback = (agentIDs[0] === agentIDs[1]);
+			const labelAttrs = (loopback ?
+				config.label.loopbackAttrs : config.label.attrs);
+
+			env.textSizer.expectMeasure(labelAttrs, label);
+		}
+
 		separationPre({agentIDs}, env) {
 			const r = env.theme.connect.source.radius;
 			agentIDs.forEach((id) => {
@@ -128,15 +137,17 @@ define([
 			const lArrow = ARROWHEADS[options.left];
 			const rArrow = ARROWHEADS[options.right];
 
-			let labelWidth = (
-				env.textSizer.measure(config.label.attrs, label).width
-			);
+			const loopback = (agentIDs[0] === agentIDs[1]);
+			const labelAttrs = (loopback ?
+				config.label.loopbackAttrs : config.label.attrs);
+
+			let labelWidth = env.textSizer.measure(labelAttrs, label).width;
 			if(labelWidth > 0) {
 				labelWidth += config.label.padding * 2;
 			}
 
 			const info1 = env.agentInfos.get(agentIDs[0]);
-			if(agentIDs[0] === agentIDs[1]) {
+			if(loopback) {
 				env.addSpacing(agentIDs[0], {
 					left: 0,
 					right: (
@@ -490,6 +501,8 @@ define([
 	}
 
 	class ConnectDelayEnd extends Connect {
+		prepareMeasurements() {}
+
 		separationPre() {}
 
 		separation() {}

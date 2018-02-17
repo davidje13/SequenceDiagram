@@ -9,6 +9,16 @@ define(() => {
 			this.makeState(state);
 		}
 
+		prepareMeasurements(/*stage, {
+			renderer,
+			theme,
+			agentInfos,
+			textSizer,
+			state,
+			components,
+		}*/) {
+		}
+
 		separationPre(/*stage, {
 			renderer,
 			theme,

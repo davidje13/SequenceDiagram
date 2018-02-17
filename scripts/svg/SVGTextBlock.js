@@ -38,27 +38,6 @@ define(['./SVGUtilities'], (svg) => {
 		});
 	}
 
-	function measureLine(tester, line) {
-		if(!line.length) {
-			return 0;
-		}
-
-		const labelKey = JSON.stringify(line);
-		const knownWidth = tester.widths.get(labelKey);
-		if(knownWidth !== undefined) {
-			return knownWidth;
-		}
-
-		// getComputedTextLength forces a reflow, so only call it if nothing
-		// else can tell us the length
-
-		svg.empty(tester.node);
-		populateSvgTextLine(tester.node, line);
-		const width = tester.node.getComputedTextLength();
-		tester.widths.set(labelKey, width);
-		return width;
-	}
-
 	const EMPTY = [];
 
 	class SVGTextBlock {
@@ -175,35 +154,68 @@ define(['./SVGUtilities'], (svg) => {
 			});
 			this.container = container;
 			this.cache = new Map();
+			this.nodes = null;
+		}
+
+		_expectMeasure({attrs, formatted}) {
+			if(!formatted.length) {
+				return;
+			}
+
+			const attrKey = JSON.stringify(attrs);
+			let attrCache = this.cache.get(attrKey);
+			if(!attrCache) {
+				attrCache = {
+					attrs,
+					lines: new Map(),
+				};
+				this.cache.set(attrKey, attrCache);
+			}
+
+			formatted.forEach((line) => {
+				if(!line.length) {
+					return;
+				}
+
+				const labelKey = JSON.stringify(line);
+				if(!attrCache.lines.has(labelKey)) {
+					attrCache.lines.set(labelKey, {
+						formatted: line,
+						width: null,
+					});
+				}
+			});
+
+			return attrCache;
 		}
 
 		_measureHeight({attrs, formatted}) {
 			return formatted.length * fontDetails(attrs).lineHeight;
 		}
 
-		_measureWidth({attrs, formatted}) {
-			if(!formatted.length) {
+		_measureLine(attrCache, line) {
+			if(!line.length) {
 				return 0;
 			}
 
-			const attrKey = JSON.stringify(attrs);
-			let tester = this.cache.get(attrKey);
-			if(!tester) {
-				const node = svg.make('text', attrs);
-				this.testers.appendChild(node);
-				tester = {
-					node,
-					widths: new Map(),
-				};
-				this.cache.set(attrKey, tester);
+			const labelKey = JSON.stringify(line);
+			const cache = attrCache.lines.get(labelKey);
+			if(cache.width === null) {
+				window.console.warn('Performing unexpected measurement', line);
+				this.performMeasurements();
+			}
+			return cache.width;
+		}
+
+		_measureWidth(opts) {
+			if(!opts.formatted.length) {
+				return 0;
 			}
 
-			if(!this.testers.parentNode) {
-				this.container.appendChild(this.testers);
-			}
+			const attrCache = this._expectMeasure(opts);
 
-			return (formatted
-				.map((line) => measureLine(tester, line))
+			return (opts.formatted
+				.map((line) => this._measureLine(attrCache, line))
 				.reduce((a, b) => Math.max(a, b), 0)
 			);
 		}
@@ -222,6 +234,52 @@ define(['./SVGUtilities'], (svg) => {
 			return {attrs, formatted};
 		}
 
+		expectMeasure(attrs, formatted) {
+			const opts = this._getMeasurementOpts(attrs, formatted);
+			this._expectMeasure(opts);
+		}
+
+		performMeasurementsPre() {
+			this.nodes = [];
+			this.cache.forEach(({attrs, lines}) => {
+				lines.forEach((cacheLine) => {
+					if(cacheLine.width === null) {
+						const node = svg.make('text', attrs);
+						populateSvgTextLine(node, cacheLine.formatted);
+						this.testers.appendChild(node);
+						this.nodes.push({node, cacheLine});
+					}
+				});
+			});
+
+			if(this.nodes.length) {
+				this.container.appendChild(this.testers);
+			}
+		}
+
+		performMeasurementsAct() {
+			this.nodes.forEach(({node, cacheLine}) => {
+				cacheLine.width = node.getComputedTextLength();
+			});
+		}
+
+		performMeasurementsPost() {
+			if(this.nodes.length) {
+				this.container.removeChild(this.testers);
+				svg.empty(this.testers);
+			}
+			this.nodes = null;
+		}
+
+		performMeasurements() {
+			// getComputedTextLength forces a reflow, so we try to batch as
+			// many measurements as possible into a single DOM change
+
+			this.performMeasurementsPre();
+			this.performMeasurementsAct();
+			this.performMeasurementsPost();
+		}
+
 		measure(attrs, formatted) {
 			const opts = this._getMeasurementOpts(attrs, formatted);
 			return {
@@ -236,14 +294,7 @@ define(['./SVGUtilities'], (svg) => {
 		}
 
 		resetCache() {
-			svg.empty(this.testers);
 			this.cache.clear();
-		}
-
-		detach() {
-			if(this.testers.parentNode) {
-				this.container.removeChild(this.testers);
-			}
 		}
 	}
 

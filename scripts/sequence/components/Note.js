@@ -20,6 +20,11 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 	}
 
 	class NoteComponent extends BaseComponent {
+		prepareMeasurements({mode, label}, env) {
+			const config = env.theme.getNote(mode);
+			env.textSizer.expectMeasure(config.labelAttrs, label);
+		}
+
 		renderPre({agentIDs}) {
 			return {agentIDs};
 		}

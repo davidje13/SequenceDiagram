@@ -289,7 +289,7 @@ define(['require'], (require) => {
 		}
 
 		buildLibrary(container) {
-			this.library.forEach((lib) => {
+			const diagrams = this.library.map((lib) => {
 				const holdInner = makeNode('div', {
 					'title': lib.title || lib.code,
 				});
@@ -301,17 +301,22 @@ define(['require'], (require) => {
 					this.addCodeBlock.bind(this, lib.code)
 				);
 				container.appendChild(hold);
-				try {
-					this.diagram.clone({
-						code: simplifyPreview(lib.preview || lib.code),
-						container: holdInner,
-					});
-				} catch(e) {
-					window.console.log('Failed to render preview', e);
+				const diagram = this.diagram.clone({
+					code: simplifyPreview(lib.preview || lib.code),
+					container: holdInner,
+					render: false,
+				});
+				diagram.addEventListener('error', (sd, e) => {
+					window.console.warn('Failed to render preview', e);
 					hold.setAttribute('class', 'library-item broken');
-					holdInner.appendChild(makeText(lib.code));
-				}
+					holdInner.textContent = lib.code;
+				});
+				return diagram;
 			});
+
+			try {
+				this.diagram.renderAll(diagrams);
+			} catch(e) {}
 		}
 
 		buildErrorReport() {

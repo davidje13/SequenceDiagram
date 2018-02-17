@@ -12,6 +12,13 @@ define([
 	'use strict';
 
 	class BlockSplit extends BaseComponent {
+		prepareMeasurements({left, tag, label}, env) {
+			const blockInfo = env.state.blocks.get(left);
+			const config = env.theme.getBlock(blockInfo.type).section;
+			env.textSizer.expectMeasure(config.tag.labelAttrs, tag);
+			env.textSizer.expectMeasure(config.label.labelAttrs, label);
+		}
+
 		separation({left, right, tag, label}, env) {
 			const blockInfo = env.state.blocks.get(left);
 			const config = env.theme.getBlock(blockInfo.type).section;
@@ -126,8 +133,14 @@ define([
 			return blockInfo;
 		}
 
+		prepareMeasurements(stage, env) {
+			this.storeBlockInfo(stage, env);
+			super.prepareMeasurements(stage, env);
+		}
+
 		separationPre(stage, env) {
 			this.storeBlockInfo(stage, env);
+			super.separationPre(stage, env);
 		}
 
 		separation(stage, env) {

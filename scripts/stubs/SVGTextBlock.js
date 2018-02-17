@@ -114,25 +114,60 @@ define(['svg/SVGUtilities'], (svg) => {
 	}
 
 	class SizeTester {
+		constructor() {
+			this.expected = new Set();
+			this.measured = new Set();
+		}
+
+		_getMeasurementOpts(attrs, formatted) {
+			if(!formatted) {
+				if(typeof attrs === 'object' && attrs.state) {
+					formatted = attrs.state.formatted || [];
+					attrs = attrs.state.attrs;
+				} else {
+					formatted = [];
+				}
+			} else if(!Array.isArray(formatted)) {
+				throw new Error('Invalid formatted text: ' + formatted);
+			}
+			return {attrs, formatted};
+		}
+
+		expectMeasure(attrs, formatted) {
+			const opts = this._getMeasurementOpts(attrs, formatted);
+			this.expected.add(JSON.stringify(opts));
+		}
+
+		performMeasurementsPre() {
+		}
+
+		performMeasurementsAct() {
+			this.measured = new Set(this.expected);
+		}
+
+		performMeasurementsPost() {
+		}
+
 		measure(attrs, formatted) {
-			if(attrs.state) {
-				formatted = attrs.state.formatted;
-				attrs = attrs.state.attrs;
+			const opts = this._getMeasurementOpts(attrs, formatted);
+
+			if(!this.measured.has(JSON.stringify(opts))) {
+				throw new Error('Unexpected measurement', opts);
 			}
 
-			if(!formatted || !formatted.length) {
+			if(!opts.formatted || !opts.formatted.length) {
 				return {width: 0, height: 0};
 			}
 
 			let width = 0;
-			formatted.forEach((line) => {
+			opts.formatted.forEach((line) => {
 				const length = line.reduce((v, pt) => v + pt.text.length, 0);
 				width = Math.max(width, length);
 			});
 
 			return {
 				width,
-				height: formatted.length,
+				height: opts.formatted.length,
 			};
 		}
 
@@ -145,9 +180,8 @@ define(['svg/SVGUtilities'], (svg) => {
 		}
 
 		resetCache() {
-		}
-
-		detach() {
+			this.expected.clear();
+			this.measured.clear();
 		}
 	}
 

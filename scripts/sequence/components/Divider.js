@@ -10,6 +10,11 @@ define([
 	'use strict';
 
 	class Divider extends BaseComponent {
+		prepareMeasurements({mode, formattedLabel}, env) {
+			const config = env.theme.getDivider(mode);
+			env.textSizer.expectMeasure(config.labelAttrs, formattedLabel);
+		}
+
 		separation({mode, formattedLabel}, env) {
 			const config = env.theme.getDivider(mode);
 

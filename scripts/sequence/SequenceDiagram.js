@@ -60,6 +60,29 @@ define([
 		return meta.textContent;
 	}
 
+	function renderAll(diagrams) {
+		const errors = [];
+		function storeError(sd, e) {
+			errors.push(e);
+		}
+
+		diagrams.forEach((diagram) => {
+			diagram.addEventListener('error', storeError);
+			diagram.optimisedRenderPreReflow();
+		});
+		diagrams.forEach((diagram) => {
+			diagram.optimisedRenderReflow();
+		});
+		diagrams.forEach((diagram) => {
+			diagram.optimisedRenderPostReflow();
+			diagram.removeEventListener('error', storeError);
+		});
+
+		if(errors.length > 0) {
+			throw errors;
+		}
+	}
+
 	class SequenceDiagram extends EventObject {
 		constructor(code = null, options = {}) {
 			super();
@@ -85,7 +108,7 @@ define([
 			if(options.interactive) {
 				this.addInteractivity();
 			}
-			if(typeof this.code === 'string') {
+			if(typeof this.code === 'string' && options.render !== false) {
 				this.render();
 			}
 		}
@@ -102,13 +125,15 @@ define([
 			}, options));
 		}
 
-		set(code = '') {
+		set(code = '', {render = true} = {}) {
 			if(this.code === code) {
 				return;
 			}
 
 			this.code = code;
-			this.render();
+			if(render) {
+				this.render();
+			}
 		}
 
 		process(code) {
@@ -206,29 +231,92 @@ define([
 			};
 		}
 
-		render(processed = null) {
+		_revertParent(state) {
 			const dom = this.renderer.svg();
-			const originalParent = dom.parentNode;
+			if(dom.parentNode !== state.originalParent) {
+				document.body.removeChild(dom);
+				if(state.originalParent) {
+					state.originalParent.appendChild(dom);
+				}
+			}
+		}
+
+		_sendRenderError(e) {
+			this._revertParent(this.renderState);
+			this.renderState.error = true;
+			this.trigger('error', [this, e]);
+		}
+
+		optimisedRenderPreReflow(processed = null) {
+			const dom = this.renderer.svg();
+			this.renderState = {
+				originalParent: dom.parentNode,
+				processed,
+				error: false,
+			};
+			const state = this.renderState;
+
 			if(!document.body.contains(dom)) {
-				if(originalParent) {
-					originalParent.removeChild(dom);
+				if(state.originalParent) {
+					state.originalParent.removeChild(dom);
 				}
 				document.body.appendChild(dom);
 			}
+
 			try {
-				if(!processed) {
-					processed = this.process(this.code);
+				if(!state.processed) {
+					state.processed = this.process(this.code);
 				}
-				this.renderer.render(processed);
-				this.latestProcessed = processed;
+				this.renderer.optimisedRenderPreReflow(state.processed);
+			} catch(e) {
+				this._sendRenderError(e);
+			}
+		}
+
+		optimisedRenderReflow() {
+			try {
+				if(!this.renderState.error) {
+					this.renderer.optimisedRenderReflow();
+				}
+			} catch(e) {
+				this._sendRenderError(e);
+			}
+		}
+
+		optimisedRenderPostReflow() {
+			const state = this.renderState;
+
+			try {
+				if(!state.error) {
+					this.renderer.optimisedRenderPostReflow(state.processed);
+				}
+			} catch(e) {
+				this._sendRenderError(e);
+			}
+
+			this.renderState = null;
+
+			if(!state.error) {
+				this._revertParent(state);
+				this.latestProcessed = state.processed;
 				this.trigger('render', [this]);
-			} finally {
-				if(dom.parentNode !== originalParent) {
-					document.body.removeChild(dom);
-					if(originalParent) {
-						originalParent.appendChild(dom);
-					}
-				}
+			}
+		}
+
+		render(processed = null) {
+			let latestError = null;
+			function storeError(sd, e) {
+				latestError = e;
+			}
+			this.addEventListener('error', storeError);
+
+			this.optimisedRenderPreReflow(processed);
+			this.optimisedRenderReflow();
+			this.optimisedRenderPostReflow();
+
+			this.removeEventListener('error', storeError);
+			if(latestError) {
+				throw latestError;
 			}
 		}
 
@@ -257,6 +345,10 @@ define([
 			return extractCodeFromSVG(svg);
 		}
 
+		renderAll(diagrams) {
+			return renderAll(diagrams);
+		}
+
 		dom() {
 			return this.renderer.svg();
 		}
@@ -273,16 +365,13 @@ define([
 		};
 	}
 
-	function convert(element, code = null, options = {}) {
+	function convertOne(element, code = null, options = {}) {
 		if(element.tagName === 'svg') {
 			return null;
 		}
 
 		if(code === null) {
-			code = element.innerText;
-		} else if(typeof code === 'object') {
-			options = code;
-			code = options.code;
+			code = element.textContent;
 		}
 
 		const tagOptions = parseTagOptions(element);
@@ -304,6 +393,24 @@ define([
 		return diagram;
 	}
 
+	function convert(elements, code = null, options = {}) {
+		if(code && typeof code === 'object') {
+			options = code;
+			code = options.code;
+		}
+
+		if(Array.isArray(elements)) {
+			const opts = Object.assign({}, options, {render: false});
+			const diagrams = elements.map((el) => convertOne(el, code, opts));
+			if(options.render !== false) {
+				renderAll(diagrams);
+			}
+			return diagrams;
+		} else {
+			return convertOne(elements, code, options);
+		}
+	}
+
 	function convertAll(root = null, className = 'sequence-diagram') {
 		if(typeof root === 'string') {
 			className = root;
@@ -315,13 +422,15 @@ define([
 		} else {
 			elements = (root || document).getElementsByClassName(className);
 		}
+
 		// Convert from "live" collection to static to avoid infinite loops:
 		const els = [];
 		for(let i = 0; i < elements.length; ++ i) {
 			els.push(elements[i]);
 		}
+
 		// Convert elements
-		els.forEach((el) => convert(el));
+		convert(els);
 	}
 
 	return Object.assign(SequenceDiagram, {
@@ -334,6 +443,7 @@ define([
 		addTheme,
 		registerCodeMirrorMode,
 		extractCodeFromSVG,
+		renderAll,
 		convert,
 		convertAll,
 	});

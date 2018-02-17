@@ -206,23 +206,5 @@ defineDescribe('SVGTextBlock', [
 				expect(hold.children.length).toEqual(0);
 			});
 		});
-
-		describe('.detach', () => {
-			it('removes the test node from the DOM', () => {
-				tester.measure(attrs, [[{text: 'foo'}]]);
-				expect(hold.children.length).toEqual(1);
-				tester.detach();
-				expect(hold.children.length).toEqual(0);
-			});
-
-			it('does not prevent using the tester again later', () => {
-				tester.measure(attrs, [[{text: 'foo'}]]);
-				tester.detach();
-
-				const size = tester.measure(attrs, [[{text: 'foo'}]]);
-				expect(hold.children.length).toEqual(1);
-				expect(size.width).toBeGreaterThan(0);
-			});
-		});
 	});
 });

@@ -99,6 +99,8 @@ define([
 
 		_bindMethods() {
 			this.separationStage = this.separationStage.bind(this);
+			this.prepareMeasurementsStage =
+				this.prepareMeasurementsStage.bind(this);
 			this.renderStage = this.renderStage.bind(this);
 			this.addThemeDef = this.addThemeDef.bind(this);
 			this.addDef = this.addDef.bind(this);
@@ -294,6 +296,24 @@ define([
 			});
 		}
 
+		prepareMeasurementsStage(stage) {
+			const env = {
+				renderer: this,
+				theme: this.theme,
+				agentInfos: this.agentInfos,
+				textSizer: this.sizer,
+				state: this.state,
+				components: this.components,
+			};
+
+			const component = this.components.get(stage.type);
+			if(!component) {
+				throw new Error('Unknown component: ' + stage.type);
+			}
+
+			component.prepareMeasurements(stage, env);
+		}
+
 		checkAgentRange(agentIDs, topY = 0) {
 			if(agentIDs.length === 0) {
 				return topY;
@@ -467,7 +487,7 @@ define([
 			});
 		}
 
-		buildAgentInfos(agents, stages) {
+		buildAgentInfos(agents) {
 			this.agentInfos = new Map();
 			agents.forEach((agent, index) => {
 				this.agentInfos.set(agent.id, {
@@ -487,11 +507,6 @@ define([
 					separations: new Map(),
 				});
 			});
-
-			this.visibleAgentIDs = ['[', ']'];
-			stages.forEach(this.separationStage);
-
-			this.positionAgents();
 		}
 
 		updateBounds(stagesHeight) {
@@ -623,16 +638,18 @@ define([
 			return this._setCollapsed(line, collapsed);
 		}
 
-		render(sequence) {
-			const prevHighlight = this.currentHighlight;
+		_switchTheme(name) {
 			const oldTheme = this.theme;
+			this.theme = this.getThemeNamed(name);
+			this.theme.reset();
 
-			this.theme = this.getThemeNamed(sequence.meta.theme);
+			return (this.theme !== oldTheme);
+		}
 
-			const themeChanged = (this.theme !== oldTheme);
+		optimisedRenderPreReflow(sequence) {
+			const themeChanged = this._switchTheme(sequence.meta.theme);
 			this._reset(themeChanged);
 
-			this.theme.reset();
 			this.metaCode.nodeValue = sequence.meta.code;
 			this.theme.addDefs(this.addThemeDef);
 
@@ -640,21 +657,47 @@ define([
 				attrs: this.theme.titleAttrs,
 				formatted: sequence.meta.title,
 			});
+			this.sizer.expectMeasure(this.title);
 
 			this.minX = 0;
 			this.maxX = 0;
-			this.buildAgentInfos(sequence.agents, sequence.stages);
 
+			this.buildAgentInfos(sequence.agents);
+
+			sequence.stages.forEach(this.prepareMeasurementsStage);
 			this._resetState();
+			this.sizer.performMeasurementsPre();
+		}
+
+		optimisedRenderReflow() {
+			this.sizer.performMeasurementsAct();
+		}
+
+		optimisedRenderPostReflow(sequence) {
+			this.visibleAgentIDs = ['[', ']'];
+			sequence.stages.forEach(this.separationStage);
+			this._resetState();
+
+			this.positionAgents();
+
 			sequence.stages.forEach(this.renderStage);
 			const bottomY = this.checkAgentRange(['[', ']'], this.currentY);
 
 			const stagesHeight = Math.max(bottomY - this.theme.actionMargin, 0);
 			this.updateBounds(stagesHeight);
 
-			this.sizer.resetCache();
-			this.sizer.detach();
+			const prevHighlight = this.currentHighlight;
+			this.currentHighlight = -1;
 			this.setHighlight(prevHighlight);
+
+			this.sizer.performMeasurementsPost();
+			this.sizer.resetCache();
+		}
+
+		render(sequence) {
+			this.optimisedRenderPreReflow(sequence);
+			this.optimisedRenderReflow();
+			this.optimisedRenderPostReflow(sequence);
 		}
 
 		getThemeNames() {

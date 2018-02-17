@@ -491,8 +491,8 @@ define([
 				// but this fails when exporting as SVG / PNG (svg tags must
 				// have no external dependencies).
 //				const url = 'https://fonts.googleapis.com/css?family=' + FONT;
-//				style.innerText = '@import url("' + url + '")';
-				style.innerText = (
+//				style.textContent = '@import url("' + url + '")';
+				style.textContent = (
 					'@font-face{' +
 					'font-family:"' + Handlee.name + '";' +
 					'src:url("data:font/woff2;base64,' + Handlee.woff2 + '");' +

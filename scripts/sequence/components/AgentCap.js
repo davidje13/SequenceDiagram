@@ -20,6 +20,11 @@ define([
 			return config || env.theme.agentCap.box;
 		}
 
+		prepareMeasurements({formattedLabel, options}, env) {
+			const config = this.getConfig(options, env);
+			env.textSizer.expectMeasure(config.labelAttrs, formattedLabel);
+		}
+
 		separation({formattedLabel, options}, env) {
 			const config = this.getConfig(options, env);
 			const width = (
@@ -78,6 +83,9 @@ define([
 	}
 
 	class CapCross {
+		prepareMeasurements() {
+		}
+
 		separation(agentInfo, env) {
 			const config = env.theme.agentCap.cross;
 			return {
@@ -122,6 +130,11 @@ define([
 	}
 
 	class CapBar {
+		prepareMeasurements({formattedLabel}, env) {
+			const config = env.theme.agentCap.box;
+			env.textSizer.expectMeasure(config.labelAttrs, formattedLabel);
+		}
+
 		separation({formattedLabel}, env) {
 			const config = env.theme.agentCap.box;
 			const width = (
@@ -178,6 +191,9 @@ define([
 	}
 
 	class CapFade {
+		prepareMeasurements() {
+		}
+
 		separation({currentRad}) {
 			return {
 				left: currentRad,
@@ -239,6 +255,9 @@ define([
 	}
 
 	class CapNone {
+		prepareMeasurements() {
+		}
+
 		separation({currentRad}) {
 			return {
 				left: currentRad,
@@ -285,6 +304,14 @@ define([
 		constructor(begin) {
 			super();
 			this.begin = begin;
+		}
+
+		prepareMeasurements({mode, agentIDs}, env) {
+			agentIDs.forEach((id) => {
+				const agentInfo = env.agentInfos.get(id);
+				const cap = AGENT_CAPS[mode];
+				cap.prepareMeasurements(agentInfo, env, this.begin);
+			});
 		}
 
 		separationPre({mode, agentIDs}, env) {

@@ -28,16 +28,23 @@ define([
 	}
 
 	class Parallel extends BaseComponent {
-		separationPre(stage, env) {
-			stage.stages.forEach((subStage) => {
-				env.components.get(subStage.type).separationPre(subStage, env);
+		invokeChildren(stage, env, methodName) {
+			return stage.stages.map((subStage) => {
+				const component = env.components.get(subStage.type);
+				return component[methodName](subStage, env);
 			});
 		}
 
+		prepareMeasurements(stage, env) {
+			this.invokeChildren(stage, env, 'prepareMeasurements');
+		}
+
+		separationPre(stage, env) {
+			this.invokeChildren(stage, env, 'separationPre');
+		}
+
 		separation(stage, env) {
-			stage.stages.forEach((subStage) => {
-				env.components.get(subStage.type).separation(subStage, env);
-			});
+			this.invokeChildren(stage, env, 'separation');
 		}
 
 		renderPre(stage, env) {
@@ -47,11 +54,9 @@ define([
 				asynchronousY: null,
 			};
 
-			return stage.stages.map((subStage) => {
-				const component = env.components.get(subStage.type);
-				const subResult = component.renderPre(subStage, env);
-				return BaseComponent.cleanRenderPreResult(subResult);
-			}).reduce(mergeResults, baseResults);
+			return this.invokeChildren(stage, env, 'renderPre')
+				.map((r) => BaseComponent.cleanRenderPreResult(r))
+				.reduce(mergeResults, baseResults);
 		}
 
 		render(stage, env) {
@@ -73,24 +78,19 @@ define([
 		}
 
 		renderHidden(stage, env) {
-			stage.stages.forEach((subStage) => {
-				const component = env.components.get(subStage.type);
-				component.renderHidden(subStage, env);
-			});
+			this.invokeChildren(stage, env, 'renderHidden');
 		}
 
 		shouldHide(stage, env) {
-			const result = {
+			const baseResults = {
 				self: false,
 				nest: 0,
 			};
-			stage.stages.forEach((subStage) => {
-				const component = env.components.get(subStage.type);
-				const hide = component.shouldHide(subStage, env) || {};
-				result.self = (result.self || Boolean(hide.self));
-				result.nest += (hide.nest || 0);
-			});
-			return result;
+			return this.invokeChildren(stage, env, 'shouldHide')
+				.reduce((result, {self = false, nest = 0} = {}) => ({
+					self: result.self || Boolean(self),
+					nest: result.nest + nest,
+				}), baseResults);
 		}
 	}
 

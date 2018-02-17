@@ -40,7 +40,7 @@
 		const links = [];
 		for(let i = 0; i < linkElements.length; ++ i) {
 			links.push({
-				label: linkElements[i].innerText,
+				label: linkElements[i].textContent,
 				href: linkElements[i].getAttribute('href'),
 			});
 		}
