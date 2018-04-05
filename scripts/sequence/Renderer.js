@@ -559,7 +559,6 @@ define([
 
 			this.knownDefs.clear();
 			this.highlights.clear();
-			this.currentHighlight = -1;
 			svg.empty(this.defs);
 			svg.empty(this.fullMask);
 			svg.empty(this.lineMask);
@@ -576,18 +575,18 @@ define([
 		}
 
 		setHighlight(line = null) {
-			if(line === null || !this.highlights.has(line)) {
+			if(line === null) {
 				line = -1;
 			}
 			if(this.currentHighlight === line) {
 				return;
 			}
-			if(this.currentHighlight !== -1) {
+			if(this.highlights.has(this.currentHighlight)) {
 				this.highlights.get(this.currentHighlight).forEach((o) => {
 					o.setAttribute('class', 'region');
 				});
 			}
-			if(line !== -1) {
+			if(this.highlights.has(line)) {
 				this.highlights.get(line).forEach((o) => {
 					o.setAttribute('class', 'region focus');
 				});
