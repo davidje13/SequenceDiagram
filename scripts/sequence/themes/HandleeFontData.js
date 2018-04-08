@@ -5,6 +5,10 @@ define(() => {
 	// Downloaded from Google Fonts and converted to Base64 for embedding in
 	// generated SVGs
 	// https://fonts.google.com/specimen/Handlee
+	// base64 -b64 \
+	//   < *.woff2 \
+	//   | sed -e "s/^/"$'\t'$'\t'$'\t'"'/" -e "s/$/' +/" \
+	//   > handlee.woff2.b64
 
 	/* License
 
