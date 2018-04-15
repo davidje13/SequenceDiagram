@@ -16,7 +16,7 @@
   ],
   "main": "lib/sequence-diagram",
   "scripts": {
-    "serve": "node_modules/.bin/http-server",
+    "start": "node_modules/.bin/http-server",
     "minify": "node node_modules/.bin/r.js -o scripts/build.js && node_modules/.bin/uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js"
   },
   "devDependencies": {

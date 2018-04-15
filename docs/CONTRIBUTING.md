@@ -24,7 +24,7 @@ is easy to do:
 
 ```shell
 npm install;
-npm run serve;
+npm start;
 ```
 
 The tests and linter will now be available at
