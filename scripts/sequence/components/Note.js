@@ -1,5 +1,10 @@
-define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
+define(['./BaseComponent'], (BaseComponent) => {
 	'use strict';
+
+	const OUTLINE_ATTRS = {
+		'fill': 'transparent',
+		'class': 'outline',
+	};
 
 	function findExtremes(agentInfos, agentIDs) {
 		let min = null;
@@ -39,14 +44,8 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 		}, env) {
 			const config = env.theme.getNote(mode);
 
-			const clickable = env.makeRegion();
-
 			const y = env.topY + config.margin.top + config.padding.top;
-			const labelNode = new env.SVGTextBlockClass(clickable, {
-				attrs: config.labelAttrs,
-				formatted: label,
-				y,
-			});
+			const labelNode = env.svg.formattedText(config.labelAttrs, label);
 			const size = env.textSizer.measure(labelNode);
 
 			const fullW = (
@@ -85,21 +84,21 @@ define(['./BaseComponent', 'svg/SVGUtilities'], (BaseComponent, svg) => {
 				break;
 			}
 
-			clickable.insertBefore(svg.make('rect', {
-				'x': x0,
-				'y': env.topY + config.margin.top,
-				'width': x1 - x0,
-				'height': fullH,
-				'fill': 'transparent',
-				'class': 'outline',
-			}), clickable.firstChild);
-
-			clickable.insertBefore(config.boxRenderer({
-				x: x0,
-				y: env.topY + config.margin.top,
-				width: x1 - x0,
-				height: fullH,
-			}), clickable.firstChild);
+			env.makeRegion().add(
+				config.boxRenderer({
+					x: x0,
+					y: env.topY + config.margin.top,
+					width: x1 - x0,
+					height: fullH,
+				}),
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': x0,
+					'y': env.topY + config.margin.top,
+					'width': x1 - x0,
+					'height': fullH,
+				}),
+				labelNode
+			);
 
 			return (
 				env.topY +

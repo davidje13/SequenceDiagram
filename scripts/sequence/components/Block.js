@@ -1,15 +1,16 @@
 define([
 	'./BaseComponent',
 	'core/ArrayUtilities',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
 ], (
 	BaseComponent,
-	array,
-	svg,
-	SVGShapes
+	array
 ) => {
 	'use strict';
+
+	const OUTLINE_ATTRS = {
+		'fill': 'transparent',
+		'class': 'outline',
+	};
 
 	class BlockSplit extends BaseComponent {
 		prepareMeasurements({left, tag, label}, env) {
@@ -53,58 +54,46 @@ define([
 
 			const clickable = env.makeRegion();
 
-			const tagRender = SVGShapes.renderBoxedText(tag, {
-				x: agentInfoL.x,
-				y,
+			const tagRender = env.svg.boxedText({
 				padding: config.section.tag.padding,
 				boxAttrs: config.section.tag.boxAttrs,
 				boxRenderer: config.section.tag.boxRenderer,
 				labelAttrs: config.section.tag.labelAttrs,
-				boxLayer: blockInfo.hold,
-				labelLayer: clickable,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-				textSizer: env.textSizer,
-			});
+			}, tag, {x: agentInfoL.x, y});
 
-			const labelRender = SVGShapes.renderBoxedText(label, {
-				x: agentInfoL.x + tagRender.width,
-				y,
+			const labelRender = env.svg.boxedText({
 				padding: config.section.label.padding,
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.section.label.labelAttrs,
-				boxLayer: env.lineMaskLayer,
-				labelLayer: clickable,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-				textSizer: env.textSizer,
-			});
+			}, label, {x: agentInfoL.x + tagRender.width, y});
 
 			const labelHeight = Math.max(
 				Math.max(tagRender.height, labelRender.height),
 				config.section.label.minHeight
 			);
 
-			clickable.insertBefore(svg.make('rect', {
-				'x': agentInfoL.x,
-				'y': y,
-				'width': agentInfoR.x - agentInfoL.x,
-				'height': labelHeight,
-				'fill': 'transparent',
-				'class': 'outline',
-			}), clickable.firstChild);
+			blockInfo.hold.add(tagRender.box);
+			env.lineMaskLayer.add(labelRender.box);
+			clickable.add(
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': agentInfoL.x,
+					'y': y,
+					'width': agentInfoR.x - agentInfoL.x,
+					'height': labelHeight,
+				}),
+				tagRender.label,
+				labelRender.label
+			);
 
 			if(!first) {
-				blockInfo.hold.appendChild(config.sepRenderer({
+				blockInfo.hold.add(config.sepRenderer({
 					'x1': agentInfoL.x,
 					'y1': y,
 					'x2': agentInfoR.x,
 					'y2': y,
 				}));
 			} else if(blockInfo.canHide) {
-				clickable.setAttribute(
-					'class',
-					clickable.getAttribute('class') +
-					(blockInfo.hide ? ' collapsed' : ' expanded')
-				);
+				clickable.addClass(blockInfo.hide ? 'collapsed' : 'expanded');
 			}
 
 			return y + labelHeight + config.section.padding.top;
@@ -160,8 +149,8 @@ define([
 		}
 
 		render(stage, env) {
-			const hold = svg.make('g');
-			env.blockLayer.appendChild(hold);
+			const hold = env.svg.el('g');
+			env.blockLayer.add(hold);
 
 			const blockInfo = env.state.blocks.get(stage.left);
 			blockInfo.hold = hold;
@@ -215,13 +204,9 @@ define([
 				shapes = {shape: shapes};
 			}
 
-			blockInfo.hold.appendChild(shapes.shape);
-			if(shapes.fill) {
-				env.fillLayer.appendChild(shapes.fill);
-			}
-			if(shapes.mask) {
-				env.lineMaskLayer.appendChild(shapes.mask);
-			}
+			blockInfo.hold.add(shapes.shape);
+			env.fillLayer.add(shapes.fill);
+			env.lineMaskLayer.add(shapes.mask);
 
 			return env.primaryY + config.margin.bottom + env.theme.actionMargin;
 		}

@@ -1,24 +1,24 @@
 defineDescribe('SVGTextBlock', [
 	'./SVGTextBlock',
-	'./SVGUtilities',
+	'./SVG',
+	'stubs/TestDOM',
 ], (
 	SVGTextBlock,
-	svg
+	SVG,
+	TestDOM
 ) => {
 	'use strict';
 
+
 	const attrs = {'font-size': 10, 'line-height': 1.5};
-	let hold = null;
+	let svg = null;
 	let block = null;
+	let hold = null;
 
 	beforeEach(() => {
-		hold = svg.makeContainer();
-		document.body.appendChild(hold);
-		block = new SVGTextBlock(hold, {attrs});
-	});
-
-	afterEach(() => {
-		document.body.removeChild(hold);
+		svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+		block = new SVGTextBlock(svg.body, svg, {attrs});
+		hold = svg.body.element;
 	});
 
 	describe('constructor', () => {
@@ -26,28 +26,28 @@ defineDescribe('SVGTextBlock', [
 			expect(block.state.formatted).toEqual([]);
 			expect(block.state.x).toEqual(0);
 			expect(block.state.y).toEqual(0);
-			expect(hold.children.length).toEqual(0);
+			expect(hold.childNodes.length).toEqual(0);
 		});
 
 		it('does not explode if given no setup', () => {
-			block = new SVGTextBlock(hold);
+			block = new SVGTextBlock(svg.body, svg);
 			expect(block.state.formatted).toEqual([]);
 			expect(block.state.x).toEqual(0);
 			expect(block.state.y).toEqual(0);
-			expect(hold.children.length).toEqual(0);
+			expect(hold.childNodes.length).toEqual(0);
 		});
 
 		it('adds the given formatted text if specified', () => {
-			block = new SVGTextBlock(hold, {
+			block = new SVGTextBlock(svg.body, svg, {
 				attrs,
 				formatted: [[{text: 'abc'}]],
 			});
 			expect(block.state.formatted).toEqual([[{text: 'abc'}]]);
-			expect(hold.children.length).toEqual(1);
+			expect(hold.childNodes.length).toEqual(1);
 		});
 
 		it('uses the given coordinates if specified', () => {
-			block = new SVGTextBlock(hold, {attrs, x: 5, y: 7});
+			block = new SVGTextBlock(svg.body, svg, {attrs, x: 5, y: 7});
 			expect(block.state.x).toEqual(5);
 			expect(block.state.y).toEqual(7);
 		});
@@ -57,21 +57,21 @@ defineDescribe('SVGTextBlock', [
 		it('sets the text to the given content', () => {
 			block.set({formatted: [[{text: 'foo'}]]});
 			expect(block.state.formatted).toEqual([[{text: 'foo'}]]);
-			expect(hold.children.length).toEqual(1);
-			expect(hold.children[0].innerHTML).toEqual('foo');
+			expect(hold.childNodes.length).toEqual(1);
+			expect(hold.childNodes[0].innerHTML).toEqual('foo');
 		});
 
 		it('renders multiline text', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			expect(hold.children.length).toEqual(2);
-			expect(hold.children[0].innerHTML).toEqual('foo');
-			expect(hold.children[1].innerHTML).toEqual('bar');
+			expect(hold.childNodes.length).toEqual(2);
+			expect(hold.childNodes[0].innerHTML).toEqual('foo');
+			expect(hold.childNodes[1].innerHTML).toEqual('bar');
 		});
 
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			const line0 = hold.children[0];
-			const line1 = hold.children[1];
+			const line0 = hold.childNodes[0];
+			const line1 = hold.childNodes[1];
 
 			block.set({formatted: [
 				[{text: 'zig'}],
@@ -79,77 +79,83 @@ defineDescribe('SVGTextBlock', [
 				[{text: 'baz'}],
 			]});
 
-			expect(hold.children.length).toEqual(3);
-			expect(hold.children[0]).toEqual(line0);
-			expect(hold.children[0].innerHTML).toEqual('zig');
-			expect(hold.children[1]).toEqual(line1);
-			expect(hold.children[1].innerHTML).toEqual('zag');
-			expect(hold.children[2].innerHTML).toEqual('baz');
+			expect(hold.childNodes.length).toEqual(3);
+			expect(hold.childNodes[0]).toEqual(line0);
+			expect(hold.childNodes[0].innerHTML).toEqual('zig');
+			expect(hold.childNodes[1]).toEqual(line1);
+			expect(hold.childNodes[1].innerHTML).toEqual('zag');
+			expect(hold.childNodes[2].innerHTML).toEqual('baz');
 		});
 
 		it('re-uses text nodes when possible, removing extra if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			const line0 = hold.children[0];
+			const line0 = hold.childNodes[0];
 
 			block.set({formatted: [[{text: 'zig'}]]});
 
-			expect(hold.children.length).toEqual(1);
-			expect(hold.children[0]).toEqual(line0);
-			expect(hold.children[0].innerHTML).toEqual('zig');
+			expect(hold.childNodes.length).toEqual(1);
+			expect(hold.childNodes[0]).toEqual(line0);
+			expect(hold.childNodes[0].innerHTML).toEqual('zig');
 		});
 
 		it('positions text nodes and applies attributes', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			expect(hold.children.length).toEqual(2);
-			expect(hold.children[0].getAttribute('x')).toEqual('0');
-			expect(hold.children[0].getAttribute('y')).toEqual('10');
-			expect(hold.children[0].getAttribute('font-size')).toEqual('10');
-			expect(hold.children[1].getAttribute('x')).toEqual('0');
-			expect(hold.children[1].getAttribute('y')).toEqual('25');
-			expect(hold.children[1].getAttribute('font-size')).toEqual('10');
+			expect(hold.childNodes.length).toEqual(2);
+			expect(hold.childNodes[0].getAttribute('x')).toEqual('0');
+			expect(hold.childNodes[0].getAttribute('y')).toEqual('1');
+			expect(hold.childNodes[0].getAttribute('font-size')).toEqual('10');
+			expect(hold.childNodes[1].getAttribute('x')).toEqual('0');
+			expect(hold.childNodes[1].getAttribute('y')).toEqual('2');
+			expect(hold.childNodes[1].getAttribute('font-size')).toEqual('10');
 		});
 
 		it('moves all nodes', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			block.set({x: 5, y: 7});
-			expect(hold.children[0].getAttribute('x')).toEqual('5');
-			expect(hold.children[0].getAttribute('y')).toEqual('17');
-			expect(hold.children[1].getAttribute('x')).toEqual('5');
-			expect(hold.children[1].getAttribute('y')).toEqual('32');
+			expect(hold.childNodes[0].getAttribute('x')).toEqual('5');
+			expect(hold.childNodes[0].getAttribute('y')).toEqual('8');
+			expect(hold.childNodes[1].getAttribute('x')).toEqual('5');
+			expect(hold.childNodes[1].getAttribute('y')).toEqual('9');
 		});
 
 		it('clears if the text is empty', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			block.set({formatted: []});
-			expect(hold.children.length).toEqual(0);
+			expect(hold.childNodes.length).toEqual(0);
 			expect(block.state.formatted).toEqual([]);
 			expect(block.lines.length).toEqual(0);
 		});
 	});
 
-	describe('SizeTester', () => {
-		let tester = null;
-
+	describe('TextSizer', () => {
 		beforeEach(() => {
-			tester = new SVGTextBlock.SizeTester(hold);
+			svg = new SVG(
+				new TestDOM.DOMWrapper(window.document),
+				(svgBase) => new SVGTextBlock.TextSizer(svgBase)
+			);
+			document.body.appendChild(svg.body.element);
+		});
+
+		afterEach(() => {
+			document.body.removeChild(svg.body.element);
 		});
 
 		describe('.measure', () => {
 			it('calculates the size of the formatted text', () => {
-				const size = tester.measure(attrs, [[{text: 'foo'}]]);
+				const size = svg.textSizer.measure(attrs, [[{text: 'foo'}]]);
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(15);
 			});
 
 			it('calculates the size of text blocks', () => {
 				block.set({formatted: [[{text: 'foo'}]]});
-				const size = tester.measure(block);
+				const size = svg.textSizer.measure(block);
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(15);
 			});
 
 			it('measures multiline text', () => {
-				const size = tester.measure(attrs, [
+				const size = svg.textSizer.measure(attrs, [
 					[{text: 'foo'}],
 					[{text: 'bar'}],
 				]);
@@ -158,19 +164,19 @@ defineDescribe('SVGTextBlock', [
 			});
 
 			it('returns 0, 0 for empty content', () => {
-				const size = tester.measure(attrs, []);
+				const size = svg.textSizer.measure(attrs, []);
 				expect(size.width).toEqual(0);
 				expect(size.height).toEqual(0);
 			});
 
 			it('returns the maximum width for multiline text', () => {
-				const size0 = tester.measure(attrs, [
+				const size0 = svg.textSizer.measure(attrs, [
 					[{text: 'foo'}],
 				]);
-				const size1 = tester.measure(attrs, [
+				const size1 = svg.textSizer.measure(attrs, [
 					[{text: 'longline'}],
 				]);
-				const size = tester.measure(attrs, [
+				const size = svg.textSizer.measure(attrs, [
 					[{text: 'foo'}],
 					[{text: 'longline'}],
 					[{text: 'foo'}],
@@ -182,14 +188,14 @@ defineDescribe('SVGTextBlock', [
 
 		describe('.measureHeight', () => {
 			it('calculates the height of the rendered text', () => {
-				const height = tester.measureHeight(attrs, [
+				const height = svg.textSizer.measureHeight(attrs, [
 					[{text: 'foo'}],
 				]);
 				expect(height).toEqual(15);
 			});
 
 			it('measures multiline text', () => {
-				const height = tester.measureHeight(attrs, [
+				const height = svg.textSizer.measureHeight(attrs, [
 					[{text: 'foo'}],
 					[{text: 'bar'}],
 				]);
@@ -197,13 +203,13 @@ defineDescribe('SVGTextBlock', [
 			});
 
 			it('returns 0 for empty content', () => {
-				const height = tester.measureHeight(attrs, []);
+				const height = svg.textSizer.measureHeight(attrs, []);
 				expect(height).toEqual(0);
 			});
 
 			it('does not require the container', () => {
-				tester.measureHeight(attrs, [[{text: 'foo'}]]);
-				expect(hold.children.length).toEqual(0);
+				svg.textSizer.measureHeight(attrs, [[{text: 'foo'}]]);
+				expect(svg.body.element.childNodes.length).toEqual(0);
 			});
 		});
 	});

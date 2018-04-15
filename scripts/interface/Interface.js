@@ -1,36 +1,17 @@
-define(['require'], (require) => {
+define(['require', 'core/DOMWrapper'], (require, DOMWrapper) => {
 	'use strict';
 
 	const DELAY_AGENTCHANGE = 500;
 	const DELAY_STAGECHANGE = 250;
 	const PNG_RESOLUTION = 4;
 
-	function makeText(text = '') {
-		return document.createTextNode(text);
-	}
-
-	function makeNode(type, attrs = {}, children = []) {
-		const o = document.createElement(type);
-		for(const k in attrs) {
-			if(attrs.hasOwnProperty(k)) {
-				o.setAttribute(k, attrs[k]);
-			}
-		}
-		for(const c of children) {
-			o.appendChild(c);
-		}
-		return o;
-	}
+	const dom = new DOMWrapper(document);
 
 	function addNewline(value) {
 		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
 			return value + '\n';
 		}
 		return value;
-	}
-
-	function on(element, events, fn) {
-		events.forEach((event) => element.addEventListener(event, fn));
 	}
 
 	function findPos(content, index) {
@@ -166,196 +147,140 @@ define(['require'], (require) => {
 			this._showDropStyle = this._showDropStyle.bind(this);
 			this._hideDropStyle = this._hideDropStyle.bind(this);
 
-			this._enhanceEditor();
-		}
-
-		buildOptionsLinks() {
-			const options = makeNode('div', {'class': 'options links'});
-			this.links.forEach((link) => {
-				options.appendChild(makeNode('a', {
-					'href': link.href,
-					'target': '_blank',
-				}, [makeText(link.label)]));
-			});
-			return options;
+			this.diagram
+				.on('render', () => {
+					this.updateMinSize(this.diagram.getSize());
+					this.pngDirty = true;
+				})
+				.on('mouseover', (element) => {
+					if(this.marker) {
+						this.marker.clear();
+					}
+					if(element.ln !== undefined && this.code.markText) {
+						this.marker = this.code.markText(
+							{line: element.ln, ch: 0},
+							{line: element.ln + 1, ch: 0},
+							{
+								className: 'hover',
+								inclusiveLeft: false,
+								inclusiveRight: false,
+								clearOnEnter: true,
+							}
+						);
+					}
+				})
+				.on('mouseout', () => {
+					if(this.marker) {
+						this.marker.clear();
+						this.marker = null;
+					}
+				})
+				.on('click', (element) => {
+					if(this.marker) {
+						this.marker.clear();
+						this.marker = null;
+					}
+					if(element.ln !== undefined && this.code.setSelection) {
+						this.code.setSelection(
+							{line: element.ln, ch: 0},
+							{line: element.ln + 1, ch: 0},
+							{origin: '+focus', bias: -1}
+						);
+						this.code.focus();
+					}
+				})
+				.on('dblclick', (element) => {
+					this.diagram.toggleCollapsed(element.ln);
+				});
 		}
 
 		buildOptionsDownloads() {
-			this.downloadPNG = makeNode('a', {
-				'href': '#',
-				'download': 'SequenceDiagram.png',
-			}, [makeText('Download PNG')]);
-			on(this.downloadPNG, [
-				'focus',
-				'mouseover',
-				'mousedown',
-			], this._downloadPNGFocus);
-			on(this.downloadPNG, ['click'], this._downloadPNGClick);
+			this.downloadPNG = dom.el('a')
+				.text('Download PNG')
+				.attrs({
+					'href': '#',
+					'download': 'SequenceDiagram.png',
+				})
+				.on(['focus', 'mouseover', 'mousedown'], this._downloadPNGFocus)
+				.on('click', this._downloadPNGClick);
 
-			this.downloadSVG = makeNode('a', {
-				'href': '#',
-				'download': 'SequenceDiagram.svg',
-			}, [makeText('SVG')]);
-			on(this.downloadSVG, ['click'], this._downloadSVGClick);
+			this.downloadSVG = dom.el('a')
+				.text('SVG')
+				.attrs({
+					'href': '#',
+					'download': 'SequenceDiagram.svg',
+				})
+				.on('click', this._downloadSVGClick);
 
-			return makeNode('div', {'class': 'options downloads'}, [
-				this.downloadPNG,
-				this.downloadSVG,
-			]);
-		}
-
-		buildEditor(container) {
-			const value = this.loadCode() || this.defaultCode;
-			const code = makeNode('textarea', {'class': 'editor-simple'});
-			code.value = value;
-			container.appendChild(code);
-
-			return code;
-		}
-
-		registerListeners() {
-			this.code.addEventListener('input', () => this.update(false));
-
-			this.diagram.addEventListener('render', () => {
-				this.updateMinSize(this.diagram.getSize());
-				this.pngDirty = true;
-			});
-
-			this.diagram.addEventListener('mouseover', (element) => {
-				if(this.marker) {
-					this.marker.clear();
-				}
-				if(element.ln !== undefined && this.code.markText) {
-					this.marker = this.code.markText(
-						{line: element.ln, ch: 0},
-						{line: element.ln + 1, ch: 0},
-						{
-							className: 'hover',
-							inclusiveLeft: false,
-							inclusiveRight: false,
-							clearOnEnter: true,
-						}
-					);
-				}
-			});
-
-			this.diagram.addEventListener('mouseout', () => {
-				if(this.marker) {
-					this.marker.clear();
-					this.marker = null;
-				}
-			});
-
-			this.diagram.addEventListener('click', (element) => {
-				if(this.marker) {
-					this.marker.clear();
-					this.marker = null;
-				}
-				if(element.ln !== undefined && this.code.setSelection) {
-					this.code.setSelection(
-						{line: element.ln, ch: 0},
-						{line: element.ln + 1, ch: 0},
-						{origin: '+focus', bias: -1}
-					);
-					this.code.focus();
-				}
-			});
-
-			this.diagram.addEventListener('dblclick', (element) => {
-				this.diagram.toggleCollapsed(element.ln);
-			});
-
-			this.container.addEventListener('dragover', (event) => {
-				event.preventDefault();
-				if(hasDroppedFile(event, 'image/svg+xml')) {
-					event.dataTransfer.dropEffect = 'copy';
-					this._showDropStyle();
-				} else {
-					event.dataTransfer.dropEffect = 'none';
-				}
-			});
-
-			this.container.addEventListener('dragleave', this._hideDropStyle);
-			this.container.addEventListener('dragend', this._hideDropStyle);
-
-			this.container.addEventListener('drop', (event) => {
-				event.preventDefault();
-				this._hideDropStyle();
-				const file = getDroppedFile(event, 'image/svg+xml');
-				if(file) {
-					this.loadFile(file);
-				}
-			});
+			return dom.el('div').setClass('options downloads')
+				.add(this.downloadPNG, this.downloadSVG);
 		}
 
 		buildLibrary(container) {
 			const diagrams = this.library.map((lib) => {
-				const holdInner = makeNode('div', {
-					'title': lib.title || lib.code,
-				});
-				const hold = makeNode('div', {
-					'class': 'library-item',
-				}, [holdInner]);
-				hold.addEventListener(
-					'click',
-					this.addCodeBlock.bind(this, lib.code)
-				);
-				container.appendChild(hold);
-				const diagram = this.diagram.clone({
+				const holdInner = dom.el('div')
+					.attr('title', lib.title || lib.code);
+
+				const hold = dom.el('div')
+					.setClass('library-item')
+					.add(holdInner)
+					.on('click', this.addCodeBlock.bind(this, lib.code))
+					.attach(container);
+
+				return this.diagram.clone({
 					code: simplifyPreview(lib.preview || lib.code),
-					container: holdInner,
+					container: holdInner.element,
 					render: false,
-				});
-				diagram.addEventListener('error', (sd, e) => {
+				}).on('error', (sd, e) => {
 					window.console.warn('Failed to render preview', e);
-					hold.setAttribute('class', 'library-item broken');
-					holdInner.textContent = lib.code;
+					hold.attr('class', 'library-item broken');
+					holdInner.text(lib.code);
 				});
-				return diagram;
 			});
 
 			try {
 				this.diagram.renderAll(diagrams);
 			} catch(e) {}
-		}
 
-		buildErrorReport() {
-			this.errorText = makeText();
-			this.errorMsg = makeNode('div', {'class': 'msg-error'}, [
-				this.errorText,
-			]);
-			return this.errorMsg;
+			return container;
 		}
 
 		buildViewPane() {
-			this.viewPaneInner = makeNode('div', {'class': 'pane-view-inner'});
+			this.viewPaneInner = dom.el('div').setClass('pane-view-inner')
+				.add(this.diagram.dom());
 
-			return makeNode('div', {'class': 'pane-view'}, [
-				makeNode('div', {'class': 'pane-view-scroller'}, [
-					this.viewPaneInner,
-				]),
-				this.buildErrorReport(),
-			]);
+			this.errorMsg = dom.el('div').setClass('msg-error');
+
+			return dom.el('div').setClass('pane-view')
+				.add(
+					dom.el('div').setClass('pane-view-scroller')
+						.add(this.viewPaneInner),
+					this.errorMsg
+				);
 		}
 
-		buildLeftPanes(container) {
-			const codePane = makeNode('div', {'class': 'pane-code'});
-			container.appendChild(codePane);
-			let libPane = null;
+		buildLeftPanes() {
+			const container = dom.el('div').setClass('pane-side');
+
+			this.code = dom.el('textarea')
+				.setClass('editor-simple')
+				.val(this.loadCode() || this.defaultCode)
+				.on('input', () => this.update(false));
+
+			const codePane = dom.el('div').setClass('pane-code')
+				.add(this.code)
+				.attach(container);
 
 			if(this.library.length > 0) {
-				const libPaneInner = makeNode('div', {
-					'class': 'pane-library-inner',
-				});
-				libPane = makeNode('div', {'class': 'pane-library'}, [
-					makeNode('div', {'class': 'pane-library-scroller'}, [
-						libPaneInner,
-					]),
-				]);
-				container.appendChild(libPane);
-				this.buildLibrary(libPaneInner);
+				const libPane = dom.el('div').setClass('pane-library')
+					.add(dom.el('div').setClass('pane-library-scroller')
+						.add(this.buildLibrary(
+							dom.el('div').setClass('pane-library-inner')
+						))
+					)
+					.attach(container);
 
-				makeSplit([codePane, libPane], {
+				makeSplit([codePane.element, libPane.element], {
 					direction: 'vertical',
 					snapOffset: 5,
 					sizes: [70, 30],
@@ -363,39 +288,58 @@ define(['require'], (require) => {
 				});
 			}
 
-			return {codePane, libPane};
+			return container;
 		}
 
 		build(container) {
-			this.container = container;
-
+			const lPane = this.buildLeftPanes();
 			const viewPane = this.buildViewPane();
 
-			const lPane = makeNode('div', {'class': 'pane-side'});
-			const hold = makeNode('div', {'class': 'pane-hold'}, [
-				lPane,
-				viewPane,
-				this.buildOptionsLinks(),
-				this.buildOptionsDownloads(),
-			]);
-			container.appendChild(hold);
+			this.container = dom.wrap(container)
+				.add(dom.el('div').setClass('pane-hold')
+					.add(
+						lPane,
+						viewPane,
+						dom.el('div').setClass('options links')
+							.add(this.links.map((link) => dom.el('a')
+								.attrs({'href': link.href, 'target': '_blank'})
+								.text(link.label)
+							)),
+						this.buildOptionsDownloads()
+					)
+				)
+				.on('dragover', (event) => {
+					event.preventDefault();
+					if(hasDroppedFile(event, 'image/svg+xml')) {
+						event.dataTransfer.dropEffect = 'copy';
+						this._showDropStyle();
+					} else {
+						event.dataTransfer.dropEffect = 'none';
+					}
+				})
+				.on('dragleave', this._hideDropStyle)
+				.on('dragend', this._hideDropStyle)
+				.on('drop', (event) => {
+					event.preventDefault();
+					this._hideDropStyle();
+					const file = getDroppedFile(event, 'image/svg+xml');
+					if(file) {
+						this.loadFile(file);
+					}
+				});
 
-			makeSplit([lPane, viewPane], {
+			makeSplit([lPane.element, viewPane.element], {
 				direction: 'horizontal',
 				snapOffset: 70,
 				sizes: [30, 70],
 				minSize: [10, 10],
 			});
 
-			const {codePane} = this.buildLeftPanes(lPane);
-			this.code = this.buildEditor(codePane);
-			this.viewPaneInner.appendChild(this.diagram.dom());
-
-			this.registerListeners();
-
 			// Delay first update 1 frame to ensure render target is ready
 			// (prevents initial incorrect font calculations for custom fonts)
 			setTimeout(this.update.bind(this), 0);
+
+			this._enhanceEditor();
 		}
 
 		addCodeBlock(block) {
@@ -413,15 +357,15 @@ define(['require'], (require) => {
 				this.code.setCursor({line: pos.line + lines, ch: 0});
 			} else {
 				const value = this.value();
-				const cur = this.code.selectionStart;
+				const cur = this.code.element.selectionStart;
 				const pos = ('\n' + value + '\n').indexOf('\n', cur);
 				const replaced = (
 					addNewline(value.substr(0, pos)) +
 					addNewline(block)
 				);
-				this.code.value = replaced + value.substr(pos);
-				this.code.selectionStart = replaced.length;
-				this.code.selectionEnd = replaced.length;
+				this.code
+					.val(replaced + value.substr(pos))
+					.select(replaced.length);
 				this.update(false);
 			}
 
@@ -429,9 +373,10 @@ define(['require'], (require) => {
 		}
 
 		updateMinSize({width, height}) {
-			const style = this.viewPaneInner.style;
-			style.minWidth = Math.ceil(width * this.minScale) + 'px';
-			style.minHeight = Math.ceil(height * this.minScale) + 'px';
+			this.viewPaneInner.styles({
+				'minWidth': Math.ceil(width * this.minScale) + 'px',
+				'minHeight': Math.ceil(height * this.minScale) + 'px',
+			});
 		}
 
 		redraw(sequence) {
@@ -465,23 +410,22 @@ define(['require'], (require) => {
 
 		markError(error) {
 			if(typeof error === 'object' && error.message) {
-				this.errorText.nodeValue = error.message;
+				this.errorMsg.text(error.message);
 			} else {
-				this.errorText.nodeValue = error;
+				this.errorMsg.text(error);
 			}
-			this.errorMsg.setAttribute('class', 'msg-error error');
+			this.errorMsg.addClass('error');
 		}
 
 		markOK() {
-			this.errorText.nodeValue = '';
-			this.errorMsg.setAttribute('class', 'msg-error');
+			this.errorMsg.text('').delClass('error');
 		}
 
 		value() {
 			if(this.code.getDoc) {
 				return this.code.getDoc().getValue();
 			} else {
-				return this.code.value;
+				return this.code.element.value;
 			}
 		}
 
@@ -491,7 +435,7 @@ define(['require'], (require) => {
 				doc.setValue(code);
 				doc.clearHistory();
 			} else {
-				this.code.value = code;
+				this.code.val(code);
 			}
 			this.diagram.expandAll({render: false});
 			this.update(true);
@@ -555,7 +499,7 @@ define(['require'], (require) => {
 			this.diagram.getPNG({resolution: PNG_RESOLUTION})
 				.then(({url, latest}) => {
 					if(latest) {
-						this.downloadPNG.setAttribute('href', url);
+						this.downloadPNG.attr('href', url);
 						this.updatingPNG = false;
 					}
 				});
@@ -563,11 +507,11 @@ define(['require'], (require) => {
 		}
 
 		_showDropStyle() {
-			this.container.setAttribute('class', 'drop-target');
+			this.container.addClass('drop-target');
 		}
 
 		_hideDropStyle() {
-			this.container.setAttribute('class', '');
+			this.container.delClass('drop-target');
 		}
 
 		_downloadPNGFocus() {
@@ -585,7 +529,7 @@ define(['require'], (require) => {
 		_downloadSVGClick() {
 			this.forceRender();
 			const url = this.diagram.getSVGSynchronous();
-			this.downloadSVG.setAttribute('href', url);
+			this.downloadSVG.attr('href', url);
 		}
 
 		_enhanceEditor() {
@@ -599,12 +543,12 @@ define(['require'], (require) => {
 			], (CodeMirror) => {
 				this.diagram.registerCodeMirrorMode(CodeMirror);
 
-				const selBegin = this.code.selectionStart;
-				const selEnd = this.code.selectionEnd;
-				const value = this.code.value;
-				const focussed = this.code === document.activeElement;
+				const selBegin = this.code.element.selectionStart;
+				const selEnd = this.code.element.selectionEnd;
+				const value = this.code.element.value;
+				const focussed = this.code.focussed();
 
-				const code = new CodeMirror(this.code.parentNode, {
+				const code = new CodeMirror(this.code.element.parentNode, {
 					value,
 					mode: 'sequence',
 					globals: {
@@ -622,7 +566,7 @@ define(['require'], (require) => {
 						'Cmd-Enter': 'autocomplete',
 					},
 				});
-				this.code.parentNode.removeChild(this.code);
+				this.code.detach();
 				code.getDoc().setSelection(
 					findPos(value, selBegin),
 					findPos(value, selEnd)

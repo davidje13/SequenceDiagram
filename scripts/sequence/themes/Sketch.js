@@ -1,12 +1,10 @@
 define([
+	'core/Random',
 	'./BaseTheme',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
 	'./HandleeFontData',
 ], (
+	Random,
 	BaseTheme,
-	svg,
-	SVGShapes,
 	Handlee
 ) => {
 	'use strict';
@@ -31,264 +29,10 @@ define([
 		},
 	};
 
-	const SETTINGS = {
-		titleMargin: 10,
-		outerMargin: 5,
-		agentMargin: 10,
-		actionMargin: 10,
-		minActionMargin: 3,
-		agentLineHighlightRadius: 4,
-
-		agentCap: {
-			box: {
-				padding: {
-					top: 5,
-					left: 10,
-					right: 10,
-					bottom: 5,
-				},
-				arrowBottom: 5 + 12 * 1.3 / 2,
-				labelAttrs: {
-					'font-family': FONT_FAMILY,
-					'font-size': 12,
-					'line-height': LINE_HEIGHT,
-					'text-anchor': 'middle',
-				},
-				boxRenderer: null,
-			},
-			database: {
-				padding: {
-					top: 12,
-					left: 10,
-					right: 10,
-					bottom: 2,
-				},
-				arrowBottom: 5 + 12 * 1.3 / 2,
-				boxRenderer: BaseTheme.renderDB.bind(null, Object.assign({
-					'fill': '#FFFFFF',
-					'db-z': 5,
-				}, PENCIL.normal)),
-				labelAttrs: {
-					'font-family': FONT,
-					'font-size': 12,
-					'line-height': LINE_HEIGHT,
-					'text-anchor': 'middle',
-				},
-			},
-			cross: {
-				size: 15,
-				render: null,
-			},
-			bar: {
-				height: 6,
-				render: null,
-			},
-			fade: {
-				width: Math.ceil(MAX_CHAOS * 2 + 2),
-				height: 6,
-				extend: Math.ceil(MAX_CHAOS * 0.3 + 1),
-			},
-			none: {
-				height: 10,
-			},
-		},
-
-		connect: {
-			loopbackRadius: 6,
-			line: {
-				'solid': {
-					attrs: Object.assign({
-						'fill': 'none',
-					}, PENCIL.normal),
-					renderFlat: null,
-					renderRev: null,
-				},
-				'dash': {
-					attrs: Object.assign({
-						'fill': 'none',
-						'stroke-dasharray': '4, 2',
-					}, PENCIL.normal),
-					renderFlat: null,
-					renderRev: null,
-				},
-				'wave': {
-					attrs: Object.assign({
-						'fill': 'none',
-						'stroke-linejoin': 'round',
-						'stroke-linecap': 'round',
-					}, PENCIL.normal),
-					renderFlat: null,
-					renderRev: null,
-				},
-			},
-			arrow: {
-				'single': {
-					width: 5,
-					height: 6,
-					attrs: Object.assign({
-						'fill': 'rgba(0,0,0,0.9)',
-					}, PENCIL.normal),
-					render: null,
-				},
-				'double': {
-					width: 4,
-					height: 8,
-					attrs: Object.assign({
-						'fill': 'none',
-					}, PENCIL.normal),
-					render: null,
-				},
-				'cross': {
-					short: 5,
-					radius: 3,
-					render: null,
-				},
-			},
-			label: {
-				padding: 6,
-				margin: {top: 2, bottom: 1},
-				attrs: {
-					'font-family': FONT_FAMILY,
-					'font-size': 8,
-					'line-height': LINE_HEIGHT,
-					'text-anchor': 'middle',
-				},
-				loopbackAttrs: {
-					'font-family': FONT_FAMILY,
-					'font-size': 8,
-					'line-height': LINE_HEIGHT,
-				},
-			},
-			source: {
-				radius: 1,
-				render: ({x, y, radius}) => {
-					return svg.make('circle', {
-						'cx': x,
-						'cy': y,
-						'r': radius,
-						'fill': '#000000',
-						'stroke': '#000000',
-						'stroke-width': 1,
-					});
-				},
-			},
-			mask: {
-				padding: {
-					top: 0,
-					left: 3,
-					right: 3,
-					bottom: 1,
-				},
-			},
-		},
-
-		titleAttrs: {
-			'font-family': FONT_FAMILY,
-			'font-size': 20,
-			'line-height': LINE_HEIGHT,
-			'text-anchor': 'middle',
-			'class': 'title',
-		},
-
-		agentLineAttrs: {
-			'': Object.assign({
-				'fill': 'none',
-			}, PENCIL.normal),
-			'red': {
-				'stroke': 'rgba(200,40,0,0.8)',
-			},
-		},
-	};
-
-	const SHARED_BLOCK_SECTION = {
-		padding: {
-			top: 3,
-			bottom: 2,
-		},
-		tag: {
-			padding: {
-				top: 2,
-				left: 3,
-				right: 5,
-				bottom: 0,
-			},
-			boxRenderer: null,
-			labelAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-weight': 'bold',
-				'font-size': 9,
-				'line-height': LINE_HEIGHT,
-				'text-anchor': 'left',
-			},
-		},
-		label: {
-			minHeight: 6,
-			padding: {
-				top: 2,
-				left: 5,
-				right: 3,
-				bottom: 1,
-			},
-			labelAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-size': 8,
-				'line-height': LINE_HEIGHT,
-				'text-anchor': 'left',
-			},
-		},
-	};
-
-	const BLOCKS = {
-		'ref': {
-			margin: {
-				top: 0,
-				bottom: 0,
-			},
-			boxRenderer: null,
-			section: SHARED_BLOCK_SECTION,
-		},
-		'': {
-			margin: {
-				top: 0,
-				bottom: 0,
-			},
-			boxRenderer: null,
-			collapsedBoxRenderer: null,
-			section: SHARED_BLOCK_SECTION,
-			sepRenderer: null,
-		},
-	};
-
 	const NOTE_ATTRS = {
 		'font-family': FONT_FAMILY,
 		'font-size': 8,
 		'line-height': LINE_HEIGHT,
-	};
-
-	const NOTES = {
-		'text': {
-			margin: {top: 0, left: 6, right: 6, bottom: 0},
-			padding: {top: 2, left: 2, right: 2, bottom: 2},
-			overlap: {left: 10, right: 10},
-			boxRenderer: SVGShapes.renderBox.bind(null, {
-				'fill': '#FFFFFF',
-			}),
-			labelAttrs: NOTE_ATTRS,
-		},
-		'note': {
-			margin: {top: 0, left: 5, right: 5, bottom: 0},
-			padding: {top: 5, left: 5, right: 10, bottom: 5},
-			overlap: {left: 10, right: 10},
-			boxRenderer: null,
-			labelAttrs: NOTE_ATTRS,
-		},
-		'state': {
-			margin: {top: 0, left: 5, right: 5, bottom: 0},
-			padding: {top: 7, left: 7, right: 7, bottom: 7},
-			overlap: {left: 10, right: 10},
-			boxRenderer: null,
-			labelAttrs: NOTE_ATTRS,
-		},
 	};
 
 	const DIVIDER_LABEL_ATTRS = {
@@ -297,78 +41,6 @@ define([
 		'line-height': LINE_HEIGHT,
 		'text-anchor': 'middle',
 	};
-
-	const DIVIDERS = {
-		'': {
-			labelAttrs: DIVIDER_LABEL_ATTRS,
-			padding: {top: 2, left: 5, right: 5, bottom: 2},
-			extend: 0,
-			margin: 0,
-			render: () => ({}),
-		},
-		'line': {
-			labelAttrs: DIVIDER_LABEL_ATTRS,
-			padding: {top: 2, left: 5, right: 5, bottom: 2},
-			extend: 10,
-			margin: 0,
-			render: null,
-		},
-		'delay': {
-			labelAttrs: DIVIDER_LABEL_ATTRS,
-			padding: {top: 2, left: 5, right: 5, bottom: 2},
-			extend: 0,
-			margin: 0,
-			render: BaseTheme.renderDelayDivider.bind(null, {
-				dotSize: 1,
-				gapSize: 2,
-			}),
-		},
-		'tear': {
-			labelAttrs: DIVIDER_LABEL_ATTRS,
-			padding: {top: 2, left: 5, right: 5, bottom: 2},
-			extend: 10,
-			margin: 10,
-			render: null,
-		},
-	};
-
-	class Random {
-		// xorshift+ 64-bit random generator
-		// https://en.wikipedia.org/wiki/Xorshift
-
-		constructor() {
-			this.s = new Uint32Array(4);
-		}
-
-		reset() {
-			// Arbitrary random seed with roughly balanced 1s / 0s
-			// (taken from running Math.random a few times)
-			this.s[0] = 0x177E9C74;
-			this.s[1] = 0xAE6FFDCE;
-			this.s[2] = 0x3CF4F32B;
-			this.s[3] = 0x46449F88;
-		}
-
-		nextFloat() {
-			/* jshint -W016 */ // bit-operations are part of the algorithm
-			const range = 0x100000000;
-			let x0 = this.s[0];
-			let x1 = this.s[1];
-			const y0 = this.s[2];
-			const y1 = this.s[3];
-			this.s[0] = y0;
-			this.s[1] = y1;
-			x0 ^= (x0 << 23) | (x1 >>> 9);
-			x1 ^= (x1 << 23);
-			this.s[2] = x0 ^ y0 ^ (x0 >>> 17) ^ (y0 >>> 26);
-			this.s[3] = (
-				x1 ^ y1 ^
-				(x0 << 15 | x1 >>> 17) ^
-				(y0 << 6 | y1 >>> 26)
-			);
-			return (((this.s[3] + y1) >>> 0) % range) / range;
-		}
-	}
 
 	const RIGHT = {};
 	const LEFT = {};
@@ -399,84 +71,296 @@ define([
 	}
 
 	class SketchTheme extends BaseTheme {
-		constructor(handedness = RIGHT) {
-			super({
-				name: '',
-				settings: SETTINGS,
-				blocks: BLOCKS,
-				notes: NOTES,
-				dividers: DIVIDERS,
-			});
+		constructor(svg, handedness = RIGHT) {
+			super(svg);
 
-			if(handedness === RIGHT) {
-				this.name = 'sketch';
-				this.handedness = 1;
-			} else {
-				this.name = 'sketch left handed';
-				this.handedness = -1;
-			}
+			this.handedness = (handedness === RIGHT) ? 1 : -1;
 			this.random = new Random();
 			this.wave = new SketchWavePattern(4, handedness);
 
-			this._assignCapFunctions();
-			this._assignConnectFunctions();
-			this._assignNoteFunctions();
-			this._assignBlockFunctions();
-			this._assignDividerFunctions();
-		}
+			const sharedBlockSection = {
+				padding: {
+					top: 3,
+					bottom: 2,
+				},
+				tag: {
+					padding: {
+						top: 2,
+						left: 3,
+						right: 5,
+						bottom: 0,
+					},
+					boxRenderer: this.renderTag.bind(this),
+					labelAttrs: {
+						'font-family': FONT_FAMILY,
+						'font-weight': 'bold',
+						'font-size': 9,
+						'line-height': LINE_HEIGHT,
+						'text-anchor': 'left',
+					},
+				},
+				label: {
+					minHeight: 6,
+					padding: {
+						top: 2,
+						left: 5,
+						right: 3,
+						bottom: 1,
+					},
+					labelAttrs: {
+						'font-family': FONT_FAMILY,
+						'font-size': 8,
+						'line-height': LINE_HEIGHT,
+						'text-anchor': 'left',
+					},
+				},
+			};
 
-		_assignCapFunctions() {
-			this.renderBar = this.renderBar.bind(this);
-			this.renderBox = this.renderBox.bind(this);
+			Object.assign(this, {
+				titleMargin: 10,
+				outerMargin: 5,
+				agentMargin: 10,
+				actionMargin: 10,
+				minActionMargin: 3,
+				agentLineHighlightRadius: 4,
 
-			this.agentCap.cross.render = this.renderCross.bind(this);
-			this.agentCap.bar.render = this.renderBar;
-			this.agentCap.box.boxRenderer = this.renderBox;
-		}
+				agentCap: {
+					box: {
+						padding: {
+							top: 5,
+							left: 10,
+							right: 10,
+							bottom: 5,
+						},
+						arrowBottom: 5 + 12 * 1.3 / 2,
+						labelAttrs: {
+							'font-family': FONT_FAMILY,
+							'font-size': 12,
+							'line-height': LINE_HEIGHT,
+							'text-anchor': 'middle',
+						},
+						boxRenderer: this.renderBox.bind(this),
+					},
+					database: {
+						padding: {
+							top: 12,
+							left: 10,
+							right: 10,
+							bottom: 2,
+						},
+						arrowBottom: 5 + 12 * 1.3 / 2,
+						boxRenderer: this.renderDB.bind(this, Object.assign({
+							'fill': '#FFFFFF',
+							'db-z': 5,
+						}, PENCIL.normal)),
+						labelAttrs: {
+							'font-family': FONT,
+							'font-size': 12,
+							'line-height': LINE_HEIGHT,
+							'text-anchor': 'middle',
+						},
+					},
+					cross: {
+						size: 15,
+						render: this.renderCross.bind(this),
+					},
+					bar: {
+						height: 6,
+						render: this.renderBar.bind(this),
+					},
+					fade: {
+						width: Math.ceil(MAX_CHAOS * 2 + 2),
+						height: 6,
+						extend: Math.ceil(MAX_CHAOS * 0.3 + 1),
+					},
+					none: {
+						height: 10,
+					},
+				},
 
-		_assignConnectFunctions() {
-			this.renderArrowHead = this.renderArrowHead.bind(this);
-			this.renderFlatConnector = this.renderFlatConnector.bind(this);
-			this.renderRevConnector = this.renderRevConnector.bind(this);
+				connect: {
+					loopbackRadius: 6,
+					line: {
+						'solid': {
+							attrs: Object.assign({
+								'fill': 'none',
+							}, PENCIL.normal),
+							renderFlat: this.renderFlatConnect.bind(this),
+							renderRev: this.renderRevConnect.bind(this),
+						},
+						'dash': {
+							attrs: Object.assign({
+								'fill': 'none',
+								'stroke-dasharray': '4, 2',
+							}, PENCIL.normal),
+							renderFlat: this.renderFlatConnect.bind(this),
+							renderRev: this.renderRevConnect.bind(this),
+						},
+						'wave': {
+							attrs: Object.assign({
+								'fill': 'none',
+								'stroke-linejoin': 'round',
+								'stroke-linecap': 'round',
+							}, PENCIL.normal),
+							renderFlat: this.renderFlatConnectWave.bind(this),
+							renderRev: this.renderRevConnectWave.bind(this),
+						},
+					},
+					arrow: {
+						'single': {
+							width: 5,
+							height: 6,
+							attrs: Object.assign({
+								'fill': 'rgba(0,0,0,0.9)',
+							}, PENCIL.normal),
+							render: this.renderArrowHead.bind(this),
+						},
+						'double': {
+							width: 4,
+							height: 8,
+							attrs: Object.assign({
+								'fill': 'none',
+							}, PENCIL.normal),
+							render: this.renderArrowHead.bind(this),
+						},
+						'cross': {
+							short: 5,
+							radius: 3,
+							render: this.renderCross.bind(this),
+						},
+					},
+					label: {
+						padding: 6,
+						margin: {top: 2, bottom: 1},
+						attrs: {
+							'font-family': FONT_FAMILY,
+							'font-size': 8,
+							'line-height': LINE_HEIGHT,
+							'text-anchor': 'middle',
+						},
+						loopbackAttrs: {
+							'font-family': FONT_FAMILY,
+							'font-size': 8,
+							'line-height': LINE_HEIGHT,
+						},
+					},
+					source: {
+						radius: 1,
+						render: svg.circleFactory({
+							'fill': '#000000',
+							'stroke': '#000000',
+							'stroke-width': 1,
+						}),
+					},
+					mask: {
+						padding: {
+							top: 0,
+							left: 3,
+							right: 3,
+							bottom: 1,
+						},
+					},
+				},
 
-			this.connect.arrow.single.render = this.renderArrowHead;
-			this.connect.arrow.double.render = this.renderArrowHead;
-			this.connect.arrow.cross.render = this.renderCross.bind(this);
+				titleAttrs: {
+					'font-family': FONT_FAMILY,
+					'font-size': 20,
+					'line-height': LINE_HEIGHT,
+					'text-anchor': 'middle',
+					'class': 'title',
+				},
 
-			this.connect.line.solid.renderFlat = this.renderFlatConnector;
-			this.connect.line.solid.renderRev = this.renderRevConnector;
-			this.connect.line.dash.renderFlat = this.renderFlatConnector;
-			this.connect.line.dash.renderRev = this.renderRevConnector;
-			this.connect.line.wave.renderFlat =
-				this.renderFlatConnectorWave.bind(this);
-			this.connect.line.wave.renderRev =
-				this.renderRevConnectorWave.bind(this);
-		}
-
-		_assignNoteFunctions() {
-			this.notes.note.boxRenderer = this.renderNote.bind(this);
-			this.notes.state.boxRenderer = this.renderState.bind(this);
-		}
-
-		_assignBlockFunctions() {
-			this.renderTag = this.renderTag.bind(this);
-
-			this.blocks.ref.boxRenderer = this.renderRefBlock.bind(this);
-			this.blocks[''].boxRenderer = this.renderBlock.bind(this);
-			this.blocks[''].collapsedBoxRenderer =
-				this.renderCollapsedBlock.bind(this);
-			this.blocks.ref.section.tag.boxRenderer = this.renderTag;
-			this.blocks[''].section.tag.boxRenderer = this.renderTag;
-			this.blocks[''].sepRenderer = this.renderSeparator.bind(this);
-		}
-
-		_assignDividerFunctions() {
-			this.dividers.line.render = this.renderLineDivider.bind(this);
-			this.dividers.tear.render = BaseTheme.renderTearDivider.bind(null, {
-				fadeBegin: 5,
-				fadeSize: 10,
-				pattern: this.wave,
-				lineAttrs: PENCIL.normal,
+				agentLineAttrs: {
+					'': Object.assign({
+						'fill': 'none',
+					}, PENCIL.normal),
+					'red': {
+						'stroke': 'rgba(200,40,0,0.8)',
+					},
+				},
+				blocks: {
+					'ref': {
+						margin: {
+							top: 0,
+							bottom: 0,
+						},
+						boxRenderer: this.renderRefBlock.bind(this),
+						section: sharedBlockSection,
+					},
+					'': {
+						margin: {
+							top: 0,
+							bottom: 0,
+						},
+						boxRenderer: this.renderBlock.bind(this),
+						collapsedBoxRenderer: this.renderMinBlock.bind(this),
+						section: sharedBlockSection,
+						sepRenderer: this.renderSeparator.bind(this),
+					},
+				},
+				notes: {
+					'text': {
+						margin: {top: 0, left: 6, right: 6, bottom: 0},
+						padding: {top: 2, left: 2, right: 2, bottom: 2},
+						overlap: {left: 10, right: 10},
+						boxRenderer: svg.boxFactory({
+							'fill': '#FFFFFF',
+						}),
+						labelAttrs: NOTE_ATTRS,
+					},
+					'note': {
+						margin: {top: 0, left: 5, right: 5, bottom: 0},
+						padding: {top: 5, left: 5, right: 10, bottom: 5},
+						overlap: {left: 10, right: 10},
+						boxRenderer: this.renderNote.bind(this),
+						labelAttrs: NOTE_ATTRS,
+					},
+					'state': {
+						margin: {top: 0, left: 5, right: 5, bottom: 0},
+						padding: {top: 7, left: 7, right: 7, bottom: 7},
+						overlap: {left: 10, right: 10},
+						boxRenderer: this.renderState.bind(this),
+						labelAttrs: NOTE_ATTRS,
+					},
+				},
+				dividers: {
+					'': {
+						labelAttrs: DIVIDER_LABEL_ATTRS,
+						padding: {top: 2, left: 5, right: 5, bottom: 2},
+						extend: 0,
+						margin: 0,
+						render: () => ({}),
+					},
+					'line': {
+						labelAttrs: DIVIDER_LABEL_ATTRS,
+						padding: {top: 2, left: 5, right: 5, bottom: 2},
+						extend: 10,
+						margin: 0,
+						render: this.renderLineDivider.bind(this),
+					},
+					'delay': {
+						labelAttrs: DIVIDER_LABEL_ATTRS,
+						padding: {top: 2, left: 5, right: 5, bottom: 2},
+						extend: 0,
+						margin: 0,
+						render: this.renderDelayDivider.bind(this, {
+							dotSize: 1,
+							gapSize: 2,
+						}),
+					},
+					'tear': {
+						labelAttrs: DIVIDER_LABEL_ATTRS,
+						padding: {top: 2, left: 5, right: 5, bottom: 2},
+						extend: 10,
+						margin: 10,
+						render: this.renderTearDivider.bind(this, {
+							fadeBegin: 5,
+							fadeSize: 10,
+							pattern: this.wave,
+							lineAttrs: PENCIL.normal,
+						}),
+					},
+				},
 			});
 		}
 
@@ -486,13 +370,13 @@ define([
 
 		addDefs(builder) {
 			builder('sketch_font', () => {
-				const style = document.createElement('style');
+				const style = this.svg.el('style', null);
 				// For some uses, it is fine to load this font externally,
 				// but this fails when exporting as SVG / PNG (svg tags must
 				// have no external dependencies).
 //				const url = 'https://fonts.googleapis.com/css?family=' + FONT;
-//				style.textContent = '@import url("' + url + '")';
-				style.textContent = (
+//				style.text('@import url("' + url + '")');
+				style.text(
 					'@font-face{' +
 					'font-family:"' + Handlee.name + '";' +
 					'src:url("data:font/woff2;base64,' + Handlee.woff2 + '");' +
@@ -564,14 +448,15 @@ define([
 
 		renderLine(p1, p2, lineOptions) {
 			const line = this.lineNodes(p1, p2, lineOptions);
-			const shape = svg.make('path', Object.assign({
-				'd': line.nodes,
-				'fill': 'none',
-				'stroke-dasharray': lineOptions.dash ? '6, 5' : 'none',
-			}, lineOptions.attrs || (
-				lineOptions.thick ? PENCIL.thick : PENCIL.normal
-			)));
-			return shape;
+			return this.svg.el('path')
+				.attrs({
+					'd': line.nodes,
+					'fill': 'none',
+					'stroke-dasharray': lineOptions.dash ? '6, 5' : 'none',
+				})
+				.attrs(lineOptions.attrs || (
+					lineOptions.thick ? PENCIL.thick : PENCIL.normal
+				));
 		}
 
 		boxNodes({x, y, width, height}) {
@@ -600,10 +485,12 @@ define([
 		}
 
 		renderBox(position, {fill = null, thick = false, attrs = null} = {}) {
-			return svg.make('path', Object.assign({
-				'd': this.boxNodes(position),
-				'fill': fill || '#FFFFFF',
-			}, attrs || (thick ? PENCIL.thick : PENCIL.normal)));
+			return this.svg.el('path')
+				.attrs({
+					'd': this.boxNodes(position),
+					'fill': fill || '#FFFFFF',
+				})
+				.attrs(attrs || (thick ? PENCIL.thick : PENCIL.normal));
 		}
 
 		renderNote({x, y, width, height}) {
@@ -644,29 +531,33 @@ define([
 				{var1: 0, move: false}
 			);
 
-			return svg.make('g', {}, [
-				svg.make('path', Object.assign({
-					'd': (
-						lT.nodes +
-						lF.nodes +
-						lR.nodes +
-						lB.nodes +
-						lL.nodes
-					),
-					'fill': '#FFFFFF',
-				}, PENCIL.normal)),
-				svg.make('path', Object.assign({
-					'd': lF1.nodes + lF2.nodes,
-					'fill': 'none',
-				}, PENCIL.normal)),
-			]);
+			return this.svg.el('g').add(
+				this.svg.el('path')
+					.attrs({
+						'd': (
+							lT.nodes +
+							lF.nodes +
+							lR.nodes +
+							lB.nodes +
+							lL.nodes
+						),
+						'fill': '#FFFFFF',
+					})
+					.attrs(PENCIL.normal),
+				this.svg.el('path')
+					.attrs({
+						'd': lF1.nodes + lF2.nodes,
+						'fill': 'none',
+					})
+					.attrs(PENCIL.normal)
+			);
 		}
 
 		renderLineDivider({x, y, labelWidth, width, height}) {
 			let shape = null;
 			const yPos = y + height / 2;
 			if(labelWidth > 0) {
-				shape = svg.make('g', {}, [
+				shape = this.svg.el('g').add(
 					this.renderLine(
 						{x, y: yPos},
 						{x: x + (width - labelWidth) / 2, y: yPos},
@@ -676,8 +567,8 @@ define([
 						{x: x + (width + labelWidth) / 2, y: yPos},
 						{x: x + width, y: yPos},
 						{}
-					),
-				]);
+					)
+				);
 			} else {
 				shape = this.renderLine(
 					{x, y: yPos},
@@ -688,20 +579,20 @@ define([
 			return {shape};
 		}
 
-		renderFlatConnector(attrs, {x1, y1, x2, y2}) {
+		renderFlatConnect(attrs, {x1, y1, x2, y2}) {
 			const ln = this.lineNodes(
 				{x: x1, y: y1},
 				{x: x2, y: y2},
 				{varX: 0.3}
 			);
 			return {
-				shape: svg.make('path', Object.assign({'d': ln.nodes}, attrs)),
+				shape: this.svg.el('path').attr('d', ln.nodes).attrs(attrs),
 				p1: ln.p1,
 				p2: ln.p2,
 			};
 		}
 
-		renderRevConnector(attrs, {x1, y1, x2, y2, xR}) {
+		renderRevConnect(attrs, {x1, y1, x2, y2, xR}) {
 			const variance = Math.min((xR - x1) * 0.06, 3);
 			const overshoot = Math.min((xR - x1) * 0.5, 6);
 			const p1x = x1 + this.vary(variance, -1);
@@ -716,54 +607,56 @@ define([
 			const p3y = y2 + this.vary(variance, -1);
 
 			return {
-				shape: svg.make('path', Object.assign({
-					d: (
+				shape: this.svg.el('path')
+					.attr('d', (
 						'M' + p1x + ' ' + p1y +
 						'C' + p1x + ' ' + p1y +
 						',' + b1x + ' ' + b1y +
 						',' + p2x + ' ' + p2y +
 						'S' + b2x + ' ' + b2y +
 						',' + p3x + ' ' + p3y
-					),
-				}, attrs)),
+					))
+					.attrs(attrs),
 				p1: {x: p1x, y: p1y},
 				p2: {x: p3x, y: p3y},
 			};
 		}
 
-		renderFlatConnectorWave(attrs, {x1, y1, x2, y2}) {
+		renderFlatConnectWave(attrs, {x1, y1, x2, y2}) {
 			const x1v = x1 + this.vary(0.3);
 			const x2v = x2 + this.vary(0.3);
 			const y1v = y1 + this.vary(1);
 			const y2v = y2 + this.vary(1);
 			return {
-				shape: svg.make('path', Object.assign({
-					d: new SVGShapes.PatternedLine(this.wave)
+				shape: this.svg.el('path')
+					.attr('d', this.svg.patternedLine(this.wave)
 						.move(x1v, y1v)
 						.line(x2v, y2v)
 						.cap()
-						.asPath(),
-				}, attrs)),
+						.asPath()
+					)
+					.attrs(attrs),
 				p1: {x: x1v, y: y1v},
 				p2: {x: x2v, y: y2v},
 			};
 		}
 
-		renderRevConnectorWave(attrs, {x1, y1, x2, y2, xR}) {
+		renderRevConnectWave(attrs, {x1, y1, x2, y2, xR}) {
 			const x1v = x1 + this.vary(0.3);
 			const x2v = x2 + this.vary(0.3);
 			const y1v = y1 + this.vary(1);
 			const y2v = y2 + this.vary(1);
 			return {
-				shape: svg.make('path', Object.assign({
-					d: new SVGShapes.PatternedLine(this.wave)
+				shape: this.svg.el('path')
+					.attr('d', this.svg.patternedLine(this.wave)
 						.move(x1v, y1v)
 						.line(xR, y1)
 						.arc(xR, (y1 + y2) / 2, Math.PI)
 						.line(x2v, y2v)
 						.cap()
-						.asPath(),
-				}, attrs)),
+						.asPath()
+					)
+					.attrs(attrs),
 				p1: {x: x1v, y: y1v},
 				p2: {x: x2v, y: y2v},
 			};
@@ -791,9 +684,9 @@ define([
 				l1.p1,
 				{var1: 0, var2: 0, move: false}
 			);
-			return svg.make('path', Object.assign({
-				'd': l1.nodes + l2.nodes + l3.nodes,
-			}, attrs));
+			return this.svg.el('path')
+				.attr('d', l1.nodes + l2.nodes + l3.nodes)
+				.attrs(attrs);
 		}
 
 		renderState({x, y, width, height}) {
@@ -816,8 +709,8 @@ define([
 			const bentL = x - Math.min(height * 0.01, 2) * this.handedness;
 			const bentR = bentL + width;
 
-			return svg.make('path', Object.assign({
-				'd': (
+			return this.svg.el('path')
+				.attr('d', (
 					'M' + tlX + ' ' + tlY +
 					'C' + (tlX + cx) + ' ' + (tlY - cy) +
 					',' + (mX - width * this.vary(0.03, 0.3)) + ' ' + bentT +
@@ -837,26 +730,21 @@ define([
 					'S' + (tlX - cx) + ' ' + (tlY + cy) +
 					',' + tlX + ' ' + tlY +
 					'Z'
-				),
-				'fill': '#FFFFFF',
-			}, PENCIL.normal));
+				))
+				.attr('fill', '#FFFFFF')
+				.attrs(PENCIL.normal);
 		}
 
 		renderRefBlock(position) {
 			const nodes = this.boxNodes(position);
 			return {
-				shape: svg.make('path', Object.assign({
-					'd': nodes,
-					'fill': 'none',
-				}, PENCIL.thick)),
-				mask: svg.make('path', {
-					'd': nodes,
-					'fill': '#000000',
-				}),
-				fill: svg.make('path', {
-					'd': nodes,
-					'fill': '#FFFFFF',
-				}),
+				shape: this.svg.el('path')
+					.attrs({'d': nodes, 'fill': 'none'})
+					.attrs(PENCIL.thick),
+				mask: this.svg.el('path')
+					.attrs({'d': nodes, 'fill': '#000000'}),
+				fill: this.svg.el('path')
+					.attrs({'d': nodes, 'fill': '#FFFFFF'}),
 			};
 		}
 
@@ -864,7 +752,7 @@ define([
 			return this.renderBox(position, {fill: 'none', thick: true});
 		}
 
-		renderCollapsedBlock(position) {
+		renderMinBlock(position) {
 			return this.renderRefBlock(position);
 		}
 
@@ -885,16 +773,19 @@ define([
 
 			const line = l1.nodes + l2.nodes;
 
-			return svg.make('g', {}, [
-				svg.make('path', {
-					'd': line + 'L' + x + ' ' + y,
-					'fill': '#FFFFFF',
-				}),
-				svg.make('path', Object.assign({
-					'd': line,
-					'fill': '#FFFFFF',
-				}, PENCIL.normal)),
-			]);
+			return this.svg.el('g').add(
+				this.svg.el('path')
+					.attrs({
+						'd': line + 'L' + x + ' ' + y,
+						'fill': '#FFFFFF',
+					}),
+				this.svg.el('path')
+					.attrs({
+						'd': line,
+						'fill': '#FFFFFF',
+					})
+					.attrs(PENCIL.normal)
+			);
 		}
 
 		renderSeparator({x1, y1, x2, y2}) {
@@ -923,34 +814,44 @@ define([
 				{}
 			);
 
-			return svg.make('path', Object.assign({
-				'd': l1.nodes + l2.nodes,
-				'fill': 'none',
-			}, PENCIL.normal));
+			return this.svg.el('path')
+				.attrs({
+					'd': l1.nodes + l2.nodes,
+					'fill': 'none',
+				})
+				.attrs(PENCIL.normal);
 		}
 
 		renderAgentLine({x, y0, y1, width, className, options}) {
 			const attrs = this.optionsAttributes(this.agentLineAttrs, options);
 			if(width > 0) {
-				const shape = this.renderBox({
+				return this.renderBox({
 					x: x - width / 2,
 					y: y0,
 					width,
 					height: y1 - y0,
-				}, {fill: 'none', attrs});
-				shape.setAttribute('class', className);
-				return shape;
+				}, {fill: 'none', attrs}).setClass(className);
 			} else {
-				const shape = this.renderLine(
+				return this.renderLine(
 					{x, y: y0},
 					{x, y: y1},
 					{varY: 0.3, attrs}
-				);
-				shape.setAttribute('class', className);
-				return shape;
+				).setClass(className);
 			}
 		}
 	}
+
+	SketchTheme.Factory = class {
+		constructor(handedness = RIGHT) {
+			const right = (handedness === RIGHT);
+			this.name = right ? 'sketch' : 'sketch left handed';
+			this.handedness = handedness;
+		}
+
+		build(svg) {
+			return new SketchTheme(svg, this.handedness);
+		}
+	};
 
 	SketchTheme.RIGHT = RIGHT;
 	SketchTheme.LEFT = LEFT;

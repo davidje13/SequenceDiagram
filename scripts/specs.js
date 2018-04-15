@@ -1,9 +1,10 @@
 define([
 	'core/ArrayUtilities_spec',
 	'core/EventObject_spec',
-	'svg/SVGUtilities_spec',
+	'core/Random_spec',
+	'core/documents/VirtualDocument_spec',
+	'svg/SVG_spec',
 	'svg/SVGTextBlock_spec',
-	'svg/SVGShapes_spec',
 	'svg/PatternedLine_spec',
 	'interface/Interface_spec',
 	'interface/ComponentsLibrary_spec',

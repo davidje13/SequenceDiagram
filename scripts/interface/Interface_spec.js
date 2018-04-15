@@ -17,7 +17,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			'getSize',
 			'process',
 			'getThemeNames',
-			'addEventListener',
+			'on',
 			'registerCodeMirrorMode',
 			'getSVGSynchronous',
 		]);
@@ -26,10 +26,11 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			agents: [],
 			stages: [],
 		});
+		sequenceDiagram.on.and.returnValue(sequenceDiagram);
 		sequenceDiagram.getSize.and.returnValue({width: 10, height: 20});
 		sequenceDiagram.dom.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', [
-			'appendChild',
+			'insertBefore',
 			'addEventListener',
 		]);
 
@@ -42,7 +43,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 	describe('build', () => {
 		it('adds elements to the given container', () => {
 			ui.build(container);
-			expect(container.appendChild).toHaveBeenCalled();
+			expect(container.insertBefore).toHaveBeenCalled();
 		});
 
 		it('creates a code mirror instance with the given code', (done) => {
@@ -64,14 +65,16 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			sequenceDiagram.getSVGSynchronous.and.returnValue('mySVGURL');
 			ui.build(container);
 
-			expect(ui.downloadSVG.getAttribute('href')).toEqual('#');
+			const el = ui.downloadSVG.element;
+
+			expect(el.getAttribute('href')).toEqual('#');
 			if(safari) {
 				// Safari actually starts a download if we do this, which
 				// doesn't seem to fit its usual security vibe
 				return;
 			}
-			ui.downloadSVG.dispatchEvent(new Event('click'));
-			expect(ui.downloadSVG.getAttribute('href')).toEqual('mySVGURL');
+			el.dispatchEvent(new Event('click'));
+			expect(el.getAttribute('href')).toEqual('mySVGURL');
 		});
 	});
 });

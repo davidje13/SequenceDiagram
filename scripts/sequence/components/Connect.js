@@ -1,15 +1,16 @@
 define([
 	'core/ArrayUtilities',
 	'./BaseComponent',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
 ], (
 	array,
-	BaseComponent,
-	svg,
-	SVGShapes
+	BaseComponent
 ) => {
 	'use strict';
+
+	const OUTLINE_ATTRS = {
+		'fill': 'transparent',
+		'class': 'outline',
+	};
 
 	class Arrowhead {
 		constructor(propName) {
@@ -38,7 +39,7 @@ define([
 		render(layer, theme, pt, dir) {
 			const config = this.getConfig(theme);
 			const short = this.short(theme);
-			layer.appendChild(config.render(config.attrs, {
+			layer.add(config.render(config.attrs, {
 				x: pt.x + short * dir.dx,
 				y: pt.y + short * dir.dy,
 				width: config.width,
@@ -76,7 +77,7 @@ define([
 
 		render(layer, theme, pt, dir) {
 			const config = this.getConfig(theme);
-			layer.appendChild(config.render({
+			layer.add(config.render({
 				x: pt.x + config.short * dir.dx,
 				y: pt.y + config.short * dir.dy,
 				radius: config.radius,
@@ -194,7 +195,7 @@ define([
 				xR,
 				rad: config.loopbackRadius,
 			});
-			clickable.appendChild(rendered.shape);
+			clickable.add(rendered.shape);
 
 			lArrow.render(clickable, env.theme, {
 				x: rendered.p1.x - dx1,
@@ -227,19 +228,15 @@ define([
 				(label ? config.label.padding : 0)
 			);
 
-			const clickable = env.makeRegion();
-
-			const renderedText = SVGShapes.renderBoxedText(label, {
-				x: xL - config.mask.padding.left,
-				y: yBegin - height + config.label.margin.top,
+			const renderedText = env.svg.boxedText({
 				padding: config.mask.padding,
 				boxAttrs: {'fill': '#000000'},
 				labelAttrs: config.label.loopbackAttrs,
-				boxLayer: env.lineMaskLayer,
-				labelLayer: clickable,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-				textSizer: env.textSizer,
+			}, label, {
+				x: xL - config.mask.padding.left,
+				y: yBegin - height + config.label.margin.top,
 			});
+
 			const labelW = (label ? (
 				renderedText.width +
 				config.label.padding -
@@ -252,6 +249,20 @@ define([
 				xL + labelW
 			);
 
+			const raise = Math.max(height, lArrow.height(env.theme) / 2);
+			const arrowDip = rArrow.height(env.theme) / 2;
+
+			env.lineMaskLayer.add(renderedText.box);
+			const clickable = env.makeRegion().add(
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': from.x,
+					'y': yBegin - raise,
+					'width': xR + config.loopbackRadius - from.x,
+					'height': raise + env.primaryY - yBegin + arrowDip,
+				}),
+				renderedText.label
+			);
+
 			this.renderRevArrowLine({
 				x1: from.x + from.currentMaxRad,
 				y1: yBegin,
@@ -259,18 +270,6 @@ define([
 				y2: env.primaryY,
 				xR,
 			}, options, env, clickable);
-
-			const raise = Math.max(height, lArrow.height(env.theme) / 2);
-			const arrowDip = rArrow.height(env.theme) / 2;
-
-			clickable.insertBefore(svg.make('rect', {
-				'x': from.x,
-				'y': yBegin - raise,
-				'width': xR + config.loopbackRadius - from.x,
-				'height': raise + env.primaryY - yBegin + arrowDip,
-				'fill': 'transparent',
-				'class': 'outline',
-			}), clickable.firstChild);
 
 			return (
 				env.primaryY +
@@ -300,7 +299,7 @@ define([
 				x2: x2 - d2 * dx,
 				y2: y2 - d2 * dy,
 			});
-			clickable.appendChild(rendered.shape);
+			clickable.add(rendered.shape);
 
 			const p1 = {x: rendered.p1.x - d1 * dx, y: rendered.p1.y - d1 * dy};
 			const p2 = {x: rendered.p2.x + d2 * dx, y: rendered.p2.y + d2 * dy};
@@ -320,14 +319,14 @@ define([
 			const config = env.theme.connect.source;
 
 			if(from.isVirtualSource) {
-				clickable.appendChild(config.render({
+				clickable.add(config.render({
 					x: rendered.p1.x - config.radius,
 					y: rendered.p1.y,
 					radius: config.radius,
 				}));
 			}
 			if(to.isVirtualSource) {
-				clickable.appendChild(config.render({
+				clickable.add(config.render({
 					x: rendered.p2.x + config.radius,
 					y: rendered.p2.y,
 					radius: config.radius,
@@ -352,21 +351,20 @@ define([
 					')'
 				);
 				boxAttrs.transform = transform;
-				labelLayer = svg.make('g', {'transform': transform});
-				layer.appendChild(labelLayer);
+				labelLayer = env.svg.el('g').attrs({'transform': transform});
+				layer.add(labelLayer);
 			}
 
-			SVGShapes.renderBoxedText(label, {
-				x: midX,
-				y: midY + config.label.margin.top - height,
+			const text = env.svg.boxedText({
 				padding: config.mask.padding,
 				boxAttrs,
 				labelAttrs: config.label.attrs,
-				boxLayer: env.lineMaskLayer,
-				labelLayer,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-				textSizer: env.textSizer,
+			}, label, {
+				x: midX,
+				y: midY + config.label.margin.top - height,
 			});
+			env.lineMaskLayer.add(text.box);
+			labelLayer.add(text.label);
 		}
 
 		renderSimpleConnect({label, agentIDs, options}, env, from, yBegin) {
@@ -402,17 +400,16 @@ define([
 
 			this.renderVirtualSources({from, to, rendered}, env, clickable);
 
-			clickable.appendChild(svg.make('path', {
-				'd': (
+			clickable.add(env.svg.el('path')
+				.attrs(OUTLINE_ATTRS)
+				.attr('d', (
 					'M' + x1 + ',' + (yBegin - lift) +
 					'L' + x2 + ',' + (env.primaryY - lift) +
 					'L' + x2 + ',' + (env.primaryY + arrowSpread) +
 					'L' + x1 + ',' + (yBegin + arrowSpread) +
 					'Z'
-				),
-				'fill': 'transparent',
-				'class': 'outline',
-			}));
+				))
+			);
 
 			this.renderSimpleLabel(label, {
 				layer: clickable,

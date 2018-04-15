@@ -1,10 +1,21 @@
-defineDescribe('Monospace Theme', ['./Monospace'], (MonospaceTheme) => {
+defineDescribe('Monospace Theme', [
+	'./Monospace',
+	'svg/SVG',
+	'stubs/TestDOM',
+], (
+	MonospaceTheme,
+	SVG,
+	TestDOM
+) => {
 	'use strict';
 
-	const theme = new MonospaceTheme();
+	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+
+	const themeFactory = new MonospaceTheme.Factory();
+	const theme = themeFactory.build(svg);
 
 	it('has a name', () => {
-		expect(theme.name).toEqual('monospace');
+		expect(themeFactory.name).toEqual('monospace');
 	});
 
 	it('contains settings for the theme', () => {

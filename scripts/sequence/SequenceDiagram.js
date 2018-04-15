@@ -28,11 +28,11 @@ define([
 	'use strict';
 
 	const themes = [
-		new BasicTheme(),
-		new MonospaceTheme(),
-		new ChunkyTheme(),
-		new SketchTheme(SketchTheme.RIGHT),
-		new SketchTheme(SketchTheme.LEFT),
+		new BasicTheme.Factory(),
+		new MonospaceTheme.Factory(),
+		new ChunkyTheme.Factory(),
+		new SketchTheme.Factory(SketchTheme.RIGHT),
+		new SketchTheme.Factory(SketchTheme.LEFT),
 	];
 
 	const SharedParser = new Parser();
@@ -83,6 +83,14 @@ define([
 		}
 	}
 
+	function pickDocument(container) {
+		if(container) {
+			return container.ownerDocument;
+		} else {
+			return window.document;
+		}
+	}
+
 	class SequenceDiagram extends EventObject {
 		constructor(code = null, options = {}) {
 			super();
@@ -92,16 +100,24 @@ define([
 				code = options.code;
 			}
 
-			this.registerCodeMirrorMode = registerCodeMirrorMode;
+			Object.assign(this, {
+				code,
+				latestProcessed: null,
+				isInteractive: false,
+				textSizerFactory: options.textSizerFactory || null,
+				registerCodeMirrorMode,
 
-			this.code = code;
-			this.parser = SharedParser;
-			this.generator = SharedGenerator;
-			this.renderer = new Renderer(Object.assign({themes}, options));
-			this.exporter = new Exporter();
+				parser: SharedParser,
+				generator: SharedGenerator,
+				renderer: new Renderer(Object.assign({
+					themes,
+					document: pickDocument(options.container),
+				}, options)),
+				exporter: new Exporter(),
+			});
+
 			this.renderer.addEventForwarding(this);
-			this.latestProcessed = null;
-			this.isInteractive = false;
+
 			if(options.container) {
 				options.container.appendChild(this.dom());
 			}
@@ -114,6 +130,8 @@ define([
 		}
 
 		clone(options = {}) {
+			const reference = (options.container || this.renderer.dom());
+
 			return new SequenceDiagram(Object.assign({
 				code: this.code,
 				container: null,
@@ -121,7 +139,8 @@ define([
 				namespace: null,
 				components: this.renderer.components,
 				interactive: this.isInteractive,
-				SVGTextBlockClass: this.renderer.SVGTextBlockClass,
+				document: reference.ownerDocument,
+				textSizerFactory: this.textSizerFactory,
 			}, options));
 		}
 
@@ -232,9 +251,9 @@ define([
 		}
 
 		_revertParent(state) {
-			const dom = this.renderer.svg();
+			const dom = this.renderer.dom();
 			if(dom.parentNode !== state.originalParent) {
-				document.body.removeChild(dom);
+				dom.parentNode.removeChild(dom);
 				if(state.originalParent) {
 					state.originalParent.appendChild(dom);
 				}
@@ -248,7 +267,7 @@ define([
 		}
 
 		optimisedRenderPreReflow(processed = null) {
-			const dom = this.renderer.svg();
+			const dom = this.renderer.dom();
 			this.renderState = {
 				originalParent: dom.parentNode,
 				processed,
@@ -256,11 +275,11 @@ define([
 			};
 			const state = this.renderState;
 
-			if(!document.body.contains(dom)) {
+			if(!dom.isConnected) {
 				if(state.originalParent) {
 					state.originalParent.removeChild(dom);
 				}
-				document.body.appendChild(dom);
+				dom.ownerDocument.body.appendChild(dom);
 			}
 
 			try {
@@ -350,7 +369,7 @@ define([
 		}
 
 		dom() {
-			return this.renderer.svg();
+			return this.renderer.dom();
 		}
 	}
 
@@ -381,8 +400,6 @@ define([
 			Object.assign(tagOptions, options)
 		);
 		const newElement = diagram.dom();
-		element.parentNode.insertBefore(newElement, element);
-		element.parentNode.removeChild(element);
 		const attrs = element.attributes;
 		for(let i = 0; i < attrs.length; ++ i) {
 			newElement.setAttribute(
@@ -390,6 +407,7 @@ define([
 				attrs[i].nodeValue
 			);
 		}
+		element.parentNode.replaceChild(newElement, element);
 		return diagram;
 	}
 

@@ -1,11 +1,11 @@
 defineDescribe('Markdown Parser', [
 	'./MarkdownParser',
-	'svg/SVGTextBlock',
-	'svg/SVGUtilities',
+	'svg/SVG',
+	'stubs/TestDOM',
 ], (
 	parser,
-	SVGTextBlock,
-	svg
+	SVG,
+	TestDOM
 ) => {
 	'use strict';
 
@@ -122,25 +122,12 @@ defineDescribe('Markdown Parser', [
 		]]);
 	});
 
-	describe('SVGTextBlock interaction', () => {
-		let hold = null;
-		let block = null;
-
-		beforeEach(() => {
-			hold = svg.makeContainer();
-			document.body.appendChild(hold);
-			block = new SVGTextBlock(hold, {attrs: {'font-size': 12}});
-		});
-
-		afterEach(() => {
-			document.body.removeChild(hold);
-		});
-
-		it('produces a format compatible with SVGTextBlock', () => {
-			const formatted = parser('hello everybody');
-			block.set({formatted});
-			expect(hold.children.length).toEqual(1);
-			expect(hold.children[0].innerHTML).toEqual('hello everybody');
-		});
+	it('produces a format compatible with SVG.formattedText', () => {
+		const formatted = parser('hello everybody');
+		const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+		const block = svg.formattedText({}, formatted).element;
+		expect(block.outerHTML).toEqual(
+			'<g><text x="0" y="1">hello everybody</text></g>'
+		);
 	});
 });

@@ -16,7 +16,7 @@ define(() => {
 		}
 
 		getSVGContent(renderer) {
-			let code = renderer.svg().outerHTML;
+			let code = renderer.dom().outerHTML;
 
 			// Firefox fails to render SVGs as <img> unless they have size
 			// attributes on the <svg> tag, so we must set this when

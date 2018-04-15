@@ -1,13 +1,14 @@
 define([
 	'./BaseComponent',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
 ], (
-	BaseComponent,
-	svg,
-	SVGShapes
+	BaseComponent
 ) => {
 	'use strict';
+
+	const OUTLINE_ATTRS = {
+		'fill': 'transparent',
+		'class': 'outline',
+	};
 
 	class Divider extends BaseComponent {
 		prepareMeasurements({mode, formattedLabel}, env) {
@@ -41,8 +42,6 @@ define([
 			const left = env.agentInfos.get('[');
 			const right = env.agentInfos.get(']');
 
-			const clickable = env.makeRegion({unmasked: true});
-
 			let labelWidth = 0;
 			let labelHeight = 0;
 			if(formattedLabel) {
@@ -54,22 +53,22 @@ define([
 
 			const fullHeight = Math.max(height, labelHeight) + config.margin;
 
+			let labelText = null;
 			if(formattedLabel) {
-				const boxed = SVGShapes.renderBoxedText(formattedLabel, {
+				const boxed = env.svg.boxedText({
+					padding: config.padding,
+					boxAttrs: {'fill': '#000000'},
+					labelAttrs: config.labelAttrs,
+				}, formattedLabel, {
 					x: (left.x + right.x) / 2,
 					y: (
 						env.primaryY +
 						(fullHeight - labelHeight) / 2 -
 						config.padding.top
 					),
-					padding: config.padding,
-					boxAttrs: {'fill': '#000000'},
-					labelAttrs: config.labelAttrs,
-					boxLayer: env.fullMaskLayer,
-					labelLayer: clickable,
-					SVGTextBlockClass: env.SVGTextBlockClass,
-					textSizer: env.textSizer,
 				});
+				env.fullMaskLayer.add(boxed.box);
+				labelText = boxed.label;
 				labelWidth = boxed.width;
 			}
 
@@ -82,20 +81,18 @@ define([
 				height,
 				env,
 			});
-			if(shape) {
-				clickable.insertBefore(shape, clickable.firstChild);
-			}
-			if(mask) {
-				env.fullMaskLayer.appendChild(mask);
-			}
-			clickable.insertBefore(svg.make('rect', {
-				'x': left.x - config.extend,
-				'y': env.primaryY,
-				'width': right.x - left.x + config.extend * 2,
-				'height': fullHeight,
-				'fill': 'transparent',
-				'class': 'outline',
-			}), clickable.firstChild);
+			env.fullMaskLayer.add(mask);
+
+			env.makeRegion({unmasked: true}).add(
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': left.x - config.extend,
+					'y': env.primaryY,
+					'width': right.x - left.x + config.extend * 2,
+					'height': fullHeight,
+				}),
+				shape,
+				labelText
+			);
 
 			return env.primaryY + fullHeight + env.theme.actionMargin;
 		}

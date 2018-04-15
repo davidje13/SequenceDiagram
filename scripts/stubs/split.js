@@ -1,4 +1,4 @@
-define([], () => {
+define(() => {
 	'use strict';
 
 	function Split(elements, options) {

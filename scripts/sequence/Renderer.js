@@ -2,8 +2,8 @@
 define([
 	'core/ArrayUtilities',
 	'core/EventObject',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
+	'core/DOMWrapper',
+	'svg/SVG',
 	'./components/BaseComponent',
 	'./components/Block',
 	'./components/Parallel',
@@ -16,8 +16,8 @@ define([
 ], (
 	array,
 	EventObject,
-	svg,
-	SVGShapes,
+	DOMWrapper,
+	SVG,
 	BaseComponent
 ) => {
 	/* jshint +W072 */
@@ -68,7 +68,8 @@ define([
 			themes = [],
 			namespace = null,
 			components = null,
-			SVGTextBlockClass = SVGShapes.TextBlock,
+			document,
+			textSizerFactory = null,
 		} = {}) {
 			super();
 
@@ -82,10 +83,11 @@ define([
 			this.width = 0;
 			this.height = 0;
 			this.themes = makeThemes(themes);
+			this.themeBuilder = null;
 			this.theme = null;
 			this.namespace = parseNamespace(namespace);
 			this.components = components;
-			this.SVGTextBlockClass = SVGTextBlockClass;
+			this.svg = new SVG(new DOMWrapper(document), textSizerFactory);
 			this.knownThemeDefs = new Set();
 			this.knownDefs = new Set();
 			this.highlights = new Map();
@@ -110,61 +112,54 @@ define([
 			this.themes.set(theme.name, theme);
 		}
 
-		buildMetadata() {
-			this.metaCode = svg.makeText();
-			return svg.make('metadata', {}, [this.metaCode]);
-		}
-
 		buildStaticElements() {
-			this.base = svg.makeContainer();
+			const el = this.svg.el;
 
-			this.themeDefs = svg.make('defs');
-			this.defs = svg.make('defs');
-			this.fullMask = svg.make('mask', {
+			this.metaCode = this.svg.txt();
+			this.themeDefs = el('defs');
+			this.defs = el('defs');
+			this.fullMask = el('mask').attrs({
 				'id': this.namespace + 'FullMask',
 				'maskUnits': 'userSpaceOnUse',
 			});
-			this.lineMask = svg.make('mask', {
+			this.lineMask = el('mask').attrs({
 				'id': this.namespace + 'LineMask',
 				'maskUnits': 'userSpaceOnUse',
 			});
-			this.fullMaskReveal = svg.make('rect', {'fill': '#FFFFFF'});
-			this.lineMaskReveal = svg.make('rect', {'fill': '#FFFFFF'});
-			this.backgroundFills = svg.make('g');
-			this.agentLines = svg.make('g', {
-				'mask': 'url(#' + this.namespace + 'LineMask)',
-			});
-			this.blocks = svg.make('g');
-			this.shapes = svg.make('g');
-			this.unmaskedShapes = svg.make('g');
-			this.base.appendChild(this.buildMetadata());
-			this.base.appendChild(this.themeDefs);
-			this.base.appendChild(this.defs);
-			this.base.appendChild(this.backgroundFills);
-			this.base.appendChild(
-				svg.make('g', {
-					'mask': 'url(#' + this.namespace + 'FullMask)',
-				}, [
-					this.agentLines,
-					this.blocks,
-					this.shapes,
-				])
-			);
-			this.base.appendChild(this.unmaskedShapes);
-			this.title = new this.SVGTextBlockClass(this.base);
+			this.fullMaskReveal = el('rect').attr('fill', '#FFFFFF');
+			this.lineMaskReveal = el('rect').attr('fill', '#FFFFFF');
+			this.backgroundFills = el('g');
+			this.agentLines = el('g')
+				.attr('mask', 'url(#' + this.namespace + 'LineMask)');
+			this.blocks = el('g');
+			this.shapes = el('g');
+			this.unmaskedShapes = el('g');
+			this.title = this.svg.formattedText();
 
-			this.sizer = new this.SVGTextBlockClass.SizeTester(this.base);
+			this.svg.body.add(
+				this.svg.el('metadata')
+					.add(this.metaCode),
+				this.themeDefs,
+				this.defs,
+				this.backgroundFills,
+				el('g')
+					.attr('mask', 'url(#' + this.namespace + 'FullMask)')
+					.add(
+						this.agentLines,
+						this.blocks,
+						this.shapes
+					),
+				this.unmaskedShapes,
+				this.title
+			);
 		}
 
 		addThemeDef(name, generator) {
 			const namespacedName = this.namespace + name;
-			if(this.knownThemeDefs.has(name)) {
-				return namespacedName;
+			if(!this.knownThemeDefs.has(name)) {
+				this.knownThemeDefs.add(name);
+				this.themeDefs.add(generator().attr('id', namespacedName));
 			}
-			this.knownThemeDefs.add(name);
-			const def = generator();
-			def.setAttribute('id', namespacedName);
-			this.themeDefs.appendChild(def);
 			return namespacedName;
 		}
 
@@ -176,13 +171,10 @@ define([
 			}
 
 			const namespacedName = this.namespace + name;
-			if(this.knownDefs.has(name)) {
-				return namespacedName;
+			if(!this.knownDefs.has(name)) {
+				this.knownDefs.add(name);
+				this.defs.add(generator().attr('id', namespacedName));
 			}
-			this.knownDefs.add(name);
-			const def = generator();
-			def.setAttribute('id', namespacedName);
-			this.defs.appendChild(def);
 			return namespacedName;
 		}
 
@@ -203,7 +195,7 @@ define([
 				renderer: this,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
-				textSizer: this.sizer,
+				textSizer: this.svg.textSizer,
 				state: this.state,
 				components: this.components,
 			};
@@ -251,7 +243,7 @@ define([
 				agentInfos: this.agentInfos,
 				visibleAgentIDs: this.visibleAgentIDs,
 				momentaryAgentIDs: agentIDs,
-				textSizer: this.sizer,
+				textSizer: this.svg.textSizer,
 				addSpacing,
 				addSeparation,
 				state: this.state,
@@ -301,7 +293,7 @@ define([
 				renderer: this,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
-				textSizer: this.sizer,
+				textSizer: this.svg.textSizer,
 				state: this.state,
 				components: this.components,
 			};
@@ -346,20 +338,18 @@ define([
 
 		drawAgentLine(agentInfo, toY) {
 			if(
-				agentInfo.latestYStart === null ||
-				toY <= agentInfo.latestYStart
+				agentInfo.latestYStart !== null &&
+				toY > agentInfo.latestYStart
 			) {
-				return;
+				this.agentLines.add(this.theme.renderAgentLine({
+					x: agentInfo.x,
+					y0: agentInfo.latestYStart,
+					y1: toY,
+					width: agentInfo.currentRad * 2,
+					className: 'agent-' + agentInfo.index + '-line',
+					options: agentInfo.options,
+				}));
 			}
-
-			this.agentLines.appendChild(this.theme.renderAgentLine({
-				x: agentInfo.x,
-				y0: agentInfo.latestYStart,
-				y1: toY,
-				width: agentInfo.currentRad * 2,
-				className: 'agent-' + agentInfo.index + '-line',
-				options: agentInfo.options,
-			}));
 		}
 
 		addHighlightObject(line, o) {
@@ -372,7 +362,7 @@ define([
 		}
 
 		forwardEvent(source, sourceEvent, forwardEvent, forwardArgs) {
-			source.addEventListener(
+			source.on(
 				sourceEvent,
 				this.trigger.bind(this, forwardEvent, forwardArgs)
 			);
@@ -388,7 +378,7 @@ define([
 				renderer: this,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
-				textSizer: this.sizer,
+				textSizer: this.svg.textSizer,
 				state: this.state,
 				components: this.components,
 			};
@@ -403,16 +393,14 @@ define([
 				stageOverride = null,
 				unmasked = false,
 			} = {}) => {
-				const o = svg.make('g');
+				const o = this.svg.el('g').setClass('region');
 				const targetStage = (stageOverride || stage);
 				this.addHighlightObject(targetStage.ln, o);
-				o.setAttribute('class', 'region');
 				this.forwardEvent(o, 'mouseenter', 'mouseover', [targetStage]);
 				this.forwardEvent(o, 'mouseleave', 'mouseout', [targetStage]);
 				this.forwardEvent(o, 'click', 'click', [targetStage]);
 				this.forwardEvent(o, 'dblclick', 'dblclick', [targetStage]);
-				(unmasked ? this.unmaskedShapes : this.shapes).appendChild(o);
-				return o;
+				return o.attach(unmasked ? this.unmaskedShapes : this.shapes);
 			};
 
 			const env = {
@@ -425,8 +413,7 @@ define([
 				lineMaskLayer: this.lineMask,
 				theme: this.theme,
 				agentInfos: this.agentInfos,
-				textSizer: this.sizer,
-				SVGTextBlockClass: this.SVGTextBlockClass,
+				textSizer: this.svg.textSizer,
 				state: this.state,
 				drawAgentLine: (agentID, toY, andStop = false) => {
 					const agentInfo = this.agentInfos.get(agentID);
@@ -436,6 +423,7 @@ define([
 				addDef: this.addDef,
 				makeRegion,
 				components: this.components,
+				svg: this.svg,
 			};
 
 			let bottomY = topY;
@@ -511,7 +499,7 @@ define([
 
 		updateBounds(stagesHeight) {
 			const cx = (this.minX + this.maxX) / 2;
-			const titleSize = this.sizer.measure(this.title);
+			const titleSize = this.svg.textSizer.measure(this.title);
 			const titleY = ((titleSize.height > 0) ?
 				(-this.theme.titleMargin - titleSize.height) : 0
 			);
@@ -534,10 +522,10 @@ define([
 				'height': this.height,
 			};
 
-			svg.setAttributes(this.fullMaskReveal, fullSize);
-			svg.setAttributes(this.lineMaskReveal, fullSize);
+			this.fullMaskReveal.attrs(fullSize);
+			this.lineMaskReveal.attrs(fullSize);
 
-			this.base.setAttribute('viewBox', (
+			this.svg.body.attr('viewBox', (
 				x0 + ' ' + y0 + ' ' +
 				this.width + ' ' + this.height
 			));
@@ -554,23 +542,23 @@ define([
 		_reset(theme) {
 			if(theme) {
 				this.knownThemeDefs.clear();
-				svg.empty(this.themeDefs);
+				this.themeDefs.empty();
 			}
 
 			this.knownDefs.clear();
 			this.highlights.clear();
-			svg.empty(this.defs);
-			svg.empty(this.fullMask);
-			svg.empty(this.lineMask);
-			svg.empty(this.backgroundFills);
-			svg.empty(this.agentLines);
-			svg.empty(this.blocks);
-			svg.empty(this.shapes);
-			svg.empty(this.unmaskedShapes);
-			this.fullMask.appendChild(this.fullMaskReveal);
-			this.lineMask.appendChild(this.lineMaskReveal);
-			this.defs.appendChild(this.fullMask);
-			this.defs.appendChild(this.lineMask);
+			this.defs.empty();
+			this.fullMask.empty();
+			this.lineMask.empty();
+			this.backgroundFills.empty();
+			this.agentLines.empty();
+			this.blocks.empty();
+			this.shapes.empty();
+			this.unmaskedShapes.empty();
+			this.defs.add(
+				this.fullMask.add(this.fullMaskReveal),
+				this.lineMask.add(this.lineMaskReveal)
+			);
 			this._resetState();
 		}
 
@@ -583,12 +571,12 @@ define([
 			}
 			if(this.highlights.has(this.currentHighlight)) {
 				this.highlights.get(this.currentHighlight).forEach((o) => {
-					o.setAttribute('class', 'region');
+					o.delClass('focus');
 				});
 			}
 			if(this.highlights.has(line)) {
 				this.highlights.get(line).forEach((o) => {
-					o.setAttribute('class', 'region focus');
+					o.addClass('focus');
 				});
 			}
 			this.currentHighlight = line;
@@ -638,11 +626,14 @@ define([
 		}
 
 		_switchTheme(name) {
-			const oldTheme = this.theme;
-			this.theme = this.getThemeNamed(name);
+			const oldThemeBuilder = this.themeBuilder;
+			this.themeBuilder = this.getThemeNamed(name);
+			if(this.themeBuilder !== oldThemeBuilder) {
+				this.theme = this.themeBuilder.build(this.svg);
+			}
 			this.theme.reset();
 
-			return (this.theme !== oldTheme);
+			return (this.themeBuilder !== oldThemeBuilder);
 		}
 
 		optimisedRenderPreReflow(sequence) {
@@ -656,7 +647,7 @@ define([
 				attrs: this.theme.titleAttrs,
 				formatted: sequence.meta.title,
 			});
-			this.sizer.expectMeasure(this.title);
+			this.svg.textSizer.expectMeasure(this.title);
 
 			this.minX = 0;
 			this.maxX = 0;
@@ -665,11 +656,11 @@ define([
 
 			sequence.stages.forEach(this.prepareMeasurementsStage);
 			this._resetState();
-			this.sizer.performMeasurementsPre();
+			this.svg.textSizer.performMeasurementsPre();
 		}
 
 		optimisedRenderReflow() {
-			this.sizer.performMeasurementsAct();
+			this.svg.textSizer.performMeasurementsAct();
 		}
 
 		optimisedRenderPostReflow(sequence) {
@@ -689,8 +680,8 @@ define([
 			this.currentHighlight = -1;
 			this.setHighlight(prevHighlight);
 
-			this.sizer.performMeasurementsPost();
-			this.sizer.resetCache();
+			this.svg.textSizer.performMeasurementsPost();
+			this.svg.textSizer.resetCache();
 		}
 
 		render(sequence) {
@@ -721,8 +712,8 @@ define([
 			return this.agentInfos.get(id).x;
 		}
 
-		svg() {
-			return this.base;
+		dom() {
+			return this.svg.body.element;
 		}
 	};
 });

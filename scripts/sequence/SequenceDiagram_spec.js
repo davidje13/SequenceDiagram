@@ -5,14 +5,14 @@ defineDescribe('SequenceDiagram', [
 	'./Generator',
 	'./Renderer',
 	'./Exporter',
-	'stubs/SVGTextBlock',
+	'stubs/TestDOM',
 ], (
 	SequenceDiagram,
 	Parser,
 	Generator,
 	Renderer,
 	Exporter,
-	SVGTextBlock
+	TestDOM
 ) => {
 	/* jshint +W072 */
 	'use strict';
@@ -30,7 +30,7 @@ defineDescribe('SequenceDiagram', [
 	beforeEach(() => {
 		diagram = new SequenceDiagram({
 			namespace: '',
-			SVGTextBlockClass: SVGTextBlock,
+			textSizerFactory: TestDOM.textSizerFactory,
 		});
 	});
 
@@ -87,6 +87,7 @@ defineDescribe('SequenceDiagram', [
 			'<g mask="url(#FullMask)">' +
 			'<g mask="url(#LineMask)"></g>' +
 			'</g>' +
+			'<g>' +
 			'<text' +
 			' x="0"' +
 			' font-family="sans-serif"' +
@@ -94,7 +95,8 @@ defineDescribe('SequenceDiagram', [
 			' line-height="1.3"' +
 			' text-anchor="middle"' +
 			' class="title"' +
-			' y="-11">My title here</text>' +
+			' y="-10">My title here</text>' +
+			'</g>' +
 			'</svg>'
 		);
 	});
@@ -110,10 +112,12 @@ defineDescribe('SequenceDiagram', [
 
 		// Agent 1
 		expect(content).toContain(
-			'<line x1="20.5" y1="11" x2="20.5" y2="46" class="agent-1-line"'
+			'<line fill="none" stroke="#000000" stroke-width="1"' +
+			' x1="20.5" y1="11" x2="20.5" y2="46" class="agent-1-line"'
 		);
 		expect(content).toContain(
-			'<rect x="10" y="0" width="21" height="11"'
+			'<rect fill="transparent" class="outline"' +
+			' x="10" y="0" width="21" height="11"'
 		);
 		expect(content).toContain(
 			'<text x="20.5"'
@@ -121,10 +125,12 @@ defineDescribe('SequenceDiagram', [
 
 		// Agent 2
 		expect(content).toContain(
-			'<line x1="51.5" y1="11" x2="51.5" y2="46" class="agent-2-line"'
+			'<line fill="none" stroke="#000000" stroke-width="1"' +
+			' x1="51.5" y1="11" x2="51.5" y2="46" class="agent-2-line"'
 		);
 		expect(content).toContain(
-			'<rect x="41" y="0" width="21" height="11"'
+			'<rect fill="transparent" class="outline"' +
+			' x="41" y="0" width="21" height="11"'
 		);
 		expect(content).toContain(
 			'<text x="51.5"'
@@ -147,9 +153,19 @@ defineDescribe('SequenceDiagram', [
 
 		expect(content).toContain('<svg viewBox="-5 -5 60 39">');
 
-		expect(content).toContain('<line x1="20" y1="7" x2="20" y2="29"');
-		expect(content).toContain('<line x1="30" y1="7" x2="30" y2="29"');
-		expect(content).toContain('<rect x="10" y="0" width="30" height="9"');
+		expect(content).toContain(
+			'<line fill="none" stroke="#000000" stroke-width="1"' +
+			' x1="20" y1="7" x2="20" y2="29"'
+		);
+		expect(content).toContain(
+			'<line fill="none" stroke="#000000" stroke-width="1"' +
+			' x1="30" y1="7" x2="30" y2="29"'
+		);
+		expect(content).toContain(
+			'<rect fill="none" stroke="#000000" stroke-width="1.5"' +
+			' rx="2" ry="2"' +
+			' x="10" y="0" width="30" height="9"'
+		);
 		expect(content).toContain('<g class="region collapsed"');
 	});
 

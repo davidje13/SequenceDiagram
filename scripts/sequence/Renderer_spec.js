@@ -10,17 +10,20 @@ defineDescribe('Sequence Renderer', [
 	let renderer = null;
 
 	beforeEach(() => {
-		renderer = new Renderer({themes: [new BasicTheme()]});
-		document.body.appendChild(renderer.svg());
+		renderer = new Renderer({
+			themes: [new BasicTheme.Factory()],
+			document: window.document,
+		});
+		document.body.appendChild(renderer.dom());
 	});
 
 	afterEach(() => {
-		document.body.removeChild(renderer.svg());
+		document.body.removeChild(renderer.dom());
 	});
 
-	describe('.svg', () => {
+	describe('.dom', () => {
 		it('returns an SVG node containing the rendered diagram', () => {
-			const svg = renderer.svg();
+			const svg = renderer.dom();
 			expect(svg.tagName).toEqual('svg');
 		});
 	});
@@ -76,7 +79,7 @@ defineDescribe('Sequence Renderer', [
 				],
 				stages: [],
 			});
-			const element = renderer.svg();
+			const element = renderer.dom();
 			const title = element.getElementsByClassName('title')[0];
 			expect(title.innerHTML).toEqual('Title');
 		});
@@ -99,7 +102,7 @@ defineDescribe('Sequence Renderer', [
 				],
 				stages: [],
 			});
-			const element = renderer.svg();
+			const element = renderer.dom();
 			const metadata = element.getElementsByTagName('metadata')[0];
 			expect(metadata.innerHTML).toEqual('hello');
 		});
@@ -141,7 +144,7 @@ defineDescribe('Sequence Renderer', [
 				],
 			});
 
-			const element = renderer.svg();
+			const element = renderer.dom();
 			const line = element.getElementsByClassName('agent-1-line')[0];
 			const drawnX = Number(line.getAttribute('x1'));
 

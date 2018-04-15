@@ -419,6 +419,10 @@ Creates a new SequenceDiagram object. Options is an object which can contain:
 separate argument.</li>
 <li><code>container</code>: DOM node to append the diagram to (defaults to
 null).</li>
+<li><code>document</code>: Document object to base the diagram in (defaults to
+container's document, or <code>window.document</code>).</li>
+<li><code>textSizerFactory</code>: Function which returns an object capable of
+measuring text (defaults to wrapping <code>getComputedTextLength</code>).</li>
 <li><code>themes</code>: List of themes to make available to the diagram
 (defaults to globally registered themes).</li>
 <li><code>namespace</code>: Each diagram on a page must have a unique namespace.

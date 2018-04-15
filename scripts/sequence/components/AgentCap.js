@@ -1,15 +1,16 @@
 define([
 	'./BaseComponent',
 	'core/ArrayUtilities',
-	'svg/SVGUtilities',
-	'svg/SVGShapes',
 ], (
 	BaseComponent,
-	array,
-	svg,
-	SVGShapes
+	array
 ) => {
 	'use strict';
+
+	const OUTLINE_ATTRS = {
+		'fill': 'transparent',
+		'class': 'outline',
+	};
 
 	class CapBox {
 		getConfig(options, env) {
@@ -52,27 +53,18 @@ define([
 
 		render(y, {x, formattedLabel, options}, env) {
 			const config = this.getConfig(options, env);
-			const clickable = env.makeRegion();
-			const text = SVGShapes.renderBoxedText(formattedLabel, {
-				x,
-				y,
-				padding: config.padding,
-				boxAttrs: config.boxAttrs,
-				boxRenderer: config.boxRenderer,
-				labelAttrs: config.labelAttrs,
-				boxLayer: clickable,
-				labelLayer: clickable,
-				SVGTextBlockClass: env.SVGTextBlockClass,
-				textSizer: env.textSizer,
-			});
-			clickable.insertBefore(svg.make('rect', {
-				'x': x - text.width / 2,
-				'y': y,
-				'width': text.width,
-				'height': text.height,
-				'fill': 'transparent',
-				'class': 'outline',
-			}), text.label.firstLine());
+
+			const text = env.svg.boxedText(config, formattedLabel, {x, y});
+
+			env.makeRegion().add(
+				text,
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': x - text.width / 2,
+					'y': y,
+					'width': text.width,
+					'height': text.height,
+				})
+			);
 
 			return {
 				lineTop: 0,
@@ -104,22 +96,20 @@ define([
 			const config = env.theme.agentCap.cross;
 			const d = config.size / 2;
 
-			const clickable = env.makeRegion();
-
-			clickable.appendChild(config.render({
-				x,
-				y: y + d,
-				radius: d,
-				options,
-			}));
-			clickable.appendChild(svg.make('rect', {
-				'x': x - d,
-				'y': y,
-				'width': d * 2,
-				'height': d * 2,
-				'fill': 'transparent',
-				'class': 'outline',
-			}));
+			env.makeRegion().add(
+				config.render({
+					x,
+					y: y + d,
+					radius: d,
+					options,
+				}),
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': x - d,
+					'y': y,
+					'width': d * 2,
+					'height': d * 2,
+				})
+			);
 
 			return {
 				lineTop: d,
@@ -165,22 +155,21 @@ define([
 			);
 			const height = barCfg.height;
 
-			const clickable = env.makeRegion();
-			clickable.appendChild(barCfg.render({
-				x: x - width / 2,
-				y,
-				width,
-				height,
-				options,
-			}));
-			clickable.appendChild(svg.make('rect', {
-				'x': x - width / 2,
-				'y': y,
-				'width': width,
-				'height': height,
-				'fill': 'transparent',
-				'class': 'outline',
-			}));
+			env.makeRegion().add(
+				barCfg.render({
+					x: x - width / 2,
+					y,
+					width,
+					height,
+					options,
+				}),
+				env.svg.box(OUTLINE_ATTRS, {
+					'x': x - width / 2,
+					'y': y,
+					'width': width,
+					'height': height,
+				})
+			);
 
 			return {
 				lineTop: 0,
@@ -212,38 +201,37 @@ define([
 			const ratio = config.height / (config.height + config.extend);
 
 			const gradID = env.addDef(isBegin ? 'FadeIn' : 'FadeOut', () => {
-				return svg.make('linearGradient', {
+				return env.svg.linearGradient({
 					'x1': '0%',
 					'y1': isBegin ? '100%' : '0%',
 					'x2': '0%',
 					'y2': isBegin ? '0%' : '100%',
 				}, [
-					svg.make('stop', {
+					{
 						'offset': '0%',
 						'stop-color': '#FFFFFF',
-					}),
-					svg.make('stop', {
+					},
+					{
 						'offset': (100 * ratio).toFixed(3) + '%',
 						'stop-color': '#000000',
-					}),
+					},
 				]);
 			});
 
-			env.lineMaskLayer.appendChild(svg.make('rect', {
+			env.lineMaskLayer.add(env.svg.box({
+				'fill': 'url(#' + gradID + ')',
+			}, {
 				'x': x - config.width / 2,
 				'y': y - (isBegin ? config.extend : 0),
 				'width': config.width,
 				'height': config.height + config.extend,
-				'fill': 'url(#' + gradID + ')',
 			}));
 
-			env.makeRegion().appendChild(svg.make('rect', {
+			env.makeRegion().add(env.svg.box(OUTLINE_ATTRS, {
 				'x': x - config.width / 2,
 				'y': y,
 				'width': config.width,
 				'height': config.height,
-				'fill': 'transparent',
-				'class': 'outline',
 			}));
 
 			return {
@@ -275,13 +263,11 @@ define([
 			const config = env.theme.agentCap.none;
 
 			const w = 10;
-			env.makeRegion().appendChild(svg.make('rect', {
+			env.makeRegion().add(env.svg.box(OUTLINE_ATTRS, {
 				'x': x - w / 2,
 				'y': y,
 				'width': w,
 				'height': config.height,
-				'fill': 'transparent',
-				'class': 'outline',
 			}));
 
 			return {
@@ -359,12 +345,7 @@ define([
 				const cap = AGENT_CAPS[mode];
 				const topShift = cap.topShift(agentInfo, env, this.begin);
 				const y0 = env.primaryY - topShift;
-				const shifts = cap.render(
-					y0,
-					agentInfo,
-					env,
-					this.begin
-				);
+				const shifts = cap.render(y0, agentInfo, env, this.begin);
 				maxEnd = Math.max(maxEnd, y0 + shifts.height);
 				if(this.begin) {
 					env.drawAgentLine(id, y0 + shifts.lineBottom);

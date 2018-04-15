@@ -1,18 +1,31 @@
-defineDescribe('Sketch Theme', ['./Sketch'], (SketchTheme) => {
+defineDescribe('Sketch Theme', [
+	'./Sketch',
+	'svg/SVG',
+	'stubs/TestDOM',
+], (
+	SketchTheme,
+	SVG,
+	TestDOM
+) => {
 	'use strict';
 
-	const theme = new SketchTheme(SketchTheme.RIGHT);
-	const themeL = new SketchTheme(SketchTheme.LEFT);
+	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+
+	const themeFactory = new SketchTheme.Factory(SketchTheme.RIGHT);
+	const themeFactoryL = new SketchTheme.Factory(SketchTheme.LEFT);
+	const theme = themeFactory.build(svg);
+	const themeL = themeFactory.build(svg);
 
 	it('has a name', () => {
-		expect(theme.name).toEqual('sketch');
+		expect(themeFactory.name).toEqual('sketch');
 	});
 
 	it('has a left-handed variant', () => {
-		expect(themeL.name).toEqual('sketch left handed');
+		expect(themeFactoryL.name).toEqual('sketch left handed');
 	});
 
 	it('contains settings for the theme', () => {
 		expect(theme.outerMargin).toEqual(5);
+		expect(themeL.outerMargin).toEqual(5);
 	});
 });

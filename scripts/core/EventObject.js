@@ -27,6 +27,16 @@ define(() => {
 			}
 		}
 
+		on(type, fn) {
+			this.addEventListener(type, fn);
+			return this;
+		}
+
+		off(type, fn) {
+			this.removeEventListener(type, fn);
+			return this;
+		}
+
 		countEventListeners(type) {
 			return (this.listeners.get(type) || []).length;
 		}

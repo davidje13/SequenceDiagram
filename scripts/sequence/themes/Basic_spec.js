@@ -1,10 +1,21 @@
-defineDescribe('Basic Theme', ['./Basic'], (BasicTheme) => {
+defineDescribe('Basic Theme', [
+	'./Basic',
+	'svg/SVG',
+	'stubs/TestDOM',
+], (
+	BasicTheme,
+	SVG,
+	TestDOM
+) => {
 	'use strict';
 
-	const theme = new BasicTheme();
+	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+
+	const themeFactory = new BasicTheme.Factory();
+	const theme = themeFactory.build(svg);
 
 	it('has a name', () => {
-		expect(theme.name).toEqual('basic');
+		expect(themeFactory.name).toEqual('basic');
 	});
 
 	it('contains settings for the theme', () => {
