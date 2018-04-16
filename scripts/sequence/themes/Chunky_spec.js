@@ -1,17 +1,11 @@
-defineDescribe('Chunky Theme', [
-	'./Chunky',
-	'svg/SVG',
-	'stubs/TestDOM',
-], (
-	ChunkyTheme,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {dom, textSizerFactory} from '../../stubs/TestDOM.js';
+import {Factory} from './Chunky.js';
+import SVG from '../../svg/SVG.js';
 
-	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+describe('Chunky Theme', () => {
+	const svg = new SVG(dom, textSizerFactory);
 
-	const themeFactory = new ChunkyTheme.Factory();
+	const themeFactory = new Factory();
 	const theme = themeFactory.build(svg);
 
 	it('has a name', () => {

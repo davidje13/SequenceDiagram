@@ -1,6 +1,6 @@
-defineDescribe('PatternedLine', ['./PatternedLine'], (PatternedLine) => {
-	'use strict';
+import PatternedLine from './PatternedLine.js';
 
+describe('PatternedLine', () => {
 	function simplify(path, dp) {
 		return path.replace(/[0-9.]+/g, (v) => Number(v).toFixed(dp));
 	}
@@ -91,10 +91,8 @@ defineDescribe('PatternedLine', ['./PatternedLine'], (PatternedLine) => {
 	describe('patterned', () => {
 		const patternDeltas = [-1, 1, -2];
 		const pattern = {
+			getDelta: (p) => patternDeltas[p % 3],
 			partWidth: 5,
-			getDelta: (p) => {
-				return patternDeltas[p % 3];
-			},
 		};
 
 		it('draws lines using the given pattern', () => {
@@ -102,8 +100,10 @@ defineDescribe('PatternedLine', ['./PatternedLine'], (PatternedLine) => {
 				.move(10, 20)
 				.line(30, 20);
 
-			// last segment of line is not rendered to avoid high frequencies
-			// near line segment joins
+			/*
+			 * Last segment of line is not rendered to avoid high
+			 * frequencies near line segment joins
+			 */
 			expect(ln.asPath()).toEqual(
 				'M10 19' +
 				'L15 21' +
@@ -165,6 +165,5 @@ defineDescribe('PatternedLine', ['./PatternedLine'], (PatternedLine) => {
 				'L5.0 39.0'
 			);
 		});
-
 	});
 });

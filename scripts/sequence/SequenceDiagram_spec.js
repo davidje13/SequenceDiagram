@@ -1,22 +1,11 @@
-/* jshint -W072 */ // Allow several required modules
-defineDescribe('SequenceDiagram', [
-	'./SequenceDiagram',
-	'./Parser',
-	'./Generator',
-	'./Renderer',
-	'./Exporter',
-	'stubs/TestDOM',
-], (
-	SequenceDiagram,
-	Parser,
-	Generator,
-	Renderer,
-	Exporter,
-	TestDOM
-) => {
-	/* jshint +W072 */
-	'use strict';
+import Exporter from './Exporter.js';
+import Generator from './Generator.js';
+import Parser from './Parser.js';
+import Renderer from './Renderer.js';
+import SequenceDiagram from './SequenceDiagram.js';
+import {textSizerFactory} from '../stubs/TestDOM.js';
 
+describe('SequenceDiagram', () => {
 	function getSimplifiedContent(d) {
 		return (d.dom().outerHTML
 			.replace(/<g><\/g>/g, '')
@@ -30,7 +19,7 @@ defineDescribe('SequenceDiagram', [
 	beforeEach(() => {
 		diagram = new SequenceDiagram({
 			namespace: '',
-			textSizerFactory: TestDOM.textSizerFactory,
+			textSizerFactory,
 		});
 	});
 
@@ -53,11 +42,11 @@ defineDescribe('SequenceDiagram', [
 			'<metadata></metadata>' +
 			'<defs>' +
 			'<mask id="FullMask" maskUnits="userSpaceOnUse">' +
-			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
+			'<rect fill="#FFFFFF" height="10" width="10" x="-5" y="-5">' +
 			'</rect>' +
 			'</mask>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
-			'<rect fill="#FFFFFF" x="-5" y="-5" width="10" height="10">' +
+			'<rect fill="#FFFFFF" height="10" width="10" x="-5" y="-5">' +
 			'</rect>' +
 			'</mask>' +
 			'</defs>' +
@@ -76,11 +65,11 @@ defineDescribe('SequenceDiagram', [
 			'<metadata>title My title here</metadata>' +
 			'<defs>' +
 			'<mask id="FullMask" maskUnits="userSpaceOnUse">' +
-			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
+			'<rect fill="#FFFFFF" height="21" width="23" x="-11.5" y="-16">' +
 			'</rect>' +
 			'</mask>' +
 			'<mask id="LineMask" maskUnits="userSpaceOnUse">' +
-			'<rect fill="#FFFFFF" x="-11.5" y="-16" width="23" height="21">' +
+			'<rect fill="#FFFFFF" height="21" width="23" x="-11.5" y="-16">' +
 			'</rect>' +
 			'</mask>' +
 			'</defs>' +
@@ -113,12 +102,14 @@ defineDescribe('SequenceDiagram', [
 		// Agent 1
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="20.5" y1="11" x2="20.5" y2="46" class="agent-1-line"'
+			' x1="20.5" x2="20.5" y1="11" y2="46" class="agent-1-line"'
 		);
+
 		expect(content).toContain(
-			'<rect fill="transparent" class="outline"' +
-			' x="10" y="0" width="21" height="11"'
+			'<rect class="outline" fill="transparent"' +
+			' height="11" width="21" x="10" y="0"'
 		);
+
 		expect(content).toContain(
 			'<text x="20.5"'
 		);
@@ -126,12 +117,14 @@ defineDescribe('SequenceDiagram', [
 		// Agent 2
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="51.5" y1="11" x2="51.5" y2="46" class="agent-2-line"'
+			' x1="51.5" x2="51.5" y1="11" y2="46" class="agent-2-line"'
 		);
+
 		expect(content).toContain(
-			'<rect fill="transparent" class="outline"' +
-			' x="41" y="0" width="21" height="11"'
+			'<rect class="outline" fill="transparent"' +
+			' height="11" width="21" x="41" y="0"'
 		);
+
 		expect(content).toContain(
 			'<text x="51.5"'
 		);
@@ -140,6 +133,7 @@ defineDescribe('SequenceDiagram', [
 		expect(content).toContain(
 			'<path d="M20.5 26L48.5 26"'
 		);
+
 		expect(content).toContain(
 			'<polygon points="46 31 51 26 46 21"'
 		);
@@ -155,17 +149,20 @@ defineDescribe('SequenceDiagram', [
 
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="20" y1="7" x2="20" y2="29"'
+			' x1="20" x2="20" y1="7" y2="29"'
 		);
+
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="30" y1="7" x2="30" y2="29"'
+			' x1="30" x2="30" y1="7" y2="29"'
 		);
+
 		expect(content).toContain(
 			'<rect fill="none" stroke="#000000" stroke-width="1.5"' +
 			' rx="2" ry="2"' +
-			' x="10" y="0" width="30" height="9"'
+			' height="9" width="30" x="10" y="0"'
 		);
+
 		expect(content).toContain('<g class="region collapsed"');
 	});
 
@@ -173,14 +170,18 @@ defineDescribe('SequenceDiagram', [
 		const code = 'title message';
 		const sd = new SequenceDiagram(code);
 		const widthImmediate = sd.getSize().width;
+
 		expect(widthImmediate).toBeGreaterThan(40);
 
 		sd.set(code);
+
 		expect(sd.getSize().width).toEqual(widthImmediate);
 
 		setTimeout(() => {
 			sd.set(code);
+
 			expect(sd.getSize().width).toEqual(widthImmediate);
+
 			done();
 		}, 500);
 	});
@@ -189,14 +190,18 @@ defineDescribe('SequenceDiagram', [
 		const code = 'theme sketch\ntitle message';
 		const sd = new SequenceDiagram(code);
 		const widthImmediate = sd.getSize().width;
+
 		expect(widthImmediate).toBeGreaterThan(40);
 
 		sd.set(code);
+
 		expect(sd.getSize().width).toEqual(widthImmediate);
 
 		setTimeout(() => {
 			sd.set(code);
+
 			expect(sd.getSize().width).toEqual(widthImmediate);
+
 			done();
 		}, 500);
 	});

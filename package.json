@@ -15,14 +15,19 @@
     "lib/sequence-diagram.js"
   ],
   "main": "lib/sequence-diagram",
+  "module": "source/standalone",
   "scripts": {
-    "start": "node_modules/.bin/http-server",
-    "minify": "node node_modules/.bin/r.js -o scripts/build.js && node_modules/.bin/uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js"
+    "lint": "eslint scripts --ext .js --ignore-pattern '!.eslintrc.js' --ignore-pattern '*FontData.js'",
+    "minify": "rollup --config rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js && uglifyjs --compress --mangle --warn --output weblib/editor.min.js -- weblib/editor.js",
+    "start": "http-server"
   },
   "devDependencies": {
-    "almond": "^0.3.3",
+    "eslint": "^4.19.1",
+    "eslint-plugin-jasmine": "^2.9.3",
     "http-server": "^0.10.0",
     "requirejs": "2.3.5",
+    "rollup": "^0.57.1",
+    "rollup-plugin-hypothetical": "^2.1.0",
     "uglify-es": "^3.1.10"
   }
 }

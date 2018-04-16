@@ -1,16 +1,9 @@
-defineDescribe('SequenceDiagram Visuals', [
-	'./SequenceDiagram',
-	'./test-images/list',
-	'image/ImageRegion',
-	'image/ImageSimilarity',
-], (
-	SequenceDiagram,
-	TESTS,
-	ImageRegion,
-	ImageSimilarity
-) => {
-	'use strict';
+import ImageRegion from '../image/ImageRegion.js';
+import SequenceDiagram from './SequenceDiagram.js';
+import TESTS from './test-images/list.js';
+import {matchers} from '../image/ImageSimilarity.js';
 
+describe('SequenceDiagram Visuals', () => {
 	const RESOLUTION = 4;
 
 	const IMAGE_BASE_PATH = 'scripts/sequence/test-images/';
@@ -21,7 +14,7 @@ defineDescribe('SequenceDiagram Visuals', [
 		const results = [];
 		let p = 0;
 		let ln = -1;
-		while(true) {
+		for(;;) {
 			const match = COLLAPSE_REGEX.exec(code);
 			if(!match) {
 				break;
@@ -44,9 +37,7 @@ defineDescribe('SequenceDiagram Visuals', [
 		return Promise.all([
 			diagram.getCanvas(size).then(ImageRegion.fromCanvas),
 			ImageRegion.loadSVG(svg, size),
-		]).then(([actual, expected]) => {
-			return {actual, expected, code};
-		});
+		]).then(([actual, expected]) => ({actual, code, expected}));
 	}
 
 	function loadAndRenderURL(url, size) {
@@ -55,20 +46,19 @@ defineDescribe('SequenceDiagram Visuals', [
 			.then((svg) => loadAndRenderSVG(svg, size));
 	}
 
-	function testImageMatches({actual, expected, code}) {
-		const widthSm = Math.min(Math.round(actual.width / 4), 150);
-		const actualSm = actual.resize({width: widthSm});
-		expect(actualSm).toLookLike(expected.resize(actualSm), {
-			details: 'Code is:\n\n' + code,
-		});
-	}
-
 	TESTS.forEach((image) => {
 		it('renders ' + image + ' as expected', (done) => {
-			jasmine.addMatchers(ImageSimilarity.matchers);
+			jasmine.addMatchers(matchers);
 
 			loadAndRenderURL(IMAGE_BASE_PATH + image)
-				.then(testImageMatches)
+				.then(({actual, expected, code}) => {
+					const widthSm = Math.min(Math.round(actual.width / 4), 150);
+					const actualSm = actual.resize({width: widthSm});
+
+					expect(actualSm).toLookLike(expected.resize(actualSm), {
+						details: 'Code is:\n\n' + code,
+					});
+				})
 				.catch(fail)
 				.then(done);
 		});

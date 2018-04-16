@@ -1,17 +1,11 @@
-defineDescribe('Basic Theme', [
-	'./Basic',
-	'svg/SVG',
-	'stubs/TestDOM',
-], (
-	BasicTheme,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {dom, textSizerFactory} from '../../stubs/TestDOM.js';
+import {Factory} from './Basic.js';
+import SVG from '../../svg/SVG.js';
 
-	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+describe('Basic Theme', () => {
+	const svg = new SVG(dom, textSizerFactory);
 
-	const themeFactory = new BasicTheme.Factory();
+	const themeFactory = new Factory();
 	const theme = themeFactory.build(svg);
 
 	it('has a name', () => {

@@ -1,11 +1,12 @@
-defineDescribe('VirtualDocument', ['./VirtualDocument'], (VirtualDocument) => {
-	'use strict';
+import VirtualDocument from './VirtualDocument.js';
 
+describe('VirtualDocument', () => {
 	const doc = new VirtualDocument();
 
 	describe('createElement', () => {
 		it('creates elements which conform to the DOM API', () => {
 			const o = doc.createElement('div');
+
 			expect(o.ownerDocument).toEqual(doc);
 			expect(o.tagName).toEqual('div');
 			expect(o.namespaceURI).toEqual('');
@@ -15,6 +16,7 @@ defineDescribe('VirtualDocument', ['./VirtualDocument'], (VirtualDocument) => {
 
 		it('claims all elements are always connected', () => {
 			const o = doc.createElement('div');
+
 			expect(o.isConnected).toEqual(true);
 		});
 	});
@@ -162,7 +164,7 @@ defineDescribe('VirtualDocument', ['./VirtualDocument'], (VirtualDocument) => {
 
 			expect(o.getAttribute('foo')).toEqual('baz');
 			expect(o.getAttribute('zig')).toEqual('zag');
-			expect(o.getAttribute('nope')).toEqual(undefined);
+			expect(o.getAttribute('nope')).not.toBeDefined();
 		});
 	});
 

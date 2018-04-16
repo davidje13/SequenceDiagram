@@ -1,57 +1,56 @@
-define([], [
+export default [
 	{
-		title: 'Simple arrow (synchronous)',
 		code: '{Agent1} -> {Agent2}: {Message}',
+		title: 'Simple arrow (synchronous)',
 	},
 	{
-		title: 'Arrow with dotted line (response)',
 		code: '{Agent1} --> {Agent2}: {Message}',
+		title: 'Arrow with dotted line (response)',
 	},
 	{
-		title: 'Open arrow (asynchronous)',
 		code: '{Agent1} ->> {Agent2}: {Message}',
+		title: 'Open arrow (asynchronous)',
 	},
 	{
-		title: 'Lost message',
 		code: '{Agent1} -x {Agent2}: {Message}',
+		title: 'Lost message',
 	},
 	{
-		title: 'Wavy line',
 		code: '{Agent1} ~> {Agent2}: {Message}',
+		title: 'Wavy line',
 	},
 	{
-		title: 'Self-connection',
 		code: '{Agent1} -> {Agent1}: {Message}',
+		title: 'Self-connection',
 	},
 	{
-		title: 'Asynchronous message',
 		code: '{Agent1} -> ...{id}\n...{id} -> {Agent2}: {Message}',
 		preview: (
 			'begin A, B\n' +
 			'A -> ...x\n' +
 			'...x -> B: Message'
 		),
+		title: 'Asynchronous message',
 	},
 	{
-		title: 'Found message',
 		code: '* -> {Agent1}: {Message}',
+		title: 'Found message',
 	},
 	{
-		title: 'Request/response pair',
 		code: (
 			'{Agent1} -> +{Agent2}: {Request}\n' +
 			'{Agent1} <-- -{Agent2}: {Response}'
 		),
+		title: 'Request/response pair',
 	},
 	{
-		title: 'Inline agent creation / destruction',
 		code: (
 			'{Agent1} -> *{Agent2}: {Request}\n' +
 			'{Agent1} <-- !{Agent2}: {Response}'
 		),
+		title: 'Inline agent creation / destruction',
 	},
 	{
-		title: 'Agent creation / destruction',
 		code: (
 			'{Agent1} -> {Agent2}: {Request}\n' +
 			'{Agent1} <-- {Agent2}: {Response}\n' +
@@ -64,9 +63,9 @@ define([], [
 			'A <-- B: Response\n' +
 			'end B'
 		),
+		title: 'Agent creation / destruction',
 	},
 	{
-		title: 'Numbered labels',
 		code: 'autolabel "[<inc>] <label>"',
 		preview: (
 			'autolabel "[<inc>] <label>"\n' +
@@ -74,9 +73,9 @@ define([], [
 			'A <- B: Bar\n' +
 			'A -> B: Baz'
 		),
+		title: 'Numbered labels',
 	},
 	{
-		title: 'Conditional blocks',
 		code: (
 			'if {Condition1}\n' +
 			'  {Agent1} -> {Agent2}\n' +
@@ -96,9 +95,9 @@ define([], [
 			'  A -> B\n' +
 			'end'
 		),
+		title: 'Conditional blocks',
 	},
 	{
-		title: 'Repeated block',
 		code: (
 			'repeat {Condition}\n' +
 			'  {Agent1} -> {Agent2}\n' +
@@ -110,9 +109,9 @@ define([], [
 			'  A -> B\n' +
 			'end'
 		),
+		title: 'Repeated block',
 	},
 	{
-		title: 'Reference',
 		code: (
 			'begin reference: {Label} as {Name}\n' +
 			'{Agent1} -> {Name}\n' +
@@ -125,9 +124,9 @@ define([], [
 			'myRef -> A\n' +
 			'end myRef'
 		),
+		title: 'Reference',
 	},
 	{
-		title: 'Reference over agents',
 		code: (
 			'begin reference over {Covered}: {Label} as {Name}\n' +
 			'{Agent1} -> {Name}\n' +
@@ -140,9 +139,9 @@ define([], [
 			'myRef -> A\n' +
 			'end myRef'
 		),
+		title: 'Reference over agents',
 	},
 	{
-		title: 'Group',
 		code: (
 			'group {Label}\n' +
 			'  {Agent1} -> {Agent2}\n' +
@@ -154,144 +153,145 @@ define([], [
 			'  A -> B\n' +
 			'end'
 		),
+		title: 'Group',
 	},
 	{
-		title: 'Note over agent',
 		code: 'note over {Agent1}: {Message}',
+		title: 'Note over agent',
 	},
 	{
-		title: 'Note over multiple agents',
 		code: 'note over {Agent1}, {Agent2}: {Message}',
+		title: 'Note over multiple agents',
 	},
 	{
-		title: 'Note left of agent',
 		code: 'note left of {Agent1}: {Message}',
+		title: 'Note left of agent',
 	},
 	{
-		title: 'Note right of agent',
 		code: 'note right of {Agent1}: {Message}',
+		title: 'Note right of agent',
 	},
 	{
-		title: 'Note between agents',
 		code: 'note between {Agent1}, {Agent2}: {Message}',
+		title: 'Note between agents',
 	},
 	{
-		title: 'State over agent',
 		code: 'state over {Agent1}: {State}',
+		title: 'State over agent',
 	},
 	{
-		title: 'Arrows to/from the sides',
 		code: '[ -> {Agent1}: {Message1}\n{Agent1} -> ]: {Message2}',
+		title: 'Arrows to/from the sides',
 	},
 	{
-		title: 'Text beside the diagram',
 		code: 'text right: {Message}',
 		preview: (
 			'A -> B\n' +
 			'simultaneously:\n' +
 			'text right: "Message\\non the\\nside"'
 		),
+		title: 'Text beside the diagram',
 	},
 	{
-		title: 'Vertical space divider',
 		code: 'divider space with height 10: {message}',
 		preview: (
 			'begin A, B, C, D, E, F\n' +
 			'divider space with height 30: message'
 		),
+		title: 'Vertical space divider',
 	},
 	{
-		title: 'Line divider',
 		code: 'divider line with height 10: {message}',
 		preview: (
 			'begin A, B, C, D, E, F\n' +
 			'divider line with height 30: message'
 		),
+		title: 'Line divider',
 	},
 	{
-		title: 'Delay divider',
 		code: 'divider delay with height 10: {message}',
 		preview: (
 			'begin A, B, C, D, E, F\n' +
 			'divider delay with height 30: message'
 		),
+		title: 'Delay divider',
 	},
 	{
-		title: 'Tear divider',
 		code: 'divider tear with height 10: {message}',
 		preview: (
 			'begin A, B, C, D, E, F\n' +
 			'divider tear with height 30: message'
 		),
+		title: 'Tear divider',
 	},
 	{
-		title: 'Title',
 		code: 'title {Title}',
 		preview: 'headers box\ntitle Title\nA -> B',
+		title: 'Title',
 	},
 	{
-		title: 'Bold markdown',
 		code: '**{text}**',
 		preview: 'A -> B: **bold**',
+		title: 'Bold markdown',
 	},
 	{
-		title: 'Italic markdown',
 		code: '_{text}_',
 		preview: 'A -> B: _italic_',
+		title: 'Italic markdown',
 	},
 	{
-		title: 'Strikeout markdown',
 		code: '~{text}~',
 		preview: 'A -> B: ~strikeout~',
+		title: 'Strikeout markdown',
 	},
 	{
-		title: 'Monospace markdown',
 		code: '`{text}`',
 		preview: 'A -> B: `mono`',
+		title: 'Monospace markdown',
 	},
 	{
-		title: 'Red agent line',
 		code: '{Agent} is red',
 		preview: 'headers box\nA is red\nbegin A',
+		title: 'Red agent line',
 	},
 	{
-		title: 'Database indicator',
 		code: '{Agent} is a database',
 		preview: 'headers box\nA is a database\nbegin A',
+		title: 'Database indicator',
 	},
 	{
-		title: 'Monospace theme',
 		code: 'theme monospace',
 		preview: 'headers box\ntitle mono\ntheme monospace\nA -> B',
+		title: 'Monospace theme',
 	},
 	{
-		title: 'Chunky theme',
 		code: 'theme chunky',
 		preview: 'headers box\ntitle chunky\ntheme chunky\nA -> B',
+		title: 'Chunky theme',
 	},
 	{
-		title: 'Sketch theme',
 		code: 'theme sketch',
 		preview: 'headers box\ntitle sketch\ntheme sketch\nA -> B',
+		title: 'Sketch theme',
 	},
 	{
-		title: 'Cross terminators',
 		code: 'terminators cross',
 		preview: 'begin A\nterminators cross',
+		title: 'Cross terminators',
 	},
 	{
-		title: 'Fade terminators',
 		code: 'terminators fade',
 		preview: 'begin A\nterminators fade',
+		title: 'Fade terminators',
 	},
 	{
-		title: 'Bar terminators',
 		code: 'terminators bar',
 		preview: 'begin A\nterminators bar',
+		title: 'Bar terminators',
 	},
 	{
-		title: 'Box terminators',
 		code: 'terminators box',
 		preview: 'begin A\nterminators box',
+		title: 'Box terminators',
 	},
-]);
+];

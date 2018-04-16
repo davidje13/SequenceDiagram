@@ -1,15 +1,15 @@
-defineDescribe('Code Mirror Mode', [
-	'./SequenceDiagram',
-	'cm/lib/codemirror-real',
-], (
-	SequenceDiagram,
-	CodeMirror
-) => {
-	'use strict';
+/* eslint-disable max-lines */
+/* eslint-disable max-statements */
+/* eslint-disable sort-keys */ // Maybe later
 
-	SequenceDiagram.registerCodeMirrorMode(CodeMirror);
+import SequenceDiagram from './SequenceDiagram.js';
 
-	const cm = new CodeMirror(null, {
+const CM = window.CodeMirror;
+
+describe('Code Mirror Mode', () => {
+	SequenceDiagram.registerCodeMirrorMode(CM);
+
+	const cm = new CM(null, {
 		value: '',
 		mode: 'sequence',
 		globals: {
@@ -27,6 +27,7 @@ defineDescribe('Code Mirror Mode', [
 	describe('colouring', () => {
 		it('highlights comments', () => {
 			cm.getDoc().setValue('# foo');
+
 			expect(getTokens(0)).toEqual([
 				{v: '# foo', type: 'comment'},
 			]);
@@ -34,6 +35,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights valid keywords', () => {
 			cm.getDoc().setValue('terminators cross');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'terminators', type: 'keyword'},
 				{v: ' cross', type: 'keyword'},
@@ -42,6 +44,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights comments after content', () => {
 			cm.getDoc().setValue('terminators cross # foo');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'terminators', type: 'keyword'},
 				{v: ' cross', type: 'keyword'},
@@ -51,16 +54,19 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights invalid lines', () => {
 			cm.getDoc().setValue('terminators huh');
+
 			expect(getTokens(0)[1].type).toContain('line-error');
 		});
 
 		it('highlights incomplete lines', () => {
 			cm.getDoc().setValue('terminators');
+
 			expect(getTokens(0)[0].type).toContain('line-error');
 		});
 
 		it('highlights free text', () => {
 			cm.getDoc().setValue('title my free text');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'title', type: 'keyword'},
 				{v: ' my', type: 'string'},
@@ -71,6 +77,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights quoted text', () => {
 			cm.getDoc().setValue('title "my free text"');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'title', type: 'keyword'},
 				{v: ' "my free text"', type: 'string'},
@@ -79,6 +86,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights agent names', () => {
 			cm.getDoc().setValue('A -> B');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'A', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
@@ -88,6 +96,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('does not consider quoted tokens as keywords', () => {
 			cm.getDoc().setValue('A "->" -> B');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'A', type: 'variable'},
 				{v: ' "->"', type: 'variable'},
@@ -98,6 +107,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights agent aliasing syntax', () => {
 			cm.getDoc().setValue('define A as B, C as D');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'define', type: 'keyword'},
 				{v: ' A', type: 'variable'},
@@ -112,6 +122,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights multi-word agent names', () => {
 			cm.getDoc().setValue('Foo Bar -> Zig Zag');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'Foo', type: 'variable'},
 				{v: ' Bar', type: 'variable'},
@@ -123,6 +134,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights connection operators without spaces', () => {
 			cm.getDoc().setValue('abc->xyz');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'abc', type: 'variable'},
 				{v: '->', type: 'keyword'},
@@ -132,6 +144,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights the lost message operator without spaces', () => {
 			cm.getDoc().setValue('abc-xxyz');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'abc', type: 'variable'},
 				{v: '-x', type: 'keyword'},
@@ -141,6 +154,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('recognises agent flags on the right', () => {
 			cm.getDoc().setValue('Foo -> *Bar');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'Foo', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
@@ -151,6 +165,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('recognises agent flags on the left', () => {
 			cm.getDoc().setValue('*Foo -> Bar');
+
 			expect(getTokens(0)).toEqual([
 				{v: '*', type: 'operator'},
 				{v: 'Foo', type: 'variable'},
@@ -161,22 +176,27 @@ defineDescribe('Code Mirror Mode', [
 
 		it('rejects missing agent names', () => {
 			cm.getDoc().setValue('+ -> Bar');
+
 			expect(getTokens(0)[2].type).toContain('line-error');
 
 			cm.getDoc().setValue('Bar -> +');
+
 			expect(getTokens(0)[2].type).toContain('line-error');
 		});
 
 		it('recognises found messages', () => {
 			cm.getDoc().setValue('* -> Bar');
+
 			expect(getTokens(0)[2].type).not.toContain('line-error');
 
 			cm.getDoc().setValue('Bar <- *');
+
 			expect(getTokens(0)[2].type).not.toContain('line-error');
 		});
 
 		it('recognises combined agent flags', () => {
 			cm.getDoc().setValue('Foo -> +*Bar');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'Foo', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
@@ -188,6 +208,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('allows messages after connections', () => {
 			cm.getDoc().setValue('Foo -> Bar: hello');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'Foo', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
@@ -199,17 +220,21 @@ defineDescribe('Code Mirror Mode', [
 
 		it('recognises invalid agent flag combinations', () => {
 			cm.getDoc().setValue('Foo -> *!Bar');
+
 			expect(getTokens(0)[3].type).toContain('line-error');
 
 			cm.getDoc().setValue('Foo -> +-Bar');
+
 			expect(getTokens(0)[3].type).toContain('line-error');
 
 			cm.getDoc().setValue('Foo -> +*-Bar');
+
 			expect(getTokens(0)[4].type).toContain('line-error');
 		});
 
 		it('highlights delayed message syntax', () => {
 			cm.getDoc().setValue('A -> ...x\n...x -> B: hello');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'A', type: 'variable'},
 				{v: ' ->', type: 'keyword'},
@@ -229,6 +254,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('recognises invalid delayed messages', () => {
 			cm.getDoc().setValue('A -> ...x: hello');
+
 			expect(getTokens(0)[4].type).toContain('line-error');
 		});
 
@@ -372,6 +398,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('rejects notes between a single agent', () => {
 			cm.getDoc().setValue('note between A: hi');
+
 			expect(getTokens(0)[3].type).toContain('line-error');
 		});
 
@@ -389,6 +416,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('rejects state over multiple agents', () => {
 			cm.getDoc().setValue('state over A, B: hi');
+
 			expect(getTokens(0)[3].type).toContain('line-error');
 		});
 
@@ -408,6 +436,7 @@ defineDescribe('Code Mirror Mode', [
 
 		it('highlights agent info statements', () => {
 			cm.getDoc().setValue('A is a red database');
+
 			expect(getTokens(0)).toEqual([
 				{v: 'A', type: 'variable'},
 				{v: ' is', type: 'keyword'},
@@ -419,13 +448,14 @@ defineDescribe('Code Mirror Mode', [
 
 		it('rejects unknown info statements', () => {
 			cm.getDoc().setValue('A is a foobar');
+
 			expect(getTokens(0)[3].type).toContain('line-error');
 		});
 	});
 
 	describe('autocomplete', () => {
 		function getHints(pos, {completeSingle = true} = {}) {
-			const hintFn = cm.getHelpers(pos, 'hint')[0];
+			const [hintFn] = cm.getHelpers(pos, 'hint');
 			cm.setCursor(pos);
 			return hintFn(cm, Object.assign({completeSingle}, cm.options));
 		}
@@ -438,6 +468,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests commands when used at the start of a line', () => {
 			cm.getDoc().setValue('');
 			const hints = getHintTexts({line: 0, ch: 0});
+
 			expect(hints).toContain('theme ');
 			expect(hints).toContain('title ');
 			expect(hints).toContain('headers ');
@@ -461,6 +492,7 @@ defineDescribe('Code Mirror Mode', [
 		it('ignores indentation', () => {
 			cm.getDoc().setValue('  ');
 			const hints = getHintTexts({line: 0, ch: 2});
+
 			expect(hints).toContain('theme ');
 			expect(hints).toContain('title ');
 		});
@@ -468,6 +500,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests known header types', () => {
 			cm.getDoc().setValue('headers ');
 			const hints = getHintTexts({line: 0, ch: 8});
+
 			expect(hints).toEqual([
 				'none\n',
 				'cross\n',
@@ -480,6 +513,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests known terminator types', () => {
 			cm.getDoc().setValue('terminators ');
 			const hints = getHintTexts({line: 0, ch: 12});
+
 			expect(hints).toEqual([
 				'none\n',
 				'cross\n',
@@ -492,6 +526,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests divider types', () => {
 			cm.getDoc().setValue('divider ');
 			const hints = getHintTexts({line: 0, ch: 8});
+
 			expect(hints).toEqual([
 				'line ',
 				'space ',
@@ -506,6 +541,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests divider sizes', () => {
 			cm.getDoc().setValue('divider space with height ');
 			const hints = getHintTexts({line: 0, ch: 26});
+
 			expect(hints).toEqual([
 				'6 ',
 				'30 ',
@@ -515,6 +551,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests useful autolabel values', () => {
 			cm.getDoc().setValue('autolabel ');
 			const hints = getHintTexts({line: 0, ch: 10});
+
 			expect(hints).toContain('off\n');
 			expect(hints).toContain('"<label>"\n');
 			expect(hints).toContain('"[<inc>] <label>"\n');
@@ -523,6 +560,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests note positioning', () => {
 			cm.getDoc().setValue('note ');
 			const hints = getHintTexts({line: 0, ch: 5});
+
 			expect(hints).toEqual([
 				'over ',
 				'left of ',
@@ -536,12 +574,14 @@ defineDescribe('Code Mirror Mode', [
 		it('filters suggestions', () => {
 			cm.getDoc().setValue('term');
 			const hints = getHintTexts({line: 0, ch: 4});
+
 			expect(hints).toEqual(['terminators ']);
 		});
 
 		it('suggests known agent names and flags', () => {
 			cm.getDoc().setValue('Foo -> ');
 			const hints = getHintTexts({line: 0, ch: 7});
+
 			expect(hints).toEqual([
 				'+ ',
 				'- ',
@@ -555,6 +595,7 @@ defineDescribe('Code Mirror Mode', [
 		it('only suggests valid flag combinations', () => {
 			cm.getDoc().setValue('Foo -> + ');
 			const hints = getHintTexts({line: 0, ch: 10});
+
 			expect(hints).toContain('* ');
 			expect(hints).not.toContain('! ');
 			expect(hints).not.toContain('+ ');
@@ -565,6 +606,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests known agent names at the start of lines', () => {
 			cm.getDoc().setValue('Foo -> Bar\n');
 			const hints = getHintTexts({line: 1, ch: 0});
+
 			expect(hints).toContain('Foo ');
 			expect(hints).toContain('Bar ');
 		});
@@ -572,18 +614,21 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests known labels', () => {
 			cm.getDoc().setValue('Abc:\nsimultaneously with ');
 			const hints = getHintTexts({line: 1, ch: 20});
+
 			expect(hints).toEqual(['Abc ']);
 		});
 
 		it('suggests known themes', () => {
 			cm.getDoc().setValue('theme ');
 			const hints = getHintTexts({line: 0, ch: 6});
+
 			expect(hints).toEqual(['Theme\n', 'Other Theme\n']);
 		});
 
 		it('suggests filtered multi-word themes', () => {
 			cm.getDoc().setValue('theme Other ');
 			const hints = getHintTexts({line: 0, ch: 12});
+
 			expect(hints).toContain('Other Theme\n');
 			expect(hints).not.toContain('Theme\n');
 		});
@@ -591,6 +636,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests multi-word agents', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> ');
 			const hints = getHintTexts({line: 1, ch: 11});
+
 			expect(hints).toContain('Zig Zag ');
 			expect(hints).toContain('Meh ');
 			expect(hints).toContain('Foo Bar ');
@@ -599,6 +645,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests quoted agent names if a quote is typed', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> "');
 			const hints = getHintTexts({line: 1, ch: 12});
+
 			expect(hints).toEqual([
 				'"Zig Zag" ',
 				'"Meh" ',
@@ -609,6 +656,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests filtered multi-word agents', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> Foo ');
 			const hints = getHintTexts({line: 1, ch: 15});
+
 			expect(hints).toContain('Foo Bar ');
 			expect(hints).not.toContain('Zig Zag ');
 			expect(hints).not.toContain('Meh ');
@@ -617,28 +665,33 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests quoted names where required', () => {
 			cm.getDoc().setValue('"Zig -> Zag" -> ');
 			const hints = getHintTexts({line: 0, ch: 16});
+
 			expect(hints).toContain('"Zig -> Zag" ');
 		});
 
 		it('filters quoted names ignoring quotes', () => {
 			cm.getDoc().setValue('"Zig -> Zag" -> Zig');
 			let hints = getHintTexts({line: 0, ch: 19});
+
 			expect(hints).toContain('"Zig -> Zag" ');
 
 			cm.getDoc().setValue('"Zig -> Zag" -> Zag');
 			hints = getHintTexts({line: 0, ch: 19});
+
 			expect(hints).not.toContain('"Zig -> Zag" ');
 		});
 
 		it('suggests known delayed agents', () => {
 			cm.getDoc().setValue('A -> ...woo\n... ');
 			const hints = getHintTexts({line: 1, ch: 4});
+
 			expect(hints).toEqual(['woo ']);
 		});
 
 		it('suggests agent properties', () => {
 			cm.getDoc().setValue('A is a ');
 			const hints = getHintTexts({line: 0, ch: 7});
+
 			expect(hints).toContain('database ');
 			expect(hints).toContain('red ');
 			expect(hints).not.toContain('\n');
@@ -647,6 +700,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests indefinite articles for agent properties', () => {
 			cm.getDoc().setValue('A is ');
 			const hints = getHintTexts({line: 0, ch: 5});
+
 			expect(hints).toContain('database ');
 			expect(hints).toContain('a ');
 			expect(hints).toContain('an ');
@@ -656,6 +710,7 @@ defineDescribe('Code Mirror Mode', [
 		it('suggests more agent properties after the first', () => {
 			cm.getDoc().setValue('A is a red ');
 			const hints = getHintTexts({line: 0, ch: 11});
+
 			expect(hints).toContain('database ');
 			expect(hints).toContain('\n');
 			expect(hints).not.toContain('a ');

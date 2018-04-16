@@ -11,6 +11,15 @@
       location = "container:styles">
    </FileRef>
    <FileRef
+      location = "container:.gitignore">
+   </FileRef>
+   <FileRef
+      location = "container:.eslintrc.js">
+   </FileRef>
+   <FileRef
+      location = "group:rollup.config.js">
+   </FileRef>
+   <FileRef
       location = "container:editor-dev.htm">
    </FileRef>
    <FileRef

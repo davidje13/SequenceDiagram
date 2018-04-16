@@ -1,6 +1,6 @@
-defineDescribe('Random', ['./Random'], (Random) => {
-	'use strict';
+import Random from './Random.js';
 
+describe('Random', () => {
 	let random = null;
 
 	beforeEach(() => {
@@ -12,6 +12,7 @@ defineDescribe('Random', ['./Random'], (Random) => {
 		it('produces values between 0 and 1', () => {
 			for(let i = 0; i < 1000; ++ i) {
 				const v = random.nextFloat();
+
 				expect(v).not.toBeLessThan(0);
 				expect(v).toBeLessThan(1);
 			}

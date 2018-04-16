@@ -1,26 +1,25 @@
-defineDescribe('Markdown Parser', [
-	'./MarkdownParser',
-	'svg/SVG',
-	'stubs/TestDOM',
-], (
-	parser,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+/* eslint-disable sort-keys */ // Maybe later
 
+import {dom, textSizerFactory} from '../stubs/TestDOM.js';
+import SVG from '../svg/SVG.js';
+import parser from './MarkdownParser.js';
+
+describe('Markdown Parser', () => {
 	it('converts simple text', () => {
 		const formatted = parser('hello everybody');
+
 		expect(formatted).toEqual([[{text: 'hello everybody', attrs: null}]]);
 	});
 
 	it('produces an empty array given an empty input', () => {
 		const formatted = parser('');
+
 		expect(formatted).toEqual([]);
 	});
 
 	it('converts multiline text', () => {
 		const formatted = parser('hello\neverybody');
+
 		expect(formatted).toEqual([
 			[{text: 'hello', attrs: null}],
 			[{text: 'everybody', attrs: null}],
@@ -29,6 +28,7 @@ defineDescribe('Markdown Parser', [
 
 	it('recognises bold styling', () => {
 		const formatted = parser('a **b** c __d__ e');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {'font-weight': 'bolder'}},
@@ -40,6 +40,7 @@ defineDescribe('Markdown Parser', [
 
 	it('ignores styling marks inside words', () => {
 		const formatted = parser('a**b**c__d__e');
+
 		expect(formatted).toEqual([[
 			{text: 'a**b**c__d__e', attrs: null},
 		]]);
@@ -47,6 +48,7 @@ defineDescribe('Markdown Parser', [
 
 	it('continues styling across lines', () => {
 		const formatted = parser('a **b\nc** d');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {'font-weight': 'bolder'}},
@@ -58,6 +60,7 @@ defineDescribe('Markdown Parser', [
 
 	it('recognises italic styling', () => {
 		const formatted = parser('a *b* c _d_ e');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {'font-style': 'italic'}},
@@ -69,6 +72,7 @@ defineDescribe('Markdown Parser', [
 
 	it('recognises strikethrough styling', () => {
 		const formatted = parser('a ~b~ c');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {'text-decoration': 'line-through'}},
@@ -78,6 +82,7 @@ defineDescribe('Markdown Parser', [
 
 	it('recognises monospace styling', () => {
 		const formatted = parser('a `b` c');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {'font-family': 'monospace'}},
@@ -87,6 +92,7 @@ defineDescribe('Markdown Parser', [
 
 	it('allows dots around monospace styling', () => {
 		const formatted = parser('a.`b`.c');
+
 		expect(formatted).toEqual([[
 			{text: 'a.', attrs: null},
 			{text: 'b', attrs: {'font-family': 'monospace'}},
@@ -96,6 +102,7 @@ defineDescribe('Markdown Parser', [
 
 	it('recognises combined styling', () => {
 		const formatted = parser('a **_b_ c**');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: null},
 			{text: 'b', attrs: {
@@ -108,6 +115,7 @@ defineDescribe('Markdown Parser', [
 
 	it('allows complex interactions between styles', () => {
 		const formatted = parser('_a **b_ ~c~**');
+
 		expect(formatted).toEqual([[
 			{text: 'a ', attrs: {'font-style': 'italic'}},
 			{text: 'b', attrs: {
@@ -124,8 +132,9 @@ defineDescribe('Markdown Parser', [
 
 	it('produces a format compatible with SVG.formattedText', () => {
 		const formatted = parser('hello everybody');
-		const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+		const svg = new SVG(dom, textSizerFactory);
 		const block = svg.formattedText({}, formatted).element;
+
 		expect(block.outerHTML).toEqual(
 			'<g><text x="0" y="1">hello everybody</text></g>'
 		);

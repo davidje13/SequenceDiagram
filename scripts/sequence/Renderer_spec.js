@@ -1,17 +1,14 @@
-defineDescribe('Sequence Renderer', [
-	'./Renderer',
-	'./themes/Basic',
-], (
-	Renderer,
-	BasicTheme
-) => {
-	'use strict';
+/* eslint-disable sort-keys */ // Maybe later
 
+import {Factory as BasicThemeFactory} from './themes/Basic.js';
+import Renderer from './Renderer.js';
+
+describe('Sequence Renderer', () => {
 	let renderer = null;
 
 	beforeEach(() => {
 		renderer = new Renderer({
-			themes: [new BasicTheme.Factory()],
+			themes: [new BasicThemeFactory()],
 			document: window.document,
 		});
 		document.body.appendChild(renderer.dom());
@@ -24,23 +21,22 @@ defineDescribe('Sequence Renderer', [
 	describe('.dom', () => {
 		it('returns an SVG node containing the rendered diagram', () => {
 			const svg = renderer.dom();
+
 			expect(svg.tagName).toEqual('svg');
 		});
 	});
 
 	const GENERATED = {
-		connect: (agentIDs, label = []) => {
-			return {
-				type: 'connect',
-				agentIDs,
-				label,
-				options: {
-					line: 'solid',
-					left: 0,
-					right: 1,
-				},
-			};
-		},
+		connect: (agentIDs, label = []) => ({
+			type: 'connect',
+			agentIDs,
+			label,
+			options: {
+				line: 'solid',
+				left: 0,
+				right: 1,
+			},
+		}),
 	};
 
 	function format(text) {
@@ -80,7 +76,8 @@ defineDescribe('Sequence Renderer', [
 				stages: [],
 			});
 			const element = renderer.dom();
-			const title = element.getElementsByClassName('title')[0];
+			const [title] = element.getElementsByClassName('title');
+
 			expect(title.innerHTML).toEqual('Title');
 		});
 
@@ -103,7 +100,8 @@ defineDescribe('Sequence Renderer', [
 				stages: [],
 			});
 			const element = renderer.dom();
-			const metadata = element.getElementsByTagName('metadata')[0];
+			const [metadata] = element.getElementsByTagName('metadata');
+
 			expect(metadata.innerHTML).toEqual('hello');
 		});
 
@@ -145,7 +143,7 @@ defineDescribe('Sequence Renderer', [
 			});
 
 			const element = renderer.dom();
-			const line = element.getElementsByClassName('agent-1-line')[0];
+			const [line] = element.getElementsByClassName('agent-1-line');
 			const drawnX = Number(line.getAttribute('x1'));
 
 			expect(drawnX).toEqual(renderer.getAgentX('A'));

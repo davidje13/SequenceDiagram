@@ -1,6 +1,10 @@
-defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
-	'use strict';
+/* eslint-disable max-lines */
+/* eslint-disable max-statements */
+/* eslint-disable sort-keys */ // Maybe later
 
+import Generator from './Generator.js';
+
+describe('Sequence Generator', () => {
 	const generator = new Generator();
 
 	function makeParsedAgents(source) {
@@ -22,68 +26,66 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 	const PARSED = {
 		sourceAgent: {name: '', alias: '', flags: ['source']},
 
-		blockBegin: (tag, label, {ln = 0} = {}) => {
-			return {type: 'block begin', blockType: tag, tag, label, ln};
-		},
+		blockBegin: (tag, label, {ln = 0} = {}) => ({
+			type: 'block begin',
+			blockType: tag,
+			tag,
+			label,
+			ln,
+		}),
 
-		blockSplit: (tag, label, {ln = 0} = {}) => {
-			return {type: 'block split', blockType: tag, tag, label, ln};
-		},
+		blockSplit: (tag, label, {ln = 0} = {}) => ({
+			type: 'block split',
+			blockType: tag,
+			tag,
+			label,
+			ln,
+		}),
 
-		blockEnd: ({ln = 0} = {}) => {
-			return {type: 'block end', ln};
-		},
+		blockEnd: ({ln = 0} = {}) => ({type: 'block end', ln}),
 
-		labelPattern: (pattern, {ln = 0} = {}) => {
-			return {type: 'label pattern', pattern, ln};
-		},
+		labelPattern: (pattern, {ln = 0} = {}) => ({
+			type: 'label pattern',
+			pattern,
+			ln,
+		}),
 
-		groupBegin: (alias, agentIDs, {label = '', ln = 0} = {}) => {
-			return {
-				type: 'group begin',
-				agents: makeParsedAgents(agentIDs),
-				blockType: 'ref',
-				tag: 'ref',
-				label,
-				alias,
-				ln,
-			};
-		},
+		groupBegin: (alias, agentIDs, {label = '', ln = 0} = {}) => ({
+			type: 'group begin',
+			agents: makeParsedAgents(agentIDs),
+			blockType: 'ref',
+			tag: 'ref',
+			label,
+			alias,
+			ln,
+		}),
 
-		defineAgents: (agentIDs, {ln = 0} = {}) => {
-			return {
-				type: 'agent define',
-				agents: makeParsedAgents(agentIDs),
-				ln,
-			};
-		},
+		defineAgents: (agentIDs, {ln = 0} = {}) => ({
+			type: 'agent define',
+			agents: makeParsedAgents(agentIDs),
+			ln,
+		}),
 
-		agentOptions: (agentID, options, {ln = 0} = {}) => {
-			return {
-				type: 'agent options',
-				agent: makeParsedAgents([agentID])[0],
-				options,
-				ln,
-			};
-		},
+		agentOptions: (agentID, options, {ln = 0} = {}) => ({
+			type: 'agent options',
+			agent: makeParsedAgents([agentID])[0],
+			options,
+			ln,
+		}),
 
-		beginAgents: (agentIDs, {mode = 'box', ln = 0} = {}) => {
-			return {
-				type: 'agent begin',
-				agents: makeParsedAgents(agentIDs),
-				mode,
-				ln,
-			};
-		},
+		beginAgents: (agentIDs, {mode = 'box', ln = 0} = {}) => ({
+			type: 'agent begin',
+			agents: makeParsedAgents(agentIDs),
+			mode,
+			ln,
+		}),
 
-		endAgents: (agentIDs, {mode = 'cross', ln = 0} = {}) => {
-			return {
-				type: 'agent end',
-				agents: makeParsedAgents(agentIDs),
-				mode,
-				ln,
-			};
-		},
+		endAgents: (agentIDs, {mode = 'cross', ln = 0} = {}) => ({
+			type: 'agent end',
+			agents: makeParsedAgents(agentIDs),
+			mode,
+			ln,
+		}),
 
 		connect: (agentIDs, {
 			label = '',
@@ -91,40 +93,35 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = 0,
 			right = 0,
 			ln = 0,
-		} = {}) => {
-			return {
-				type: 'connect',
-				agents: makeParsedAgents(agentIDs),
-				label,
-				options: {
-					line,
-					left,
-					right,
-				},
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'connect',
+			agents: makeParsedAgents(agentIDs),
+			label,
+			options: {
+				line,
+				left,
+				right,
+			},
+			ln,
+		}),
 
 		connectDelayBegin: (agentID, {
-			label = '',
 			tag = '',
 			line = '',
 			left = 0,
 			right = 0,
 			ln = 0,
-		} = {}) => {
-			return {
-				type: 'connect-delay-begin',
-				ln,
-				tag,
-				agent: makeParsedAgents([agentID])[0],
-				options: {
-					line,
-					left,
-					right,
-				},
-			};
-		},
+		} = {}) => ({
+			type: 'connect-delay-begin',
+			ln,
+			tag,
+			agent: makeParsedAgents([agentID])[0],
+			options: {
+				line,
+				left,
+				right,
+			},
+		}),
 
 		connectDelayEnd: (agentID, {
 			label = '',
@@ -133,34 +130,30 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = 0,
 			right = 0,
 			ln = 0,
-		} = {}) => {
-			return {
-				type: 'connect-delay-end',
-				ln,
-				tag,
-				agent: makeParsedAgents([agentID])[0],
-				label,
-				options: {
-					line,
-					left,
-					right,
-				},
-			};
-		},
+		} = {}) => ({
+			type: 'connect-delay-end',
+			ln,
+			tag,
+			agent: makeParsedAgents([agentID])[0],
+			label,
+			options: {
+				line,
+				left,
+				right,
+			},
+		}),
 
 		note: (type, agentIDs, {
 			mode = '',
 			label = '',
 			ln = 0,
-		} = {}) => {
-			return {
-				type,
-				agents: makeParsedAgents(agentIDs),
-				mode,
-				label,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type,
+			agents: makeParsedAgents(agentIDs),
+			mode,
+			label,
+			ln,
+		}),
 	};
 
 	const GENERATED = {
@@ -169,33 +162,33 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			anchorRight = any(),
 			isVirtualSource = any(),
 			options = any(),
-		} = {}) => {
-			return {id, formattedLabel, anchorRight, isVirtualSource, options};
-		},
+		} = {}) => ({
+			id,
+			formattedLabel,
+			anchorRight,
+			isVirtualSource,
+			options,
+		}),
 
 		beginAgents: (agentIDs, {
 			mode = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'agent begin',
-				agentIDs,
-				mode,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'agent begin',
+			agentIDs,
+			mode,
+			ln,
+		}),
 
 		endAgents: (agentIDs, {
 			mode = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'agent end',
-				agentIDs,
-				mode,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'agent end',
+			agentIDs,
+			mode,
+			ln,
+		}),
 
 		blockBegin: (blockType, {
 			tag = any(),
@@ -204,18 +197,16 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = any(),
 			right = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'block begin',
-				blockType,
-				tag,
-				label,
-				canHide,
-				left,
-				right,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'block begin',
+			blockType,
+			tag,
+			label,
+			canHide,
+			left,
+			right,
+			ln,
+		}),
 
 		blockSplit: (blockType, {
 			tag = any(),
@@ -223,30 +214,26 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = any(),
 			right = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'block split',
-				blockType,
-				tag,
-				label,
-				left,
-				right,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'block split',
+			blockType,
+			tag,
+			label,
+			left,
+			right,
+			ln,
+		}),
 
 		blockEnd: ({
 			left = any(),
 			right = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'block end',
-				left,
-				right,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'block end',
+			left,
+			right,
+			ln,
+		}),
 
 		connect: (agentIDs, {
 			label = any(),
@@ -254,19 +241,17 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = any(),
 			right = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'connect',
-				agentIDs,
-				label,
-				options: {
-					line,
-					left,
-					right,
-				},
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'connect',
+			agentIDs,
+			label,
+			options: {
+				line,
+				left,
+				right,
+			},
+			ln,
+		}),
 
 		connectDelayBegin: (agentIDs, {
 			label = any(),
@@ -275,72 +260,62 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			left = any(),
 			right = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'connect-delay-begin',
-				agentIDs,
-				label,
-				tag,
-				options: {
-					line,
-					left,
-					right,
-				},
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'connect-delay-begin',
+			agentIDs,
+			label,
+			tag,
+			options: {
+				line,
+				left,
+				right,
+			},
+			ln,
+		}),
 
 		connectDelayEnd: ({
 			tag = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'connect-delay-end',
-				tag,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'connect-delay-end',
+			tag,
+			ln,
+		}),
 
 		highlight: (agentIDs, highlighted, {
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'agent highlight',
-				agentIDs,
-				highlighted,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'agent highlight',
+			agentIDs,
+			highlighted,
+			ln,
+		}),
 
 		note: (type, agentIDs, {
 			mode = any(),
 			label = any(),
 			ln = any(),
-		} = {}) => {
-			return {
-				type,
-				agentIDs,
-				mode,
-				label,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type,
+			agentIDs,
+			mode,
+			label,
+			ln,
+		}),
 
 		parallel: (stages, {
 			ln = any(),
-		} = {}) => {
-			return {
-				type: 'parallel',
-				stages,
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'parallel',
+			stages,
+			ln,
+		}),
 	};
 
 	function invoke(stages, meta = {}) {
 		return generator.generate({
 			meta: Object.assign({textFormatter}, meta),
-			stages: stages,
+			stages,
 		});
 	}
 
@@ -352,6 +327,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				code: 'zoom',
 				nope: 'skip',
 			});
+
 			expect(sequence.meta).toEqual({
 				title: 'bar!',
 				theme: 'zig',
@@ -361,11 +337,13 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 
 		it('returns an empty sequence for blank input', () => {
 			const sequence = invoke([]);
+
 			expect(sequence.stages).toEqual([]);
 		});
 
 		it('includes implicit hidden left/right agents', () => {
 			const sequence = invoke([]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('[', {anchorRight: true}),
 				GENERATED.agent(']', {anchorRight: false}),
@@ -378,6 +356,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				{type: 'async', target: 'foo', ln: 1},
 				{type: 'async', target: '', ln: 2},
 			]);
+
 			expect(sequence.stages).toEqual([
 				{type: 'mark', name: 'foo', ln: 0},
 				{type: 'async', target: 'foo', ln: 1},
@@ -393,6 +372,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				label: 'woo',
 				ln: 0,
 			}]);
+
 			expect(sequence.stages).toEqual([{
 				type: 'divider',
 				mode: 'foo',
@@ -415,6 +395,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['C', 'D']),
 				PARSED.beginAgents(['E']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A'),
@@ -430,6 +411,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A', {formattedLabel: 'A!'}),
@@ -442,6 +424,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect([']', 'B']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('B'),
@@ -454,6 +437,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.defineAgents(['B']),
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('B'),
@@ -466,6 +450,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.agentOptions('A', ['foo']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				any(),
 				GENERATED.agent('A', {options: ['foo']}),
@@ -479,6 +464,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.agentOptions('B', ['zig']),
 				PARSED.agentOptions('A', ['zag', 'bar']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				any(),
 				GENERATED.agent('A', {options: ['foo', 'bar', 'zag']}),
@@ -492,6 +478,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.defineAgents([{name: 'Baz', alias: 'B', flags: []}]),
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('Baz'),
@@ -523,6 +510,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 				PARSED.connect(['B', 'C']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B']),
 				any(),
@@ -536,6 +524,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(['A', 'B']),
@@ -552,6 +541,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					right: 0,
 				}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(['A', 'B'], {
@@ -568,6 +558,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', PARSED.sourceAgent]),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A'),
@@ -577,6 +568,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				}),
 				GENERATED.agent(']'),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
 				GENERATED.connect(['A', '__0']),
@@ -589,6 +581,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', PARSED.sourceAgent]),
 				PARSED.connect(['A', PARSED.sourceAgent]),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A'),
@@ -596,6 +589,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				GENERATED.agent('__0'),
 				GENERATED.agent(']'),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
 				GENERATED.connect(['A', '__0']),
@@ -609,6 +603,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['A', 'B', 'C']),
 				PARSED.connect(['B', PARSED.sourceAgent]),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A'),
@@ -627,6 +622,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['A', 'B', 'C']),
 				PARSED.connect([PARSED.sourceAgent, 'B']),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('A'),
@@ -661,6 +657,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.labelPattern(['foo ', {token: 'label'}, ' bar']),
 				PARSED.connect(['A', 'B'], {label: 'myLabel'}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(['A', 'B'], {
@@ -676,6 +673,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B'], {label: 'foo'}),
 				PARSED.connect(['A', 'B'], {label: 'bar'}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(['A', 'B'], {
@@ -694,6 +692,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B'], {label: 'foo'}),
 				PARSED.connect(['A', 'B'], {label: 'bar'}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(['A', 'B'], {
@@ -725,6 +724,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					right: 1,
 				}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connectDelayBegin(['A', 'B'], {
@@ -753,6 +753,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					right: 1,
 				}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connectDelayBegin(['A', 'A'], {
@@ -778,6 +779,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					{name: 'A', alias: '', flags: ['stop']},
 				], {label: 'woo'}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
@@ -808,6 +810,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					right: 1,
 				}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connectDelayBegin(['A', 'B'], {
@@ -842,6 +845,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connectDelayBegin('A', {tag: 'foo'}),
 				PARSED.connectDelayEnd('B', {tag: 'foo'}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
 				GENERATED.connectDelayBegin(['A', 'B']),
@@ -938,6 +942,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			], {
 				terminators: 'foo',
 			});
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -949,6 +954,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -961,6 +967,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 				PARSED.endAgents(['A', 'B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -974,6 +981,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 				PARSED.connect(['B', 'C']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B', 'C']),
 				GENERATED.connect(any()),
@@ -989,6 +997,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.endAgents(['B']),
 				PARSED.connect(['A', 'B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -1003,6 +1012,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.beginAgents(['A', 'A']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
 				any(),
@@ -1016,6 +1026,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['B', 'C']),
 				PARSED.connect(['C', 'D']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B']),
 				GENERATED.connect(any()),
@@ -1032,6 +1043,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['B']),
 				PARSED.beginAgents(['C']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B', 'C']),
 				any(),
@@ -1045,6 +1057,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.endAgents(['B']),
 				PARSED.endAgents(['C']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.endAgents(['A', 'B', 'C']),
@@ -1057,6 +1070,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['A', 'C', 'D']),
 				PARSED.beginAgents(['C', 'E']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B']),
 				GENERATED.connect(any()),
@@ -1072,6 +1086,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			], {
 				headers: 'foo',
 			});
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B'], {mode: 'foo'}),
 				any(),
@@ -1086,6 +1101,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.beginAgents(['A']),
 				PARSED.endAgents(['A', 'A']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.endAgents(['A']),
@@ -1100,6 +1116,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.endAgents(['A', 'B', 'C']),
 				PARSED.endAgents(['A', 'D', 'E']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(any()),
@@ -1113,6 +1130,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', 'B']),
 				PARSED.endAgents(['A', 'B', 'C']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.connect(any()),
@@ -1126,6 +1144,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['stop']}]),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
@@ -1144,6 +1163,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['begin']}]),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A']),
 				GENERATED.parallel([
@@ -1158,6 +1178,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 			const sequence = invoke([
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['end']}]),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.beginAgents(['A', 'B']),
 				GENERATED.parallel([
@@ -1173,6 +1194,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['end']}]),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -1212,6 +1234,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					{name: 'B', alias: '', flags: ['start']},
 				]),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -1227,6 +1250,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.connect(['A', {name: 'B', alias: '', flags: ['start']}]),
 				PARSED.endAgents(['A', 'B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -1246,6 +1270,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.endAgents(['A']),
 				PARSED.endAgents(['B']),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				any(),
@@ -1310,6 +1335,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.defineAgents(['C']),
 				PARSED.blockEnd(),
 			]);
+
 			expect(sequence.agents).toEqual([
 				GENERATED.agent('['),
 				GENERATED.agent('__BLOCK0['),
@@ -1381,7 +1407,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				right: '__BLOCK0]',
 			};
 
-			const stages = sequence.stages;
+			const {stages} = sequence;
+
 			expect(stages[0]).toEqual(GENERATED.blockBegin('if', bounds));
 			expect(stages[3]).toEqual(GENERATED.blockSplit('else', bounds));
 			expect(stages[5]).toEqual(GENERATED.blockEnd(bounds));
@@ -1420,7 +1447,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				right: '__BLOCK1]',
 			};
 
-			const stages = sequence.stages;
+			const {stages} = sequence;
+
 			expect(stages[0]).toEqual(GENERATED.blockBegin('if', bounds0));
 			expect(stages[4]).toEqual(GENERATED.blockBegin('if', bounds1));
 			expect(stages[7]).toEqual(GENERATED.blockEnd(bounds1));
@@ -1458,7 +1486,8 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				right: '__BLOCK1]',
 			};
 
-			const stages = sequence.stages;
+			const {stages} = sequence;
+
 			expect(stages[2]).toEqual(GENERATED.blockBegin('if', bounds0));
 			expect(stages[3]).toEqual(GENERATED.blockBegin('if', bounds1));
 			expect(stages[5]).toEqual(GENERATED.blockEnd(bounds1));
@@ -2013,6 +2042,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 					label: 'bar',
 				}),
 			]);
+
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.note('note right', ['A', 'B'], {
@@ -2040,6 +2070,7 @@ defineDescribe('Sequence Generator', ['./Generator'], (Generator) => {
 				PARSED.note('note left', []),
 				PARSED.note('note over', []),
 			]);
+
 			expect(sequence.stages).toEqual([
 				GENERATED.note('note right', [']']),
 				GENERATED.note('note left', ['[']),

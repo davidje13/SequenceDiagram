@@ -1,15 +1,10 @@
-requirejs(['sequence/SequenceDiagram'], (SequenceDiagram) => {
-	'use strict';
+import SequenceDiagram from './sequence/SequenceDiagram.js';
 
-	const def = window.define;
-	if(def && def.amd) {
-		def(() => {
-			return SequenceDiagram;
-		});
-		return;
-	}
-
-	document.addEventListener('DOMContentLoaded', () => {
+const def = window.define;
+if(def && def.amd) {
+	def(() => SequenceDiagram);
+} else {
+	window.document.addEventListener('DOMContentLoaded', () => {
 		SequenceDiagram.convertAll();
 	}, {once: true});
 
@@ -18,4 +13,4 @@ requirejs(['sequence/SequenceDiagram'], (SequenceDiagram) => {
 	}
 
 	window.SequenceDiagram = SequenceDiagram;
-}, null, true);
+}

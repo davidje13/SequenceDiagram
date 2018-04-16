@@ -1,8 +1,9 @@
-defineDescribe('Interface', ['./Interface'], (Interface) => {
-	'use strict';
+import Interface from './Interface.js';
+import stubRequire from '../stubs/require.js';
 
+describe('Interface', () => {
 	// Thanks, https://stackoverflow.com/a/23522755/1180785
-	const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+	const safari = (/^((?!chrome|android).)*safari/i).test(navigator.userAgent);
 
 	const defaultCode = 'my default code';
 	let sequenceDiagram = null;
@@ -22,12 +23,12 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			'getSVGSynchronous',
 		]);
 		sequenceDiagram.process.and.returnValue({
-			meta: {},
 			agents: [],
+			meta: {},
 			stages: [],
 		});
 		sequenceDiagram.on.and.returnValue(sequenceDiagram);
-		sequenceDiagram.getSize.and.returnValue({width: 10, height: 20});
+		sequenceDiagram.getSize.and.returnValue({height: 20, width: 10});
 		sequenceDiagram.dom.and.returnValue(document.createElement('svg'));
 		container = jasmine.createSpyObj('container', [
 			'insertBefore',
@@ -35,15 +36,20 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 		]);
 
 		ui = new Interface({
-			sequenceDiagram,
 			defaultCode,
+			require: stubRequire,
+			sequenceDiagram,
 		});
 	});
 
 	describe('build', () => {
 		it('adds elements to the given container', () => {
 			ui.build(container);
-			expect(container.insertBefore).toHaveBeenCalled();
+
+			expect(container.insertBefore).toHaveBeenCalledWith(
+				jasmine.anything(),
+				null
+			);
 		});
 
 		it('creates a code mirror instance with the given code', (done) => {
@@ -54,6 +60,7 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 					return;
 				}
 				clearInterval(check);
+
 				expect(constructorArgs.options.value).toEqual(defaultCode);
 				done();
 			}, 50);
@@ -68,12 +75,16 @@ defineDescribe('Interface', ['./Interface'], (Interface) => {
 			const el = ui.downloadSVG.element;
 
 			expect(el.getAttribute('href')).toEqual('#');
+
 			if(safari) {
-				// Safari actually starts a download if we do this, which
-				// doesn't seem to fit its usual security vibe
+				/*
+				 * Safari actually starts a download if we do this, which
+				 * doesn't seem to fit its usual security vibe
+				 */
 				return;
 			}
 			el.dispatchEvent(new Event('click'));
+
 			expect(el.getAttribute('href')).toEqual('mySVGURL');
 		});
 	});

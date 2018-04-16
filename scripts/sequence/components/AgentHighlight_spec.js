@@ -1,12 +1,7 @@
-defineDescribe('AgentHighlight', [
-	'./AgentHighlight',
-	'./BaseComponent',
-], (
-	AgentHighlight,
-	BaseComponent
-) => {
-	'use strict';
+import AgentHighlight from './AgentHighlight.js';
+import {getComponents} from './BaseComponent.js';
 
+describe('AgentHighlight', () => {
 	const highlight = new AgentHighlight();
 
 	const theme = {
@@ -14,47 +9,51 @@ defineDescribe('AgentHighlight', [
 	};
 
 	it('registers itself with the component store', () => {
-		const components = BaseComponent.getComponents();
+		const components = getComponents();
+
 		expect(components.get('agent highlight')).toEqual(
 			jasmine.any(AgentHighlight)
 		);
 	});
 
 	it('updates the radius of the agent lines when checking separation', () => {
-		const agentInfo = {currentRad: 0, currentMaxRad: 1};
+		const agentInfo = {currentMaxRad: 1, currentRad: 0};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
-			theme,
 			agentInfos,
+			theme,
 		};
 		highlight.separationPre({agentIDs: ['foo'], highlighted: true}, env);
+
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(2);
 	});
 
 	it('keeps the largest maximum radius', () => {
-		const agentInfo = {currentRad: 0, currentMaxRad: 3};
+		const agentInfo = {currentMaxRad: 3, currentRad: 0};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
-			theme,
 			agentInfos,
+			theme,
 		};
 		highlight.separationPre({agentIDs: ['foo'], highlighted: true}, env);
+
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(3);
 	});
 
 	it('sets the radius to 0 when highlighting is disabled', () => {
-		const agentInfo = {currentRad: 0, currentMaxRad: 1};
+		const agentInfo = {currentMaxRad: 1, currentRad: 0};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
-			theme,
 			agentInfos,
+			theme,
 		};
 		highlight.separationPre({agentIDs: ['foo'], highlighted: false}, env);
+
 		expect(agentInfo.currentRad).toEqual(0);
 		expect(agentInfo.currentMaxRad).toEqual(1);
 	});

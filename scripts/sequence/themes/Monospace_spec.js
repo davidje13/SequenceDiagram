@@ -1,17 +1,11 @@
-defineDescribe('Monospace Theme', [
-	'./Monospace',
-	'svg/SVG',
-	'stubs/TestDOM',
-], (
-	MonospaceTheme,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {dom, textSizerFactory} from '../../stubs/TestDOM.js';
+import {Factory} from './Monospace.js';
+import SVG from '../../svg/SVG.js';
 
-	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+describe('Monospace Theme', () => {
+	const svg = new SVG(dom, textSizerFactory);
 
-	const themeFactory = new MonospaceTheme.Factory();
+	const themeFactory = new Factory();
 	const theme = themeFactory.build(svg);
 
 	it('has a name', () => {

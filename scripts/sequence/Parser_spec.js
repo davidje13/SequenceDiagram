@@ -1,6 +1,10 @@
-defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
-	'use strict';
+/* eslint-disable max-lines */
+/* eslint-disable max-statements */
+/* eslint-disable sort-keys */ // Maybe later
 
+import Parser from './Parser.js';
+
+describe('Sequence Parser', () => {
 	const parser = new Parser();
 
 	const PARSED = {
@@ -9,39 +13,33 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			blockType = jasmine.anything(),
 			tag = jasmine.anything(),
 			label = jasmine.anything(),
-		} = {}) => {
-			return {
-				type: 'block begin',
-				ln,
-				blockType,
-				tag,
-				label,
-			};
-		},
+		} = {}) => ({
+			type: 'block begin',
+			ln,
+			blockType,
+			tag,
+			label,
+		}),
 
 		blockSplit: ({
 			ln = jasmine.anything(),
 			blockType = jasmine.anything(),
 			tag = jasmine.anything(),
 			label = jasmine.anything(),
-		} = {}) => {
-			return {
-				type: 'block split',
-				ln,
-				blockType,
-				tag,
-				label,
-			};
-		},
+		} = {}) => ({
+			type: 'block split',
+			ln,
+			blockType,
+			tag,
+			label,
+		}),
 
 		blockEnd: ({
 			ln = jasmine.anything(),
-		} = {}) => {
-			return {
-				type: 'block end',
-				ln,
-			};
-		},
+		} = {}) => ({
+			type: 'block end',
+			ln,
+		}),
 
 		connect: (agentNames, {
 			ln = jasmine.anything(),
@@ -49,36 +47,35 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			left = jasmine.anything(),
 			right = jasmine.anything(),
 			label = jasmine.anything(),
-		} = {}) => {
-			return {
-				type: 'connect',
-				ln,
-				agents: agentNames.map((name) => ({
-					name,
-					alias: '',
-					flags: [],
-				})),
-				label,
-				options: {
-					line,
-					left,
-					right,
-				},
-			};
-		},
+		} = {}) => ({
+			type: 'connect',
+			ln,
+			agents: agentNames.map((name) => ({
+				name,
+				alias: '',
+				flags: [],
+			})),
+			label,
+			options: {
+				line,
+				left,
+				right,
+			},
+		}),
 	};
 
 	describe('.parse', () => {
 		it('returns an empty sequence for blank input', () => {
 			const parsed = parser.parse('');
+
 			expect(parsed).toEqual({
 				meta: {
-					title: '',
-					theme: '',
 					code: '',
-					terminators: 'none',
 					headers: 'box',
+					terminators: 'none',
 					textFormatter: jasmine.anything(),
+					theme: '',
+					title: '',
 				},
 				stages: [],
 			});
@@ -86,41 +83,49 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('reads title metadata', () => {
 			const parsed = parser.parse('title foo');
+
 			expect(parsed.meta.title).toEqual('foo');
 		});
 
 		it('reads theme metadata', () => {
 			const parsed = parser.parse('theme foo');
+
 			expect(parsed.meta.theme).toEqual('foo');
 		});
 
 		it('propagates original source as metadata', () => {
 			const parsed = parser.parse('theme foo');
+
 			expect(parsed.meta.code).toEqual('theme foo');
 		});
 
 		it('reads terminators metadata', () => {
 			const parsed = parser.parse('terminators bar');
+
 			expect(parsed.meta.terminators).toEqual('bar');
 		});
 
 		it('reads headers metadata', () => {
 			const parsed = parser.parse('headers bar');
+
 			expect(parsed.meta.headers).toEqual('bar');
 		});
 
 		it('propagates a function which can be used to format text', () => {
 			const parsed = parser.parse('title foo');
+
 			expect(parsed.meta.textFormatter).toEqual(jasmine.any(Function));
 		});
 
 		it('reads multiple tokens as one when reading values', () => {
 			const parsed = parser.parse('title foo bar');
+
 			expect(parsed.meta.title).toEqual('foo bar');
 		});
 
 		it('converts entries into abstract form', () => {
 			const parsed = parser.parse('A -> B');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B']),
 			]);
@@ -128,6 +133,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('combines multiple tokens into single entries', () => {
 			const parsed = parser.parse('A B -> C D');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A B', 'C D']),
 			]);
@@ -135,6 +141,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('propagates aliases', () => {
 			const parsed = parser.parse('define Foo Bar as A B');
+
 			expect(parsed.stages).toEqual([
 				{type: 'agent define', ln: jasmine.anything(), agents: [
 					{name: 'Foo Bar', alias: 'A B', flags: []},
@@ -144,6 +151,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('propagates agent options', () => {
 			const parsed = parser.parse('Foo bar is zig zag');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'agent options',
@@ -160,6 +168,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('ignores indefinite articles in agent options', () => {
 			const parsed = parser.parse('Foo is a zig\nBar is an oom');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'agent options',
@@ -188,6 +197,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(() => parser.parse('Foo is')).toThrow(new Error(
 				'Empty agent options at line 1, character 6'
 			));
+
 			expect(() => parser.parse('Foo is a')).toThrow(new Error(
 				'Empty agent options at line 1, character 8'
 			));
@@ -195,6 +205,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('respects spacing within agent names', () => {
 			const parsed = parser.parse('A+B -> C  D');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A+B', 'C  D']),
 			]);
@@ -202,6 +213,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('parses optional labels', () => {
 			const parsed = parser.parse('A B -> C D: foo bar');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A B', 'C D'], {label: 'foo bar'}),
 			]);
@@ -209,6 +221,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('parses optional flags', () => {
 			const parsed = parser.parse('+A -> -*!B');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'connect',
@@ -231,6 +244,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 			expect(() => parser.parse('A -> +*+B')).toThrow(new Error(
 				'Duplicate agent flag: + at line 1, character 7'
 			));
+
 			expect(() => parser.parse('A -> **B')).toThrow(new Error(
 				'Duplicate agent flag: * at line 1, character 6'
 			));
@@ -244,6 +258,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('parses source agents', () => {
 			const parsed = parser.parse('A -> *');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'connect',
@@ -260,6 +275,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('parses source agents with labels', () => {
 			const parsed = parser.parse('A -> *: foo');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'connect',
@@ -276,6 +292,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts multiple entries', () => {
 			const parsed = parser.parse('A -> B\nB -> A');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B']),
 				PARSED.connect(['B', 'A']),
@@ -284,6 +301,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('ignores blank lines', () => {
 			const parsed = parser.parse('A -> B\n\nB -> A\n');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B']),
 				PARSED.connect(['B', 'A']),
@@ -292,6 +310,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('stores line numbers', () => {
 			const parsed = parser.parse('A -> B\nB -> A');
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {ln: 0}),
 				PARSED.connect(['B', 'A'], {ln: 1}),
@@ -328,6 +347,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A<<~>>B\n' +
 				'A~xB\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
 					line: 'solid',
@@ -369,6 +389,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'A <- B: B -> A\n' +
 				'A -> B: B <- A\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				PARSED.connect(['A', 'B'], {
 					line: 'solid',
@@ -387,6 +408,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts delayed connections', () => {
 			const parsed = parser.parse('+A <- ...foo\n...foo -> -B: woo');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'connect-delay-begin',
@@ -424,6 +446,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts notes', () => {
 			const parsed = parser.parse('note over A: hello there');
+
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
 				ln: jasmine.anything(),
@@ -441,6 +464,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'note right of A: hello there\n' +
 				'note between A, B: hi\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'note left',
@@ -485,6 +509,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('allows multiple agents for notes', () => {
 			const parsed = parser.parse('note over A B, C D: hi');
+
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
 				ln: jasmine.anything(),
@@ -505,6 +530,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts state', () => {
 			const parsed = parser.parse('state over A: doing stuff');
+
 			expect(parsed.stages).toEqual([{
 				type: 'note over',
 				ln: jasmine.anything(),
@@ -522,6 +548,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts text blocks', () => {
 			const parsed = parser.parse('text right of A: doing stuff');
+
 			expect(parsed.stages).toEqual([{
 				type: 'note right',
 				ln: jasmine.anything(),
@@ -537,6 +564,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'begin A, B\n' +
 				'end A, B\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'agent define',
@@ -569,6 +597,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts dividers', () => {
 			const parsed = parser.parse('divider');
+
 			expect(parsed.stages).toEqual([{
 				type: 'divider',
 				ln: jasmine.anything(),
@@ -585,6 +614,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'divider delay\n' +
 				'divider tear\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'divider',
@@ -622,6 +652,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'divider with height 40\n' +
 				'divider delay with height 0\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'divider',
@@ -646,6 +677,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'divider tear: message 2\n' +
 				'divider delay with height 40: message 3\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'divider',
@@ -676,6 +708,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'begin reference: Foo bar as baz\n' +
 				'begin reference over A, B: Foo bar as baz\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'group begin',
@@ -703,6 +736,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts markers', () => {
 			const parsed = parser.parse('abc:');
+
 			expect(parsed.stages).toEqual([{
 				type: 'mark',
 				ln: jasmine.anything(),
@@ -712,6 +746,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts autolabel commands', () => {
 			const parsed = parser.parse('autolabel "foo <label> bar"');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'label pattern',
@@ -727,6 +762,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts autolabel off commands', () => {
 			const parsed = parser.parse('autolabel off');
+
 			expect(parsed.stages).toEqual([
 				{
 					type: 'label pattern',
@@ -738,6 +774,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts "simultaneously" flow commands', () => {
 			const parsed = parser.parse('simultaneously:');
+
 			expect(parsed.stages).toEqual([{
 				type: 'async',
 				ln: jasmine.anything(),
@@ -747,6 +784,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts named "simultaneously" flow commands', () => {
 			const parsed = parser.parse('simultaneously with abc:');
+
 			expect(parsed.stages).toEqual([{
 				type: 'async',
 				ln: jasmine.anything(),
@@ -765,6 +803,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 				'  A -> D\n' +
 				'end\n'
 			);
+
 			expect(parsed.stages).toEqual([
 				PARSED.blockBegin({
 					blockType: 'if',
@@ -791,6 +830,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts loop blocks', () => {
 			const parsed = parser.parse('repeat until something');
+
 			expect(parsed.stages).toEqual([
 				PARSED.blockBegin({
 					blockType: 'repeat',
@@ -802,6 +842,7 @@ defineDescribe('Sequence Parser', ['./Parser'], (Parser) => {
 
 		it('converts group blocks', () => {
 			const parsed = parser.parse('group something');
+
 			expect(parsed.stages).toEqual([
 				PARSED.blockBegin({
 					blockType: 'group',

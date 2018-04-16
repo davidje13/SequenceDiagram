@@ -1,18 +1,12 @@
-defineDescribe('Sketch Theme', [
-	'./Sketch',
-	'svg/SVG',
-	'stubs/TestDOM',
-], (
-	SketchTheme,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {dom, textSizerFactory} from '../../stubs/TestDOM.js';
+import {Factory} from './Sketch.js';
+import SVG from '../../svg/SVG.js';
 
-	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+describe('Sketch Theme', () => {
+	const svg = new SVG(dom, textSizerFactory);
 
-	const themeFactory = new SketchTheme.Factory(SketchTheme.RIGHT);
-	const themeFactoryL = new SketchTheme.Factory(SketchTheme.LEFT);
+	const themeFactory = new Factory(Factory.RIGHT);
+	const themeFactoryL = new Factory(Factory.LEFT);
 	const theme = themeFactory.build(svg);
 	const themeL = themeFactory.build(svg);
 

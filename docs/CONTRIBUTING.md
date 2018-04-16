@@ -12,29 +12,47 @@ existing tests where necessary).
 
 ## Getting Started
 
-To get started, you can clone this repository and simply open
-`index.htm` or `library.htm` in your browser. You do not need any build
-tooling, and you do not need to run a local server. You can also run
-the unit tests (but not the linter) by opening `test.htm`.
-
-In order to run the linter, you will need to serve the files using a
-local server. When opened in this way, `test.htm` will run both the
-unit tests and the linter. If you have `node` & `npm` installed, this
-is easy to do:
+To get started, you can clone this repository and run:
 
 ```shell
 npm install;
 npm start;
 ```
 
-The tests and linter will now be available at
-[http://localhost:8080/test.htm](http://localhost:8080/test.htm).
+This will launch a server in the project directory. You can now open
+several pages:
 
-When running using a local server, you can also use the
-[editor-dev](http://localhost:8080/editor-dev.htm) resource to test
-changes you make to the code. This page uses the non-minified source,
-meaning your changes will be available immediately (unlike index.htm
-which requires you to run the minifier first).
+* [http://localhost:8080/](http://localhost:8080/):
+  the main editor (uses minified sources, so you won't see your changes
+  immediately)
+* [http://localhost:8080/editor-dev.htm](http://localhost:8080/editor-dev.htm):
+  the main editor, using non-minified sources (good for development)
+* [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
+  the library sample page (uses minified sources)
+* [http://localhost:8080/test.htm](http://localhost:8080/test.htm):
+  browser-based tests
+* [http://localhost:8080/readme-images.htm](http://localhost:8080/readme-images.htm):
+  image generation page for the readme file
+
+**NOTE**: This project uses web modules, which are only supported by
+recent browsers. In particular, note that FireFox 59 does not support
+web modules unless a flag is set (FireFox 60 will support them fully).
+The editor and library page do not require web modules, so should have
+wider support.
+
+To run the linter, run the command:
+
+```shell
+npm run lint;
+```
+
+And to rebuild the minified sources, run:
+
+```shell
+npm run minify;
+```
+
+Currently there are no command-line tests; only the browser tests.
 
 ## Project Structure
 
@@ -69,7 +87,7 @@ The testing library used here is [Jasmine](https://jasmine.github.io/).
 
 All test files follow the naming convention of `<filename>_spec.js`,
 and must be listed in `/scripts/spec.js`. Linting automatically applies
-to all files which are loaded during testing.
+to all files with a `.js` extension.
 
 You can run the tests by opening `test.htm` in a browser.
 
@@ -111,9 +129,10 @@ polyfils are included.
 ### Testing & Linting
 
 Ensure that all unit tests are passing and files pass linting. This can
-be done by opening `test.htm` in a browser. At a minimum, you should
-ensure that tests are passing in Google Chrome, but testing in other
-supported browsers is even better.
+be done by opening `test.htm` in a browser and running `npm run lint`
+in a command window. At a minimum, you should ensure that tests are
+passing in Google Chrome, but testing in other supported browsers is
+even better.
 
 Due to the limited testing of SVG rendering, it is also a good idea to
 open [readme-images](http://localhost:8080/readme-images.htm) and scan
@@ -127,11 +146,11 @@ When you have finished your changes, it is good to regenerate the
 minified library (this is preferred but not required):
 
 ```shell
-npm run minify
+npm run minify;
 ```
 
-This will update the files in `/lib`. The minified code is a
-self-contained copy of the `/scripts/sequence/SequenceDiagram.js`
+This will update the files in `/lib` and `/weblib`. The minified code
+is a self-contained copy of the `/scripts/sequence/SequenceDiagram.js`
 script, with some boiler-plate added to allow loading into a page in a
 variety of ways.
 

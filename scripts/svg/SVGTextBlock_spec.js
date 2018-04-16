@@ -1,22 +1,15 @@
-defineDescribe('SVGTextBlock', [
-	'./SVGTextBlock',
-	'./SVG',
-	'stubs/TestDOM',
-], (
-	SVGTextBlock,
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {DOMWrapper, dom, textSizerFactory} from '../stubs/TestDOM.js';
+import {SVGTextBlock, TextSizer} from './SVGTextBlock.js';
+import SVG from './SVG.js';
 
-
+describe('SVGTextBlock', () => {
 	const attrs = {'font-size': 10, 'line-height': 1.5};
 	let svg = null;
 	let block = null;
 	let hold = null;
 
 	beforeEach(() => {
-		svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+		svg = new SVG(dom, textSizerFactory);
 		block = new SVGTextBlock(svg.body, svg, {attrs});
 		hold = svg.body.element;
 	});
@@ -31,6 +24,7 @@ defineDescribe('SVGTextBlock', [
 
 		it('does not explode if given no setup', () => {
 			block = new SVGTextBlock(svg.body, svg);
+
 			expect(block.state.formatted).toEqual([]);
 			expect(block.state.x).toEqual(0);
 			expect(block.state.y).toEqual(0);
@@ -42,12 +36,14 @@ defineDescribe('SVGTextBlock', [
 				attrs,
 				formatted: [[{text: 'abc'}]],
 			});
+
 			expect(block.state.formatted).toEqual([[{text: 'abc'}]]);
 			expect(hold.childNodes.length).toEqual(1);
 		});
 
 		it('uses the given coordinates if specified', () => {
 			block = new SVGTextBlock(svg.body, svg, {attrs, x: 5, y: 7});
+
 			expect(block.state.x).toEqual(5);
 			expect(block.state.y).toEqual(7);
 		});
@@ -56,6 +52,7 @@ defineDescribe('SVGTextBlock', [
 	describe('.set', () => {
 		it('sets the text to the given content', () => {
 			block.set({formatted: [[{text: 'foo'}]]});
+
 			expect(block.state.formatted).toEqual([[{text: 'foo'}]]);
 			expect(hold.childNodes.length).toEqual(1);
 			expect(hold.childNodes[0].innerHTML).toEqual('foo');
@@ -63,6 +60,7 @@ defineDescribe('SVGTextBlock', [
 
 		it('renders multiline text', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
+
 			expect(hold.childNodes.length).toEqual(2);
 			expect(hold.childNodes[0].innerHTML).toEqual('foo');
 			expect(hold.childNodes[1].innerHTML).toEqual('bar');
@@ -70,8 +68,7 @@ defineDescribe('SVGTextBlock', [
 
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			const line0 = hold.childNodes[0];
-			const line1 = hold.childNodes[1];
+			const [line0, line1] = hold.childNodes;
 
 			block.set({formatted: [
 				[{text: 'zig'}],
@@ -89,7 +86,7 @@ defineDescribe('SVGTextBlock', [
 
 		it('re-uses text nodes when possible, removing extra if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
-			const line0 = hold.childNodes[0];
+			const [line0] = hold.childNodes;
 
 			block.set({formatted: [[{text: 'zig'}]]});
 
@@ -100,6 +97,7 @@ defineDescribe('SVGTextBlock', [
 
 		it('positions text nodes and applies attributes', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
+
 			expect(hold.childNodes.length).toEqual(2);
 			expect(hold.childNodes[0].getAttribute('x')).toEqual('0');
 			expect(hold.childNodes[0].getAttribute('y')).toEqual('1');
@@ -112,6 +110,7 @@ defineDescribe('SVGTextBlock', [
 		it('moves all nodes', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			block.set({x: 5, y: 7});
+
 			expect(hold.childNodes[0].getAttribute('x')).toEqual('5');
 			expect(hold.childNodes[0].getAttribute('y')).toEqual('8');
 			expect(hold.childNodes[1].getAttribute('x')).toEqual('5');
@@ -121,6 +120,7 @@ defineDescribe('SVGTextBlock', [
 		it('clears if the text is empty', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			block.set({formatted: []});
+
 			expect(hold.childNodes.length).toEqual(0);
 			expect(block.state.formatted).toEqual([]);
 			expect(block.lines.length).toEqual(0);
@@ -130,8 +130,8 @@ defineDescribe('SVGTextBlock', [
 	describe('TextSizer', () => {
 		beforeEach(() => {
 			svg = new SVG(
-				new TestDOM.DOMWrapper(window.document),
-				(svgBase) => new SVGTextBlock.TextSizer(svgBase)
+				new DOMWrapper(window.document),
+				(svgBase) => new TextSizer(svgBase)
 			);
 			document.body.appendChild(svg.body.element);
 		});
@@ -143,6 +143,7 @@ defineDescribe('SVGTextBlock', [
 		describe('.measure', () => {
 			it('calculates the size of the formatted text', () => {
 				const size = svg.textSizer.measure(attrs, [[{text: 'foo'}]]);
+
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(15);
 			});
@@ -150,6 +151,7 @@ defineDescribe('SVGTextBlock', [
 			it('calculates the size of text blocks', () => {
 				block.set({formatted: [[{text: 'foo'}]]});
 				const size = svg.textSizer.measure(block);
+
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(15);
 			});
@@ -159,12 +161,14 @@ defineDescribe('SVGTextBlock', [
 					[{text: 'foo'}],
 					[{text: 'bar'}],
 				]);
+
 				expect(size.width).toBeGreaterThan(0);
 				expect(size.height).toEqual(30);
 			});
 
 			it('returns 0, 0 for empty content', () => {
 				const size = svg.textSizer.measure(attrs, []);
+
 				expect(size.width).toEqual(0);
 				expect(size.height).toEqual(0);
 			});
@@ -181,6 +185,7 @@ defineDescribe('SVGTextBlock', [
 					[{text: 'longline'}],
 					[{text: 'foo'}],
 				]);
+
 				expect(size1.width).toBeGreaterThan(size0.width);
 				expect(size.width).toEqual(size1.width);
 			});
@@ -191,6 +196,7 @@ defineDescribe('SVGTextBlock', [
 				const height = svg.textSizer.measureHeight(attrs, [
 					[{text: 'foo'}],
 				]);
+
 				expect(height).toEqual(15);
 			});
 
@@ -199,16 +205,19 @@ defineDescribe('SVGTextBlock', [
 					[{text: 'foo'}],
 					[{text: 'bar'}],
 				]);
+
 				expect(height).toEqual(30);
 			});
 
 			it('returns 0 for empty content', () => {
 				const height = svg.textSizer.measureHeight(attrs, []);
+
 				expect(height).toEqual(0);
 			});
 
 			it('does not require the container', () => {
 				svg.textSizer.measureHeight(attrs, [[{text: 'foo'}]]);
+
 				expect(svg.body.element.childNodes.length).toEqual(0);
 			});
 		});

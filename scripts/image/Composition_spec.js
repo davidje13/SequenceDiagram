@@ -1,14 +1,9 @@
-defineDescribe('Composition', [
-	'./Composition',
-	'./ImageRegion',
-], (
-	Composition,
-	ImageRegion
-) => {
-	'use strict';
+import ImageRegion from './ImageRegion.js';
+import {subtract} from './Composition.js';
 
-	let inputA;
-	let inputB;
+describe('Composition', () => {
+	let inputA = null;
+	let inputB = null;
 
 	beforeEach(() => {
 		inputA = ImageRegion.fromValues(2, 2, [
@@ -23,7 +18,8 @@ defineDescribe('Composition', [
 
 	describe('subtract', () => {
 		it('returns a new image of the same size', () => {
-			const output = Composition.subtract(inputA, inputB);
+			const output = subtract(inputA, inputB);
+
 			expect(output).not.toBe(inputA);
 			expect(output).not.toBe(inputB);
 			expect(output.width).toEqual(inputA.width);
@@ -34,16 +30,18 @@ defineDescribe('Composition', [
 		});
 
 		it('uses the given target if specified', () => {
-			const output = Composition.subtract(
+			const output = subtract(
 				inputA,
 				inputB,
 				{target: inputA}
 			);
+
 			expect(output).toBe(inputA);
 		});
 
 		it('calculates the difference for each pixel', () => {
-			const output = Composition.subtract(inputA, inputB);
+			const output = subtract(inputA, inputB);
+
 			expect(output.get(0, 0)).toEqual(0);
 			expect(output.get(1, 0)).toEqual(1);
 			expect(output.get(0, 1)).toEqual(-1);
@@ -58,6 +56,7 @@ defineDescribe('Composition', [
 
 		it('invokes subtract', () => {
 			const output = inputA.subtract(inputB);
+
 			expect(output.get(0, 1)).toEqual(-1);
 		});
 	});
@@ -69,6 +68,7 @@ defineDescribe('Composition', [
 
 		it('invokes abs(subtract)', () => {
 			const output = inputA.difference(inputB);
+
 			expect(output.get(0, 1)).toEqual(1);
 		});
 	});

@@ -1,6 +1,6 @@
-defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
-	'use strict';
+import EventObject from './EventObject.js';
 
+describe('EventObject', () => {
 	let o = null;
 
 	beforeEach(() => {
@@ -70,15 +70,17 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 
 	describe('countEventListeners', () => {
 		it('returns the number of event listeners of a given type', () => {
-			o.addEventListener('foo', () => {});
-			o.addEventListener('foo', () => {});
+			o.addEventListener('foo', () => null);
+			o.addEventListener('foo', () => null);
+
 			expect(o.countEventListeners('foo')).toEqual(2);
 		});
 
 		it('does not count unrequested types', () => {
-			o.addEventListener('foo', () => {});
-			o.addEventListener('foo', () => {});
-			o.addEventListener('bar', () => {});
+			o.addEventListener('foo', () => null);
+			o.addEventListener('foo', () => null);
+			o.addEventListener('bar', () => null);
+
 			expect(o.countEventListeners('bar')).toEqual(1);
 		});
 
@@ -96,18 +98,19 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 
 			o.addEventListener('foo', fn);
 			o.trigger('foo');
+
 			expect(triggered).toEqual(1);
 
 			triggered = 0;
 			o.removeEventListener('foo', fn);
 			o.trigger('foo');
+
 			expect(triggered).toEqual(0);
 		});
 
 		it('leaves other listeners', () => {
 			let triggered = 0;
-			const fn1 = () => {
-			};
+			const fn1 = () => null;
 			const fn2 = () => {
 				++ triggered;
 			};
@@ -116,6 +119,7 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 			o.addEventListener('foo', fn2);
 			o.removeEventListener('foo', fn1);
 			o.trigger('foo');
+
 			expect(triggered).toEqual(1);
 		});
 
@@ -129,11 +133,13 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 			o.addEventListener('bar', fn);
 			o.removeEventListener('foo', fn);
 			o.trigger('bar');
+
 			expect(triggered).toEqual(1);
 		});
 
 		it('silently ignores non-existent listeners', () => {
-			expect(() => o.removeEventListener('foo', () => {})).not.toThrow();
+			expect(() => o.removeEventListener('foo', () => null))
+				.not.toThrow();
 		});
 	});
 
@@ -146,11 +152,13 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 
 			o.addEventListener('foo', fn);
 			o.trigger('foo');
+
 			expect(triggered).toEqual(1);
 
 			triggered = 0;
 			o.removeAllEventListeners('foo');
 			o.trigger('foo');
+
 			expect(triggered).toEqual(0);
 		});
 
@@ -164,6 +172,7 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 			o.addEventListener('bar', fn);
 			o.removeAllEventListeners('foo');
 			o.trigger('bar');
+
 			expect(triggered).toEqual(1);
 		});
 
@@ -182,6 +191,7 @@ defineDescribe('EventObject', ['./EventObject'], (EventObject) => {
 			o.removeAllEventListeners();
 			o.trigger('foo');
 			o.trigger('bar');
+
 			expect(triggered).toEqual(0);
 		});
 	});

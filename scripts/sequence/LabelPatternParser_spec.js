@@ -1,8 +1,9 @@
-defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
-	'use strict';
+import parser from './LabelPatternParser.js';
 
+describe('Label Pattern Parser', () => {
 	it('converts simple text', () => {
 		const parsed = parser('hello everybody');
+
 		expect(parsed).toEqual([
 			'hello everybody',
 		]);
@@ -10,11 +11,13 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('handles the empty case', () => {
 		const parsed = parser('');
+
 		expect(parsed).toEqual([]);
 	});
 
 	it('converts tokens', () => {
 		const parsed = parser('foo <label> bar');
+
 		expect(parsed).toEqual([
 			'foo ',
 			{token: 'label'},
@@ -24,6 +27,7 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('converts multiple tokens', () => {
 		const parsed = parser('foo <label> bar <label> baz');
+
 		expect(parsed).toEqual([
 			'foo ',
 			{token: 'label'},
@@ -35,6 +39,7 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('ignores empty sequences', () => {
 		const parsed = parser('<label><label>');
+
 		expect(parsed).toEqual([
 			{token: 'label'},
 			{token: 'label'},
@@ -43,6 +48,7 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('passes unrecognised tokens through unchanged', () => {
 		const parsed = parser('foo <nope>');
+
 		expect(parsed).toEqual([
 			'foo ',
 			'<nope>',
@@ -51,25 +57,28 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('converts counters', () => {
 		const parsed = parser('<inc 5, 2>a<inc 2, 1>b');
+
 		expect(parsed).toEqual([
-			{start: 5, inc: 2, dp: 0},
+			{dp: 0, inc: 2, start: 5},
 			'a',
-			{start: 2, inc: 1, dp: 0},
+			{dp: 0, inc: 1, start: 2},
 			'b',
 		]);
 	});
 
 	it('defaults counters to increment = 1', () => {
 		const parsed = parser('<inc 5>');
+
 		expect(parsed).toEqual([
-			{start: 5, inc: 1, dp: 0},
+			{dp: 0, inc: 1, start: 5},
 		]);
 	});
 
 	it('defaults counters to start = 1', () => {
 		const parsed = parser('<inc>');
+
 		expect(parsed).toEqual([
-			{start: 1, inc: 1, dp: 0},
+			{dp: 0, inc: 1, start: 1},
 		]);
 	});
 
@@ -77,6 +86,7 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 		expect(parser('<inc abc>')).toEqual([
 			'<inc abc>',
 		]);
+
 		expect(parser('<inc 1, abc>')).toEqual([
 			'<inc 1, abc>',
 		]);
@@ -84,9 +94,10 @@ defineDescribe('Label Pattern Parser', ['./LabelPatternParser'], (parser) => {
 
 	it('assigns decimal places to counters by their written precision', () => {
 		const parsed = parser('<inc 5.0, 2.00><inc 2.00, 1.0>');
+
 		expect(parsed).toEqual([
-			{start: jasmine.anything(), inc: jasmine.anything(), dp: 2},
-			{start: jasmine.anything(), inc: jasmine.anything(), dp: 2},
+			{dp: 2, inc: jasmine.anything(), start: jasmine.anything()},
+			{dp: 2, inc: jasmine.anything(), start: jasmine.anything()},
 		]);
 	});
 });

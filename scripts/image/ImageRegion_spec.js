@@ -1,6 +1,8 @@
-defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
-	'use strict';
+/* eslint-disable max-statements */
 
+import ImageRegion from './ImageRegion.js';
+
+describe('ImageRegion', () => {
 	function makeCanvas(w, h) {
 		const canvas = document.createElement('canvas');
 		canvas.width = w;
@@ -12,10 +14,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 
 	function setPix(dat, x, y, rgba) {
 		const p = (y * dat.width + x) * 4;
-		dat.data[p  ] = rgba[0];
-		dat.data[p+1] = rgba[1];
-		dat.data[p+2] = rgba[2];
-		dat.data[p+3] = rgba[3];
+		[dat.data[p], dat.data[p + 1], dat.data[p + 2], dat.data[p + 3]] = rgba;
 	}
 
 	const PRECISION = 0.01;
@@ -23,6 +22,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 	describe('ofSize', () => {
 		it('returns an empty region of the requested size', () => {
 			const r = ImageRegion.ofSize(2, 2);
+
 			expect(r.width).toEqual(2);
 			expect(r.height).toEqual(2);
 			expect(r.origin).toEqual(0);
@@ -37,6 +37,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 
 		it('accepts an optional dimension value', () => {
 			const r = ImageRegion.ofSize(2, 2, 2);
+
 			expect(r.width).toEqual(2);
 			expect(r.height).toEqual(2);
 			expect(r.origin).toEqual(0);
@@ -53,6 +54,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				6, 9,
 			];
 			const r = ImageRegion.fromValues(2, 2, input);
+
 			expect(r.width).toEqual(2);
 			expect(r.height).toEqual(2);
 			expect(r.origin).toEqual(0);
@@ -70,6 +72,8 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 	describe('fromCanvas', () => {
 		it('converts canvas image data into luminosity', () => {
 			const {canvas, ctx, dat} = makeCanvas(3, 3);
+			/* eslint-disable no-multi-spaces */
+			/* eslint-disable array-bracket-spacing */
 			setPix(dat, 0, 0, [  0,   0,   0,   0]);
 			setPix(dat, 1, 0, [255,   0,   0,   0]);
 			setPix(dat, 2, 0, [255, 255, 255,   0]);
@@ -79,24 +83,27 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 			setPix(dat, 0, 2, [  0,   0,   0, 128]);
 			setPix(dat, 1, 2, [255,   0,   0, 128]);
 			setPix(dat, 2, 2, [255, 255, 255, 128]);
+			/* eslint-enable no-multi-spaces */
+			/* eslint-enable array-bracket-spacing */
 			ctx.putImageData(dat, 0, 0);
 
 			const r = ImageRegion.fromCanvas(canvas);
+
 			expect(r.width).toEqual(3);
 			expect(r.height).toEqual(3);
 			expect(r.origin).toEqual(0);
 			expect(r.stepX).toEqual(1);
 			expect(r.stepY).toEqual(3);
 			expect(r.dim).toEqual(1);
-			expect(r.values[0]).toBeNear(   0, PRECISION);
-			expect(r.values[1]).toBeNear(   0, PRECISION);
-			expect(r.values[2]).toBeNear(   0, PRECISION);
-			expect(r.values[3]).toBeNear(  -1, PRECISION);
-			expect(r.values[4]).toBeNear(-1/3, PRECISION);
-			expect(r.values[5]).toBeNear(   1, PRECISION);
-			expect(r.values[6]).toBeNear(-1/2, PRECISION);
-			expect(r.values[7]).toBeNear(-1/6, PRECISION);
-			expect(r.values[8]).toBeNear( 1/2, PRECISION);
+			expect(r.values[0]).toBeNear(0, PRECISION);
+			expect(r.values[1]).toBeNear(0, PRECISION);
+			expect(r.values[2]).toBeNear(0, PRECISION);
+			expect(r.values[3]).toBeNear(-1, PRECISION);
+			expect(r.values[4]).toBeNear(-1 / 3, PRECISION);
+			expect(r.values[5]).toBeNear(1, PRECISION);
+			expect(r.values[6]).toBeNear(-1 / 2, PRECISION);
+			expect(r.values[7]).toBeNear(-1 / 6, PRECISION);
+			expect(r.values[8]).toBeNear(1 / 2, PRECISION);
 		});
 	});
 
@@ -106,6 +113,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				3, 2,
 				6, 9,
 			]);
+
 			expect(r.get(0, 0)).toEqual(3);
 			expect(r.get(1, 0)).toEqual(2);
 			expect(r.get(0, 1)).toEqual(6);
@@ -117,6 +125,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				3, 2,
 				6, 9,
 			]);
+
 			expect(r.get(-1, 0)).toEqual(0);
 			expect(r.get(0, -1)).toEqual(0);
 			expect(r.get(3, 0)).toEqual(0);
@@ -132,6 +141,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				6, 8, 0,
 			]);
 			const t = r.transposed();
+
 			expect(t.width).toEqual(2);
 			expect(t.height).toEqual(3);
 			expect(t.stepX).toEqual(3);
@@ -153,6 +163,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				-9, 2,
 				6, 8,
 			]);
+
 			expect(r.sum()).toEqual(7);
 		});
 	});
@@ -163,6 +174,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				-9, 2,
 				6, 8,
 			]);
+
 			expect(r.max()).toEqual(8);
 		});
 	});
@@ -173,6 +185,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				-9, 2,
 				6, 8,
 			]);
+
 			expect(r.min()).toEqual(-9);
 		});
 	});
@@ -183,6 +196,7 @@ defineDescribe('ImageRegion', ['./ImageRegion'], (ImageRegion) => {
 				-9, 2,
 				6, 8,
 			]);
+
 			expect(r.absMax()).toEqual(9);
 		});
 	});

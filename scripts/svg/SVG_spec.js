@@ -1,24 +1,21 @@
-defineDescribe('SVG', [
-	'./SVG',
-	'stubs/TestDOM',
-], (
-	SVG,
-	TestDOM
-) => {
-	'use strict';
+import {dom, textSizerFactory} from '../stubs/TestDOM.js';
+import SVG from './SVG.js';
 
+describe('SVG', () => {
 	const expectedNS = 'http://www.w3.org/2000/svg';
 
-	const svg = new SVG(TestDOM.dom, TestDOM.textSizerFactory);
+	const svg = new SVG(dom, textSizerFactory);
 
 	describe('.txt', () => {
 		it('creates a text node with the given content', () => {
 			const node = svg.txt('foo');
+
 			expect(node.nodeValue).toEqual('foo');
 		});
 
 		it('defaults to empty', () => {
 			const node = svg.txt();
+
 			expect(node.nodeValue).toEqual('');
 		});
 	});
@@ -26,12 +23,14 @@ defineDescribe('SVG', [
 	describe('.el', () => {
 		it('creates a wrapped node with the SVG namespace', () => {
 			const node = svg.el('path').element;
+
 			expect(node.namespaceURI).toEqual(expectedNS);
 			expect(node.tagName).toEqual('path');
 		});
 
 		it('overrides the namespace if desired', () => {
 			const node = svg.el('path', 'foo').element;
+
 			expect(node.namespaceURI).toEqual('foo');
 		});
 	});
@@ -39,6 +38,7 @@ defineDescribe('SVG', [
 	describe('.body', () => {
 		it('is a wrapped svg node with the SVG namespace', () => {
 			const node = svg.body.element;
+
 			expect(node.namespaceURI).toEqual(expectedNS);
 			expect(node.getAttribute('xmlns')).toEqual(expectedNS);
 			expect(node.getAttribute('version')).toEqual('1.1');
@@ -51,11 +51,12 @@ defineDescribe('SVG', [
 			const node = svg.box({
 				'foo': 'bar',
 			}, {
+				'height': 40,
+				'width': 30,
 				'x': 10,
 				'y': 20,
-				'width': 30,
-				'height': 40,
 			}).element;
+
 			expect(node.tagName).toEqual('rect');
 			expect(node.getAttribute('foo')).toEqual('bar');
 			expect(node.getAttribute('x')).toEqual('10');
@@ -72,14 +73,17 @@ defineDescribe('SVG', [
 			}, {
 				'zig': 'zag',
 			}, {
+				'height': 40,
+				'width': 30,
 				'x': 10,
 				'y': 20,
-				'width': 30,
-				'height': 40,
 			}).element;
+
 			expect(node.tagName).toEqual('g');
 			expect(node.childNodes.length).toEqual(2);
-			const back = node.childNodes[0];
+
+			const [back, flick] = node.childNodes;
+
 			expect(back.getAttribute('foo')).toEqual('bar');
 			expect(back.getAttribute('points')).toEqual(
 				'10 20 ' +
@@ -88,7 +92,7 @@ defineDescribe('SVG', [
 				'40 60 ' +
 				'10 60'
 			);
-			const flick = node.childNodes[1];
+
 			expect(flick.getAttribute('zig')).toEqual('zag');
 			expect(flick.getAttribute('points')).toEqual(
 				'33 20 ' +
@@ -99,8 +103,8 @@ defineDescribe('SVG', [
 	});
 
 	describe('.boxedText', () => {
-		const PADDING = {left: 4, top: 8, right: 16, bottom: 32};
-		const LABEL_ATTRS = {'font-size': 10, 'line-height': 1.5, 'foo': 'bar'};
+		const PADDING = {bottom: 32, left: 4, right: 16, top: 8};
+		const LABEL_ATTRS = {'font-size': 10, 'foo': 'bar', 'line-height': 1.5};
 		const LABEL = [[{text: 'foo'}]];
 
 		beforeEach(() => {
@@ -110,9 +114,9 @@ defineDescribe('SVG', [
 
 		it('renders a label', () => {
 			const rendered = svg.boxedText({
-				padding: PADDING,
 				boxAttrs: {},
 				labelAttrs: LABEL_ATTRS,
+				padding: PADDING,
 			}, LABEL, {x: 1, y: 2});
 			const block = rendered.label.textBlock;
 
@@ -123,11 +127,11 @@ defineDescribe('SVG', [
 
 		it('positions a box beneath the rendered label', () => {
 			const rendered = svg.boxedText({
-				padding: PADDING,
 				boxAttrs: {'foo': 'bar'},
 				labelAttrs: LABEL_ATTRS,
+				padding: PADDING,
 			}, LABEL, {x: 1, y: 2});
-			const box = rendered.element.childNodes[0];
+			const [box] = rendered.element.childNodes;
 
 			expect(box.getAttribute('x')).toEqual('1');
 			expect(box.getAttribute('y')).toEqual('2');
@@ -138,9 +142,9 @@ defineDescribe('SVG', [
 
 		it('returns the size of the rendered box', () => {
 			const rendered = svg.boxedText({
-				padding: PADDING,
 				boxAttrs: {},
 				labelAttrs: LABEL_ATTRS,
+				padding: PADDING,
 			}, LABEL, {x: 1, y: 2});
 
 			expect(rendered.width).toEqual(4 + 16 + 3);

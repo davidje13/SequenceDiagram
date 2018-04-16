@@ -4,7 +4,7 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' https://cdnjs.cloudflare.com;
+	script-src 'self';
 	connect-src 'self';
 	style-src 'self'
 		'sha256-ru2GY2rXeOf7PQX5LzK3ckNo21FCDUoRc2f3i0QcD1g='
@@ -19,15 +19,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <link rel="stylesheet" href="styles/readmeImages.css">
-
-<script src="scripts/requireConfig.js"></script>
-
-<script
-	data-main="scripts/readmeImages"
-	src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
-	integrity="sha256-0SGl1PJNDyJwcV5T+weg2zpEMrh7xvlwO4oXgvZCeZk="
-	crossorigin="anonymous"
-></script>
+<script src="scripts/readmeImages.js" type="module"></script>
 
 </head>
 <body>

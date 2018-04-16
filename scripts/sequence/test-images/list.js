@@ -1,4 +1,4 @@
-define([], [
+export default [
 	'Connect.svg',
 	'SelfConnect.svg',
 	'Divider.svg',
@@ -10,4 +10,4 @@ define([], [
 	'ReferenceLayering.svg',
 	'Markdown.svg',
 	'AgentOptions.svg',
-]);
+];

@@ -1,39 +1,29 @@
-defineDescribe('Note', [
-	'./Note',
-	'./BaseComponent',
-], (
-	Note,
-	BaseComponent
-) => {
-	'use strict';
+import {NoteBetween, NoteOver, NoteSide} from './Note.js';
+import {getComponents} from './BaseComponent.js';
 
-	describe('NoteOver', () => {
-		it('registers itself with the component store', () => {
-			const components = BaseComponent.getComponents();
-			expect(components.get('note over')).toEqual(
-				jasmine.any(Note.NoteOver)
-			);
-		});
+describe('NoteOver', () => {
+	it('registers itself with the component store', () => {
+		const components = getComponents();
+
+		expect(components.get('note over')).toEqual(jasmine.any(NoteOver));
 	});
+});
 
-	describe('NoteSide', () => {
-		it('registers itself with the component store', () => {
-			const components = BaseComponent.getComponents();
-			expect(components.get('note left')).toEqual(
-				jasmine.any(Note.NoteSide)
-			);
-			expect(components.get('note right')).toEqual(
-				jasmine.any(Note.NoteSide)
-			);
-		});
+describe('NoteSide', () => {
+	it('registers itself with the component store', () => {
+		const components = getComponents();
+
+		expect(components.get('note left')).toEqual(jasmine.any(NoteSide));
+		expect(components.get('note right')).toEqual(jasmine.any(NoteSide));
 	});
+});
 
-	describe('NoteBetween', () => {
-		it('registers itself with the component store', () => {
-			const components = BaseComponent.getComponents();
-			expect(components.get('note between')).toEqual(
-				jasmine.any(Note.NoteBetween)
-			);
-		});
+describe('NoteBetween', () => {
+	it('registers itself with the component store', () => {
+		const components = getComponents();
+
+		expect(components.get('note between')).toEqual(
+			jasmine.any(NoteBetween)
+		);
 	});
 });
