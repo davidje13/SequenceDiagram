@@ -1,8 +1,13 @@
 import SequenceDiagram from './sequence/SequenceDiagram.mjs';
 
+const out = {
+	SequenceDiagram,
+};
+
 if(typeof exports !== 'undefined') {
-	exports.SequenceDiagram = SequenceDiagram;
+	Object.assign(exports, out);
 } else if(window.define && window.define.amd) {
+	Object.assign(SequenceDiagram, out);
 	window.define(() => SequenceDiagram);
 } else {
 	window.document.addEventListener('DOMContentLoaded', () => {
@@ -13,5 +18,5 @@ if(typeof exports !== 'undefined') {
 		SequenceDiagram.registerCodeMirrorMode(window.CodeMirror);
 	}
 
-	window.SequenceDiagram = SequenceDiagram;
+	Object.assign(window, out);
 }

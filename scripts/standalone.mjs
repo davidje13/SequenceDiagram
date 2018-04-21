@@ -30,11 +30,16 @@ class UnitaryTextSizer {
 	}
 }
 
+const out = {
+	SequenceDiagram,
+	VirtualDocument,
+	headlessTextSizerFactory: () => new UnitaryTextSizer(),
+};
+
 if(typeof exports !== 'undefined') {
-	exports.SequenceDiagram = SequenceDiagram;
-	exports.VirtualDocument = VirtualDocument;
-	exports.headlessTextSizerFactory = () => new UnitaryTextSizer();
+	Object.assign(exports, out);
 } else if(window.define && window.define.amd) {
+	Object.assign(SequenceDiagram, out);
 	window.define(() => SequenceDiagram);
 } else {
 	window.document.addEventListener('DOMContentLoaded', () => {
@@ -45,5 +50,5 @@ if(typeof exports !== 'undefined') {
 		SequenceDiagram.registerCodeMirrorMode(window.CodeMirror);
 	}
 
-	window.SequenceDiagram = SequenceDiagram;
+	Object.assign(window, out);
 }
