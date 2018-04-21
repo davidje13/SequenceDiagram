@@ -40,10 +40,10 @@ web modules unless a flag is set (FireFox 60 will support them fully).
 The editor and library page do not require web modules, so should have
 wider support.
 
-To run the linter, run the command:
+To run the non-browser tests and linter, run the command:
 
 ```shell
-npm run lint;
+npm test;
 ```
 
 And to rebuild the minified sources, run:
@@ -52,7 +52,18 @@ And to rebuild the minified sources, run:
 npm run minify;
 ```
 
-Currently there are no command-line tests; only the browser tests.
+## Commands
+
+The available commands are:
+
+* `npm start`: runs a webserver on
+  [localhost:8080](http://localhost:8080)
+* `npm test`: runs the `unit-test` and `lint` commands
+* `npm run unit-test`: runs non-browser-based unit tests in NodeJS
+* `npm run lint`: runs the linter against all source and test files
+* `npm run minify`: runs the `minify-lib` and `minify-web` commands
+* `npm run minify-lib`: minifies the library code in `/lib`
+* `npm run minify-web`: minifies the web code in `/weblib`
 
 ## Project Structure
 
@@ -78,18 +89,19 @@ Useful helpers can also be found in `/scripts/core/*` and
 `/scripts/svg/*`.
 
 The live editor (index.htm & editor-dev.htm) uses the source in
-`/scripts/editor.js` and `/scripts/interface/*`. Other pages use
-sources in the root of `/scripts` as their entry-points.
+`/web/editor.mjs` and `/web/interface/*`. Other pages use sources in
+the root of `/web` as their entry-points.
 
 ## Testing
 
 The testing library used here is [Jasmine](https://jasmine.github.io/).
 
-All test files follow the naming convention of `<filename>_spec.js`,
-and must be listed in `/scripts/spec.js`. Linting automatically applies
-to all files with a `.js` extension.
+All test files follow the naming convention of `<filename>_spec.mjs`
+(commandline and browser) or `_webspec.mjs` (browser-only). Browser
+tests must be listed in `/spec/support/browser_specs.mjs`. Linting
+automatically applies to all files with a `.js` or `.mjs` extension.
 
-You can run the tests by opening `test.htm` in a browser.
+You can run the browser tests by opening `test.htm` in a browser.
 
 The current state of automated testing is:
 
@@ -97,12 +109,12 @@ The current state of automated testing is:
 * `Parser` and `Generator` stages have a good level of testing
 * Rendering methods (SVG generation) have a minimal level of testing;
   there are some high-level tests in
-  `/scripts/sequence/SequenceDiagram_spec.js`, and a series of image
-  comparison tests in `/scripts/sequence/Readme_spec.js` (testing that
+  `/scripts/sequence/SequenceDiagram_spec.mjs`, and a series of image
+  comparison tests in `/scripts/sequence/Readme_spec.mjs` (testing that
   the readme screenshots roughly match the current behaviour). Finally
-  `/scripts/sequence/SequenceDiagram_visual_spec.js` uses coarse image
+  `/scripts/sequence/SequenceDiagram_visual_spec.mjs` uses coarse image
   comparison to test components and interactions using baseline SVGs
-  from `test-images`.
+  from `spec/images`.
 * The editor has a minimal level of testing.
 
 If you suspect a failing test is not related to your changes, you can
@@ -129,7 +141,7 @@ polyfils are included.
 ### Testing & Linting
 
 Ensure that all unit tests are passing and files pass linting. This can
-be done by opening `test.htm` in a browser and running `npm run lint`
+be done by opening `test.htm` in a browser and running `npm test`
 in a command window. At a minimum, you should ensure that tests are
 passing in Google Chrome, but testing in other supported browsers is
 even better.
@@ -150,7 +162,7 @@ npm run minify;
 ```
 
 This will update the files in `/lib` and `/weblib`. The minified code
-is a self-contained copy of the `/scripts/sequence/SequenceDiagram.js`
+is a self-contained copy of the `/scripts/sequence/SequenceDiagram.mjs`
 script, with some boiler-plate added to allow loading into a page in a
 variety of ways.
 

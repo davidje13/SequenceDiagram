@@ -1,0 +1,6 @@
+{
+	"spec_dir": "ephemeral",
+	"spec_files": ["spec_bundle.js"],
+	"stopSpecOnExpectationFailure": false,
+	"random": true
+}

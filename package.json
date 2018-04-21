@@ -15,19 +15,26 @@
     "lib/sequence-diagram.js"
   ],
   "main": "lib/sequence-diagram",
-  "module": "source/standalone",
+  "module": "scripts/standalone",
   "scripts": {
-    "lint": "eslint scripts --ext .js --ignore-pattern '!.eslintrc.js' --ignore-pattern '*FontData.js'",
-    "minify": "rollup --config rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js && uglifyjs --compress --mangle --warn --output weblib/editor.min.js -- weblib/editor.js",
-    "start": "http-server"
+    "lint": "eslint . --config spec/support/eslintrc.js --ignore-path spec/support/eslintignore --ext .js --ext .mjs",
+    "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js",
+    "minify-web": "rollup --config web/rollup.config.js && uglifyjs --compress --mangle --warn --output weblib/editor.min.js -- weblib/editor.js",
+    "minify": "npm run minify-lib && npm run minify-web",
+    "start": "http-server",
+    "test": "npm run unit-test && npm run lint",
+    "unit-test": "rollup --config spec/support/rollup.config.js && node -r source-map-support/register node_modules/.bin/jasmine --config=spec/support/jasmine.json"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-plugin-jasmine": "^2.9.3",
     "http-server": "^0.10.0",
+    "jasmine": "^3.1.0",
     "requirejs": "2.3.5",
     "rollup": "^0.57.1",
     "rollup-plugin-hypothetical": "^2.1.0",
+    "rollup-plugin-multi-entry": "^2.0.2",
+    "source-map-support": "^0.5.4",
     "uglify-es": "^3.1.10"
   }
 }

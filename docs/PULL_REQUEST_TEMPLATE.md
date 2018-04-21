@@ -3,7 +3,7 @@ reference it with #issue-number.
 
 Checklist: (tick with [x])
 
-- [ ] Any new spec files are listed in `scripts/specs.js`.
+- [ ] Any new spec files are listed in `spec/support/browser_specs.mjs`.
 - [ ] Tests are passing in Google Chrome.
 - [ ] Linting is passing (`npm run lint`)
 - [ ] No dead code is left behind.

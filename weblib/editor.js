@@ -510,8 +510,6 @@
 	const DELAY_STAGECHANGE = 250;
 	const PNG_RESOLUTION = 4;
 
-	const dom = new DOMWrapper(document);
-
 	function addNewline(value) {
 		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
 			return value + '\n';
@@ -704,7 +702,7 @@
 		}
 
 		buildOptionsDownloads() {
-			this.downloadPNG = dom.el('a')
+			this.downloadPNG = this.dom.el('a')
 				.text('Download PNG')
 				.attrs({
 					'download': 'SequenceDiagram.png',
@@ -713,7 +711,7 @@
 				.on(['focus', 'mouseover', 'mousedown'], this._downloadPNGFocus)
 				.on('click', this._downloadPNGClick);
 
-			this.downloadSVG = dom.el('a')
+			this.downloadSVG = this.dom.el('a')
 				.text('SVG')
 				.attrs({
 					'download': 'SequenceDiagram.svg',
@@ -721,16 +719,16 @@
 				})
 				.on('click', this._downloadSVGClick);
 
-			return dom.el('div').setClass('options downloads')
+			return this.dom.el('div').setClass('options downloads')
 				.add(this.downloadPNG, this.downloadSVG);
 		}
 
 		buildLibrary(container) {
 			const diagrams = this.library.map((lib) => {
-				const holdInner = dom.el('div')
+				const holdInner = this.dom.el('div')
 					.attr('title', lib.title || lib.code);
 
-				const hold = dom.el('div')
+				const hold = this.dom.el('div')
 					.setClass('library-item')
 					.add(holdInner)
 					.on('click', this.addCodeBlock.bind(this, lib.code))
@@ -757,36 +755,36 @@
 		}
 
 		buildViewPane() {
-			this.viewPaneInner = dom.el('div').setClass('pane-view-inner')
+			this.viewPaneInner = this.dom.el('div').setClass('pane-view-inner')
 				.add(this.diagram.dom());
 
-			this.errorMsg = dom.el('div').setClass('msg-error');
+			this.errorMsg = this.dom.el('div').setClass('msg-error');
 
-			return dom.el('div').setClass('pane-view')
+			return this.dom.el('div').setClass('pane-view')
 				.add(
-					dom.el('div').setClass('pane-view-scroller')
+					this.dom.el('div').setClass('pane-view-scroller')
 						.add(this.viewPaneInner),
 					this.errorMsg
 				);
 		}
 
 		buildLeftPanes() {
-			const container = dom.el('div').setClass('pane-side');
+			const container = this.dom.el('div').setClass('pane-side');
 
-			this.code = dom.el('textarea')
+			this.code = this.dom.el('textarea')
 				.setClass('editor-simple')
 				.val(this.loadCode() || this.defaultCode)
 				.on('input', () => this.update(false));
 
-			const codePane = dom.el('div').setClass('pane-code')
+			const codePane = this.dom.el('div').setClass('pane-code')
 				.add(this.code)
 				.attach(container);
 
 			if(this.library.length > 0) {
-				const libPane = dom.el('div').setClass('pane-library')
-					.add(dom.el('div').setClass('pane-library-scroller')
+				const libPane = this.dom.el('div').setClass('pane-library')
+					.add(this.dom.el('div').setClass('pane-library-scroller')
 						.add(this.buildLibrary(
-							dom.el('div').setClass('pane-library-inner')
+							this.dom.el('div').setClass('pane-library-inner')
 						)))
 					.attach(container);
 
@@ -802,16 +800,17 @@
 		}
 
 		build(container) {
+			this.dom = new DOMWrapper(container.ownerDocument);
 			const lPane = this.buildLeftPanes();
 			const viewPane = this.buildViewPane();
 
-			this.container = dom.wrap(container)
-				.add(dom.el('div').setClass('pane-hold')
+			this.container = this.dom.wrap(container)
+				.add(this.dom.el('div').setClass('pane-hold')
 					.add(
 						lPane,
 						viewPane,
-						dom.el('div').setClass('options links')
-							.add(this.links.map((link) => dom.el('a')
+						this.dom.el('div').setClass('options links')
+							.add(this.links.map((link) => this.dom.el('a')
 								.attrs({'href': link.href, 'target': '_blank'})
 								.text(link.label))),
 						this.buildOptionsDownloads()
@@ -1134,7 +1133,9 @@
 		if(name && name.startsWith('cdn-')) {
 			const module = name.substr('cdn-'.length);
 			let src = metaTag.getAttribute('content');
-			if(src.endsWith('.js')) {
+			if(src.endsWith('.mjs')) {
+				src = src.substr(0, src.length - '.mjs'.length);
+			} else if(src.endsWith('.js')) {
 				src = src.substr(0, src.length - '.js'.length);
 			}
 			paths[module] = src;
