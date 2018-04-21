@@ -40,7 +40,4 @@
    <FileRef
       location = "container:README.md">
    </FileRef>
-   <FileRef
-      location = "container:test.htm">
-   </FileRef>
 </Workspace>

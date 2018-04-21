@@ -29,8 +29,6 @@ several pages:
   the main editor, using non-minified sources (good for development)
 * [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
   the library sample page (uses minified sources)
-* [http://localhost:8080/test.htm](http://localhost:8080/test.htm):
-  browser-based tests
 * [http://localhost:8080/readme-images.htm](http://localhost:8080/readme-images.htm):
   image generation page for the readme file
 
@@ -40,7 +38,7 @@ web modules unless a flag is set (FireFox 60 will support them fully).
 The editor and library page do not require web modules, so should have
 wider support.
 
-To run the non-browser tests and linter, run the command:
+To run the tests and linter, run the command:
 
 ```shell
 npm test;
@@ -58,8 +56,10 @@ The available commands are:
 
 * `npm start`: runs a webserver on
   [localhost:8080](http://localhost:8080)
-* `npm test`: runs the `unit-test` and `lint` commands
+* `npm test`: runs the `unit-test`, `web-test` and `lint` commands
 * `npm run unit-test`: runs non-browser-based unit tests in NodeJS
+* `npm run web-test`: runs browser-based unit tests via Karma
+  (currently only Chrome is used)
 * `npm run lint`: runs the linter against all source and test files
 * `npm run minify`: runs the `minify-lib` and `minify-web` commands
 * `npm run minify-lib`: minifies the library code in `/lib`
@@ -97,11 +97,10 @@ the root of `/web` as their entry-points.
 The testing library used here is [Jasmine](https://jasmine.github.io/).
 
 All test files follow the naming convention of `<filename>_spec.mjs`
-(commandline and browser) or `_webspec.mjs` (browser-only). Browser
-tests must be listed in `/spec/support/browser_specs.mjs`. Linting
+(commandline and browser) or `_webspec.mjs` (browser-only). Linting
 automatically applies to all files with a `.js` or `.mjs` extension.
 
-You can run the browser tests by opening `test.htm` in a browser.
+You can run just the browser tests by running `npm run web-test`.
 
 The current state of automated testing is:
 
@@ -117,11 +116,10 @@ The current state of automated testing is:
   from `spec/images`.
 * The editor has a minimal level of testing.
 
-If you suspect a failing test is not related to your changes, you can
-check against the current status of the tests on the master branch:
-[test.htm](https://davidje13.github.io/SequenceDiagram/test.htm). If
-these report a failure in a supported browser, please report it in the
-issue tracker.
+If you suspect a failing test is not related to your changes, try
+[stashing](https://git-scm.com/docs/git-stash) your changes and running
+the tests again. If it still reports a failure in a supported browser,
+please report it in the issue tracker.
 
 ### Browser Support
 
@@ -141,16 +139,9 @@ polyfils are included.
 ### Testing & Linting
 
 Ensure that all unit tests are passing and files pass linting. This can
-be done by opening `test.htm` in a browser and running `npm test`
-in a command window. At a minimum, you should ensure that tests are
-passing in Google Chrome, but testing in other supported browsers is
-even better.
-
-Due to the limited testing of SVG rendering, it is also a good idea to
-open [readme-images](http://localhost:8080/readme-images.htm) and scan
-through to ensure the new rendering of each example is OK. It will show
-the new rendering as an SVG on the left, as a PNG in the middle, and
-the old rendering (from `/screenshots`) on the right.
+be done by running `npm test` in a command window. At a minimum, you
+should ensure that tests are passing in Google Chrome, but testing in
+other supported browsers is even better.
 
 ### Minifying
 
