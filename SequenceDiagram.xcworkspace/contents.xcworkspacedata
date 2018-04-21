@@ -17,6 +17,9 @@
       location = "container:web">
    </FileRef>
    <FileRef
+      location = "container:bin">
+   </FileRef>
+   <FileRef
       location = "container:.gitignore">
    </FileRef>
    <FileRef

@@ -57,7 +57,7 @@
 	crossorigin="anonymous"
 ></script>
 
-<script src="lib/sequence-diagram.min.js"></script>
+<script src="lib/sequence-diagram-web.min.js"></script>
 
 <script>document.addEventListener('DOMContentLoaded', () => {
 
@@ -125,13 +125,13 @@ This library renders sequence diagrams from code. It is
 (LGPL-3.0), and including it in a website is as simple as adding the script:</p>
 
 <pre data-lang="text/html">
-&lt;script src="lib/sequence-diagram.min.js"&gt;&lt;/script&gt;
+&lt;script src="lib/sequence-diagram-web.min.js"&gt;&lt;/script&gt;
 </pre>
 
 <p>Or if you are using requirejs:</p>
 
 <pre data-lang="javascript">
-requirejs(['lib/sequence-diagram.min'], (SequenceDiagram) => {
+requirejs(['lib/sequence-diagram-web.min'], (SequenceDiagram) => {
   SequenceDiagram.convertAll();
 });
 </pre>

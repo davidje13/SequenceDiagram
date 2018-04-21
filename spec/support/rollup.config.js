@@ -7,6 +7,7 @@ export default [
 			'scripts/**/*_spec.mjs',
 			'spec/**/*_spec.mjs',
 			'web/**/*_spec.mjs',
+			'bin/**/*_spec.mjs',
 		],
 		output: {
 			file: 'ephemeral/spec_bundle.js',
