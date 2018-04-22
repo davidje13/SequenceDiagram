@@ -1,5 +1,3 @@
-/* eslint-disable sort-keys */ // Maybe later
-
 import {
 	VirtualDocument,
 	textSizerFactory,
@@ -13,8 +11,8 @@ describe('Sequence Renderer', () => {
 	beforeEach(() => {
 		renderer = new Renderer({
 			document: new VirtualDocument(),
-			themes: [new BasicThemeFactory()],
 			textSizerFactory,
+			themes: [new BasicThemeFactory()],
 		});
 	});
 
@@ -28,14 +26,14 @@ describe('Sequence Renderer', () => {
 
 	const GENERATED = {
 		connect: (agentIDs, label = []) => ({
-			type: 'connect',
 			agentIDs,
 			label,
 			options: {
-				line: 'solid',
 				left: 0,
+				line: 'solid',
 				right: 1,
 			},
+			type: 'connect',
 		}),
 	};
 
@@ -49,30 +47,30 @@ describe('Sequence Renderer', () => {
 	describe('.render', () => {
 		it('populates the SVG with content', () => {
 			renderer.render({
-				meta: {title: format('Title')},
 				agents: [
 					{
-						id: '[',
-						formattedLabel: null,
 						anchorRight: true,
-						options: [],
-					}, {
-						id: 'Col 1',
-						formattedLabel: format('Col 1!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'Col 2',
-						formattedLabel: format('Col 2!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: ']',
 						formattedLabel: null,
+						id: '[',
+						options: [],
+					}, {
 						anchorRight: false,
+						formattedLabel: format('Col 1!'),
+						id: 'Col 1',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('Col 2!'),
+						id: 'Col 2',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: null,
+						id: ']',
 						options: [],
 					},
 				],
+				meta: {title: format('Title')},
 				stages: [],
 			});
 			const element = renderer.dom();
@@ -83,20 +81,20 @@ describe('Sequence Renderer', () => {
 
 		it('adds the code as metadata', () => {
 			renderer.render({
-				meta: {title: [], code: 'hello'},
 				agents: [
 					{
-						id: '[',
-						formattedLabel: null,
 						anchorRight: true,
+						formattedLabel: null,
+						id: '[',
 						options: [],
 					}, {
-						id: ']',
-						formattedLabel: null,
 						anchorRight: false,
+						formattedLabel: null,
+						id: ']',
 						options: [],
 					},
 				],
+				meta: {code: 'hello', title: []},
 				stages: [],
 			});
 			const element = renderer.dom();
@@ -111,34 +109,34 @@ describe('Sequence Renderer', () => {
 			*/
 
 			renderer.render({
-				meta: {title: []},
 				agents: [
 					{
-						id: '[',
-						formattedLabel: null,
 						anchorRight: true,
-						options: [],
-					}, {
-						id: 'A',
-						formattedLabel: format('A!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'B',
-						formattedLabel: format('B!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: ']',
 						formattedLabel: null,
+						id: '[',
+						options: [],
+					}, {
 						anchorRight: false,
+						formattedLabel: format('A!'),
+						id: 'A',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('B!'),
+						id: 'B',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: null,
+						id: ']',
 						options: [],
 					},
 				],
+				meta: {title: []},
 				stages: [
-					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},
+					{agentIDs: ['A', 'B'], mode: 'box', type: 'agent begin'},
 					GENERATED.connect(['A', 'B']),
-					{type: 'agent end', agentIDs: ['A', 'B'], mode: 'none'},
+					{agentIDs: ['A', 'B'], mode: 'none', type: 'agent end'},
 				],
 			});
 
@@ -158,49 +156,49 @@ describe('Sequence Renderer', () => {
 			*/
 
 			renderer.render({
-				meta: {title: []},
 				agents: [
 					{
-						id: '[',
-						formattedLabel: null,
 						anchorRight: true,
-						options: [],
-					}, {
-						id: 'A',
-						formattedLabel: format('A!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'B',
-						formattedLabel: format('B!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'C',
-						formattedLabel: format('C!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: ']',
 						formattedLabel: null,
+						id: '[',
+						options: [],
+					}, {
 						anchorRight: false,
+						formattedLabel: format('A!'),
+						id: 'A',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('B!'),
+						id: 'B',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('C!'),
+						id: 'C',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: null,
+						id: ']',
 						options: [],
 					},
 				],
+				meta: {title: []},
 				stages: [
 					{
-						type: 'agent begin',
 						agentIDs: ['A', 'B', 'C'],
 						mode: 'box',
+						type: 'agent begin',
 					},
 					GENERATED.connect(['[', 'A']),
 					GENERATED.connect(['A', 'B']),
 					GENERATED.connect(['B', 'C']),
 					GENERATED.connect(['C', ']']),
 					{
-						type: 'agent end',
 						agentIDs: ['A', 'B', 'C'],
 						mode: 'none',
+						type: 'agent end',
 					},
 				],
 			});
@@ -228,50 +226,50 @@ describe('Sequence Renderer', () => {
 			*/
 
 			renderer.render({
-				meta: {title: []},
 				agents: [
 					{
-						id: '[',
-						formattedLabel: null,
 						anchorRight: true,
-						options: [],
-					}, {
-						id: 'A',
-						formattedLabel: format('A!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'B',
-						formattedLabel: format('B!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'C',
-						formattedLabel: format('C!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: 'D',
-						formattedLabel: format('D!'),
-						anchorRight: false,
-						options: [],
-					}, {
-						id: ']',
 						formattedLabel: null,
+						id: '[',
+						options: [],
+					}, {
 						anchorRight: false,
+						formattedLabel: format('A!'),
+						id: 'A',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('B!'),
+						id: 'B',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('C!'),
+						id: 'C',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: format('D!'),
+						id: 'D',
+						options: [],
+					}, {
+						anchorRight: false,
+						formattedLabel: null,
+						id: ']',
 						options: [],
 					},
 				],
+				meta: {title: []},
 				stages: [
-					{type: 'agent begin', agentIDs: ['A', 'B'], mode: 'box'},
+					{agentIDs: ['A', 'B'], mode: 'box', type: 'agent begin'},
 					GENERATED.connect(['A', 'B'], format('short')),
-					{type: 'agent end', agentIDs: ['B'], mode: 'cross'},
-					{type: 'agent begin', agentIDs: ['C'], mode: 'box'},
+					{agentIDs: ['B'], mode: 'cross', type: 'agent end'},
+					{agentIDs: ['C'], mode: 'box', type: 'agent begin'},
 					GENERATED.connect(['A', 'C'], format('long description')),
-					{type: 'agent end', agentIDs: ['C'], mode: 'cross'},
-					{type: 'agent begin', agentIDs: ['D'], mode: 'box'},
+					{agentIDs: ['C'], mode: 'cross', type: 'agent end'},
+					{agentIDs: ['D'], mode: 'box', type: 'agent begin'},
 					GENERATED.connect(['A', 'D'], format('short again')),
-					{type: 'agent end', agentIDs: ['A', 'D'], mode: 'cross'},
+					{agentIDs: ['A', 'D'], mode: 'cross', type: 'agent end'},
 				],
 			});
 

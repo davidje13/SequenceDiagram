@@ -1,6 +1,3 @@
-/* eslint-disable complexity */ // Temporary ignore while switching linter
-/* eslint-disable no-param-reassign */ // Also temporary
-
 import BaseComponent, {register} from './BaseComponent.mjs';
 
 const OUTLINE_ATTRS = {
@@ -26,6 +23,35 @@ function findExtremes(agentInfos, agentIDs) {
 	};
 }
 
+function findEdges(fullW, {
+	x0 = null,
+	x1 = null,
+	xMid = null,
+}) {
+	let xL = x0;
+	let xR = x1;
+	if(xL === null && xMid !== null) {
+		xL = xMid - fullW / 2;
+	}
+	if(xR === null && xL !== null) {
+		xR = xL + fullW;
+	} else if(xL === null) {
+		xL = xR - fullW;
+	}
+	return {xL, xR};
+}
+
+function textAnchorX(anchor, {xL, xR}, padding) {
+	switch(anchor) {
+	case 'middle':
+		return (xL + padding.left + xR - padding.right) / 2;
+	case 'end':
+		return xR - padding.right;
+	default:
+		return xL + padding.left;
+	}
+}
+
 class NoteComponent extends BaseComponent {
 	prepareMeasurements({mode, label}, env) {
 		const config = env.theme.getNote(mode);
@@ -37,67 +63,36 @@ class NoteComponent extends BaseComponent {
 	}
 
 	renderNote({
-		xMid = null,
-		x0 = null,
-		x1 = null,
-		mode,
 		label,
+		mode,
+		position,
 	}, env) {
 		const config = env.theme.getNote(mode);
+		const {padding} = config;
 
-		const y = env.topY + config.margin.top + config.padding.top;
+		const y = env.topY + config.margin.top + padding.top;
 		const labelNode = env.svg.formattedText(config.labelAttrs, label);
 		const size = env.textSizer.measure(labelNode);
 
-		const fullW = (
-			size.width +
-			config.padding.left +
-			config.padding.right
-		);
-		const fullH = (
-			config.padding.top +
-			size.height +
-			config.padding.bottom
-		);
-		if(x0 === null && xMid !== null) {
-			x0 = xMid - fullW / 2;
-		}
-		if(x1 === null && x0 !== null) {
-			x1 = x0 + fullW;
-		} else if(x0 === null) {
-			x0 = x1 - fullW;
-		}
-		switch(config.labelAttrs['text-anchor']) {
-		case 'middle':
-			labelNode.set({
-				x: (
-					x0 + config.padding.left +
-					x1 - config.padding.right
-				) / 2,
-				y,
-			});
-			break;
-		case 'end':
-			labelNode.set({x: x1 - config.padding.right, y});
-			break;
-		default:
-			labelNode.set({x: x0 + config.padding.left, y});
-			break;
-		}
+		const fullW = (size.width + padding.left + padding.right);
+		const fullH = (size.height + padding.top + padding.bottom);
+		const edges = findEdges(fullW, position);
+
+		labelNode.set({
+			x: textAnchorX(config.labelAttrs['text-anchor'], edges, padding),
+			y,
+		});
+
+		const boundingBox = {
+			height: fullH,
+			width: edges.xR - edges.xL,
+			x: edges.xL,
+			y: env.topY + config.margin.top,
+		};
 
 		env.makeRegion().add(
-			config.boxRenderer({
-				height: fullH,
-				width: x1 - x0,
-				x: x0,
-				y: env.topY + config.margin.top,
-			}),
-			env.svg.box(OUTLINE_ATTRS, {
-				height: fullH,
-				width: x1 - x0,
-				x: x0,
-				y: env.topY + config.margin.top,
-			}),
+			config.boxRenderer(boundingBox),
+			env.svg.box(OUTLINE_ATTRS, boundingBox),
 			labelNode
 		);
 
@@ -150,14 +145,16 @@ export class NoteOver extends NoteComponent {
 			return this.renderNote({
 				label,
 				mode,
-				xMid,
+				position: {xMid},
 			}, env);
 		} else {
 			return this.renderNote({
 				label,
 				mode,
-				x0: infoL.x - infoL.currentMaxRad - config.overlap.left,
-				x1: infoR.x + infoR.currentMaxRad + config.overlap.right,
+				position: {
+					x0: infoL.x - infoL.currentMaxRad - config.overlap.left,
+					x1: infoR.x + infoR.currentMaxRad + config.overlap.right,
+				},
 			}, env);
 		}
 	}
@@ -204,7 +201,7 @@ export class NoteSide extends NoteComponent {
 			return this.renderNote({
 				label,
 				mode,
-				x0,
+				position: {x0},
 			}, env);
 		} else {
 			const info = env.agentInfos.get(left);
@@ -212,7 +209,7 @@ export class NoteSide extends NoteComponent {
 			return this.renderNote({
 				label,
 				mode,
-				x1,
+				position: {x1},
 			}, env);
 		}
 	}
@@ -251,7 +248,7 @@ export class NoteBetween extends NoteComponent {
 		return this.renderNote({
 			label,
 			mode,
-			xMid,
+			position: {xMid},
 		}, env);
 	}
 }

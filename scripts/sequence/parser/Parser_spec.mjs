@@ -140,11 +140,31 @@ describe('Sequence Parser', () => {
 		});
 
 		it('propagates aliases', () => {
+			const parsed = parser.parse('define Foo Bar as A');
+
+			expect(parsed.stages).toEqual([
+				{type: 'agent define', ln: jasmine.anything(), agents: [
+					{name: 'Foo Bar', alias: 'A', flags: []},
+				]},
+			]);
+		});
+
+		it('propagates long aliases', () => {
 			const parsed = parser.parse('define Foo Bar as A B');
 
 			expect(parsed.stages).toEqual([
 				{type: 'agent define', ln: jasmine.anything(), agents: [
 					{name: 'Foo Bar', alias: 'A B', flags: []},
+				]},
+			]);
+		});
+
+		it('ignores missing aliases', () => {
+			const parsed = parser.parse('define Foo Bar as');
+
+			expect(parsed.stages).toEqual([
+				{type: 'agent define', ln: jasmine.anything(), agents: [
+					{name: 'Foo Bar', alias: '', flags: []},
 				]},
 			]);
 		});
@@ -253,6 +273,12 @@ describe('Sequence Parser', () => {
 		it('rejects missing agent names', () => {
 			expect(() => parser.parse('A -> +')).toThrow(new Error(
 				'Missing agent name at line 1, character 6'
+			));
+		});
+
+		it('rejects missing agent names with aliases', () => {
+			expect(() => parser.parse('define as A')).toThrow(new Error(
+				'Missing agent name at line 1, character 7'
 			));
 		});
 

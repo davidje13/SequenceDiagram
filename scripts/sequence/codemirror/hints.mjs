@@ -1,5 +1,3 @@
-/* eslint-disable complexity */ // Temporary ignore while switching linter
-
 import {last, mergeSets} from '../../core/ArrayUtilities.mjs';
 
 const TRIMMER = /^([ \t]*)(.*)$/;
@@ -12,7 +10,7 @@ const ONGOING_QUOTE = /^"(\\.|[^"])*$/;
 const REQUIRED_QUOTED = /[\r\n:,"<>\-~]/;
 const QUOTE_ESCAPE = /["\\]/g;
 
-function suggestionsEqual(a, b) {
+function completionsEqual(a, b) {
 	return (
 		(a.v === b.v) &&
 		(a.prefix === b.prefix) &&
@@ -89,12 +87,12 @@ function getGlobals({global, prefix = '', suffix = ''}, globals) {
 	return identified.map((item) => ({prefix, q: true, suffix, v: item}));
 }
 
-function populateGlobals(suggestions, globals = {}) {
-	for(let i = 0; i < suggestions.length;) {
-		if(suggestions[i].global) {
-			const identified = getGlobals(suggestions[i], globals);
-			mergeSets(suggestions, identified, suggestionsEqual);
-			suggestions.splice(i, 1);
+function populateGlobals(completions, globals = {}) {
+	for(let i = 0; i < completions.length;) {
+		if(completions[i].global) {
+			const identified = getGlobals(completions[i], globals);
+			mergeSets(completions, identified, completionsEqual);
+			completions.splice(i, 1);
 		} else {
 			++ i;
 		}
@@ -176,6 +174,18 @@ function partialMatch(v, p) {
 	return p.valid && v.startsWith(p.partial);
 }
 
+function getCompletions(cur, token, globals) {
+	let completions = null;
+	if(cur.ch > 0 && token.state.line.length > 0) {
+		completions = token.state.completions.slice();
+	} else {
+		completions = token.state.beginCompletions
+			.concat(token.state.knownAgent);
+	}
+	populateGlobals(completions, globals);
+	return completions;
+}
+
 export function getHints(cm, options) {
 	const cur = cm.getCursor();
 	const tokens = getTokensUpTo(cm, cur);
@@ -183,16 +193,7 @@ export function getHints(cm, options) {
 	const pVar = getVariablePartial(tokens, cur);
 	const pKey = getKeywordPartial(token, cur);
 
-	const continuation = (cur.ch > 0 && token.state.line.length > 0);
-	let comp = (continuation ?
-		token.state.completions :
-		token.state.beginCompletions
-	);
-	if(!continuation) {
-		comp = comp.concat(token.state.knownAgent);
-	}
-
-	populateGlobals(comp, cm.options.globals);
+	const completions = getCompletions(cur, token, cm.options.globals);
 
 	const ranges = {
 		fromKey: makeRangeFrom(cm, cur.line, pKey.from),
@@ -200,7 +201,7 @@ export function getHints(cm, options) {
 		to: makeRangeTo(cm, cur.line, token.end),
 	};
 	let selfValid = null;
-	const list = (comp
+	const list = (completions
 		.filter((o) => (
 			(o.q || !pVar.quote) &&
 			partialMatch(o.v, o.q ? pVar : pKey)

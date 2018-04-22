@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-
 import DOMWrapper from '../../scripts/core/DOMWrapper.mjs';
 
 const DELAY_AGENTCHANGE = 500;

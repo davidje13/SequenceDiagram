@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-
 import './components/AgentCap.mjs';
 import './components/AgentHighlight.mjs';
 import './components/Block.mjs';

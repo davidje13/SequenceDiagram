@@ -1,12 +1,18 @@
-/* eslint-disable max-lines */
-/* eslint-disable sort-keys */ // Maybe later
-/* eslint-disable complexity */ // Temporary ignore while switching linter
+/*
+ * The order of commands inside "then" blocks directly influences the
+ * order they are displayed to the user in autocomplete menus.
+ * This relies on the fact that common JS engines maintain insertion
+ * order in objects, though this is not guaranteed. It could be switched
+ * to use Map objects instead for strict compliance, at the cost of
+ * extra syntax.
+ */
+/* eslint-disable sort-keys */
 
 import {flatMap, last, mergeSets} from '../../core/ArrayUtilities.mjs';
 
-const CM_ERROR = {type: 'error line-error', suggest: false, then: {'': 0}};
+const CM_ERROR = {type: 'error line-error', suggest: [], then: {'': 0}};
 
-function textTo(exit, suggest = false) {
+function textTo(exit, suggest = []) {
 	return {
 		type: 'string',
 		suggest,
@@ -29,19 +35,10 @@ const AGENT_INFO_TYPES = [
 ];
 
 const makeCommands = ((() => {
-	/*
-	 * The order of commands inside "then" blocks directly influences the
-	 * order they are displayed to the user in autocomplete menus.
-	 * This relies on the fact that common JS engines maintain insertion
-	 * order in objects, though this is not guaranteed. It could be switched
-	 * to use Map objects instead for strict compliance, at the cost of
-	 * extra syntax.
-	 */
-
 	function agentListTo(exit, next = 1) {
 		return {
 			type: 'variable',
-			suggest: {known: 'Agent'},
+			suggest: [{known: 'Agent'}],
 			then: Object.assign({}, exit, {
 				'': 0,
 				',': {type: 'operator', then: {'': next}},
@@ -49,8 +46,8 @@ const makeCommands = ((() => {
 		};
 	}
 
-	const end = {type: '', suggest: '\n', then: {}};
-	const hiddenEnd = {type: '', suggest: false, then: {}};
+	const end = {type: '', suggest: ['\n'], then: {}};
+	const hiddenEnd = {type: '', suggest: [], then: {}};
 	const textToEnd = textTo({'\n': end});
 	const colonTextToEnd = {
 		type: 'operator',
@@ -59,7 +56,7 @@ const makeCommands = ((() => {
 	const aliasListToEnd = agentListTo({
 		'\n': end,
 		'as': {type: 'keyword', then: {
-			'': {type: 'variable', suggest: {known: 'Agent'}, then: {
+			'': {type: 'variable', suggest: [{known: 'Agent'}], then: {
 				'': 0,
 				',': {type: 'operator', then: {'': 3}},
 				'\n': end,
@@ -70,7 +67,7 @@ const makeCommands = ((() => {
 
 	const agentToOptText = {
 		type: 'variable',
-		suggest: {known: 'Agent'},
+		suggest: [{known: 'Agent'}],
 		then: {
 			'': 0,
 			':': {type: 'operator', then: {
@@ -86,7 +83,7 @@ const makeCommands = ((() => {
 				'as': {type: 'keyword', then: {
 					'': {
 						type: 'variable',
-						suggest: {known: 'Agent'},
+						suggest: [{known: 'Agent'}],
 						then: {
 							'': 0,
 							'\n': end,
@@ -217,7 +214,7 @@ const makeCommands = ((() => {
 				'...': {type: 'operator', then: {
 					'': {
 						type: 'variable',
-						suggest: {known: 'DelayedAgent'},
+						suggest: [{known: 'DelayedAgent'}],
 						then: {
 							'': 0,
 							':': CM_ERROR,
@@ -239,14 +236,14 @@ const makeCommands = ((() => {
 
 		const hiddenLabelIndicator = {
 			type: 'operator',
-			suggest: false,
+			suggest: [],
 			override: 'Label',
 			then: {},
 		};
 
 		const firstAgent = {
 			type: 'variable',
-			suggest: {known: 'Agent'},
+			suggest: [{known: 'Agent'}],
 			then: Object.assign({
 				'': 0,
 			}, connectors, {
@@ -256,7 +253,7 @@ const makeCommands = ((() => {
 
 		const firstAgentDelayed = {
 			type: 'variable',
-			suggest: {known: 'DelayedAgent'},
+			suggest: [{known: 'DelayedAgent'}],
 			then: Object.assign({
 				'': 0,
 				':': hiddenLabelIndicator,
@@ -298,10 +295,7 @@ const makeCommands = ((() => {
 		'theme': {type: 'keyword', then: {
 			'': {
 				type: 'string',
-				suggest: {
-					global: 'themes',
-					suffix: '\n',
-				},
+				suggest: [{global: 'themes', suffix: '\n'}],
 				then: {
 					'': 0,
 					'\n': end,
@@ -344,7 +338,7 @@ const makeCommands = ((() => {
 		}},
 		'if': commonGroup,
 		'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
-			'if': {type: 'keyword', suggest: 'if: ', then: {
+			'if': {type: 'keyword', suggest: ['if: '], then: {
 				'': textToEnd,
 				':': {type: 'operator', then: {
 					'': textToEnd,
@@ -364,11 +358,11 @@ const makeCommands = ((() => {
 				'': agentListTo({':': CM_ERROR}, agentListToText),
 			}},
 		}},
-		'state': {type: 'keyword', suggest: 'state over ', then: {
+		'state': {type: 'keyword', suggest: ['state over '], then: {
 			'over': {type: 'keyword', then: {
 				'': {
 					type: 'variable',
-					suggest: {known: 'Agent'},
+					suggest: [{known: 'Agent'}],
 					then: {
 						'': 0,
 						',': CM_ERROR,
@@ -392,7 +386,7 @@ const makeCommands = ((() => {
 		'simultaneously': {type: 'keyword', then: {
 			':': {type: 'operator', then: {}},
 			'with': {type: 'keyword', then: {
-				'': {type: 'variable', suggest: {known: 'Label'}, then: {
+				'': {type: 'variable', suggest: [{known: 'Label'}], then: {
 					'': 0,
 					':': {type: 'operator', then: {}},
 				}},
@@ -406,33 +400,32 @@ const makeCommands = ((() => {
 	});
 })());
 
+/* eslint-enable sort-keys */
+
 function cmCappedToken(token, current) {
 	if(Object.keys(current.then).length > 0) {
-		return {v: token, suffix: ' ', q: false};
+		return {q: false, suffix: ' ', v: token};
 	} else {
-		return {v: token, suffix: '\n', q: false};
+		return {q: false, suffix: '\n', v: token};
 	}
 }
 
 function cmGetSuggestions(state, token, current) {
-	let suggestions = current.suggest;
-	if(!Array.isArray(suggestions)) {
-		suggestions = [suggestions];
-	}
+	const suggestions = current.suggest || [''];
 
 	return flatMap(suggestions, (suggest) => {
-		if(suggest === false) {
-			return [];
-		} else if(typeof suggest === 'object') {
+		if(typeof suggest === 'object') {
 			if(suggest.known) {
 				return state['known' + suggest.known] || [];
 			} else {
 				return [suggest];
 			}
-		} else if(typeof suggest === 'string' && suggest) {
-			return [{v: suggest, q: (token === '')}];
-		} else {
+		} else if(suggest === '') {
 			return [cmCappedToken(token, current)];
+		} else if(typeof suggest === 'string') {
+			return [{q: (token === ''), v: suggest}];
+		} else {
+			throw new Error('Invalid suggestion type ' + suggest);
 		}
 	});
 }
@@ -454,30 +447,40 @@ function cmMakeCompletions(state, path) {
 	return comp;
 }
 
-function updateSuggestion(state, locals, token, {suggest, override}) {
-	let known = null;
-	if(typeof suggest === 'object' && suggest.known) {
-		known = suggest.known;
-	}
-	if(locals.type && known !== locals.type) {
-		if(override) {
-			locals.type = override;
+function getSuggestionCategory(suggestions) {
+	for(const suggestion of suggestions) {
+		if(typeof suggestion === 'object' && suggestion.known) {
+			return suggestion.known;
 		}
-		mergeSets(
-			state['known' + locals.type],
-			[{v: locals.value, suffix: ' ', q: true}],
-			suggestionsEqual
-		);
-		locals.type = '';
+	}
+	return null;
+}
+
+function appendToken(base, token) {
+	return base + (base ? token.s : '') + token.v;
+}
+
+function storeKnownEntity(state, type, value) {
+	mergeSets(
+		state['known' + type],
+		[{q: true, suffix: ' ', v: value}],
+		suggestionsEqual
+	);
+}
+
+function updateKnownEntities(state, locals, token, current) {
+	const known = getSuggestionCategory(current.suggest || ['']);
+
+	if(locals.type && known !== locals.type) {
+		storeKnownEntity(state, current.override || locals.type, locals.value);
 		locals.value = '';
 	}
+
 	if(known) {
-		locals.type = known;
-		if(locals.value) {
-			locals.value += token.s;
-		}
-		locals.value += token.v;
+		locals.value = appendToken(locals.value, token);
 	}
+
+	locals.type = known;
 }
 
 function cmCheckToken(state, eol, commands) {
@@ -506,10 +509,10 @@ function cmCheckToken(state, eol, commands) {
 			path.push(found || CM_ERROR);
 		}
 		current = last(path);
-		updateSuggestion(state, suggestions, token, current);
+		updateKnownEntities(state, suggestions, token, current);
 	});
 	if(eol) {
-		updateSuggestion(state, suggestions, null, {});
+		updateKnownEntities(state, suggestions, null, {});
 	}
 	state.nextCompletions = cmMakeCompletions(state, path);
 	state.valid = (
@@ -522,10 +525,12 @@ function cmCheckToken(state, eol, commands) {
 function getInitialToken(block) {
 	const baseToken = (block.baseToken || {});
 	return {
-		value: baseToken.v || '',
 		quoted: baseToken.q || false,
+		value: baseToken.v || '',
 	};
 }
+
+const NO_TOKEN = -1;
 
 export default class Mode {
 	constructor(tokenDefinitions, arrows) {
@@ -536,20 +541,20 @@ export default class Mode {
 
 	startState() {
 		return {
-			currentType: -1,
+			beginCompletions: cmMakeCompletions({}, [this.commands]),
+			completions: [],
 			current: '',
-			currentSpace: '',
 			currentQuoted: false,
+			currentSpace: '',
+			currentType: NO_TOKEN,
+			indent: 0,
+			isVar: true,
 			knownAgent: [],
 			knownDelayedAgent: [],
 			knownLabel: [],
-			beginCompletions: cmMakeCompletions({}, [this.commands]),
-			completions: [],
+			line: [],
 			nextCompletions: [],
 			valid: true,
-			isVar: true,
-			line: [],
-			indent: 0,
 		};
 	}
 
@@ -588,14 +593,14 @@ export default class Mode {
 
 	_addToken(state) {
 		state.line.push({
-			v: state.current,
-			s: state.currentSpace,
 			q: state.currentQuoted,
+			s: state.currentSpace,
+			v: state.current,
 		});
 	}
 
 	_tokenEndFound(stream, state, block, match) {
-		state.currentType = -1;
+		state.currentType = NO_TOKEN;
 		if(block.includeEnd) {
 			state.current += match[0];
 		}
@@ -636,21 +641,33 @@ export default class Mode {
 		}
 	}
 
+	_tokenContinueOrBegin(stream, state) {
+		if(state.currentType === NO_TOKEN) {
+			if(stream.sol()) {
+				state.line.length = 0;
+			}
+			if(!this._tokenBegin(stream, state)) {
+				return '';
+			}
+		}
+		return this._tokenEnd(stream, state);
+	}
+
+	_isLineTerminated(state) {
+		return state.currentType !== NO_TOKEN || state.valid;
+	}
+
 	token(stream, state) {
 		state.completions = state.nextCompletions;
 		state.isVar = true;
-		if(stream.sol() && state.currentType === -1) {
-			state.line.length = 0;
-		}
-		let type = '';
-		if(state.currentType !== -1 || this._tokenBegin(stream, state)) {
-			type = this._tokenEnd(stream, state);
-		}
-		if(state.currentType === -1 && stream.eol() && !state.valid) {
+
+		const type = this._tokenContinueOrBegin(stream, state);
+
+		if(stream.eol() && !this._isLineTerminated(state)) {
 			return 'line-error ' + type;
-		} else {
-			return type;
 		}
+
+		return type;
 	}
 
 	indent(state) {

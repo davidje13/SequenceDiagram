@@ -1,6 +1,4 @@
-/* eslint-disable max-lines */
 /* eslint-disable max-statements */
-/* eslint-disable sort-keys */ // Maybe later
 
 import SequenceDiagram from '../SequenceDiagram.mjs';
 
@@ -10,17 +8,17 @@ describe('Code Mirror Mode', () => {
 	SequenceDiagram.registerCodeMirrorMode(CM);
 
 	const cm = new CM(null, {
-		value: '',
-		mode: 'sequence',
 		globals: {
 			themes: ['Theme', 'Other Theme'],
 		},
+		mode: 'sequence',
+		value: '',
 	});
 
 	function getTokens(line) {
 		return cm.getLineTokens(line).map((token) => ({
-			v: token.string,
 			type: token.type,
+			v: token.string,
 		}));
 	}
 
@@ -29,7 +27,7 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('# foo');
 
 			expect(getTokens(0)).toEqual([
-				{v: '# foo', type: 'comment'},
+				{type: 'comment', v: '# foo'},
 			]);
 		});
 
@@ -37,8 +35,8 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('terminators cross');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'terminators', type: 'keyword'},
-				{v: ' cross', type: 'keyword'},
+				{type: 'keyword', v: 'terminators'},
+				{type: 'keyword', v: ' cross'},
 			]);
 		});
 
@@ -46,9 +44,9 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('terminators cross # foo');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'terminators', type: 'keyword'},
-				{v: ' cross', type: 'keyword'},
-				{v: ' # foo', type: 'comment'},
+				{type: 'keyword', v: 'terminators'},
+				{type: 'keyword', v: ' cross'},
+				{type: 'comment', v: ' # foo'},
 			]);
 		});
 
@@ -68,10 +66,10 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('title my free text');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'title', type: 'keyword'},
-				{v: ' my', type: 'string'},
-				{v: ' free', type: 'string'},
-				{v: ' text', type: 'string'},
+				{type: 'keyword', v: 'title'},
+				{type: 'string', v: ' my'},
+				{type: 'string', v: ' free'},
+				{type: 'string', v: ' text'},
 			]);
 		});
 
@@ -79,8 +77,8 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('title "my free text"');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'title', type: 'keyword'},
-				{v: ' "my free text"', type: 'string'},
+				{type: 'keyword', v: 'title'},
+				{type: 'string', v: ' "my free text"'},
 			]);
 		});
 
@@ -88,9 +86,9 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A -> B');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'A', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' B', type: 'variable'},
+				{type: 'variable', v: 'A'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' B'},
 			]);
 		});
 
@@ -98,10 +96,10 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A "->" -> B');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'A', type: 'variable'},
-				{v: ' "->"', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' B', type: 'variable'},
+				{type: 'variable', v: 'A'},
+				{type: 'variable', v: ' "->"'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' B'},
 			]);
 		});
 
@@ -109,14 +107,14 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('define A as B, C as D');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'define', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ' as', type: 'keyword'},
-				{v: ' B', type: 'variable'},
-				{v: ',', type: 'operator'},
-				{v: ' C', type: 'variable'},
-				{v: ' as', type: 'keyword'},
-				{v: ' D', type: 'variable'},
+				{type: 'keyword', v: 'define'},
+				{type: 'variable', v: ' A'},
+				{type: 'keyword', v: ' as'},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ','},
+				{type: 'variable', v: ' C'},
+				{type: 'keyword', v: ' as'},
+				{type: 'variable', v: ' D'},
 			]);
 		});
 
@@ -124,11 +122,11 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('Foo Bar -> Zig Zag');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'Foo', type: 'variable'},
-				{v: ' Bar', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' Zig', type: 'variable'},
-				{v: ' Zag', type: 'variable'},
+				{type: 'variable', v: 'Foo'},
+				{type: 'variable', v: ' Bar'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' Zig'},
+				{type: 'variable', v: ' Zag'},
 			]);
 		});
 
@@ -136,9 +134,9 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('abc->xyz');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'abc', type: 'variable'},
-				{v: '->', type: 'keyword'},
-				{v: 'xyz', type: 'variable'},
+				{type: 'variable', v: 'abc'},
+				{type: 'keyword', v: '->'},
+				{type: 'variable', v: 'xyz'},
 			]);
 		});
 
@@ -146,9 +144,9 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('abc-xxyz');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'abc', type: 'variable'},
-				{v: '-x', type: 'keyword'},
-				{v: 'xyz', type: 'variable'},
+				{type: 'variable', v: 'abc'},
+				{type: 'keyword', v: '-x'},
+				{type: 'variable', v: 'xyz'},
 			]);
 		});
 
@@ -156,10 +154,10 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('Foo -> *Bar');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'Foo', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' *', type: 'operator'},
-				{v: 'Bar', type: 'variable'},
+				{type: 'variable', v: 'Foo'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'operator', v: ' *'},
+				{type: 'variable', v: 'Bar'},
 			]);
 		});
 
@@ -167,10 +165,10 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('*Foo -> Bar');
 
 			expect(getTokens(0)).toEqual([
-				{v: '*', type: 'operator'},
-				{v: 'Foo', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' Bar', type: 'variable'},
+				{type: 'operator', v: '*'},
+				{type: 'variable', v: 'Foo'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' Bar'},
 			]);
 		});
 
@@ -198,11 +196,11 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('Foo -> +*Bar');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'Foo', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' +', type: 'operator'},
-				{v: '*', type: 'operator'},
-				{v: 'Bar', type: 'variable'},
+				{type: 'variable', v: 'Foo'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'operator', v: ' +'},
+				{type: 'operator', v: '*'},
+				{type: 'variable', v: 'Bar'},
 			]);
 		});
 
@@ -210,11 +208,11 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('Foo -> Bar: hello');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'Foo', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' Bar', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hello', type: 'string'},
+				{type: 'variable', v: 'Foo'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' Bar'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hello'},
 			]);
 		});
 
@@ -236,19 +234,19 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A -> ...x\n...x -> B: hello');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'A', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' ...', type: 'operator'},
-				{v: 'x', type: 'variable'},
+				{type: 'variable', v: 'A'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'operator', v: ' ...'},
+				{type: 'variable', v: 'x'},
 			]);
 
 			expect(getTokens(1)).toEqual([
-				{v: '...', type: 'operator'},
-				{v: 'x', type: 'variable'},
-				{v: ' ->', type: 'keyword'},
-				{v: ' B', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hello', type: 'string'},
+				{type: 'operator', v: '...'},
+				{type: 'variable', v: 'x'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hello'},
 			]);
 		});
 
@@ -270,39 +268,39 @@ describe('Code Mirror Mode', () => {
 			);
 
 			expect(getTokens(0)).toEqual([
-				{v: 'if', type: 'keyword'},
+				{type: 'keyword', v: 'if'},
 			]);
 
 			expect(getTokens(1)).toEqual([
-				{v: 'if', type: 'keyword'},
-				{v: ' something', type: 'string'},
+				{type: 'keyword', v: 'if'},
+				{type: 'string', v: ' something'},
 			]);
 
 			expect(getTokens(2)).toEqual([
-				{v: 'else', type: 'keyword'},
-				{v: ' if', type: 'keyword'},
-				{v: ' another', type: 'string'},
-				{v: ' thing', type: 'string'},
+				{type: 'keyword', v: 'else'},
+				{type: 'keyword', v: ' if'},
+				{type: 'string', v: ' another'},
+				{type: 'string', v: ' thing'},
 			]);
 
 			expect(getTokens(3)).toEqual([
-				{v: 'else', type: 'keyword'},
+				{type: 'keyword', v: 'else'},
 			]);
 
 			expect(getTokens(4)).toEqual([
-				{v: 'end', type: 'keyword'},
+				{type: 'keyword', v: 'end'},
 			]);
 
 			expect(getTokens(5)).toEqual([
-				{v: 'repeat', type: 'keyword'},
-				{v: ' a', type: 'string'},
-				{v: ' few', type: 'string'},
-				{v: ' times', type: 'string'},
+				{type: 'keyword', v: 'repeat'},
+				{type: 'string', v: ' a'},
+				{type: 'string', v: ' few'},
+				{type: 'string', v: ' times'},
 			]);
 
 			expect(getTokens(6)).toEqual([
-				{v: 'group', type: 'keyword'},
-				{v: ' foo', type: 'string'},
+				{type: 'keyword', v: 'group'},
+				{type: 'string', v: ' foo'},
 			]);
 		});
 
@@ -314,25 +312,25 @@ describe('Code Mirror Mode', () => {
 			);
 
 			expect(getTokens(0)).toEqual([
-				{v: 'if', type: 'keyword'},
-				{v: ':', type: 'operator'},
-				{v: ' something', type: 'string'},
+				{type: 'keyword', v: 'if'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' something'},
 			]);
 
 			expect(getTokens(1)).toEqual([
-				{v: 'else', type: 'keyword'},
-				{v: ' if', type: 'keyword'},
-				{v: ':', type: 'operator'},
-				{v: ' another', type: 'string'},
-				{v: ' thing', type: 'string'},
+				{type: 'keyword', v: 'else'},
+				{type: 'keyword', v: ' if'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' another'},
+				{type: 'string', v: ' thing'},
 			]);
 
 			expect(getTokens(2)).toEqual([
-				{v: 'repeat', type: 'keyword'},
-				{v: ':', type: 'operator'},
-				{v: ' a', type: 'string'},
-				{v: ' few', type: 'string'},
-				{v: ' times', type: 'string'},
+				{type: 'keyword', v: 'repeat'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' a'},
+				{type: 'string', v: ' few'},
+				{type: 'string', v: ' times'},
 			]);
 		});
 
@@ -346,53 +344,53 @@ describe('Code Mirror Mode', () => {
 			);
 
 			expect(getTokens(0)).toEqual([
-				{v: 'note', type: 'keyword'},
-				{v: ' over', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'note'},
+				{type: 'keyword', v: ' over'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 
 			expect(getTokens(1)).toEqual([
-				{v: 'note', type: 'keyword'},
-				{v: ' over', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ',', type: 'operator'},
-				{v: ' B', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'note'},
+				{type: 'keyword', v: ' over'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ','},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 
 			expect(getTokens(2)).toEqual([
-				{v: 'note', type: 'keyword'},
-				{v: ' left', type: 'keyword'},
-				{v: ' of', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ',', type: 'operator'},
-				{v: ' B', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'note'},
+				{type: 'keyword', v: ' left'},
+				{type: 'keyword', v: ' of'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ','},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 
 			expect(getTokens(3)).toEqual([
-				{v: 'note', type: 'keyword'},
-				{v: ' right', type: 'keyword'},
-				{v: ' of', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ',', type: 'operator'},
-				{v: ' B', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'note'},
+				{type: 'keyword', v: ' right'},
+				{type: 'keyword', v: ' of'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ','},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 
 			expect(getTokens(4)).toEqual([
-				{v: 'note', type: 'keyword'},
-				{v: ' between', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ',', type: 'operator'},
-				{v: ' B', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'note'},
+				{type: 'keyword', v: ' between'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ','},
+				{type: 'variable', v: ' B'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 		});
 
@@ -406,11 +404,11 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('state over A: hi');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'state', type: 'keyword'},
-				{v: ' over', type: 'keyword'},
-				{v: ' A', type: 'variable'},
-				{v: ':', type: 'operator'},
-				{v: ' hi', type: 'string'},
+				{type: 'keyword', v: 'state'},
+				{type: 'keyword', v: ' over'},
+				{type: 'variable', v: ' A'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' hi'},
 			]);
 		});
 
@@ -424,13 +422,13 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('divider tear with height 60: stuff');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'divider', type: 'keyword'},
-				{v: ' tear', type: 'keyword'},
-				{v: ' with', type: 'keyword'},
-				{v: ' height', type: 'keyword'},
-				{v: ' 60', type: 'number'},
-				{v: ':', type: 'operator'},
-				{v: ' stuff', type: 'string'},
+				{type: 'keyword', v: 'divider'},
+				{type: 'keyword', v: ' tear'},
+				{type: 'keyword', v: ' with'},
+				{type: 'keyword', v: ' height'},
+				{type: 'number', v: ' 60'},
+				{type: 'operator', v: ':'},
+				{type: 'string', v: ' stuff'},
 			]);
 		});
 
@@ -438,11 +436,11 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A is a red database');
 
 			expect(getTokens(0)).toEqual([
-				{v: 'A', type: 'variable'},
-				{v: ' is', type: 'keyword'},
-				{v: ' a', type: 'keyword'},
-				{v: ' red', type: 'keyword'},
-				{v: ' database', type: 'keyword'},
+				{type: 'variable', v: 'A'},
+				{type: 'keyword', v: ' is'},
+				{type: 'keyword', v: ' a'},
+				{type: 'keyword', v: ' red'},
+				{type: 'keyword', v: ' database'},
 			]);
 		});
 
@@ -467,7 +465,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests commands when used at the start of a line', () => {
 			cm.getDoc().setValue('');
-			const hints = getHintTexts({line: 0, ch: 0});
+			const hints = getHintTexts({ch: 0, line: 0});
 
 			expect(hints).toContain('theme ');
 			expect(hints).toContain('title ');
@@ -491,7 +489,7 @@ describe('Code Mirror Mode', () => {
 
 		it('ignores indentation', () => {
 			cm.getDoc().setValue('  ');
-			const hints = getHintTexts({line: 0, ch: 2});
+			const hints = getHintTexts({ch: 2, line: 0});
 
 			expect(hints).toContain('theme ');
 			expect(hints).toContain('title ');
@@ -499,7 +497,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests known header types', () => {
 			cm.getDoc().setValue('headers ');
-			const hints = getHintTexts({line: 0, ch: 8});
+			const hints = getHintTexts({ch: 8, line: 0});
 
 			expect(hints).toEqual([
 				'none\n',
@@ -512,7 +510,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests known terminator types', () => {
 			cm.getDoc().setValue('terminators ');
-			const hints = getHintTexts({line: 0, ch: 12});
+			const hints = getHintTexts({ch: 12, line: 0});
 
 			expect(hints).toEqual([
 				'none\n',
@@ -525,7 +523,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests divider types', () => {
 			cm.getDoc().setValue('divider ');
-			const hints = getHintTexts({line: 0, ch: 8});
+			const hints = getHintTexts({ch: 8, line: 0});
 
 			expect(hints).toEqual([
 				'line ',
@@ -540,7 +538,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests divider sizes', () => {
 			cm.getDoc().setValue('divider space with height ');
-			const hints = getHintTexts({line: 0, ch: 26});
+			const hints = getHintTexts({ch: 26, line: 0});
 
 			expect(hints).toEqual([
 				'6 ',
@@ -550,7 +548,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests useful autolabel values', () => {
 			cm.getDoc().setValue('autolabel ');
-			const hints = getHintTexts({line: 0, ch: 10});
+			const hints = getHintTexts({ch: 10, line: 0});
 
 			expect(hints).toContain('off\n');
 			expect(hints).toContain('"<label>"\n');
@@ -559,7 +557,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests note positioning', () => {
 			cm.getDoc().setValue('note ');
-			const hints = getHintTexts({line: 0, ch: 5});
+			const hints = getHintTexts({ch: 5, line: 0});
 
 			expect(hints).toEqual([
 				'over ',
@@ -573,14 +571,14 @@ describe('Code Mirror Mode', () => {
 
 		it('filters suggestions', () => {
 			cm.getDoc().setValue('term');
-			const hints = getHintTexts({line: 0, ch: 4});
+			const hints = getHintTexts({ch: 4, line: 0});
 
 			expect(hints).toEqual(['terminators ']);
 		});
 
 		it('suggests known agent names and flags', () => {
 			cm.getDoc().setValue('Foo -> ');
-			const hints = getHintTexts({line: 0, ch: 7});
+			const hints = getHintTexts({ch: 7, line: 0});
 
 			expect(hints).toEqual([
 				'+ ',
@@ -594,7 +592,7 @@ describe('Code Mirror Mode', () => {
 
 		it('only suggests valid flag combinations', () => {
 			cm.getDoc().setValue('Foo -> + ');
-			const hints = getHintTexts({line: 0, ch: 10});
+			const hints = getHintTexts({ch: 10, line: 0});
 
 			expect(hints).toContain('* ');
 			expect(hints).not.toContain('! ');
@@ -605,7 +603,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests known agent names at the start of lines', () => {
 			cm.getDoc().setValue('Foo -> Bar\n');
-			const hints = getHintTexts({line: 1, ch: 0});
+			const hints = getHintTexts({ch: 0, line: 1});
 
 			expect(hints).toContain('Foo ');
 			expect(hints).toContain('Bar ');
@@ -613,21 +611,21 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests known labels', () => {
 			cm.getDoc().setValue('Abc:\nsimultaneously with ');
-			const hints = getHintTexts({line: 1, ch: 20});
+			const hints = getHintTexts({ch: 20, line: 1});
 
 			expect(hints).toEqual(['Abc ']);
 		});
 
 		it('suggests known themes', () => {
 			cm.getDoc().setValue('theme ');
-			const hints = getHintTexts({line: 0, ch: 6});
+			const hints = getHintTexts({ch: 6, line: 0});
 
 			expect(hints).toEqual(['Theme\n', 'Other Theme\n']);
 		});
 
 		it('suggests filtered multi-word themes', () => {
 			cm.getDoc().setValue('theme Other ');
-			const hints = getHintTexts({line: 0, ch: 12});
+			const hints = getHintTexts({ch: 12, line: 0});
 
 			expect(hints).toContain('Other Theme\n');
 			expect(hints).not.toContain('Theme\n');
@@ -635,7 +633,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests multi-word agents', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> ');
-			const hints = getHintTexts({line: 1, ch: 11});
+			const hints = getHintTexts({ch: 11, line: 1});
 
 			expect(hints).toContain('Zig Zag ');
 			expect(hints).toContain('Meh ');
@@ -644,7 +642,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests quoted agent names if a quote is typed', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> "');
-			const hints = getHintTexts({line: 1, ch: 12});
+			const hints = getHintTexts({ch: 12, line: 1});
 
 			expect(hints).toEqual([
 				'"Zig Zag" ',
@@ -655,7 +653,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests filtered multi-word agents', () => {
 			cm.getDoc().setValue('Zig Zag -> Meh\nFoo Bar -> Foo ');
-			const hints = getHintTexts({line: 1, ch: 15});
+			const hints = getHintTexts({ch: 15, line: 1});
 
 			expect(hints).toContain('Foo Bar ');
 			expect(hints).not.toContain('Zig Zag ');
@@ -664,33 +662,33 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests quoted names where required', () => {
 			cm.getDoc().setValue('"Zig -> Zag" -> ');
-			const hints = getHintTexts({line: 0, ch: 16});
+			const hints = getHintTexts({ch: 16, line: 0});
 
 			expect(hints).toContain('"Zig -> Zag" ');
 		});
 
 		it('filters quoted names ignoring quotes', () => {
 			cm.getDoc().setValue('"Zig -> Zag" -> Zig');
-			let hints = getHintTexts({line: 0, ch: 19});
+			let hints = getHintTexts({ch: 19, line: 0});
 
 			expect(hints).toContain('"Zig -> Zag" ');
 
 			cm.getDoc().setValue('"Zig -> Zag" -> Zag');
-			hints = getHintTexts({line: 0, ch: 19});
+			hints = getHintTexts({ch: 19, line: 0});
 
 			expect(hints).not.toContain('"Zig -> Zag" ');
 		});
 
 		it('suggests known delayed agents', () => {
 			cm.getDoc().setValue('A -> ...woo\n... ');
-			const hints = getHintTexts({line: 1, ch: 4});
+			const hints = getHintTexts({ch: 4, line: 1});
 
 			expect(hints).toEqual(['woo ']);
 		});
 
 		it('suggests agent properties', () => {
 			cm.getDoc().setValue('A is a ');
-			const hints = getHintTexts({line: 0, ch: 7});
+			const hints = getHintTexts({ch: 7, line: 0});
 
 			expect(hints).toContain('database ');
 			expect(hints).toContain('red ');
@@ -699,7 +697,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests indefinite articles for agent properties', () => {
 			cm.getDoc().setValue('A is ');
-			const hints = getHintTexts({line: 0, ch: 5});
+			const hints = getHintTexts({ch: 5, line: 0});
 
 			expect(hints).toContain('database ');
 			expect(hints).toContain('a ');
@@ -709,7 +707,7 @@ describe('Code Mirror Mode', () => {
 
 		it('suggests more agent properties after the first', () => {
 			cm.getDoc().setValue('A is a red ');
-			const hints = getHintTexts({line: 0, ch: 11});
+			const hints = getHintTexts({ch: 11, line: 0});
 
 			expect(hints).toContain('database ');
 			expect(hints).toContain('\n');

@@ -1,7 +1,4 @@
-/* eslint-disable max-lines */
 /* eslint-disable sort-keys */ // Maybe later
-/* eslint-disable complexity */ // Temporary ignore while switching linter
-/* eslint-disable no-param-reassign */ // Also temporary
 
 import {combine, last} from '../../core/ArrayUtilities.mjs';
 import Tokeniser from './Tokeniser.mjs';
@@ -90,17 +87,47 @@ const NOTE_TYPES = {
 	'text': {
 		mode: 'text',
 		types: {
-			'left': {type: 'note left', skip: ['of'], min: 0, max: null},
-			'right': {type: 'note right', skip: ['of'], min: 0, max: null},
+			'left': {
+				type: 'note left',
+				skip: ['of'],
+				min: 0,
+				max: Number.POSITIVE_INFINITY,
+			},
+			'right': {
+				type: 'note right',
+				skip: ['of'],
+				min: 0,
+				max: Number.POSITIVE_INFINITY,
+			},
 		},
 	},
 	'note': {
 		mode: 'note',
 		types: {
-			'over': {type: 'note over', skip: [], min: 0, max: null},
-			'left': {type: 'note left', skip: ['of'], min: 0, max: null},
-			'right': {type: 'note right', skip: ['of'], min: 0, max: null},
-			'between': {type: 'note between', skip: [], min: 2, max: null},
+			'over': {
+				type: 'note over',
+				skip: [],
+				min: 0,
+				max: Number.POSITIVE_INFINITY,
+			},
+			'left': {
+				type: 'note left',
+				skip: ['of'],
+				min: 0,
+				max: Number.POSITIVE_INFINITY,
+			},
+			'right': {
+				type: 'note right',
+				skip: ['of'],
+				min: 0,
+				max: Number.POSITIVE_INFINITY,
+			},
+			'between': {
+				type: 'note between',
+				skip: [],
+				min: 2,
+				max: Number.POSITIVE_INFINITY,
+			},
 		},
 	},
 	'state': {
@@ -135,15 +162,20 @@ function makeError(message, token = null) {
 	return new Error(message + suffix);
 }
 
-function joinLabel(line, begin = 0, end = null) {
+function endIndexInLine(line, end = null) {
 	if(end === null) {
-		end = line.length;
+		return line.length;
 	}
-	if(end <= begin) {
+	return end;
+}
+
+function joinLabel(line, begin = 0, end = null) {
+	const e = endIndexInLine(line, end);
+	if(e <= begin) {
 		return '';
 	}
 	let result = line[begin].v;
-	for(let i = begin + 1; i < end; ++ i) {
+	for(let i = begin + 1; i < e; ++ i) {
 		result += line[i].s + line[i].v;
 	}
 	return result;
@@ -179,30 +211,23 @@ function skipOver(line, start, skip, error = null) {
 	return start + skip.length;
 }
 
-function findToken(line, tokens, {
+function findTokens(line, tokens, {
 	start = 0,
 	limit = null,
 	orEnd = false,
 } = {}) {
-	if(limit === null) {
-		limit = line.length;
-	}
-	if(!Array.isArray(tokens)) {
-		tokens = [tokens];
-	}
-	for(let i = start; i <= limit - tokens.length; ++ i) {
+	const e = endIndexInLine(line, limit);
+	for(let i = start; i <= e - tokens.length; ++ i) {
 		if(skipOver(line, i, tokens) !== i) {
 			return i;
 		}
 	}
-	return orEnd ? limit : -1;
+	return orEnd ? e : -1;
 }
 
 function findFirstToken(line, tokenMap, {start = 0, limit = null} = {}) {
-	if(limit === null) {
-		limit = line.length;
-	}
-	for(let pos = start; pos < limit; ++ pos) {
+	const e = endIndexInLine(line, limit);
+	for(let pos = start; pos < e; ++ pos) {
 		const value = tokenMap.get(tokenKeyword(line[pos]));
 		if(value) {
 			return {pos, value};
@@ -212,12 +237,9 @@ function findFirstToken(line, tokenMap, {start = 0, limit = null} = {}) {
 }
 
 function readAgentAlias(line, start, end, {enableAlias, allowBlankName}) {
-	let aliasSep = -1;
+	let aliasSep = end;
 	if(enableAlias) {
-		aliasSep = findToken(line, 'as', {start});
-	}
-	if(aliasSep === -1 || aliasSep >= end) {
-		aliasSep = end;
+		aliasSep = findTokens(line, ['as'], {limit: end, orEnd: true, start});
 	}
 	if(start >= aliasSep && !allowBlankName) {
 		let errPosToken = line[start];
@@ -286,29 +308,17 @@ function readAgentList(line, start, end, readAgentOpts) {
 }
 
 const PARSERS = [
-	(line, meta) => { // Title
-		if(tokenKeyword(line[0]) !== 'title') {
-			return null;
-		}
-
+	{begin: ['title'], fn: (line, meta) => { // Title
 		meta.title = joinLabel(line, 1);
 		return true;
-	},
+	}},
 
-	(line, meta) => { // Theme
-		if(tokenKeyword(line[0]) !== 'theme') {
-			return null;
-		}
-
+	{begin: ['theme'], fn: (line, meta) => { // Theme
 		meta.theme = joinLabel(line, 1);
 		return true;
-	},
+	}},
 
-	(line, meta) => { // Terminators
-		if(tokenKeyword(line[0]) !== 'terminators') {
-			return null;
-		}
-
+	{begin: ['terminators'], fn: (line, meta) => { // Terminators
 		const type = tokenKeyword(line[1]);
 		if(!type) {
 			throw makeError('Unspecified termination', line[0]);
@@ -318,13 +328,9 @@ const PARSERS = [
 		}
 		meta.terminators = type;
 		return true;
-	},
+	}},
 
-	(line, meta) => { // Headers
-		if(tokenKeyword(line[0]) !== 'headers') {
-			return null;
-		}
-
+	{begin: ['headers'], fn: (line, meta) => { // Headers
 		const type = tokenKeyword(line[1]);
 		if(!type) {
 			throw makeError('Unspecified header', line[0]);
@@ -334,15 +340,11 @@ const PARSERS = [
 		}
 		meta.headers = type;
 		return true;
-	},
+	}},
 
-	(line) => { // Divider
-		if(tokenKeyword(line[0]) !== 'divider') {
-			return null;
-		}
-
-		const labelSep = findToken(line, ':', {orEnd: true});
-		const heightSep = findToken(line, ['with', 'height'], {
+	{begin: ['divider'], fn: (line) => { // Divider
+		const labelSep = findTokens(line, [':'], {orEnd: true});
+		const heightSep = findTokens(line, ['with', 'height'], {
 			limit: labelSep,
 			orEnd: true,
 		});
@@ -368,13 +370,9 @@ const PARSERS = [
 			height,
 			label: joinLabel(line, labelSep + 1),
 		};
-	},
+	}},
 
-	(line) => { // Autolabel
-		if(tokenKeyword(line[0]) !== 'autolabel') {
-			return null;
-		}
-
+	{begin: ['autolabel'], fn: (line) => { // Autolabel
 		let raw = null;
 		if(tokenKeyword(line[1]) === 'off') {
 			raw = '<label>';
@@ -385,13 +383,16 @@ const PARSERS = [
 			type: 'label pattern',
 			pattern: labelPatternParser(raw),
 		};
-	},
+	}},
 
-	(line) => { // Block
-		if(tokenKeyword(line[0]) === 'end' && line.length === 1) {
-			return {type: 'block end'};
+	{begin: ['end'], fn: (line) => { // Block End
+		if(line.length !== 1) {
+			return null;
 		}
+		return {type: 'block end'};
+	}},
 
+	{begin: [], fn: (line) => { // Block
 		const type = BLOCK_TYPES[tokenKeyword(line[0])];
 		if(!type) {
 			return null;
@@ -407,17 +408,11 @@ const PARSERS = [
 			tag: type.tag,
 			label: joinLabel(line, skip),
 		};
-	},
+	}},
 
-	(line) => { // Begin reference
-		if(
-			tokenKeyword(line[0]) !== 'begin' ||
-			tokenKeyword(line[1]) !== 'reference'
-		) {
-			return null;
-		}
+	{begin: ['begin', 'reference'], fn: (line) => { // Begin reference
 		let agents = [];
-		const labelSep = findToken(line, ':');
+		const labelSep = findTokens(line, [':']);
 		if(tokenKeyword(line[2]) === 'over' && labelSep > 3) {
 			agents = readAgentList(line, 3, labelSep);
 		} else if(labelSep !== 2) {
@@ -440,9 +435,9 @@ const PARSERS = [
 			label: def.name,
 			alias: def.alias,
 		};
-	},
+	}},
 
-	(line) => { // Agent
+	{begin: [], fn: (line) => { // Agent
 		const type = AGENT_MANIPULATION_TYPES[tokenKeyword(line[0])];
 		if(!type || line.length <= 1) {
 			return null;
@@ -450,12 +445,9 @@ const PARSERS = [
 		return Object.assign({
 			agents: readAgentList(line, 1, line.length, {aliases: true}),
 		}, type);
-	},
+	}},
 
-	(line) => { // Async
-		if(tokenKeyword(line[0]) !== 'simultaneously') {
-			return null;
-		}
+	{begin: ['simultaneously'], fn: (line) => { // Async
 		if(tokenKeyword(last(line)) !== ':') {
 			return null;
 		}
@@ -470,11 +462,11 @@ const PARSERS = [
 			type: 'async',
 			target,
 		};
-	},
+	}},
 
-	(line) => { // Note
+	{begin: [], fn: (line) => { // Note
 		const mode = NOTE_TYPES[tokenKeyword(line[0])];
-		const labelSep = findToken(line, ':');
+		const labelSep = findTokens(line, [':']);
 		if(!mode || labelSep === -1) {
 			return null;
 		}
@@ -488,7 +480,7 @@ const PARSERS = [
 		if(agents.length < type.min) {
 			throw makeError('Too few agents for ' + mode.mode, line[0]);
 		}
-		if(type.max !== null && agents.length > type.max) {
+		if(agents.length > type.max) {
 			throw makeError('Too many agents for ' + mode.mode, line[0]);
 		}
 		return {
@@ -497,10 +489,10 @@ const PARSERS = [
 			mode: mode.mode,
 			label: joinLabel(line, labelSep + 1),
 		};
-	},
+	}},
 
-	(line) => { // Connect
-		const labelSep = findToken(line, ':', {orEnd: true});
+	{begin: [], fn: (line) => { // Connect
+		const labelSep = findTokens(line, [':'], {orEnd: true});
 		const connectionToken = findFirstToken(
 			line,
 			CONNECT.types,
@@ -548,9 +540,9 @@ const PARSERS = [
 				options: connectionToken.value,
 			};
 		}
-	},
+	}},
 
-	(line) => { // Marker
+	{begin: [], fn: (line) => { // Marker
 		if(line.length < 2 || tokenKeyword(last(line)) !== ':') {
 			return null;
 		}
@@ -558,10 +550,10 @@ const PARSERS = [
 			type: 'mark',
 			name: joinLabel(line, 0, line.length - 1),
 		};
-	},
+	}},
 
-	(line) => { // Options
-		const sepPos = findToken(line, 'is');
+	{begin: [], fn: (line) => { // Options
+		const sepPos = findTokens(line, ['is']);
 		if(sepPos < 1) {
 			return null;
 		}
@@ -583,13 +575,16 @@ const PARSERS = [
 			agent,
 			options,
 		};
-	},
+	}},
 ];
 
 function parseLine(line, {meta, stages}) {
 	let stage = null;
-	for(let i = 0; i < PARSERS.length; ++ i) {
-		stage = PARSERS[i](line, meta);
+	for(const {begin, fn} of PARSERS) {
+		if(skipOver(line, 0, begin) !== begin.length) {
+			continue;
+		}
+		stage = fn(line, meta);
 		if(stage) {
 			break;
 		}

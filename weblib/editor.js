@@ -504,8 +504,6 @@
 		}
 	}
 
-	/* eslint-disable max-lines */
-
 	const DELAY_AGENTCHANGE = 500;
 	const DELAY_STAGECHANGE = 250;
 	const PNG_RESOLUTION = 4;

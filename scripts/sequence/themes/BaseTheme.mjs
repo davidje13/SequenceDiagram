@@ -1,5 +1,3 @@
-/* eslint-disable sort-keys */ // Maybe later
-
 function optionsAttributes(attributes, options) {
 	const attrs = Object.assign({}, attributes['']);
 	options.forEach((opt) => {
@@ -63,14 +61,14 @@ export default class BaseTheme {
 		return optionsAttributes(attributes, options);
 	}
 
-	renderAgentLine({x, y0, y1, width, className, options}) {
+	renderAgentLine({className, options, width, x, y0, y1}) {
 		const attrs = this.optionsAttributes(this.agentLineAttrs, options);
 		if(width > 0) {
 			return this.svg.box(attrs, {
+				height: y1 - y0,
+				width,
 				x: x - width / 2,
 				y: y0,
-				width,
-				height: y1 - y0,
 			}).addClass(className);
 		} else {
 			return this.svg.line(attrs, {
@@ -84,7 +82,7 @@ export default class BaseTheme {
 
 	// INTERNAL HELPERS
 
-	renderArrowHead(attrs, {x, y, width, height, dir}) {
+	renderArrowHead(attrs, {dir, height, width, x, y}) {
 		const wx = width * dir.dx;
 		const wy = width * dir.dy;
 		const hy = height * 0.5 * dir.dx;
@@ -98,7 +96,7 @@ export default class BaseTheme {
 			.attrs(attrs);
 	}
 
-	renderTag(attrs, {x, y, width, height}) {
+	renderTag(attrs, {height, width, x, y}) {
 		const {rx, ry} = attrs;
 		const x2 = x + width;
 		const y2 = y + height;
@@ -148,12 +146,12 @@ export default class BaseTheme {
 
 	renderRef(options, position) {
 		return {
-			shape: this.svg.box(options, position).attrs({'fill': 'none'}),
+			fill: this.svg.box(options, position).attrs({'stroke': 'none'}),
 			mask: this.svg.box(options, position).attrs({
 				'fill': '#000000',
 				'stroke': 'none',
 			}),
-			fill: this.svg.box(options, position).attrs({'stroke': 'none'}),
+			shape: this.svg.box(options, position).attrs({'fill': 'none'}),
 		};
 	}
 
@@ -163,6 +161,8 @@ export default class BaseTheme {
 		{x1, y1, x2, y2}
 	) {
 		return {
+			p1: {x: x1, y: y1},
+			p2: {x: x2, y: y2},
 			shape: this.svg.el('path')
 				.attr('d', this.svg.patternedLine(pattern)
 					.move(x1, y1)
@@ -170,15 +170,13 @@ export default class BaseTheme {
 					.cap()
 					.asPath())
 				.attrs(attrs),
-			p1: {x: x1, y: y1},
-			p2: {x: x2, y: y2},
 		};
 	}
 
 	renderRevConnect(
 		pattern,
 		attrs,
-		{x1, y1, x2, y2, xR, rad}
+		{rad, x1, x2, xR, y1, y2}
 	) {
 		const maxRad = (y2 - y1) / 2;
 		const line = this.svg.patternedLine(pattern)
@@ -193,20 +191,20 @@ export default class BaseTheme {
 			line.arc(xR, (y1 + y2) / 2, Math.PI);
 		}
 		return {
+			p1: {x: x1, y: y1},
+			p2: {x: x2, y: y2},
 			shape: this.svg.el('path')
 				.attr('d', line
 					.line(x2, y2)
 					.cap()
 					.asPath())
 				.attrs(attrs),
-			p1: {x: x1, y: y1},
-			p2: {x: x2, y: y2},
 		};
 	}
 
 	renderLineDivider(
 		{lineAttrs},
-		{x, y, labelWidth, width, height}
+		{height, labelWidth, width, x, y}
 	) {
 		let shape = null;
 		const yPos = y + height / 2;
@@ -238,25 +236,25 @@ export default class BaseTheme {
 
 	renderDelayDivider(
 		{dotSize, gapSize},
-		{x, y, width, height}
+		{height, width, x, y}
 	) {
 		const mask = this.svg.el('g');
 		for(let i = 0; i + gapSize <= height; i += dotSize + gapSize) {
 			mask.add(this.svg.box({
 				'fill': '#000000',
 			}, {
+				height: gapSize,
+				width,
 				x,
 				y: y + i,
-				width,
-				height: gapSize,
 			}));
 		}
 		return {mask};
 	}
 
 	renderTearDivider(
-		{fadeBegin, fadeSize, pattern, zigWidth, zigHeight, lineAttrs},
-		{x, y, labelWidth, labelHeight, width, height, env}
+		{fadeBegin, fadeSize, lineAttrs, pattern, zigHeight, zigWidth},
+		{env, height, labelHeight, labelWidth, width, x, y}
 	) {
 		const maskGradID = env.addDef('tear-grad', () => {
 			const px = 100 / width;
@@ -285,24 +283,24 @@ export default class BaseTheme {
 				this.svg.box({
 					'fill': 'url(#' + maskGradID + ')',
 				}, {
+					height: height + 10,
+					width,
 					x,
 					y: y - 5,
-					width,
-					height: height + 10,
 				})
 			);
 		const shapeMaskID = env.addDef(shapeMask);
 
 		if(labelWidth > 0) {
 			shapeMask.add(this.svg.box({
+				'fill': '#000000',
 				'rx': 2,
 				'ry': 2,
-				'fill': '#000000',
 			}, {
+				'height': labelHeight + 2,
+				'width': labelWidth,
 				'x': x + (width - labelWidth) / 2,
 				'y': y + (height - labelHeight) / 2 - 1,
-				'width': labelWidth,
-				'height': labelHeight + 2,
 			}));
 		}
 
@@ -345,6 +343,6 @@ export default class BaseTheme {
 				'fill': '#000000',
 			});
 		}
-		return {shape, mask};
+		return {mask, shape};
 	}
 }

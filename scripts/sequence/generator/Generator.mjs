@@ -1,6 +1,5 @@
 /* eslint-disable max-lines */
 /* eslint-disable sort-keys */ // Maybe later
-/* eslint-disable complexity */ // Temporary ignore while switching linter
 
 import {
 	flatMap,
@@ -41,15 +40,6 @@ const PAgent = {
 
 // Agent from Generator: {id, formattedLabel, anchorRight}
 const GAgent = {
-	equals: (a, b) => (a.id === b.id),
-	make: (id, {anchorRight = false, isVirtualSource = false} = {}) => ({
-		anchorRight,
-		id,
-		isVirtualSource,
-		options: [],
-	}),
-	indexOf: (list, gAgent) => indexOf(list, gAgent, GAgent.equals),
-	hasIntersection: (a, b) => hasIntersection(a, b, GAgent.equals),
 	addNearby: (target, reference, item, offset) => {
 		const p = indexOf(target, reference, GAgent.equals);
 		if(p === -1) {
@@ -58,11 +48,28 @@ const GAgent = {
 			target.splice(p + offset, 0, item);
 		}
 	},
+	equals: (a, b) => (a.id === b.id),
+	hasIntersection: (a, b) => hasIntersection(a, b, GAgent.equals),
+	indexOf: (list, gAgent) => indexOf(list, gAgent, GAgent.equals),
+	make: (id, {anchorRight = false, isVirtualSource = false} = {}) => ({
+		anchorRight,
+		id,
+		isVirtualSource,
+		options: [],
+	}),
 };
 
+function isExpiredGroupAlias(state) {
+	return state.blocked && state.group === null;
+}
+
+function isReservedAgentName(name) {
+	return name.startsWith('__');
+}
+
 const NOTE_DEFAULT_G_AGENTS = {
-	'note over': [GAgent.make('['), GAgent.make(']')],
 	'note left': [GAgent.make('[')],
+	'note over': [GAgent.make('['), GAgent.make(']')],
 	'note right': [GAgent.make(']')],
 };
 
@@ -247,30 +254,38 @@ export default class Generator {
 		this.currentNest = null;
 
 		this.stageHandlers = {
-			'block begin': this.handleBlockBegin.bind(this),
-			'block split': this.handleBlockSplit.bind(this),
-			'block end': this.handleBlockEnd.bind(this),
-			'group begin': this.handleGroupBegin.bind(this),
-			'mark': this.handleMark.bind(this),
-			'async': this.handleAsync.bind(this),
-			'agent define': this.handleAgentDefine.bind(this),
-			'agent options': this.handleAgentOptions.bind(this),
 			'agent begin': this.handleAgentBegin.bind(this),
+			'agent define': this.handleAgentDefine.bind(this),
 			'agent end': this.handleAgentEnd.bind(this),
-			'divider': this.handleDivider.bind(this),
-			'label pattern': this.handleLabelPattern.bind(this),
+			'agent options': this.handleAgentOptions.bind(this),
+			'async': this.handleAsync.bind(this),
+			'block begin': this.handleBlockBegin.bind(this),
+			'block end': this.handleBlockEnd.bind(this),
+			'block split': this.handleBlockSplit.bind(this),
 			'connect': this.handleConnect.bind(this),
 			'connect-delay-begin': this.handleConnectDelayBegin.bind(this),
 			'connect-delay-end': this.handleConnectDelayEnd.bind(this),
-			'note over': this.handleNote.bind(this),
-			'note left': this.handleNote.bind(this),
-			'note right': this.handleNote.bind(this),
+			'divider': this.handleDivider.bind(this),
+			'group begin': this.handleGroupBegin.bind(this),
+			'label pattern': this.handleLabelPattern.bind(this),
+			'mark': this.handleMark.bind(this),
 			'note between': this.handleNote.bind(this),
+			'note left': this.handleNote.bind(this),
+			'note over': this.handleNote.bind(this),
+			'note right': this.handleNote.bind(this),
 		};
 		this.expandGroupedGAgent = this.expandGroupedGAgent.bind(this);
 		this.handleStage = this.handleStage.bind(this);
 		this.toGAgent = this.toGAgent.bind(this);
 		this.endGroup = this.endGroup.bind(this);
+	}
+
+	_aliasInUse(alias) {
+		const old = this.agentAliases.get(alias);
+		if(old && old !== alias) {
+			return true;
+		}
+		return this.gAgents.some((gAgent) => (gAgent.id === alias));
 	}
 
 	toGAgent({name, alias, flags}) {
@@ -280,11 +295,7 @@ export default class Generator {
 					'Cannot alias ' + name + '; it is already an alias'
 				);
 			}
-			const old = this.agentAliases.get(alias);
-			if(
-				(old && old !== alias) ||
-				this.gAgents.some((gAgent) => (gAgent.id === alias))
-			) {
+			if(this._aliasInUse(alias)) {
 				throw new Error(
 					'Cannot use ' + alias +
 					' as an alias; it is already in use'
@@ -325,8 +336,8 @@ export default class Generator {
 			}
 		});
 		this.addStage({
-			type: 'parallel',
 			stages: viableStages,
+			type: 'parallel',
 		});
 	}
 
@@ -361,25 +372,27 @@ export default class Generator {
 		allowCovered = false,
 		allowVirtual = false,
 	} = {}) {
+		/* eslint-disable complexity */ // The checks are quite simple
 		gAgents.forEach((gAgent) => {
+			/* eslint-enable complexity */
 			const state = this.getGAgentState(gAgent);
-			if(state.blocked && state.group === null) {
+			const name = gAgent.id;
+
+			if(isExpiredGroupAlias(state)) {
 				// Used to be a group alias; can never be reused
-				throw new Error('Duplicate agent name: ' + gAgent.id);
+				throw new Error('Duplicate agent name: ' + name);
 			}
 			if(!allowCovered && state.covered) {
-				throw new Error(
-					'Agent ' + gAgent.id + ' is hidden behind group'
-				);
+				throw new Error('Agent ' + name + ' is hidden behind group');
 			}
 			if(!allowGrouped && state.group !== null) {
-				throw new Error('Agent ' + gAgent.id + ' is in a group');
+				throw new Error('Agent ' + name + ' is in a group');
 			}
 			if(!allowVirtual && gAgent.isVirtualSource) {
-				throw new Error('cannot use message source here');
+				throw new Error('Cannot use message source here');
 			}
-			if(gAgent.id.startsWith('__')) {
-				throw new Error(gAgent.id + ' is a reserved name');
+			if(isReservedAgentName(name)) {
+				throw new Error(name + ' is a reserved name');
 			}
 		});
 	}
@@ -410,9 +423,9 @@ export default class Generator {
 		this.defineGAgents(filteredGAgents);
 
 		return {
-			type: (visible ? 'agent begin' : 'agent end'),
 			agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
 			mode,
+			type: (visible ? 'agent begin' : 'agent end'),
 		};
 	}
 
@@ -436,16 +449,16 @@ export default class Generator {
 		});
 
 		return {
-			type: 'agent highlight',
 			agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
 			highlighted,
+			type: 'agent highlight',
 		};
 	}
 
 	_makeSection(header, stages) {
 		return {
-			header,
 			delayedConnections: new Map(),
+			header,
 			stages,
 		};
 	}
@@ -467,21 +480,21 @@ export default class Generator {
 		const gAgents = [leftGAgent, rightGAgent];
 		const stages = [];
 		this.currentSection = this._makeSection({
-			type: 'block begin',
 			blockType,
-			tag: this.textFormatter(tag),
-			label: this.textFormatter(label),
 			canHide: true,
+			label: this.textFormatter(label),
 			left: leftGAgent.id,
-			right: rightGAgent.id,
 			ln,
+			right: rightGAgent.id,
+			tag: this.textFormatter(tag),
+			type: 'block begin',
 		}, stages);
 		this.currentNest = {
 			blockType,
 			gAgents,
+			hasContent: false,
 			leftGAgent,
 			rightGAgent,
-			hasContent: false,
 			sections: [this.currentSection],
 		};
 		this.replaceGAgentState(leftGAgent, AgentState.LOCKED);
@@ -505,10 +518,10 @@ export default class Generator {
 
 	handleBlockBegin({ln, blockType, tag, label}) {
 		this.beginNested(blockType, {
-			tag,
 			label,
-			name: this.nextBlockName(),
 			ln,
+			name: this.nextBlockName(),
+			tag,
 		});
 	}
 
@@ -521,13 +534,13 @@ export default class Generator {
 		}
 		this._checkSectionEnd();
 		this.currentSection = this._makeSection({
-			type: 'block split',
 			blockType,
-			tag: this.textFormatter(tag),
 			label: this.textFormatter(label),
 			left: this.currentNest.leftGAgent.id,
-			right: this.currentNest.rightGAgent.id,
 			ln,
+			right: this.currentNest.rightGAgent.id,
+			tag: this.textFormatter(tag),
+			type: 'block split',
 		}, []);
 		this.currentNest.sections.push(this.currentSection);
 	}
@@ -554,9 +567,9 @@ export default class Generator {
 				this.currentSection.stages.push(...section.stages);
 			});
 			this.addStage({
-				type: 'block end',
 				left: nested.leftGAgent.id,
 				right: nested.rightGAgent.id,
+				type: 'block end',
 			});
 		} else {
 			throw new Error('Empty block');
@@ -595,10 +608,10 @@ export default class Generator {
 
 		return {
 			gAgents,
-			leftGAgent,
-			rightGAgent,
 			gAgentsContained,
 			gAgentsCovered,
+			leftGAgent,
+			rightGAgent,
 		};
 	}
 
@@ -614,13 +627,13 @@ export default class Generator {
 		this.activeGroups.set(alias, details);
 		this.addStage(this.setGAgentVis(details.gAgents, true, 'box'));
 		this.addStage({
-			type: 'block begin',
 			blockType,
-			tag: this.textFormatter(tag),
 			canHide: false,
 			label: this.textFormatter(label),
 			left: details.leftGAgent.id,
 			right: details.rightGAgent.id,
+			tag: this.textFormatter(tag),
+			type: 'block begin',
 		});
 	}
 
@@ -640,23 +653,23 @@ export default class Generator {
 		this.updateGAgentState(GAgent.make(name), {group: null});
 
 		return {
-			type: 'block end',
 			left: details.leftGAgent.id,
 			right: details.rightGAgent.id,
+			type: 'block end',
 		};
 	}
 
 	handleMark({name}) {
 		this.markers.add(name);
-		this.addStage({type: 'mark', name}, false);
+		this.addStage({name, type: 'mark'}, false);
 	}
 
 	handleDivider({mode, height, label}) {
 		this.addStage({
-			type: 'divider',
-			mode,
-			height,
 			formattedLabel: this.textFormatter(label),
+			height,
+			mode,
+			type: 'divider',
 		}, false);
 	}
 
@@ -664,7 +677,7 @@ export default class Generator {
 		if(target !== '' && !this.markers.has(target)) {
 			throw new Error('Unknown marker: ' + target);
 		}
-		this.addStage({type: 'async', target}, false);
+		this.addStage({target, type: 'async'}, false);
 	}
 
 	handleLabelPattern({pattern}) {
@@ -867,15 +880,15 @@ export default class Generator {
 			const tag = {};
 			this.handleConnectDelayBegin({
 				agent: agents[0],
-				tag,
-				options,
 				ln: 0,
+				options,
+				tag,
 			});
 			this.handleConnectDelayEnd({
 				agent: agents[1],
-				tag,
 				label,
 				options,
+				tag,
 			});
 			return;
 		}
@@ -886,10 +899,10 @@ export default class Generator {
 		gAgents = this.expandVirtualSourceAgents(gAgents);
 
 		const connectStage = {
-			type: 'connect',
 			agentIDs: gAgents.map((gAgent) => gAgent.id),
 			label: this.textFormatter(this.applyLabelPattern(label)),
 			options,
+			type: 'connect',
 		};
 
 		this.addParallelStages(this._makeConnectParallelStages(
@@ -908,14 +921,14 @@ export default class Generator {
 		const uniqueTag = this.nextVirtualAgentName();
 
 		const connectStage = {
-			type: 'connect-delay-begin',
-			tag: uniqueTag,
 			agentIDs: null,
 			label: null,
 			options,
+			tag: uniqueTag,
+			type: 'connect-delay-begin',
 		};
 
-		dcs.set(tag, {tag, uniqueTag, ln, gAgents, connectStage});
+		dcs.set(tag, {connectStage, gAgents, ln, tag, uniqueTag});
 
 		this.addParallelStages(this._makeConnectParallelStages(
 			flags,
@@ -955,8 +968,8 @@ export default class Generator {
 		});
 
 		const connectEndStage = {
-			type: 'connect-delay-end',
 			tag: dcInfo.uniqueTag,
+			type: 'connect-delay-end',
 		};
 
 		this.addParallelStages(this._makeConnectParallelStages(
@@ -987,18 +1000,18 @@ export default class Generator {
 		this.defineGAgents(gAgents);
 
 		this.addStage({
-			type,
 			agentIDs,
-			mode,
 			label: this.textFormatter(label),
+			mode,
+			type,
 		});
 	}
 
 	handleAgentDefine({agents}) {
 		const gAgents = agents.map(this.toGAgent);
 		this.validateGAgents(gAgents, {
-			allowGrouped: true,
 			allowCovered: true,
+			allowGrouped: true,
 		});
 		mergeSets(this.gAgents, gAgents, GAgent.equals);
 	}
@@ -1007,8 +1020,8 @@ export default class Generator {
 		const gAgent = this.toGAgent(agent);
 		const gAgents = [gAgent];
 		this.validateGAgents(gAgents, {
-			allowGrouped: true,
 			allowCovered: true,
+			allowGrouped: true,
 		});
 		mergeSets(this.gAgents, gAgents, GAgent.equals);
 
@@ -1086,10 +1099,10 @@ export default class Generator {
 
 		this.textFormatter = meta.textFormatter;
 		const globals = this.beginNested('global', {
-			tag: '',
 			label: '',
-			name: '',
 			ln: 0,
+			name: '',
+			tag: '',
 		});
 
 		stages.forEach(this.handleStage);
@@ -1117,12 +1130,12 @@ export default class Generator {
 		swapFirstBegin(globals.stages, meta.headers || 'box');
 
 		return {
-			meta: {
-				title: this.textFormatter(meta.title),
-				theme: meta.theme,
-				code: meta.code,
-			},
 			agents: this.gAgents.slice(),
+			meta: {
+				code: meta.code,
+				theme: meta.theme,
+				title: this.textFormatter(meta.title),
+			},
 			stages: globals.stages,
 		};
 	}

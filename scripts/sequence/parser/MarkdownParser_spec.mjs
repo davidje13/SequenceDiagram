@@ -1,5 +1,3 @@
-/* eslint-disable sort-keys */ // Maybe later
-
 import {dom, textSizerFactory} from '../../../spec/stubs/TestDOM.mjs';
 import SVG from '../../svg/SVG.mjs';
 import parser from './MarkdownParser.mjs';
@@ -8,7 +6,7 @@ describe('Markdown Parser', () => {
 	it('converts simple text', () => {
 		const formatted = parser('hello everybody');
 
-		expect(formatted).toEqual([[{text: 'hello everybody', attrs: null}]]);
+		expect(formatted).toEqual([[{attrs: null, text: 'hello everybody'}]]);
 	});
 
 	it('produces an empty array given an empty input', () => {
@@ -21,8 +19,8 @@ describe('Markdown Parser', () => {
 		const formatted = parser('hello\neverybody');
 
 		expect(formatted).toEqual([
-			[{text: 'hello', attrs: null}],
-			[{text: 'everybody', attrs: null}],
+			[{attrs: null, text: 'hello'}],
+			[{attrs: null, text: 'everybody'}],
 		]);
 	});
 
@@ -30,11 +28,11 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a **b** c __d__ e');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {'font-weight': 'bolder'}},
-			{text: ' c ', attrs: null},
-			{text: 'd', attrs: {'font-weight': 'bolder'}},
-			{text: ' e', attrs: null},
+			{attrs: null, text: 'a '},
+			{attrs: {'font-weight': 'bolder'}, text: 'b'},
+			{attrs: null, text: ' c '},
+			{attrs: {'font-weight': 'bolder'}, text: 'd'},
+			{attrs: null, text: ' e'},
 		]]);
 	});
 
@@ -42,7 +40,7 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a**b**c__d__e');
 
 		expect(formatted).toEqual([[
-			{text: 'a**b**c__d__e', attrs: null},
+			{attrs: null, text: 'a**b**c__d__e'},
 		]]);
 	});
 
@@ -50,11 +48,11 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a **b\nc** d');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {'font-weight': 'bolder'}},
+			{attrs: null, text: 'a '},
+			{attrs: {'font-weight': 'bolder'}, text: 'b'},
 		], [
-			{text: 'c', attrs: {'font-weight': 'bolder'}},
-			{text: ' d', attrs: null},
+			{attrs: {'font-weight': 'bolder'}, text: 'c'},
+			{attrs: null, text: ' d'},
 		]]);
 	});
 
@@ -62,11 +60,11 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a *b* c _d_ e');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {'font-style': 'italic'}},
-			{text: ' c ', attrs: null},
-			{text: 'd', attrs: {'font-style': 'italic'}},
-			{text: ' e', attrs: null},
+			{attrs: null, text: 'a '},
+			{attrs: {'font-style': 'italic'}, text: 'b'},
+			{attrs: null, text: ' c '},
+			{attrs: {'font-style': 'italic'}, text: 'd'},
+			{attrs: null, text: ' e'},
 		]]);
 	});
 
@@ -74,9 +72,9 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a ~b~ c');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {'text-decoration': 'line-through'}},
-			{text: ' c', attrs: null},
+			{attrs: null, text: 'a '},
+			{attrs: {'text-decoration': 'line-through'}, text: 'b'},
+			{attrs: null, text: ' c'},
 		]]);
 	});
 
@@ -84,9 +82,9 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a `b` c');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {'font-family': 'monospace'}},
-			{text: ' c', attrs: null},
+			{attrs: null, text: 'a '},
+			{attrs: {'font-family': 'monospace'}, text: 'b'},
+			{attrs: null, text: ' c'},
 		]]);
 	});
 
@@ -94,9 +92,9 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a.`b`.c');
 
 		expect(formatted).toEqual([[
-			{text: 'a.', attrs: null},
-			{text: 'b', attrs: {'font-family': 'monospace'}},
-			{text: '.c', attrs: null},
+			{attrs: null, text: 'a.'},
+			{attrs: {'font-family': 'monospace'}, text: 'b'},
+			{attrs: null, text: '.c'},
 		]]);
 	});
 
@@ -104,12 +102,12 @@ describe('Markdown Parser', () => {
 		const formatted = parser('a **_b_ c**');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: null},
-			{text: 'b', attrs: {
-				'font-weight': 'bolder',
+			{attrs: null, text: 'a '},
+			{attrs: {
 				'font-style': 'italic',
-			}},
-			{text: ' c', attrs: {'font-weight': 'bolder'}},
+				'font-weight': 'bolder',
+			}, text: 'b'},
+			{attrs: {'font-weight': 'bolder'}, text: ' c'},
 		]]);
 	});
 
@@ -117,16 +115,16 @@ describe('Markdown Parser', () => {
 		const formatted = parser('_a **b_ ~c~**');
 
 		expect(formatted).toEqual([[
-			{text: 'a ', attrs: {'font-style': 'italic'}},
-			{text: 'b', attrs: {
-				'font-weight': 'bolder',
+			{attrs: {'font-style': 'italic'}, text: 'a '},
+			{attrs: {
 				'font-style': 'italic',
-			}},
-			{text: ' ', attrs: {'font-weight': 'bolder'}},
-			{text: 'c', attrs: {
+				'font-weight': 'bolder',
+			}, text: 'b'},
+			{attrs: {'font-weight': 'bolder'}, text: ' '},
+			{attrs: {
 				'font-weight': 'bolder',
 				'text-decoration': 'line-through',
-			}},
+			}, text: 'c'},
 		]]);
 	});
 

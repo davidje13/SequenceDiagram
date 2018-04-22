@@ -1,5 +1,3 @@
-/* eslint-disable sort-keys */ // Maybe later
-
 import BaseComponent, {register} from './BaseComponent.mjs';
 import {mergeSets} from '../../../core/ArrayUtilities.mjs';
 
@@ -36,11 +34,11 @@ class Arrowhead {
 		const config = this.getConfig(theme);
 		const short = this.short(theme);
 		layer.add(config.render(config.attrs, {
+			dir,
+			height: config.height,
+			width: config.width,
 			x: pt.x + short * dir.dx,
 			y: pt.y + short * dir.dy,
-			width: config.width,
-			height: config.height,
-			dir,
 		}));
 	}
 
@@ -74,9 +72,9 @@ class Arrowcross {
 	render(layer, theme, pt, dir) {
 		const config = this.getConfig(theme);
 		layer.add(config.render({
+			radius: config.radius,
 			x: pt.x + config.short * dir.dx,
 			y: pt.y + config.short * dir.dy,
-			radius: config.radius,
 		}));
 	}
 
@@ -96,10 +94,10 @@ class Arrowcross {
 
 const ARROWHEADS = [
 	{
-		render: () => null,
-		width: () => 0,
 		height: () => 0,
 		lineGap: () => 0,
+		render: () => null,
+		width: () => 0,
 	},
 	new Arrowhead('single'),
 	new Arrowhead('double'),
@@ -184,12 +182,12 @@ export class Connect extends BaseComponent {
 		const dx1 = lArrow.lineGap(env.theme, line.attrs);
 		const dx2 = rArrow.lineGap(env.theme, line.attrs);
 		const rendered = line.renderRev(line.attrs, {
-			x1: x1 + dx1,
-			y1,
-			x2: x2 + dx2,
-			y2,
-			xR,
 			rad: config.loopbackRadius,
+			x1: x1 + dx1,
+			x2: x2 + dx2,
+			xR,
+			y1,
+			y2,
 		});
 		clickable.add(rendered.shape);
 
@@ -225,9 +223,9 @@ export class Connect extends BaseComponent {
 		);
 
 		const renderedText = env.svg.boxedText({
-			padding: config.mask.padding,
 			boxAttrs: {'fill': '#000000'},
 			labelAttrs: config.label.loopbackAttrs,
+			padding: config.mask.padding,
 		}, label, {
 			x: xL - config.mask.padding.left,
 			y: yBegin - height + config.label.margin.top,
@@ -251,20 +249,20 @@ export class Connect extends BaseComponent {
 		env.lineMaskLayer.add(renderedText.box);
 		const clickable = env.makeRegion().add(
 			env.svg.box(OUTLINE_ATTRS, {
+				'height': raise + env.primaryY - yBegin + arrowDip,
+				'width': xR + config.loopbackRadius - from.x,
 				'x': from.x,
 				'y': yBegin - raise,
-				'width': xR + config.loopbackRadius - from.x,
-				'height': raise + env.primaryY - yBegin + arrowDip,
 			}),
 			renderedText.label
 		);
 
 		this.renderRevArrowLine({
 			x1: from.x + from.currentMaxRad,
-			y1: yBegin,
 			x2: to.x + to.currentMaxRad,
-			y2: env.primaryY,
 			xR,
+			y1: yBegin,
+			y2: env.primaryY,
 		}, options, env, clickable);
 
 		return (
@@ -291,8 +289,8 @@ export class Connect extends BaseComponent {
 
 		const rendered = line.renderFlat(line.attrs, {
 			x1: x1 + d1 * dx,
-			y1: y1 + d1 * dy,
 			x2: x2 - d2 * dx,
+			y1: y1 + d1 * dy,
 			y2: y2 - d2 * dy,
 		});
 		clickable.add(rendered.shape);
@@ -304,9 +302,9 @@ export class Connect extends BaseComponent {
 		rArrow.render(clickable, env.theme, p2, {dx: -dx, dy: -dy});
 
 		return {
+			lArrow,
 			p1,
 			p2,
-			lArrow,
 			rArrow,
 		};
 	}
@@ -316,16 +314,16 @@ export class Connect extends BaseComponent {
 
 		if(from.isVirtualSource) {
 			clickable.add(config.render({
+				radius: config.radius,
 				x: rendered.p1.x - config.radius,
 				y: rendered.p1.y,
-				radius: config.radius,
 			}));
 		}
 		if(to.isVirtualSource) {
 			clickable.add(config.render({
+				radius: config.radius,
 				x: rendered.p2.x + config.radius,
 				y: rendered.p2.y,
-				radius: config.radius,
 			}));
 		}
 	}
@@ -352,9 +350,9 @@ export class Connect extends BaseComponent {
 		}
 
 		const text = env.svg.boxedText({
-			padding: config.mask.padding,
 			boxAttrs,
 			labelAttrs: config.label.attrs,
+			padding: config.mask.padding,
 		}, label, {
 			x: midX,
 			y: midY + config.label.margin.top - height,
@@ -382,8 +380,8 @@ export class Connect extends BaseComponent {
 
 		const rendered = this.renderArrowLine({
 			x1,
-			y1: yBegin,
 			x2,
+			y1: yBegin,
 			y2: env.primaryY,
 		}, options, env, clickable);
 
@@ -394,7 +392,7 @@ export class Connect extends BaseComponent {
 
 		const lift = Math.max(height, arrowSpread);
 
-		this.renderVirtualSources({from, to, rendered}, env, clickable);
+		this.renderVirtualSources({from, rendered, to}, env, clickable);
 
 		clickable.add(env.svg.el('path')
 			.attrs(OUTLINE_ATTRS)
@@ -407,12 +405,12 @@ export class Connect extends BaseComponent {
 			)));
 
 		this.renderSimpleLabel(label, {
+			height,
 			layer: clickable,
 			x1,
-			y1: yBegin,
 			x2,
+			y1: yBegin,
 			y2: env.primaryY,
-			height,
 		}, env);
 
 		return env.primaryY + Math.max(
@@ -482,8 +480,8 @@ export class ConnectDelayBegin extends Connect {
 	render(stage, env) {
 		const dc = env.state.delayedConnections;
 		dc.set(stage.tag, {
-			stage,
 			from: Object.assign({}, env.agentInfos.get(stage.agentIDs[0])),
+			stage,
 			y: env.primaryY,
 		});
 		return env.primaryY + env.theme.actionMargin;

@@ -1,5 +1,3 @@
-/* eslint-disable complexity */ // Temporary ignore while switching linter
-
 function makeCanvas(width, height) {
 	window.devicePixelRatio = 1;
 	const canvas = document.createElement('canvas');
@@ -33,6 +31,20 @@ function proportionalSize(
 		};
 	} else {
 		return {height, width};
+	}
+}
+
+function resize_ranges(l, h) {
+	/* eslint-disable no-bitwise */ // Faster than Math.floor
+	const li = (l | 0);
+	const hi = (h | 0);
+	/* eslint-enable no-bitwise */
+	const lm = (hi === li) ? (h - l) : (li + 1 - l);
+	const hm = h - hi;
+	if(hm < 0.001) {
+		return {hi: hi - 1, hm: 1, li, lm};
+	} else {
+		return {hi, hm, li, lm};
 	}
 }
 
@@ -296,40 +308,20 @@ export default class ImageRegion {
 		return sum;
 	}
 
-	resize(size) {
-		const {width, height} = this.getProportionalSize(size);
-		if(width === this.width && height === this.height) {
-			return this;
-		}
-
+	_resize(width, height) {
 		const {dim} = this;
-		const values = new Float32Array(width * height * dim);
-
 		const mx = this.width / width;
 		const my = this.height / height;
+		const values = new Float32Array(width * height * dim);
 		const norm = 1 / (mx * my);
-
-		function ranges(l, h) {
-			/* eslint-disable no-bitwise */ // Faster than Math.floor
-			const li = (l | 0);
-			const hi = (h | 0);
-			/* eslint-enable no-bitwise */
-			const lm = (hi === li) ? (h - l) : (li + 1 - l);
-			const hm = h - hi;
-			if(hm < 0.001) {
-				return {hi: hi - 1, hm: 1, li, lm};
-			} else {
-				return {hi, hm, li, lm};
-			}
-		}
 
 		const xrs = [];
 		for(let x = 0; x < width; ++ x) {
-			xrs[x] = ranges(x * mx, (x + 1) * mx);
+			xrs[x] = resize_ranges(x * mx, (x + 1) * mx);
 		}
 
 		for(let y = 0; y < height; ++ y) {
-			const yr = ranges(y * my, (y + 1) * my);
+			const yr = resize_ranges(y * my, (y + 1) * my);
 			for(let x = 0; x < width; ++ x) {
 				const xr = xrs[x];
 				const p = (y * width + x) * dim;
@@ -340,6 +332,15 @@ export default class ImageRegion {
 		}
 
 		return new ImageRegion(width, height, values, {dim});
+	}
+
+	resize(size) {
+		const {width, height} = this.getProportionalSize(size);
+		if(width === this.width && height === this.height) {
+			return this;
+		}
+
+		return this._resize(width, height);
 	}
 
 	getSuggestedChannels({blue = null, green = null, red = null} = {}) {
