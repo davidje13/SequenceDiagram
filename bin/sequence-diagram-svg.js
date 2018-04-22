@@ -17,20 +17,20 @@ function read(pipe) {
 	});
 }
 
+function processError(err) {
+	if(typeof err === 'object' && err.message) {
+		return err.message;
+	} else {
+		return err;
+	}
+}
+
 function getCodeArg() {
 	if(process.argv.length > 2 && process.argv[2] !== '-') {
 		return Promise.resolve(process.argv[2]);
 	} else {
 		process.stdin.setEncoding('utf8');
 		return read(process.stdin);
-	}
-}
-
-function processError(err) {
-	if(typeof err === 'object' && err.message) {
-		return err.message;
-	} else {
-		return err;
 	}
 }
 

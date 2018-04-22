@@ -37,6 +37,7 @@ module.exports = (config) => {
 			{pattern: 'spec/helpers/**/*.mjs', type: 'module'},
 			{pattern: '**/*_spec.mjs', type: 'module'},
 			{pattern: '**/*_webspec.mjs', type: 'module'},
+			{included: false, pattern: 'screenshots/**/*'},
 			{included: false, pattern: 'scripts/**/*'},
 			{included: false, pattern: 'spec/**/*'},
 			{included: false, pattern: 'web/**/*'},
@@ -54,6 +55,7 @@ module.exports = (config) => {
 		proxies: {
 			// Add some proxies so that fetch() calls work without modification
 			'/README.md': '/base/README.md',
+			'/screenshots/': '/base/screenshots/',
 			'/spec/': '/base/spec/',
 		},
 		reportSlowerThan: 500,

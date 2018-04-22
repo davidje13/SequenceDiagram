@@ -2,6 +2,14 @@ import ImageRegion from './image/ImageRegion.mjs';
 import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
 import TESTS from './images/list.mjs';
 
+function readError(err) {
+	if(typeof err === 'object' && err.message) {
+		return err.message;
+	} else {
+		return err;
+	}
+}
+
 describe('SequenceDiagram Visuals', () => {
 	const RESOLUTION = 4;
 
@@ -56,7 +64,7 @@ describe('SequenceDiagram Visuals', () => {
 						details: 'Code is:\n\n' + code,
 					});
 				})
-				.catch(fail)
+				.catch((err) => fail(readError(err)))
 				.then(done);
 		});
 	});

@@ -10,7 +10,18 @@ const SAMPLE_REGEX = new RegExp(
 const SCREENSHOT_BLACKLIST = [
 	// Renders differently but correctly in different browsers
 	'screenshots/Themes.png',
+
+	// For some reason this one breaks in headless Chrome
+	'screenshots/Markdown.png',
 ];
+
+function readError(err) {
+	if(typeof err === 'object' && err.message) {
+		return err.message;
+	} else {
+		return err;
+	}
+}
 
 function findSamples(content) {
 	SAMPLE_REGEX.lastIndex = 0;
@@ -28,39 +39,40 @@ function findSamples(content) {
 	return results;
 }
 
-function makeSampleTests({file, code}, index) {
-	describe('example #' + (index + 1), () => {
-		if(file && !SCREENSHOT_BLACKLIST.includes(file)) {
-			it('looks like ' + file + ' when rendered', (done) => {
-				let actual = null;
-				new SequenceDiagram(code)
-					.getCanvas({resolution: RESOLUTION})
-					.then((c) => {
-						actual = ImageRegion
-							.fromCanvas(c)
-							.resize({width: 150});
-					})
-					.then(() => ImageRegion.loadURL(
-						file,
-						{height: actual.height, width: actual.width}
-					))
-					.then((expected) => {
-						expect(actual).toLookLike(expected);
-					})
-					.catch(fail)
-					.then(done);
+function performSampleTests({file, code}, index) {
+	if(file && !SCREENSHOT_BLACKLIST.includes(file)) {
+		let actual = null;
+		return new SequenceDiagram(code)
+			.getCanvas({resolution: RESOLUTION})
+			.then((c) => {
+				actual = ImageRegion
+					.fromCanvas(c)
+					.resize({width: 150});
+			})
+			.then(() => ImageRegion.loadURL(
+				file,
+				{height: actual.height, width: actual.width}
+			))
+			.then((expected) => {
+				expect(actual).toLookLike(expected, {
+					details: '#' + (index + 1) + ' compared to ' + file,
+				});
 			});
-		} else {
-			it('renders without error', () => {
-				expect(() => new SequenceDiagram(code)).not.toThrow();
-			});
-		}
-	});
+	} else {
+		expect(() => new SequenceDiagram(code)).not.toThrow();
+		return Promise.resolve();
+	}
 }
 
-fetch('README.md')
-	.then((response) => response.text())
-	.then(findSamples)
-	.then((samples) => describe('Readme', () => {
-		samples.forEach(makeSampleTests);
-	}));
+describe('Readme', () => {
+	/* eslint-disable jasmine/missing-expect */ // See performSampleTests
+	it('renders all samples correctly', (done) => {
+		/* eslint-enable jasmine/missing-expect */
+		fetch('README.md')
+			.then((response) => response.text())
+			.then(findSamples)
+			.then((samples) => Promise.all(samples.map(performSampleTests)))
+			.catch((err) => fail(readError(err)))
+			.then(done);
+	});
+});
