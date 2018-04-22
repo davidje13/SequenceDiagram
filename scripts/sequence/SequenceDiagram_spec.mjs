@@ -78,7 +78,7 @@ describe('SequenceDiagram', () => {
 			'<g>' +
 			'<text' +
 			' x="0"' +
-			' font-family="sans-serif"' +
+			' font-family="Helvetica,Arial,sans-serif"' +
 			' font-size="20"' +
 			' line-height="1.3"' +
 			' text-anchor="middle"' +
