@@ -72,18 +72,18 @@ describe('SequenceDiagram', () => {
 			'</rect>' +
 			'</mask>' +
 			'</defs>' +
-			'<g mask="url(#FullMask)">' +
-			'<g mask="url(#LineMask)"></g>' +
-			'</g>' +
 			'<g>' +
 			'<text' +
 			' x="0"' +
-			' font-family="Helvetica,Arial,sans-serif"' +
+			' font-family="Helvetica,Arial,Liberation Sans,sans-serif"' +
 			' font-size="20"' +
 			' line-height="1.3"' +
 			' text-anchor="middle"' +
 			' class="title"' +
 			' y="-10">My title here</text>' +
+			'</g>' +
+			'<g mask="url(#FullMask)">' +
+			'<g mask="url(#LineMask)"></g>' +
 			'</g>' +
 			'</svg>'
 		);

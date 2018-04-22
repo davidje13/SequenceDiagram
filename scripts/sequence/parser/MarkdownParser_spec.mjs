@@ -2,6 +2,8 @@ import {dom, textSizerFactory} from '../../../spec/stubs/TestDOM.mjs';
 import SVG from '../../svg/SVG.mjs';
 import parser from './MarkdownParser.mjs';
 
+const MONO_FONT = 'Courier New,Liberation Mono,monospace';
+
 describe('Markdown Parser', () => {
 	it('converts simple text', () => {
 		const formatted = parser('hello everybody');
@@ -110,7 +112,7 @@ describe('Markdown Parser', () => {
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a '},
-			{attrs: {'font-family': 'monospace'}, text: 'b'},
+			{attrs: {'font-family': MONO_FONT}, text: 'b'},
 			{attrs: null, text: ' c'},
 		]]);
 	});
@@ -120,7 +122,7 @@ describe('Markdown Parser', () => {
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a.'},
-			{attrs: {'font-family': 'monospace'}, text: 'b'},
+			{attrs: {'font-family': MONO_FONT}, text: 'b'},
 			{attrs: null, text: '.c'},
 		]]);
 	});

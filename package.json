@@ -33,7 +33,8 @@
     "start": "http-server",
     "test": "npm run unit-test && npm run web-test && npm run lint && echo 'PASSED :)'",
     "unit-test": "rollup --config spec/support/rollup.config.js && node -r source-map-support/register node_modules/.bin/jasmine --config=spec/support/jasmine.json",
-    "web-test": "karma start spec/support/karma.conf.js --single-run"
+    "web-test": "karma start spec/support/karma.conf.js --single-run",
+    "web-test:manual": "MANUAL=1 karma start spec/support/karma.conf.js"
   },
   "devDependencies": {
     "buffer-to-stream": "^1.0.0",

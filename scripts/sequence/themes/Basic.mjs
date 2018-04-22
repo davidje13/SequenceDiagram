@@ -2,7 +2,7 @@
 
 import BaseTheme, {WavePattern} from './BaseTheme.mjs';
 
-const FONT = 'Helvetica,Arial,sans-serif';
+const FONT = 'Helvetica,Arial,Liberation Sans,sans-serif';
 const LINE_HEIGHT = 1.3;
 
 const WAVE = new WavePattern(6, 0.5);

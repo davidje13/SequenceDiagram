@@ -2,7 +2,7 @@
 
 import BaseTheme, {WavePattern} from './BaseTheme.mjs';
 
-const FONT = 'monospace';
+const FONT = 'Courier New,Liberation Mono,monospace';
 const LINE_HEIGHT = 1.3;
 
 const WAVE = new WavePattern(6, [

@@ -1,3 +1,7 @@
+/* eslint-disable no-process-env */ // Configuration section
+const manual = Boolean(process.env.MANUAL);
+/* eslint-enable no-process-env */
+
 /*
  * Firefox is supported, but tests will fail until version 60 is out
  * due to the use of es6 modules, so exclude it for now.
@@ -7,6 +11,10 @@ const SUPPORTED_BROWSERS = [
 	// 'firefox',
 	'safari',
 ];
+
+if(manual) {
+	SUPPORTED_BROWSERS.length = 0;
+}
 
 function is_supported_browser(name) {
 	const lcName = name.toLowerCase();
@@ -34,6 +42,11 @@ module.exports = (config) => {
 		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'weblib/**'],
 		files: [
 			'node_modules/codemirror/lib/codemirror.js',
+			{
+				included: manual,
+				pattern: 'spec/support/karma-hang.mjs',
+				type: 'module',
+			},
 			{pattern: 'spec/helpers/**/*.mjs', type: 'module'},
 			{pattern: '**/*_spec.mjs', type: 'module'},
 			{pattern: '**/*_webspec.mjs', type: 'module'},

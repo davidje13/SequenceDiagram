@@ -20,7 +20,7 @@ const STYLES = [
 		begin: /[\s_*`]~(?=\S)/g,
 		end: /\S~(?=[\s_*`])/g,
 	}, {
-		attrs: {'font-family': 'monospace'},
+		attrs: {'font-family': 'Courier New,Liberation Mono,monospace'},
 		begin: /[\s_*~.]`(?=\S)/g,
 		end: /\S`(?=[\s_*~.])/g,
 	},

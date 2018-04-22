@@ -10,9 +10,6 @@ const SAMPLE_REGEX = new RegExp(
 const SCREENSHOT_BLACKLIST = [
 	// Renders differently but correctly in different browsers
 	'screenshots/Themes.png',
-
-	// For some reason this one breaks in headless Chrome
-	'screenshots/Markdown.png',
 ];
 
 function readError(err) {

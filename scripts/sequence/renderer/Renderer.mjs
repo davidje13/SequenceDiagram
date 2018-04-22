@@ -129,15 +129,15 @@ export default class Renderer extends EventObject {
 			this.themeDefs,
 			this.defs,
 			this.backgroundFills,
+			this.title,
+			this.unmaskedShapes,
 			el('g')
 				.attr('mask', 'url(#' + this.namespace + 'FullMask)')
 				.add(
 					this.agentLines,
 					this.blocks,
 					this.shapes
-				),
-			this.unmaskedShapes,
-			this.title
+				)
 		);
 	}
 

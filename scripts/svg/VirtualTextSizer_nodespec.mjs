@@ -3,6 +3,8 @@ import {SVGTextBlock} from './SVGTextBlock.mjs';
 import VirtualTextSizer from './VirtualTextSizer.mjs';
 import {dom} from '../../spec/stubs/TestDOM.mjs';
 
+const MONO_FONT = 'Courier New,Liberation Mono,monospace';
+
 describe('VirtualTextSizer', () => {
 	const attrs = {'font-size': 10, 'line-height': 1.5};
 	let svg = null;
@@ -57,13 +59,13 @@ describe('VirtualTextSizer', () => {
 
 			const sizeMono = safeMeasure(attrs, [[
 				{text: 'foo'},
-				{attrs: {'font-family': 'monospace'}, text: 'bar'},
+				{attrs: {'font-family': MONO_FONT}, text: 'bar'},
 			]]);
 
 			const sizeMonoBold = safeMeasure(attrs, [[
 				{text: 'foo'},
 				{attrs: {
-					'font-family': 'monospace',
+					'font-family': MONO_FONT,
 					'font-weight': 'bolder',
 				}, text: 'bar'},
 			]]);

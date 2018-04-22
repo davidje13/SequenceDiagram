@@ -2,6 +2,8 @@ import {SVGTextBlock, TextSizer} from './SVGTextBlock.mjs';
 import {DOMWrapper} from '../../spec/stubs/TestDOM.mjs';
 import SVG from './SVG.mjs';
 
+const MONO_FONT = 'Courier New,Liberation Mono,monospace';
+
 describe('TextSizer', () => {
 	const attrs = {'font-size': 10, 'line-height': 1.5};
 	let svg = null;
@@ -64,13 +66,13 @@ describe('TextSizer', () => {
 
 			const sizeMono = safeMeasure(attrs, [[
 				{text: 'foo'},
-				{attrs: {'font-family': 'monospace'}, text: 'bar'},
+				{attrs: {'font-family': MONO_FONT}, text: 'bar'},
 			]]);
 
 			const sizeMonoBold = safeMeasure(attrs, [[
 				{text: 'foo'},
 				{attrs: {
-					'font-family': 'monospace',
+					'font-family': MONO_FONT,
 					'font-weight': 'bolder',
 				}, text: 'bar'},
 			]]);
