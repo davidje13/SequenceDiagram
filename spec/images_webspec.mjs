@@ -1,7 +1,6 @@
-import ImageRegion from '../image/ImageRegion.mjs';
-import SequenceDiagram from './SequenceDiagram.mjs';
-import TESTS from '../../spec/images/list.mjs';
-import {matchers} from '../image/ImageSimilarity.mjs';
+import ImageRegion from './image/ImageRegion.mjs';
+import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
+import TESTS from './images/list.mjs';
 
 describe('SequenceDiagram Visuals', () => {
 	const RESOLUTION = 4;
@@ -48,8 +47,6 @@ describe('SequenceDiagram Visuals', () => {
 
 	TESTS.forEach((image) => {
 		it('renders ' + image + ' as expected', (done) => {
-			jasmine.addMatchers(matchers);
-
 			loadAndRenderURL(IMAGE_BASE_PATH + image)
 				.then(({actual, expected, code}) => {
 					const widthSm = Math.min(Math.round(actual.width / 4), 150);

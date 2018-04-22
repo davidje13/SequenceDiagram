@@ -1,7 +1,7 @@
 import './Blur.mjs';
 import './Composition.mjs';
 import ImageRegion from './ImageRegion.mjs';
-import {headless} from '../core/browser.mjs';
+import {headless} from '../../scripts/core/browser.mjs';
 
 function getThresholds({
 	pixelThresh = 2,

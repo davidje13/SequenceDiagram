@@ -1,7 +1,7 @@
 /* eslint-disable max-statements */
 
 import ImageRegion from './ImageRegion.mjs';
-import {nodejs} from '../core/browser.mjs';
+import {nodejs} from '../../scripts/core/browser.mjs';
 
 describe('ImageRegion', () => {
 	function makeCanvas(w, h) {

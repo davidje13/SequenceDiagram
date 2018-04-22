@@ -1,6 +1,5 @@
-import ImageRegion from '../image/ImageRegion.mjs';
-import SequenceDiagram from './SequenceDiagram.mjs';
-import {matchers} from '../image/ImageSimilarity.mjs';
+import ImageRegion from './image/ImageRegion.mjs';
+import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
 
 const RESOLUTION = 4;
 
@@ -33,7 +32,6 @@ function makeSampleTests({file, code}, index) {
 	describe('example #' + (index + 1), () => {
 		if(file && !SCREENSHOT_BLACKLIST.includes(file)) {
 			it('looks like ' + file + ' when rendered', (done) => {
-				jasmine.addMatchers(matchers);
 				let actual = null;
 				new SequenceDiagram(code)
 					.getCanvas({resolution: RESOLUTION})
