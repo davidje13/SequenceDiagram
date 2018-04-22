@@ -1,21 +1,6 @@
 #!/usr/bin/env node
 
-const {
-	headlessTextSizerFactory,
-	SequenceDiagram,
-	VirtualDocument,
-} = require('../lib/sequence-diagram');
-
-function render(code) {
-	const sd = new SequenceDiagram({
-		code,
-		document: new VirtualDocument(),
-		namespace: '',
-		textSizerFactory: headlessTextSizerFactory,
-	});
-
-	return sd.dom().outerHTML;
-}
+const {VirtualSequenceDiagram} = require('../lib/sequence-diagram');
 
 function read(pipe) {
 	return new Promise((resolve) => {
@@ -41,6 +26,15 @@ function getCodeArg() {
 	}
 }
 
-getCodeArg().then((code) => {
-	process.stdout.write(render(code) + '\n');
-});
+function processError(err) {
+	if(typeof err === 'object' && err.message) {
+		return err.message;
+	} else {
+		return err;
+	}
+}
+
+getCodeArg()
+	.then(VirtualSequenceDiagram.render)
+	.then((svg) => process.stdout.write(svg + '\n'))
+	.catch((err) => process.stderr.write(processError(err) + '\n'));

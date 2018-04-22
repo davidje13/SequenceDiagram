@@ -192,6 +192,14 @@ export default class SequenceDiagram extends EventObject {
 		return this.renderer.getThemes();
 	}
 
+	getSVGCodeSynchronous() {
+		return this.exporter.getSVGContent(this.renderer);
+	}
+
+	getSVGCode() {
+		return Promise.resolve(this.getSVGCodeSynchronous());
+	}
+
 	getSVGSynchronous() {
 		return this.exporter.getSVGURL(this.renderer);
 	}
