@@ -1,13 +1,19 @@
 function encodeChar(c) {
-	return '&#' + c.charCodeAt(0).toString(10) + ';';
+	return '&#' + c.codePointAt(0).toString(10) + ';';
 }
 
 function escapeHTML(text) {
-	return text.replace(/[^\r\n\t -%'-;=?-~]/g, encodeChar);
+	return text.replace(
+		/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\r\n\t -%'-;=?-~]/g,
+		encodeChar
+	);
 }
 
 function escapeQuoted(text) {
-	return text.replace(/[^\r\n\t !#$%(-;=?-~]/g, encodeChar);
+	return text.replace(
+		/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\r\n\t !#$%'-;=?-~]/g,
+		encodeChar
+	);
 }
 
 class TextNode {

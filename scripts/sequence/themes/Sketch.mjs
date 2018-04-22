@@ -6,7 +6,7 @@ import Handlee from '../../fonts/HandleeFontData.mjs';
 import Random from '../../core/Random.mjs';
 
 const FONT = Handlee.name;
-const FONT_FAMILY = '\'' + FONT + '\',cursive';
+const FONT_FAMILY = FONT + ',cursive';
 const LINE_HEIGHT = 1.5;
 const MAX_CHAOS = 5;
 
@@ -374,7 +374,7 @@ export default class SketchTheme extends BaseTheme {
 			// Font must be embedded for exporting as SVG / PNG
 			style.text(
 				'@font-face{' +
-				'font-family:"' + Handlee.name + '";' +
+				'font-family:' + Handlee.name + ';' +
 				'src:url("data:font/woff2;base64,' + Handlee.woff2 + '");' +
 				'}'
 			);

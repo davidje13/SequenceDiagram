@@ -66,6 +66,16 @@ describe('SVGTextBlock', () => {
 			expect(hold.childNodes[1].innerHTML).toEqual('bar');
 		});
 
+		it('renders with tspans if the formatting changes', () => {
+			block.set({formatted: [[
+				{text: 'foo'},
+				{attrs: {zig: 'zag'}, text: 'bar'},
+			]]});
+
+			expect(hold.childNodes[0].innerHTML)
+				.toEqual('foo<tspan zig="zag">bar</tspan>');
+		});
+
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			const [line0, line1] = hold.childNodes;

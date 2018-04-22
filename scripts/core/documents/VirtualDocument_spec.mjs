@@ -236,9 +236,9 @@ describe('VirtualDocument', () => {
 
 		it('escapes attributes', () => {
 			const o = doc.createElement('div');
-			o.setAttribute('foo', 'b&a"r');
+			o.setAttribute('foo', 'b&a"\'r');
 
-			expect(o.outerHTML).toEqual('<div foo="b&#38;a&#34;r"></div>');
+			expect(o.outerHTML).toEqual('<div foo="b&#38;a&#34;\'r"></div>');
 		});
 
 		it('includes all children', () => {
@@ -257,6 +257,13 @@ describe('VirtualDocument', () => {
 			o.appendChild(doc.createTextNode('a<b>c'));
 
 			expect(o.outerHTML).toEqual('<div>a&#60;b&#62;c</div>');
+		});
+
+		it('escapes non-BMP unicode characters', () => {
+			const o = doc.createElement('div');
+			o.appendChild(doc.createTextNode('\uD83D\uDE02'));
+
+			expect(o.outerHTML).toEqual('<div>&#128514;</div>');
 		});
 	});
 });

@@ -24,6 +24,33 @@ describe('Markdown Parser', () => {
 		]);
 	});
 
+	it('trims leading and trailing whitespace', () => {
+		const formatted = parser('  a \n \u00A0b \n  ');
+
+		expect(formatted).toEqual([
+			[{attrs: null, text: 'a'}],
+			[{attrs: null, text: '\u00A0b'}],
+		]);
+	});
+
+	it('replaces sequences of whitespace with a single space', () => {
+		const formatted = parser('abc  \t \v def');
+
+		expect(formatted).toEqual([
+			[{attrs: null, text: 'abc def'}],
+		]);
+	});
+
+	it('maintains internal blank lines', () => {
+		const formatted = parser('abc\n\ndef');
+
+		expect(formatted).toEqual([
+			[{attrs: null, text: 'abc'}],
+			[],
+			[{attrs: null, text: 'def'}],
+		]);
+	});
+
 	it('recognises bold styling', () => {
 		const formatted = parser('a **b** c __d__ e');
 

@@ -62,6 +62,14 @@ function combineAttrs(activeCount, active) {
 	return attrs;
 }
 
+function shrinkWhitespace(text) {
+	return text.replace(/[\f\n\r\t\v ]+/g, ' ');
+}
+
+function trimCollapsible(text) {
+	return text.replace(/^[\f\n\r\t\v ]+|[\f\n\r\t\v ]+$/g, '');
+}
+
 export default function parseMarkdown(text) {
 	if(!text) {
 		return [];
@@ -70,13 +78,14 @@ export default function parseMarkdown(text) {
 	const active = STYLES.map(() => false);
 	let activeCount = 0;
 	let attrs = null;
-	const lines = text.split('\n');
+	const lines = trimCollapsible(text).split('\n');
 	const result = [];
 	lines.forEach((line) => {
+		const ln = shrinkWhitespace(trimCollapsible(line));
 		const parts = [];
 		let p = 0;
 		for(;;) {
-			const {styleIndex, start, end} = findNext(line, p, active);
+			const {styleIndex, start, end} = findNext(ln, p, active);
 			if(styleIndex === -1) {
 				break;
 			}
@@ -88,13 +97,13 @@ export default function parseMarkdown(text) {
 				++ activeCount;
 			}
 			if(start > p) {
-				parts.push({attrs, text: line.substring(p, start)});
+				parts.push({attrs, text: ln.substring(p, start)});
 			}
 			attrs = combineAttrs(activeCount, active);
 			p = end;
 		}
-		if(p < line.length) {
-			parts.push({attrs, text: line.substr(p)});
+		if(p < ln.length) {
+			parts.push({attrs, text: ln.substr(p)});
 		}
 		result.push(parts);
 	});
