@@ -4,27 +4,24 @@ import Generator from './generator/Generator.mjs';
 import Parser from './parser/Parser.mjs';
 import Renderer from './renderer/Renderer.mjs';
 import SequenceDiagram from './SequenceDiagram.mjs';
-import {nodejs} from '../core/browser.mjs';
+
+function getSimplifiedContent(d) {
+	return (d.dom().outerHTML
+		.replace(/<g><\/g>/g, '')
+		.replace(/<defs><\/defs>/g, '')
+		.replace(' xmlns="http://www.w3.org/2000/svg" version="1.1"', '')
+	);
+}
+
+function makeDiagram(code) {
+	return new SequenceDiagram(code, {
+		document: new VirtualDocument(),
+		namespace: '',
+		textSizerFactory,
+	});
+}
 
 describe('SequenceDiagram', () => {
-	function getSimplifiedContent(d) {
-		return (d.dom().outerHTML
-			.replace(/<g><\/g>/g, '')
-			.replace(/<defs><\/defs>/g, '')
-			.replace(' xmlns="http://www.w3.org/2000/svg" version="1.1"', '')
-		);
-	}
-
-	let diagram = null;
-
-	beforeEach(() => {
-		diagram = new SequenceDiagram({
-			document: new VirtualDocument(),
-			namespace: '',
-			textSizerFactory,
-		});
-	});
-
 	it('contains references to core objects', () => {
 		expect(SequenceDiagram.Parser).toBe(Parser);
 		expect(SequenceDiagram.Generator).toBe(Generator);
@@ -37,7 +34,7 @@ describe('SequenceDiagram', () => {
 	});
 
 	it('renders empty diagrams without error', () => {
-		diagram.set('');
+		const diagram = makeDiagram('');
 
 		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-5 -5 10 10">' +
@@ -60,7 +57,7 @@ describe('SequenceDiagram', () => {
 	});
 
 	it('renders simple metadata', () => {
-		diagram.set('title My title here');
+		const diagram = makeDiagram('title My title here');
 
 		expect(getSimplifiedContent(diagram)).toEqual(
 			'<svg viewBox="-11.5 -16 23 21">' +
@@ -92,8 +89,15 @@ describe('SequenceDiagram', () => {
 		);
 	});
 
+	it('re-renders when changed', () => {
+		const diagram = makeDiagram('title My title here');
+		diagram.set('title Another title');
+
+		expect(getSimplifiedContent(diagram)).toContain('Another title');
+	});
+
 	it('renders simple components', () => {
-		diagram.set('A -> B');
+		const diagram = makeDiagram('A -> B');
 
 		const content = getSimplifiedContent(diagram);
 
@@ -142,7 +146,7 @@ describe('SequenceDiagram', () => {
 	});
 
 	it('renders collapsed blocks', () => {
-		diagram.set('if\nA -> B\nend');
+		const diagram = makeDiagram('if\nA -> B\nend');
 		diagram.setCollapsed(0, true);
 
 		const content = getSimplifiedContent(diagram);
@@ -166,55 +170,5 @@ describe('SequenceDiagram', () => {
 		);
 
 		expect(content).toContain('<g class="region collapsed"');
-	});
-
-	it('measures OS fonts correctly on the first render', (done) => {
-		if(nodejs) {
-			pending('NodeJS font rendering not implemented yet');
-			return;
-		}
-
-		const code = 'title message';
-		const sd = new SequenceDiagram(code);
-		const widthImmediate = sd.getSize().width;
-
-		expect(widthImmediate).toBeGreaterThan(40);
-
-		sd.set(code);
-
-		expect(sd.getSize().width).toEqual(widthImmediate);
-
-		setTimeout(() => {
-			sd.set(code);
-
-			expect(sd.getSize().width).toEqual(widthImmediate);
-
-			done();
-		}, 500);
-	});
-
-	it('measures embedded fonts correctly on the first render', (done) => {
-		if(nodejs) {
-			pending('NodeJS font rendering not implemented yet');
-			return;
-		}
-
-		const code = 'theme sketch\ntitle message';
-		const sd = new SequenceDiagram(code);
-		const widthImmediate = sd.getSize().width;
-
-		expect(widthImmediate).toBeGreaterThan(40);
-
-		sd.set(code);
-
-		expect(sd.getSize().width).toEqual(widthImmediate);
-
-		setTimeout(() => {
-			sd.set(code);
-
-			expect(sd.getSize().width).toEqual(widthImmediate);
-
-			done();
-		}, 500);
 	});
 });

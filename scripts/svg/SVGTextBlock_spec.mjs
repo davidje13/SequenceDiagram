@@ -1,7 +1,6 @@
-import {DOMWrapper, dom, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
-import {SVGTextBlock, TextSizer} from './SVGTextBlock.mjs';
+import {dom, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
 import SVG from './SVG.mjs';
-import {nodejs} from '../core/browser.mjs';
+import {SVGTextBlock} from './SVGTextBlock.mjs';
 
 describe('SVGTextBlock', () => {
 	const attrs = {'font-size': 10, 'line-height': 1.5};
@@ -125,107 +124,6 @@ describe('SVGTextBlock', () => {
 			expect(hold.childNodes.length).toEqual(0);
 			expect(block.state.formatted).toEqual([]);
 			expect(block.lines.length).toEqual(0);
-		});
-	});
-
-	describe('TextSizer', () => {
-		if(nodejs) {
-			// TextSizer is for browsers only
-			return;
-		}
-
-		beforeEach(() => {
-			svg = new SVG(
-				new DOMWrapper(window.document),
-				(svgBase) => new TextSizer(svgBase)
-			);
-			document.body.appendChild(svg.body.element);
-		});
-
-		afterEach(() => {
-			document.body.removeChild(svg.body.element);
-		});
-
-		describe('.measure', () => {
-			it('calculates the size of the formatted text', () => {
-				const size = svg.textSizer.measure(attrs, [[{text: 'foo'}]]);
-
-				expect(size.width).toBeGreaterThan(0);
-				expect(size.height).toEqual(15);
-			});
-
-			it('calculates the size of text blocks', () => {
-				block.set({formatted: [[{text: 'foo'}]]});
-				const size = svg.textSizer.measure(block);
-
-				expect(size.width).toBeGreaterThan(0);
-				expect(size.height).toEqual(15);
-			});
-
-			it('measures multiline text', () => {
-				const size = svg.textSizer.measure(attrs, [
-					[{text: 'foo'}],
-					[{text: 'bar'}],
-				]);
-
-				expect(size.width).toBeGreaterThan(0);
-				expect(size.height).toEqual(30);
-			});
-
-			it('returns 0, 0 for empty content', () => {
-				const size = svg.textSizer.measure(attrs, []);
-
-				expect(size.width).toEqual(0);
-				expect(size.height).toEqual(0);
-			});
-
-			it('returns the maximum width for multiline text', () => {
-				const size0 = svg.textSizer.measure(attrs, [
-					[{text: 'foo'}],
-				]);
-				const size1 = svg.textSizer.measure(attrs, [
-					[{text: 'longline'}],
-				]);
-				const size = svg.textSizer.measure(attrs, [
-					[{text: 'foo'}],
-					[{text: 'longline'}],
-					[{text: 'foo'}],
-				]);
-
-				expect(size1.width).toBeGreaterThan(size0.width);
-				expect(size.width).toEqual(size1.width);
-			});
-		});
-
-		describe('.measureHeight', () => {
-			it('calculates the height of the rendered text', () => {
-				const height = svg.textSizer.measureHeight(attrs, [
-					[{text: 'foo'}],
-				]);
-
-				expect(height).toEqual(15);
-			});
-
-			it('measures multiline text', () => {
-				const height = svg.textSizer.measureHeight(attrs, [
-					[{text: 'foo'}],
-					[{text: 'bar'}],
-				]);
-
-				expect(height).toEqual(30);
-			});
-
-			it('returns 0 for empty content', () => {
-				const height = svg.textSizer.measureHeight(attrs, []);
-
-				expect(height).toEqual(0);
-			});
-
-			it('does not require the container', () => {
-				svg.textSizer.measureHeight(attrs, [[{text: 'foo'}]]);
-
-				expect(svg.body.element.childNodes.length).toEqual(0);
-			});
 		});
 	});
 });

@@ -72,8 +72,7 @@ class TextSizerWrapper {
 		const labelKey = JSON.stringify(line);
 		const cache = attrCache.lines.get(labelKey);
 		if(cache.width === null) {
-			window.console.warn('Performing unexpected measurement', line);
-			this.performMeasurements();
+			throw new Error('Unexpected measurement of ' + line);
 		}
 		return cache.width;
 	}

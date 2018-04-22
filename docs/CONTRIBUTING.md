@@ -97,8 +97,9 @@ the root of `/web` as their entry-points.
 The testing library used here is [Jasmine](https://jasmine.github.io/).
 
 All test files follow the naming convention of `<filename>_spec.mjs`
-(commandline and browser) or `_webspec.mjs` (browser-only). Linting
-automatically applies to all files with a `.js` or `.mjs` extension.
+(commandline and browser), `_webspec.mjs` (browser-only), or
+`_nodespec.mjs` (commandline-only). Linting automatically applies to
+all files with a `.js` or `.mjs` extension.
 
 You can run just the browser tests by running `npm run web-test`.
 

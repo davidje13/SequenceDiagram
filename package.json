@@ -12,10 +12,11 @@
   },
   "license": "LGPL-3.0",
   "files": [
-    "lib/sequence-diagram-web.js",
+    "bin",
+    "fonts",
     "lib/sequence-diagram.js",
-    "scripts",
-    "bin"
+    "lib/sequence-diagram-web.js",
+    "scripts"
   ],
   "main": "lib/sequence-diagram",
   "module": "scripts/standalone",
@@ -24,7 +25,7 @@
   },
   "scripts": {
     "lint": "eslint . --config spec/support/eslintrc.js --ignore-path spec/support/eslintignore --ext .js --ext .mjs",
-    "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram.min.js -- lib/sequence-diagram.js",
+    "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js",
     "minify-web": "rollup --config web/rollup.config.js && uglifyjs --compress --mangle --warn --output weblib/editor.min.js -- weblib/editor.js",
     "minify": "npm run minify-lib && npm run minify-web",
     "prepublishOnly": "npm run minify-lib",
@@ -51,5 +52,8 @@
     "rollup-plugin-multi-entry": "^2.0.2",
     "source-map-support": "^0.5.4",
     "uglify-es": "^3.1.10"
+  },
+  "dependencies": {
+    "opentype.js": "^0.8.0"
   }
 }
