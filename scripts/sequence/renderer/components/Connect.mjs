@@ -1,7 +1,7 @@
 /* eslint-disable sort-keys */ // Maybe later
 
 import BaseComponent, {register} from './BaseComponent.mjs';
-import {mergeSets} from '../../core/ArrayUtilities.mjs';
+import {mergeSets} from '../../../core/ArrayUtilities.mjs';
 
 const OUTLINE_ATTRS = {
 	'class': 'outline',

@@ -1,6 +1,6 @@
 /* eslint-disable complexity */ // Temporary ignore while switching linter
 
-import {last, mergeSets} from '../core/ArrayUtilities.mjs';
+import {last, mergeSets} from '../../core/ArrayUtilities.mjs';
 
 const TRIMMER = /^([ \t]*)(.*)$/;
 const SQUASH = {

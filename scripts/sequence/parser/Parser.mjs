@@ -3,7 +3,7 @@
 /* eslint-disable complexity */ // Temporary ignore while switching linter
 /* eslint-disable no-param-reassign */ // Also temporary
 
-import {combine, last} from '../core/ArrayUtilities.mjs';
+import {combine, last} from '../../core/ArrayUtilities.mjs';
 import Tokeniser from './Tokeniser.mjs';
 import labelPatternParser from './LabelPatternParser.mjs';
 import markdownParser from './MarkdownParser.mjs';

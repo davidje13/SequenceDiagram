@@ -1,7 +1,10 @@
 /* eslint-disable sort-keys */ // Maybe later
 
-import {VirtualDocument, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
-import {Factory as BasicThemeFactory} from './themes/Basic.mjs';
+import {
+	VirtualDocument,
+	textSizerFactory,
+} from '../../../spec/stubs/TestDOM.mjs';
+import {Factory as BasicThemeFactory} from '../themes/Basic.mjs';
 import Renderer from './Renderer.mjs';
 
 describe('Sequence Renderer', () => {

@@ -1,8 +1,8 @@
 import {VirtualDocument, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
-import Exporter from './Exporter.mjs';
-import Generator from './Generator.mjs';
-import Parser from './Parser.mjs';
-import Renderer from './Renderer.mjs';
+import Exporter from './exporter/Exporter.mjs';
+import Generator from './generator/Generator.mjs';
+import Parser from './parser/Parser.mjs';
+import Renderer from './renderer/Renderer.mjs';
 import SequenceDiagram from './SequenceDiagram.mjs';
 import {nodejs} from '../core/browser.mjs';
 

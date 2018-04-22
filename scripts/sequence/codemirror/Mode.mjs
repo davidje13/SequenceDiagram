@@ -2,7 +2,7 @@
 /* eslint-disable sort-keys */ // Maybe later
 /* eslint-disable complexity */ // Temporary ignore while switching linter
 
-import {flatMap, last, mergeSets} from '../core/ArrayUtilities.mjs';
+import {flatMap, last, mergeSets} from '../../core/ArrayUtilities.mjs';
 
 const CM_ERROR = {type: 'error line-error', suggest: false, then: {'': 0}};
 

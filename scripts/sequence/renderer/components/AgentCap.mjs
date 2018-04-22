@@ -1,5 +1,5 @@
 import BaseComponent, {register} from './BaseComponent.mjs';
-import {mergeSets, removeAll} from '../../core/ArrayUtilities.mjs';
+import {mergeSets, removeAll} from '../../../core/ArrayUtilities.mjs';
 
 const OUTLINE_ATTRS = {
 	'class': 'outline',

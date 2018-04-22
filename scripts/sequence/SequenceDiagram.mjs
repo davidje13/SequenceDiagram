@@ -1,13 +1,13 @@
 import {Factory as BasicThemeFactory} from './themes/Basic.mjs';
 import {Factory as ChunkyThemeFactory} from './themes/Chunky.mjs';
 import EventObject from '../core/EventObject.mjs';
-import Exporter from './Exporter.mjs';
-import Generator from './Generator.mjs';
+import Exporter from './exporter/Exporter.mjs';
+import Generator from './generator/Generator.mjs';
 import {Factory as MonospaceThemeFactory} from './themes/Monospace.mjs';
-import Parser from './Parser.mjs';
-import Renderer from './Renderer.mjs';
+import Parser from './parser/Parser.mjs';
+import Renderer from './renderer/Renderer.mjs';
 import {Factory as SketchThemeFactory} from './themes/Sketch.mjs';
-import {getHints} from './CodeMirrorHints.mjs';
+import {getHints} from './codemirror/hints.mjs';
 
 const themes = [
 	new BasicThemeFactory(),

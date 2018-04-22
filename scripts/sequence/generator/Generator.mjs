@@ -10,7 +10,7 @@ import {
 	mergeSets,
 	remove,
 	removeAll,
-} from '../core/ArrayUtilities.mjs';
+} from '../../core/ArrayUtilities.mjs';
 
 class AgentState {
 	constructor({

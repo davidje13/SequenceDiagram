@@ -12,10 +12,10 @@ import {
 	cleanRenderPreResult,
 	getComponents,
 } from './components/BaseComponent.mjs';
-import DOMWrapper from '../core/DOMWrapper.mjs';
-import EventObject from '../core/EventObject.mjs';
-import SVG from '../svg/SVG.mjs';
-import {mergeSets} from '../core/ArrayUtilities.mjs';
+import DOMWrapper from '../../core/DOMWrapper.mjs';
+import EventObject from '../../core/EventObject.mjs';
+import SVG from '../../svg/SVG.mjs';
+import {mergeSets} from '../../core/ArrayUtilities.mjs';
 
 function findExtremes(agentInfos, agentIDs) {
 	let min = null;

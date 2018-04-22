@@ -2,7 +2,7 @@
 /* eslint-disable max-statements */
 /* eslint-disable sort-keys */ // Maybe later
 
-import SequenceDiagram from './SequenceDiagram.mjs';
+import SequenceDiagram from '../SequenceDiagram.mjs';
 
 const CM = window.CodeMirror;
 

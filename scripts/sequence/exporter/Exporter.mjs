@@ -1,4 +1,4 @@
-import {safari} from '../core/browser.mjs';
+import {safari} from '../../core/browser.mjs';
 
 export default class Exporter {
 	constructor() {

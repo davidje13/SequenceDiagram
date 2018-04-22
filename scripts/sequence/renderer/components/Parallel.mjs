@@ -2,7 +2,7 @@ import BaseComponent, {
 	cleanRenderPreResult,
 	register,
 } from './BaseComponent.mjs';
-import {mergeSets} from '../../core/ArrayUtilities.mjs';
+import {mergeSets} from '../../../core/ArrayUtilities.mjs';
 
 function nullableMax(a = null, b = null) {
 	if(a === null) {

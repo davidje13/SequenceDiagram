@@ -1,7 +1,7 @@
 /* eslint-disable sort-keys */ // Maybe later
 
-import {dom, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
-import SVG from '../svg/SVG.mjs';
+import {dom, textSizerFactory} from '../../../spec/stubs/TestDOM.mjs';
+import SVG from '../../svg/SVG.mjs';
 import parser from './MarkdownParser.mjs';
 
 describe('Markdown Parser', () => {

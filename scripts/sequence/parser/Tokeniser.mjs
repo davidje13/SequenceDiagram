@@ -1,4 +1,4 @@
-import CMMode from './CodeMirrorMode.mjs';
+import CMMode from '../codemirror/Mode.mjs';
 
 function execAt(str, reg, i) {
 	reg.lastIndex = i;

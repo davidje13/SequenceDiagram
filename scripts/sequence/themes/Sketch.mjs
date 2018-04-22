@@ -2,7 +2,7 @@
 /* eslint-disable sort-keys */ // Maybe later
 
 import BaseTheme from './BaseTheme.mjs';
-import Handlee from './HandleeFontData.mjs';
+import Handlee from '../../fonts/HandleeFontData.mjs';
 import Random from '../../core/Random.mjs';
 
 const FONT = Handlee.name;
