@@ -29,8 +29,6 @@ several pages:
   the main editor, using non-minified sources (good for development)
 * [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
   the library sample page (uses minified sources)
-* [http://localhost:8080/readme-images.htm](http://localhost:8080/readme-images.htm):
-  image generation page for the readme file
 
 **NOTE**: This project uses web modules, which are only supported by
 recent browsers. In particular, note that FireFox 59 does not support
@@ -161,15 +159,13 @@ variety of ways.
 ### Screenshots
 
 If your changes affect any of the screenshots in README.md, you can
-use [readme-images](http://localhost:8080/readme-images.htm), which
-will automatically extract all sample blocks from the README.md file
-and generate downloadable PNGs for them with the correct filenames.
-These should replace the files in the `screenshots/` directory.
+use `npm run generate-screenshots`, which will automatically extract
+all sample blocks from the README.md file and update their
+corresponding images in the `screenshots/` directory.
 
-(I like to aditionally run the screenshots through
-[pngcrush](https://pmt.sourceforge.io/pngcrush/) using the flags
-`pngcrush -rem allb -brute -l 9 "<filename>"` to reduce the sizes by
-about half).
+Note: to use this command, you will need
+[pngcrush](https://pmt.sourceforge.io/pngcrush/) installed on your
+system. On MacOS you can install it with `brew install pngcrush`.
 
 The samples in
 [http://localhost:8080/library.htm](http://localhost:8080/library.htm)

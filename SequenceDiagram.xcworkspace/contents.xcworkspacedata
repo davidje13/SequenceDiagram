@@ -38,9 +38,6 @@
       location = "container:package.json">
    </FileRef>
    <FileRef
-      location = "container:readme-images.htm">
-   </FileRef>
-   <FileRef
       location = "container:README.md">
    </FileRef>
 </Workspace>
