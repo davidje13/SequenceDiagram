@@ -20,7 +20,7 @@ export default class Exporter {
 		 * exporting from any environment, in case it is opened in FireFox
 		 */
 		code = code.replace(
-			(/^<svg/),
+			(/^<svg ?/),
 			'<svg width="' + (renderer.width || 1) +
 			'" height="' + (renderer.height || 1) + '" '
 		);

@@ -575,17 +575,22 @@ the example to the right.
 <h3 id="API_getSVGSynchronous">.getSVGSynchronous</h3>
 
 <pre data-lang="javascript">
-svgURL = diagram.getSVGSynchronous();
+svgURL = diagram.getSVGSynchronous(options);
 </pre>
 
 <p>
 Returns a blob URL which contains the SVG code for the current diagram.
 </p>
+<p>The options can include:</p>
+<ul>
+<li><code>size</code>: Object containing optional width, height or zoom to
+specify in the SVG</code>.</li>
+</ul>
 
 <h3 id="API_getSVG">.getSVG</h3>
 
 <pre data-lang="javascript">
-diagram.getSVG().then(({url, latest}) => { ... });
+diagram.getSVG(options).then(({url, latest}) => { ... });
 </pre>
 
 <p>
@@ -594,10 +599,16 @@ Asynchronous version of
 provided for compatibility with <a href="#API_getPNG"><code>getPNG</code></a>,
 which has no synchronous equivalent.
 </p>
+<p>The options can include:</p>
+<ul>
+<li><code>size</code>: Object containing optional width, height or zoom to
+specify in the SVG</code>.</li>
+</ul>
 <p>The callback receives an object containing:</p>
 <ul>
 <li><code>url</code>: The URL of the generated blob.</li>
-<li><code>latest</code>: True if the URL given is still valid; subsequent calls to this method will invalidate previous URLs.</li>
+<li><code>latest</code>: True if the URL given is still valid; subsequent calls
+to this method will invalidate previous URLs.</li>
 </ul>
 
 <h3 id="API_getPNG">.getPNG</h3>
@@ -612,12 +623,16 @@ Generates a PNG image and returns a blob URL.
 <p>The options can include:</p>
 <ul>
 <li><code>resolution</code>: Desired pixels-per-unit.</li>
-<li><code>size</code>: Optional width and/or height to render the image at (defaults to the unit size of the diagram). The final output will have size <code>width * resolution</code> &times; <code>height * resolution</code>.</li>
+<li><code>size</code>: Object containing optional width, height or zoom to
+render the image at (defaults to the unit size of the diagram). The final
+output will have size <code>width * resolution</code> &times;
+<code>height * resolution</code>.</li>
 </ul>
 <p>The callback receives an object containing:</p>
 <ul>
 <li><code>url</code>: The URL of the generated blob.</li>
-<li><code>latest</code>: True if the URL given is still valid; subsequent calls to this method will invalidate previous URLs.</li>
+<li><code>latest</code>: True if the URL given is still valid; subsequent calls
+to this method will invalidate previous URLs.</li>
 </ul>
 
 <h3 id="API_getSize">.getSize</h3>

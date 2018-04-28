@@ -30,7 +30,8 @@ export default class VirtualSequenceDiagram extends SequenceDiagram {
 }
 
 function render(code, options = {}) {
-	return new VirtualSequenceDiagram(code, options).getSVGCodeSynchronous();
+	return new VirtualSequenceDiagram(code, options)
+		.getSVGCodeSynchronous({size: options.size});
 }
 
 Object.assign(VirtualSequenceDiagram, {
