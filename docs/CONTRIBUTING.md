@@ -16,25 +16,22 @@ To get started, you can clone this repository and run:
 
 ```shell
 npm install;
-npm start;
+npm start -- dev;
 ```
 
 This will launch a server in the project directory. You can now open
 several pages:
 
 * [http://localhost:8080/](http://localhost:8080/):
-  the main editor (uses minified sources, so you won't see your changes
-  immediately)
-* [http://localhost:8080/editor-dev.htm](http://localhost:8080/editor-dev.htm):
-  the main editor, using non-minified sources (good for development)
+  the main editor
 * [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
-  the library sample page (uses minified sources)
+  the library sample page
 
-**NOTE**: This project uses web modules, which are only supported by
-recent browsers. In particular, note that FireFox 59 does not support
-web modules unless a flag is set (FireFox 60 will support them fully).
-The editor and library page do not require web modules, so should have
-wider support.
+**NOTE**: When running in `dev` mode, this project uses web modules,
+which are only supported by recent browsers. In particular, note that
+FireFox 59 does not support web modules unless a flag is set (FireFox
+60 will support them fully). Production mode does not require web
+modules, so should have wider support.
 
 To run the tests and linter, run the command:
 
@@ -47,6 +44,16 @@ And to rebuild the minified sources, run:
 ```shell
 npm run minify;
 ```
+
+To check that the code works with minified sources, run:
+
+```shell
+npm start;
+```
+
+(index.htm and library.htm will now run with minified sources, but note
+that it will not perform hot-reloading; you will need to restart the
+server if you make changes)
 
 ## Commands
 
@@ -86,9 +93,8 @@ The high-level structure is:
 Useful helpers can also be found in `/scripts/core/*` and
 `/scripts/svg/*`.
 
-The live editor (index.htm & editor-dev.htm) uses the source in
-`/web/editor.mjs` and `/web/interface/*`. Other pages use sources in
-the root of `/web` as their entry-points.
+The live editor (index.htm) uses the source in `/web/editor.mjs` and
+`/web/interface/*`.
 
 ## Testing
 

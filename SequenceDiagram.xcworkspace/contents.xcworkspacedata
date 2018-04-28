@@ -23,9 +23,6 @@
       location = "container:.gitignore">
    </FileRef>
    <FileRef
-      location = "container:editor-dev.htm">
-   </FileRef>
-   <FileRef
       location = "container:index.html">
    </FileRef>
    <FileRef
