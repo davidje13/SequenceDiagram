@@ -6,7 +6,10 @@ const {render} = require('./handlers/render');
 
 const DEV = process.argv.includes('dev');
 const HOSTNAME = '127.0.0.1';
-const PORT = 8080;
+let PORT = Number.parseInt(process.argv[2], 10);
+if(Number.isNaN(PORT)) {
+	PORT = 8080;
+}
 
 function devMapper(file, type, data) {
 	if(!type.includes('text/html')) {
