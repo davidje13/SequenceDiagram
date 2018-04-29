@@ -39,7 +39,7 @@ function readEncoded(str, encoding) {
 			.from(decodeURIComponent(str), 'base64')
 			.toString('utf8');
 	case 'uri':
-		return str.split('/').map((ln) => decodeURIComponent(ln)).join('\n');
+		return str.split('/').map(decodeURIComponent).join('\n');
 	default:
 		throw new HttpError(400, 'Unknown encoding');
 	}

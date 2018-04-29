@@ -58,6 +58,7 @@ class ElementNode {
 		this.parentNode = null;
 		this.childNodes = [];
 		this.attributes = new Map();
+		this.style = {};
 		this.listeners = new Map();
 	}
 
