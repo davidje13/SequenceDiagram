@@ -1,6 +1,4 @@
-/* eslint-disable no-process-env */ // Configuration section
 const manual = Boolean(process.env.MANUAL);
-/* eslint-enable no-process-env */
 
 /*
  * Firefox is supported, but tests will fail until version 60 is out
