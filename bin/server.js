@@ -3,9 +3,12 @@
 const {Server} = require('./server/Server');
 const {StaticRequestHandler} = require('./server/StaticRequestHandler');
 const {render} = require('./handlers/render');
+const path = require('path');
 
 const DEV = process.argv.includes('dev');
 const HOSTNAME = '127.0.0.1';
+const BASEDIR = path.join(__dirname, '..') + '/';
+
 let PORT = Number.parseInt(process.argv[2], 10);
 if(Number.isNaN(PORT)) {
 	PORT = 8080;
@@ -40,7 +43,7 @@ const statics = new StaticRequestHandler('')
 
 statics
 	.add('/robots.txt', '')
-	.addResources('/', '', [
+	.addResources('/', BASEDIR, [
 		'index.html',
 		'library.htm',
 		'styles',
@@ -51,7 +54,7 @@ statics
 	], devMapper);
 
 if(DEV) {
-	statics.addResources('/', '', [
+	statics.addResources('/', BASEDIR, [
 		'node_modules/requirejs/require.js',
 		'scripts',
 		'web',
