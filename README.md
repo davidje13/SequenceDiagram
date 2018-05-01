@@ -356,6 +356,13 @@ end
 
 (indentation is ignored)
 
+## Running a Server
+
+If you want to run an online renderer (like
+[https://sequence.davidje13.com/](https://sequence.davidje13.com/)),
+take a look at
+[ubuntu-nginx-installer.sh](docs/ubuntu-nginx-installer.sh).
+
 ## Contributing
 
 Contributions are welcome!
