@@ -11,9 +11,6 @@
       location = "container:spec">
    </FileRef>
    <FileRef
-      location = "container:styles">
-   </FileRef>
-   <FileRef
       location = "container:web">
    </FileRef>
    <FileRef

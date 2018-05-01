@@ -2,9 +2,9 @@ import hypothetical from 'rollup-plugin-hypothetical';
 
 export default [
 	{
-		input: 'web/editor.mjs',
+		input: 'web/scripts/editor.mjs',
 		output: {
-			file: 'weblib/editor.js',
+			file: 'web/lib/editor.js',
 			format: 'iife',
 			name: 'SequenceDiagramEditor',
 		},

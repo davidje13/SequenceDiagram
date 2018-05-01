@@ -27,7 +27,7 @@
     "lint": "eslint . --config spec/support/eslintrc.js --ignore-path spec/support/eslintignore --ext .js --ext .mjs",
     "generate-screenshots": "bin/generate-screenshots.js README.md",
     "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js",
-    "minify-web": "rollup --config web/rollup.config.js && uglifyjs --compress --mangle --warn --output weblib/editor.min.js -- weblib/editor.js",
+    "minify-web": "rollup --config web/scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output web/lib/editor.min.js -- web/lib/editor.js",
     "minify": "npm run minify-lib && npm run minify-web",
     "prepublishOnly": "npm run minify-lib && npm run generate-screenshots && npm test",
     "start": "bin/server.js",

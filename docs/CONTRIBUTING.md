@@ -68,7 +68,7 @@ The available commands are:
 * `npm run lint`: runs the linter against all source and test files
 * `npm run minify`: runs the `minify-lib` and `minify-web` commands
 * `npm run minify-lib`: minifies the library code in `/lib`
-* `npm run minify-web`: minifies the web code in `/weblib`
+* `npm run minify-web`: minifies the web code in `/web/lib`
 
 ## Project Structure
 
@@ -93,8 +93,7 @@ The high-level structure is:
 Useful helpers can also be found in `/scripts/core/*` and
 `/scripts/svg/*`.
 
-The live editor (index.htm) uses the source in `/web/editor.mjs` and
-`/web/interface/*`.
+The live editor (index.htm) uses the sources in `/web/scripts/`.
 
 ## Testing
 
@@ -157,7 +156,7 @@ minified library (this is preferred but not required):
 npm run minify;
 ```
 
-This will update the files in `/lib` and `/weblib`. The minified code
+This will update the files in `/lib` and `/web/lib`. The minified code
 is a self-contained copy of the `/scripts/sequence/SequenceDiagram.mjs`
 script, with some boiler-plate added to allow loading into a page in a
 variety of ways.

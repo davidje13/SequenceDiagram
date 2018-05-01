@@ -1,7 +1,10 @@
-import {VirtualDocument, textSizerFactory} from '../../spec/stubs/TestDOM.mjs';
+import {
+	VirtualDocument,
+	textSizerFactory,
+} from '../../../spec/stubs/TestDOM.mjs';
 import ComponentsLibrary from './ComponentsLibrary.mjs';
-import SequenceDiagram from '../../scripts/sequence/SequenceDiagram.mjs';
-import {nodejs} from '../../scripts/core/browser.mjs';
+import SequenceDiagram from '../../../scripts/sequence/SequenceDiagram.mjs';
+import {nodejs} from '../../../scripts/core/browser.mjs';
 
 const themes = SequenceDiagram.getDefaultThemeNames().slice(1);
 

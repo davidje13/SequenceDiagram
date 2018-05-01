@@ -37,7 +37,7 @@ module.exports = (config) => {
 			usePhantomJS: false,
 		},
 
-		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'weblib/**'],
+		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'web/lib/**'],
 		files: [
 			'node_modules/codemirror/lib/codemirror.js',
 			{
@@ -51,7 +51,7 @@ module.exports = (config) => {
 			{included: false, pattern: 'screenshots/**/*'},
 			{included: false, pattern: 'scripts/**/*'},
 			{included: false, pattern: 'spec/**/*'},
-			{included: false, pattern: 'web/**/*'},
+			{included: false, pattern: 'web/scripts/**/*'},
 			{included: false, pattern: 'bin/**/*'},
 			{included: false, pattern: 'README.md'},
 		],

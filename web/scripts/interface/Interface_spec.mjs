@@ -1,6 +1,6 @@
-import {Event, VirtualDocument} from '../../spec/stubs/TestDOM.mjs';
+import {Event, VirtualDocument} from '../../../spec/stubs/TestDOM.mjs';
 import Interface from './Interface.mjs';
-import stubRequire from '../../spec/stubs/require.mjs';
+import stubRequire from '../../../spec/stubs/require.mjs';
 
 describe('Interface', () => {
 	const defaultCode = 'my default code';

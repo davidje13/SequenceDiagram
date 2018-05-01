@@ -46,9 +46,9 @@ statics
 	.addResources('/', BASEDIR, [
 		'index.html',
 		'library.htm',
-		'styles',
 		'lib',
-		'weblib',
+		'web/lib',
+		'web/styles',
 		'favicon.png',
 		'apple-touch-icon.png',
 	], devMapper);
@@ -57,7 +57,7 @@ if(DEV) {
 	statics.addResources('/', BASEDIR, [
 		'node_modules/requirejs/require.js',
 		'scripts',
-		'web',
+		'web/scripts',
 	]);
 	statics.setFileWatch(true);
 }

@@ -1,6 +1,6 @@
 import ComponentsLibrary from './interface/ComponentsLibrary.mjs';
 import Interface from './interface/Interface.mjs';
-import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
+import SequenceDiagram from '../../scripts/sequence/SequenceDiagram.mjs';
 import {require} from './requireCDN.mjs';
 
 const defaultCode = (
