@@ -2,7 +2,7 @@
 
 const {Server} = require('./server/Server');
 const {StaticRequestHandler} = require('./server/StaticRequestHandler');
-const {render} = require('./handlers/render');
+const {RenderRequestHandler} = require('./handlers/RenderRequestHandler');
 const path = require('path');
 
 const DEV = process.argv.includes('dev');
@@ -31,7 +31,11 @@ function devMapper(file, type, data) {
 	}
 }
 
+const STATIC_MAX_AGE = 10 * 60; // 10 minutes
+const RENDER_MAX_AGE = 60 * 60 * 24 * 7; // 1 week
+
 const statics = new StaticRequestHandler('')
+	.setCacheMaxAge(DEV ? 0 : STATIC_MAX_AGE)
 	.addMimeType('txt', 'text/plain; charset=utf-8')
 	.addMimeType('htm', 'text/html; charset=utf-8')
 	.addMimeType('html', 'text/html; charset=utf-8')
@@ -61,6 +65,10 @@ if(DEV) {
 	]);
 	statics.setFileWatch(true);
 }
+
+const render = new RenderRequestHandler('/render')
+	.setCacheMaxAge(DEV ? 0 : RENDER_MAX_AGE)
+	.setCrossOrigin(true);
 
 new Server()
 	.addHandler(render)

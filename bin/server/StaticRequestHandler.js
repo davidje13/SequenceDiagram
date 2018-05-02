@@ -51,6 +51,7 @@ class StaticRequestHandler extends RequestHandler {
 	_handleResource(req, res, resource, {pickEncoding, log}) {
 		log('SERVE ' + resource.path);
 
+		this.applyCommonHeaders(req, res);
 		const encoding = pickEncoding(
 			PREF_ENCODINGS.filter((enc) => (resource.encodings[enc] !== null))
 		);

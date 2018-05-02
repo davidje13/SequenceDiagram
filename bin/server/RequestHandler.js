@@ -3,7 +3,31 @@ class RequestHandler {
 		this.method = method;
 		this.matcher = matcher;
 		this.handleFn = handleFn;
-		this.info = 'Custom handler at ' + this.method + ' ' + this.matcher;
+		this.cacheMaxAge = 0;
+		this.allowAllOrigins = false;
+		this.info = `Custom handler at ${this.method} ${this.matcher}`;
+	}
+
+	setCacheMaxAge(seconds) {
+		this.cacheMaxAge = seconds;
+		return this;
+	}
+
+	setCrossOrigin(allowAll) {
+		this.allowAllOrigins = allowAll;
+		return this;
+	}
+
+	applyCommonHeaders(req, res) {
+		if(this.allowAllOrigins) {
+			res.setHeader('Access-Control-Allow-Origin', '*');
+		}
+		if(this.cacheMaxAge > 0) {
+			res.setHeader(
+				'Cache-Control',
+				`public, max-age=${this.cacheMaxAge}`
+			);
+		}
 	}
 
 	apply(req, res, info) {
