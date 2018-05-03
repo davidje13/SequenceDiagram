@@ -1,38 +1,42 @@
-/* eslint-disable sort-keys */ // Maybe later
-
 import {combine, last} from '../../core/ArrayUtilities.mjs';
 import Tokeniser from './Tokeniser.mjs';
 import labelPatternParser from './LabelPatternParser.mjs';
 import markdownParser from './MarkdownParser.mjs';
 
-const BLOCK_TYPES = {
-	'if': {
-		type: 'block begin',
-		blockType: 'if',
-		tag: 'if',
-		skip: [],
-	},
-	'else': {
-		type: 'block split',
-		blockType: 'else',
-		tag: 'else',
-		skip: ['if'],
-	},
-	'repeat': {
-		type: 'block begin',
-		blockType: 'repeat',
-		tag: 'repeat',
-		skip: [],
-	},
-	'group': {
-		type: 'block begin',
-		blockType: 'group',
-		tag: '',
-		skip: [],
-	},
-};
+const BLOCK_TYPES = new Map();
+BLOCK_TYPES.set('if', {
+	blockType: 'if',
+	skip: [],
+	tag: 'if',
+	type: 'block begin',
+});
+BLOCK_TYPES.set('else', {
+	blockType: 'else',
+	skip: ['if'],
+	tag: 'else',
+	type: 'block split',
+});
+BLOCK_TYPES.set('repeat', {
+	blockType: 'repeat',
+	skip: [],
+	tag: 'repeat',
+	type: 'block begin',
+});
+BLOCK_TYPES.set('group', {
+	blockType: 'group',
+	skip: [],
+	tag: '',
+	type: 'block begin',
+});
 
 const CONNECT = {
+	agentFlags: {
+		'!': {flag: 'end'},
+		'*': {allowBlankName: true, blankNameFlag: 'source', flag: 'begin'},
+		'+': {flag: 'start'},
+		'-': {flag: 'stop'},
+	},
+
 	types: ((() => {
 		const lTypes = [
 			{tok: '', type: 0},
@@ -58,21 +62,14 @@ const CONNECT = {
 
 		arrows.forEach((arrow) => {
 			types.set(arrow.map((part) => part.tok).join(''), {
-				line: arrow[1].type,
 				left: arrow[0].type,
+				line: arrow[1].type,
 				right: arrow[2].type,
 			});
 		});
 
 		return types;
 	})()),
-
-	agentFlags: {
-		'*': {flag: 'begin', allowBlankName: true, blankNameFlag: 'source'},
-		'+': {flag: 'start'},
-		'-': {flag: 'stop'},
-		'!': {flag: 'end'},
-	},
 };
 
 const TERMINATOR_TYPES = [
@@ -83,73 +80,70 @@ const TERMINATOR_TYPES = [
 	'bar',
 ];
 
-const NOTE_TYPES = {
-	'text': {
-		mode: 'text',
-		types: {
-			'left': {
-				type: 'note left',
-				skip: ['of'],
-				min: 0,
-				max: Number.POSITIVE_INFINITY,
-			},
-			'right': {
-				type: 'note right',
-				skip: ['of'],
-				min: 0,
-				max: Number.POSITIVE_INFINITY,
-			},
+const NOTE_TYPES = new Map();
+NOTE_TYPES.set('text', {
+	mode: 'text',
+	types: {
+		'left': {
+			max: Number.POSITIVE_INFINITY,
+			min: 0,
+			skip: ['of'],
+			type: 'note left',
+		},
+		'right': {
+			max: Number.POSITIVE_INFINITY,
+			min: 0,
+			skip: ['of'],
+			type: 'note right',
 		},
 	},
-	'note': {
-		mode: 'note',
-		types: {
-			'over': {
-				type: 'note over',
-				skip: [],
-				min: 0,
-				max: Number.POSITIVE_INFINITY,
-			},
-			'left': {
-				type: 'note left',
-				skip: ['of'],
-				min: 0,
-				max: Number.POSITIVE_INFINITY,
-			},
-			'right': {
-				type: 'note right',
-				skip: ['of'],
-				min: 0,
-				max: Number.POSITIVE_INFINITY,
-			},
-			'between': {
-				type: 'note between',
-				skip: [],
-				min: 2,
-				max: Number.POSITIVE_INFINITY,
-			},
+});
+NOTE_TYPES.set('note', {
+	mode: 'note',
+	types: {
+		'between': {
+			max: Number.POSITIVE_INFINITY,
+			min: 2,
+			skip: [],
+			type: 'note between',
+		},
+		'left': {
+			max: Number.POSITIVE_INFINITY,
+			min: 0,
+			skip: ['of'],
+			type: 'note left',
+		},
+		'over': {
+			max: Number.POSITIVE_INFINITY,
+			min: 0,
+			skip: [],
+			type: 'note over',
+		},
+		'right': {
+			max: Number.POSITIVE_INFINITY,
+			min: 0,
+			skip: ['of'],
+			type: 'note right',
 		},
 	},
-	'state': {
-		mode: 'state',
-		types: {
-			'over': {type: 'note over', skip: [], min: 1, max: 1},
-		},
+});
+NOTE_TYPES.set('state', {
+	mode: 'state',
+	types: {
+		'over': {max: 1, min: 1, skip: [], type: 'note over'},
 	},
-};
+});
 
-const DIVIDER_TYPES = {
-	'line': {defaultHeight: 6},
-	'space': {defaultHeight: 6},
-	'delay': {defaultHeight: 30},
-	'tear': {defaultHeight: 6},
-};
+const DIVIDER_TYPES = new Map();
+DIVIDER_TYPES.set('line', {defaultHeight: 6});
+DIVIDER_TYPES.set('space', {defaultHeight: 6});
+DIVIDER_TYPES.set('delay', {defaultHeight: 30});
+DIVIDER_TYPES.set('tear', {defaultHeight: 6});
 
-const AGENT_MANIPULATION_TYPES = {
-	'define': {type: 'agent define'},
-	'begin': {type: 'agent begin', mode: 'box'},
-	'end': {type: 'agent end', mode: 'cross'},
-};
+const AGENT_MANIPULATION_TYPES = new Map();
+AGENT_MANIPULATION_TYPES.set('define', {type: 'agent define'});
+AGENT_MANIPULATION_TYPES.set('begin', {mode: 'box', type: 'agent begin'});
+AGENT_MANIPULATION_TYPES.set('end', {mode: 'cross', type: 'agent end'});
 
 function makeError(message, token = null) {
 	let suffix = '';
@@ -249,8 +243,8 @@ function readAgentAlias(line, start, end, {enableAlias, allowBlankName}) {
 		throw makeError('Missing agent name', errPosToken);
 	}
 	return {
-		name: joinLabel(line, start, aliasSep),
 		alias: joinLabel(line, aliasSep + 1, end),
+		name: joinLabel(line, start, aliasSep),
 	};
 }
 
@@ -277,13 +271,13 @@ function readAgent(line, start, end, {
 		blankNameFlags.push(flag.blankNameFlag);
 	}
 	const {name, alias} = readAgentAlias(line, p, end, {
-		enableAlias: aliases,
 		allowBlankName,
+		enableAlias: aliases,
 	});
 	return {
-		name,
 		alias,
 		flags: name ? flags : blankNameFlags,
+		name,
 	};
 }
 
@@ -350,7 +344,7 @@ const PARSERS = [
 		});
 
 		const mode = joinLabel(line, 1, heightSep) || 'line';
-		if(!DIVIDER_TYPES[mode]) {
+		if(!DIVIDER_TYPES.has(mode)) {
 			throw makeError('Unknown divider type', line[1]);
 		}
 
@@ -358,17 +352,17 @@ const PARSERS = [
 			line,
 			heightSep + 2,
 			labelSep,
-			DIVIDER_TYPES[mode].defaultHeight
+			DIVIDER_TYPES.get(mode).defaultHeight
 		);
 		if(Number.isNaN(height) || height < 0) {
 			throw makeError('Invalid divider height', line[heightSep + 2]);
 		}
 
 		return {
-			type: 'divider',
-			mode,
 			height,
 			label: joinLabel(line, labelSep + 1),
+			mode,
+			type: 'divider',
 		};
 	}},
 
@@ -380,8 +374,8 @@ const PARSERS = [
 			raw = joinLabel(line, 1);
 		}
 		return {
-			type: 'label pattern',
 			pattern: labelPatternParser(raw),
+			type: 'label pattern',
 		};
 	}},
 
@@ -393,7 +387,7 @@ const PARSERS = [
 	}},
 
 	{begin: [], fn: (line) => { // Block
-		const type = BLOCK_TYPES[tokenKeyword(line[0])];
+		const type = BLOCK_TYPES.get(tokenKeyword(line[0]));
 		if(!type) {
 			return null;
 		}
@@ -403,10 +397,10 @@ const PARSERS = [
 		}
 		skip = skipOver(line, skip, [':']);
 		return {
-			type: type.type,
 			blockType: type.blockType,
-			tag: type.tag,
 			label: joinLabel(line, skip),
+			tag: type.tag,
+			type: type.type,
 		};
 	}},
 
@@ -428,17 +422,17 @@ const PARSERS = [
 			throw makeError('Reference must have an alias', line[labelSep]);
 		}
 		return {
-			type: 'group begin',
 			agents,
-			blockType: 'ref',
-			tag: 'ref',
-			label: def.name,
 			alias: def.alias,
+			blockType: 'ref',
+			label: def.name,
+			tag: 'ref',
+			type: 'group begin',
 		};
 	}},
 
 	{begin: [], fn: (line) => { // Agent
-		const type = AGENT_MANIPULATION_TYPES[tokenKeyword(line[0])];
+		const type = AGENT_MANIPULATION_TYPES.get(tokenKeyword(line[0]));
 		if(!type || line.length <= 1) {
 			return null;
 		}
@@ -459,13 +453,13 @@ const PARSERS = [
 			target = joinLabel(line, 2, line.length - 1);
 		}
 		return {
-			type: 'async',
 			target,
+			type: 'async',
 		};
 	}},
 
 	{begin: [], fn: (line) => { // Note
-		const mode = NOTE_TYPES[tokenKeyword(line[0])];
+		const mode = NOTE_TYPES.get(tokenKeyword(line[0]));
 		const labelSep = findTokens(line, [':']);
 		if(!mode || labelSep === -1) {
 			return null;
@@ -484,10 +478,10 @@ const PARSERS = [
 			throw makeError('Too many agents for ' + mode.mode, line[0]);
 		}
 		return {
-			type: type.type,
 			agents,
-			mode: mode.mode,
 			label: joinLabel(line, labelSep + 1),
+			mode: mode.mode,
+			type: type.type,
 		};
 	}},
 
@@ -496,7 +490,7 @@ const PARSERS = [
 		const connectionToken = findFirstToken(
 			line,
 			CONNECT.types,
-			{start: 0, limit: labelSep - 1}
+			{limit: labelSep - 1, start: 0}
 		);
 		if(!connectionToken) {
 			return null;
@@ -510,11 +504,11 @@ const PARSERS = [
 
 		if(tokenKeyword(line[0]) === '...') {
 			return {
-				type: 'connect-delay-end',
-				tag: joinLabel(line, 1, connectPos),
 				agent: readAgent(line, connectPos + 1, labelSep, readOpts),
 				label: joinLabel(line, labelSep + 1),
 				options: connectionToken.value,
+				tag: joinLabel(line, 1, connectPos),
+				type: 'connect-delay-end',
 			};
 		} else if(tokenKeyword(line[connectPos + 1]) === '...') {
 			if(labelSep !== line.length) {
@@ -524,20 +518,20 @@ const PARSERS = [
 				);
 			}
 			return {
-				type: 'connect-delay-begin',
-				tag: joinLabel(line, connectPos + 2, labelSep),
 				agent: readAgent(line, 0, connectPos, readOpts),
 				options: connectionToken.value,
+				tag: joinLabel(line, connectPos + 2, labelSep),
+				type: 'connect-delay-begin',
 			};
 		} else {
 			return {
-				type: 'connect',
 				agents: [
 					readAgent(line, 0, connectPos, readOpts),
 					readAgent(line, connectPos + 1, labelSep, readOpts),
 				],
 				label: joinLabel(line, labelSep + 1),
 				options: connectionToken.value,
+				type: 'connect',
 			};
 		}
 	}},
@@ -547,8 +541,8 @@ const PARSERS = [
 			return null;
 		}
 		return {
-			type: 'mark',
 			name: joinLabel(line, 0, line.length - 1),
+			type: 'mark',
 		};
 	}},
 
@@ -571,33 +565,44 @@ const PARSERS = [
 			options.push(line[i].v);
 		}
 		return {
-			type: 'agent options',
 			agent,
 			options,
+			type: 'agent options',
 		};
 	}},
 ];
 
-function parseLine(line, {meta, stages}) {
-	let stage = null;
+function stageFromLine(line, meta) {
 	for(const {begin, fn} of PARSERS) {
 		if(skipOver(line, 0, begin) !== begin.length) {
 			continue;
 		}
-		stage = fn(line, meta);
+		const stage = fn(line, meta);
 		if(stage) {
-			break;
+			return stage;
 		}
 	}
-	if(!stage) {
-		throw makeError(
-			'Unrecognised command: ' + joinLabel(line),
-			line[0]
-		);
+	return null;
+}
+
+function parseLine(line, {meta, stages}) {
+	let parallel = false;
+	const [start] = line;
+	if(tokenKeyword(start) === '&') {
+		parallel = true;
+		line.splice(0, 1);
 	}
-	if(typeof stage === 'object') {
-		stage.ln = line[0].b.ln;
+
+	const stage = stageFromLine(line, meta);
+
+	if(!stage) {
+		throw makeError('Unrecognised command: ' + joinLabel(line), line[0]);
+	} else if(typeof stage === 'object') {
+		stage.ln = start.b.ln;
+		stage.parallel = parallel;
 		stages.push(stage);
+	} else if(parallel) {
+		throw makeError('Metadata cannot be parallel', start);
 	}
 }
 
@@ -613,12 +618,12 @@ export default class Parser {
 	parseLines(lines, src) {
 		const result = {
 			meta: {
-				title: '',
-				theme: '',
 				code: src,
-				terminators: 'none',
 				headers: 'box',
+				terminators: 'none',
 				textFormatter: markdownParser,
+				theme: '',
+				title: '',
 			},
 			stages: [],
 		};

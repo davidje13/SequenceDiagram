@@ -9,10 +9,11 @@ describe('Sequence Generator', () => {
 
 	function makeParsedAgents(source) {
 		return source.map((item) => {
+			const base = {alias: '', flags: [], name: ''};
 			if(typeof item === 'object') {
-				return item;
+				return Object.assign(base, item);
 			} else {
-				return {name: item, alias: '', flags: []};
+				return Object.assign(base, {name: item});
 			}
 		});
 	}
@@ -26,31 +27,42 @@ describe('Sequence Generator', () => {
 	const PARSED = {
 		sourceAgent: {name: '', alias: '', flags: ['source']},
 
-		blockBegin: (tag, label, {ln = 0} = {}) => ({
+		blockBegin: (tag, label, {ln = 0, parallel = false} = {}) => ({
 			type: 'block begin',
 			blockType: tag,
 			tag,
 			label,
 			ln,
+			parallel,
 		}),
 
-		blockSplit: (tag, label, {ln = 0} = {}) => ({
+		blockSplit: (tag, label, {ln = 0, parallel = false} = {}) => ({
 			type: 'block split',
 			blockType: tag,
 			tag,
 			label,
 			ln,
+			parallel,
 		}),
 
-		blockEnd: ({ln = 0} = {}) => ({type: 'block end', ln}),
+		blockEnd: ({ln = 0, parallel = false} = {}) => ({
+			type: 'block end',
+			ln,
+			parallel,
+		}),
 
-		labelPattern: (pattern, {ln = 0} = {}) => ({
+		labelPattern: (pattern, {ln = 0, parallel = false} = {}) => ({
 			type: 'label pattern',
 			pattern,
 			ln,
+			parallel,
 		}),
 
-		groupBegin: (alias, agentIDs, {label = '', ln = 0} = {}) => ({
+		groupBegin: (alias, agentIDs, {
+			label = '',
+			ln = 0,
+			parallel = false,
+		} = {}) => ({
 			type: 'group begin',
 			agents: makeParsedAgents(agentIDs),
 			blockType: 'ref',
@@ -58,33 +70,46 @@ describe('Sequence Generator', () => {
 			label,
 			alias,
 			ln,
+			parallel,
 		}),
 
-		defineAgents: (agentIDs, {ln = 0} = {}) => ({
+		defineAgents: (agentIDs, {ln = 0, parallel = false} = {}) => ({
 			type: 'agent define',
 			agents: makeParsedAgents(agentIDs),
 			ln,
+			parallel,
 		}),
 
-		agentOptions: (agentID, options, {ln = 0} = {}) => ({
+		agentOptions: (agentID, options, {ln = 0, parallel = false} = {}) => ({
 			type: 'agent options',
 			agent: makeParsedAgents([agentID])[0],
 			options,
 			ln,
+			parallel,
 		}),
 
-		beginAgents: (agentIDs, {mode = 'box', ln = 0} = {}) => ({
+		beginAgents: (agentIDs, {
+			mode = 'box',
+			ln = 0,
+			parallel = false,
+		} = {}) => ({
 			type: 'agent begin',
 			agents: makeParsedAgents(agentIDs),
 			mode,
 			ln,
+			parallel,
 		}),
 
-		endAgents: (agentIDs, {mode = 'cross', ln = 0} = {}) => ({
+		endAgents: (agentIDs, {
+			mode = 'cross',
+			ln = 0,
+			parallel = false,
+		} = {}) => ({
 			type: 'agent end',
 			agents: makeParsedAgents(agentIDs),
 			mode,
 			ln,
+			parallel,
 		}),
 
 		connect: (agentIDs, {
@@ -93,6 +118,7 @@ describe('Sequence Generator', () => {
 			left = 0,
 			right = 0,
 			ln = 0,
+			parallel = false,
 		} = {}) => ({
 			type: 'connect',
 			agents: makeParsedAgents(agentIDs),
@@ -103,6 +129,7 @@ describe('Sequence Generator', () => {
 				right,
 			},
 			ln,
+			parallel,
 		}),
 
 		connectDelayBegin: (agentID, {
@@ -111,6 +138,7 @@ describe('Sequence Generator', () => {
 			left = 0,
 			right = 0,
 			ln = 0,
+			parallel = false,
 		} = {}) => ({
 			type: 'connect-delay-begin',
 			ln,
@@ -121,6 +149,7 @@ describe('Sequence Generator', () => {
 				left,
 				right,
 			},
+			parallel,
 		}),
 
 		connectDelayEnd: (agentID, {
@@ -130,6 +159,7 @@ describe('Sequence Generator', () => {
 			left = 0,
 			right = 0,
 			ln = 0,
+			parallel = false,
 		} = {}) => ({
 			type: 'connect-delay-end',
 			ln,
@@ -141,18 +171,21 @@ describe('Sequence Generator', () => {
 				left,
 				right,
 			},
+			parallel,
 		}),
 
 		note: (type, agentIDs, {
 			mode = '',
 			label = '',
 			ln = 0,
+			parallel = false,
 		} = {}) => ({
 			type,
 			agents: makeParsedAgents(agentIDs),
 			mode,
 			label,
 			ln,
+			parallel,
 		}),
 	};
 
@@ -2051,6 +2084,151 @@ describe('Sequence Generator', () => {
 				}),
 				any(),
 			]);
+		});
+
+		it('combines parallel statements', () => {
+			const sequence = invoke([
+				PARSED.connect(['A', 'B']),
+				PARSED.note('note right', ['B'], {parallel: true}),
+			]);
+
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.parallel([
+					GENERATED.connect(['A', 'B']),
+					GENERATED.note('note right', ['B']),
+				]),
+				any(),
+			]);
+		});
+
+		it('combines parallel creation and destruction', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A']),
+				PARSED.beginAgents(['B']),
+				PARSED.endAgents(['A'], {parallel: true}),
+				PARSED.endAgents(['B']),
+				PARSED.beginAgents(['A'], {parallel: true}),
+			]);
+
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A']),
+				GENERATED.parallel([
+					GENERATED.beginAgents(['B']),
+					GENERATED.endAgents(['A']),
+				]),
+				GENERATED.parallel([
+					GENERATED.endAgents(['B']),
+					GENERATED.beginAgents(['A']),
+				]),
+				GENERATED.endAgents(['A']),
+			]);
+		});
+
+		it('combines parallel connects and implicit begins', () => {
+			const sequence = invoke([
+				PARSED.connect(['A', 'B']),
+				PARSED.connect(['B', 'C'], {parallel: true}),
+			]);
+
+			expect(sequence.stages).toEqual([
+				GENERATED.beginAgents(['A', 'B', 'C']),
+				GENERATED.parallel([
+					GENERATED.connect(['A', 'B']),
+					GENERATED.connect(['B', 'C']),
+				]),
+				any(),
+			]);
+		});
+
+		it('combines parallel delayed connections', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C']),
+				PARSED.connectDelayBegin('B', {tag: 'foo'}),
+				PARSED.connectDelayBegin('B', {tag: 'bar', parallel: true}),
+				PARSED.connectDelayEnd('A', {tag: 'foo'}),
+				PARSED.connectDelayEnd('C', {tag: 'bar', parallel: true}),
+			]);
+
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.parallel([
+					GENERATED.connectDelayBegin(['B', 'A'], {tag: '__0'}),
+					GENERATED.connectDelayBegin(['B', 'C'], {tag: '__1'}),
+				]),
+				GENERATED.parallel([
+					GENERATED.connectDelayEnd({tag: '__0'}),
+					GENERATED.connectDelayEnd({tag: '__1'}),
+				]),
+				any(),
+			]);
+		});
+
+		it('combines parallel references', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('AB', ['A', 'B']),
+				PARSED.groupBegin('CD', ['C', 'D'], {parallel: true}),
+				PARSED.endAgents(['AB']),
+				PARSED.endAgents(['CD'], {parallel: true}),
+			]);
+
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.parallel([
+					GENERATED.blockBegin('ref'),
+					GENERATED.blockBegin('ref'),
+				]),
+				GENERATED.parallel([
+					GENERATED.blockEnd(),
+					GENERATED.blockEnd(),
+				]),
+				any(),
+			]);
+		});
+
+		it('rejects parallel marks on initial statements', () => {
+			expect(() => invoke([
+				PARSED.connect(['A', 'B'], {parallel: true}),
+			])).toThrow(new Error(
+				'Nothing to run statement in parallel with at line 1'
+			));
+
+			expect(() => invoke([
+				PARSED.note('note over', ['A'], {parallel: true}),
+			])).toThrow(new Error(
+				'Nothing to run statement in parallel with at line 1'
+			));
+		});
+
+		it('rejects parallel creation and destruction of an agent', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A']),
+				PARSED.endAgents(['A'], {parallel: true}),
+			])).toThrow(new Error(
+				'Cannot create and destroy A simultaneously at line 1'
+			));
+		});
+
+		it('rejects parallel begin and end of a delayed communication', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B']),
+				PARSED.connectDelayBegin('A', {tag: 'foo'}),
+				PARSED.connectDelayEnd('B', {tag: 'foo', parallel: true}),
+			])).toThrow(new Error(
+				'Cannot start and finish delayed connection simultaneously' +
+				' at line 1'
+			));
+		});
+
+		it('rejects parallel creation and destruction of a reference', () => {
+			expect(() => invoke([
+				PARSED.beginAgents(['A', 'B', 'C', 'D']),
+				PARSED.groupBegin('AB', ['A', 'B'], {label: 'Foo'}),
+				PARSED.endAgents(['AB'], {parallel: true}),
+			])).toThrow(new Error(
+				'Cannot create and destroy reference simultaneously at line 1'
+			));
 		});
 
 		it('rejects note between with a repeated agent', () => {

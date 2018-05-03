@@ -92,6 +92,23 @@ describe('Code Mirror Mode', () => {
 			]);
 		});
 
+		it('highlights parallel statements', () => {
+			cm.getDoc().setValue('& A -> B');
+
+			expect(getTokens(0)).toEqual([
+				{type: 'keyword', v: '&'},
+				{type: 'variable', v: ' A'},
+				{type: 'keyword', v: ' ->'},
+				{type: 'variable', v: ' B'},
+			]);
+		});
+
+		it('highlights invalid parallel statements', () => {
+			cm.getDoc().setValue('& terminators cross');
+
+			expect(getTokens(0)[2].type).toContain('line-error');
+		});
+
 		it('does not consider quoted tokens as keywords', () => {
 			cm.getDoc().setValue('A "->" -> B');
 
@@ -448,6 +465,13 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A is a foobar');
 
 			expect(getTokens(0)[3].type).toContain('line-error');
+		});
+
+		it('resets error handling on new lines with comments', () => {
+			cm.getDoc().setValue('nope\n#foo');
+
+			expect(getTokens(0)[0].type).toContain('line-error');
+			expect(getTokens(1)[0].type).not.toContain('line-error');
 		});
 	});
 

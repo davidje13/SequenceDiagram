@@ -10,4 +10,5 @@ export default [
 	'ReferenceLayering.svg',
 	'Markdown.svg',
 	'AgentOptions.svg',
+	'Parallel.svg',
 ];

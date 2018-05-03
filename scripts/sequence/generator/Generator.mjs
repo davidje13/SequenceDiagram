@@ -193,6 +193,87 @@ function optimiseStages(stages) {
 	}
 }
 
+function extractParallel(target, stages) {
+	for(const stage of stages) {
+		if(!stage) {
+			continue;
+		}
+		if(stage.type === 'parallel') {
+			extractParallel(target, stage.stages);
+		} else {
+			target.push(stage);
+		}
+	}
+}
+
+function checkAgentConflicts(allStages) {
+	const createIDs = flatMap(
+		allStages
+			.filter((stage) => (stage.type === 'agent begin')),
+		(stage) => stage.agentIDs
+	);
+
+	for(const stage of allStages) {
+		if(stage.type !== 'agent end') {
+			continue;
+		}
+		for(const id of stage.agentIDs) {
+			if(createIDs.indexOf(id) !== -1) {
+				return 'Cannot create and destroy ' + id + ' simultaneously';
+			}
+		}
+	}
+	return null;
+}
+
+function checkReferenceConflicts(allStages) {
+	const leftIDs = allStages
+		.filter((stage) => (stage.type === 'block begin'))
+		.map((stage) => stage.left);
+
+	for(const stage of allStages) {
+		if(stage.type !== 'block end') {
+			continue;
+		}
+		if(leftIDs.indexOf(stage.left) !== -1) {
+			return 'Cannot create and destroy reference simultaneously';
+		}
+	}
+	return null;
+}
+
+function checkDelayedConflicts(allStages) {
+	const tags = allStages
+		.filter((stage) => (stage.type === 'connect-delay-begin'))
+		.map((stage) => stage.tag);
+
+	for(const stage of allStages) {
+		if(stage.type !== 'connect-delay-end') {
+			continue;
+		}
+		if(tags.indexOf(stage.tag) !== -1) {
+			return 'Cannot start and finish delayed connection simultaneously';
+		}
+	}
+	return null;
+}
+
+function errorForParallel(existing, latest) {
+	if(!existing) {
+		return 'Nothing to run statement in parallel with';
+	}
+
+	const allStages = [];
+	extractParallel(allStages, [existing]);
+	extractParallel(allStages, [latest]);
+
+	return (
+		checkAgentConflicts(allStages) ||
+		checkReferenceConflicts(allStages) ||
+		checkDelayedConflicts(allStages)
+	);
+}
+
 function swapBegin(stage, mode) {
 	if(stage.type === 'agent begin') {
 		stage.mode = mode;
@@ -308,37 +389,75 @@ export default class Generator {
 		});
 	}
 
-	addStage(stage, isVisible = true) {
+	addStage(stage, {isVisible = true, parallel = false} = {}) {
+		if(!stage) {
+			return;
+		}
+		if(isVisible) {
+			this.currentNest.hasContent = true;
+		}
+		if(typeof stage.ln === 'undefined') {
+			stage.ln = this.latestLine;
+		}
+		const {stages} = this.currentSection;
+		if(parallel) {
+			const target = last(stages);
+			const err = errorForParallel(target, stage);
+			if(err) {
+				throw new Error(err);
+			}
+			const pstage = this.makeParallel([target, stage]);
+			pstage.ln = stage.ln;
+			-- stages.length;
+			stages.push(pstage);
+		} else {
+			stages.push(stage);
+		}
+	}
+
+	addImpStage(stage, {parallel = false} = {}) {
 		if(!stage) {
 			return;
 		}
 		if(typeof stage.ln === 'undefined') {
 			stage.ln = this.latestLine;
 		}
-		this.currentSection.stages.push(stage);
-		if(isVisible) {
-			this.currentNest.hasContent = true;
+		const {stages} = this.currentSection;
+		if(parallel) {
+			const target = stages[stages.length - 2];
+			if(!target) {
+				throw new Error('Nothing to run statement in parallel with');
+			}
+			if(errorForParallel(target, stage)) {
+				stages.splice(stages.length - 1, 0, stage);
+			} else {
+				const pstage = this.makeParallel([target, stage]);
+				pstage.ln = stage.ln;
+				stages.splice(stages.length - 2, 1, pstage);
+			}
+		} else {
+			stages.push(stage);
 		}
 	}
 
-	addParallelStages(stages) {
-		const viableStages = stages.filter((stage) => Boolean(stage));
+	makeParallel(stages) {
+		const viableStages = [];
+		extractParallel(viableStages, stages);
 		if(viableStages.length === 0) {
-			return;
+			return null;
 		}
 		if(viableStages.length === 1) {
-			this.addStage(viableStages[0]);
-			return;
+			return viableStages[0];
 		}
 		viableStages.forEach((stage) => {
 			if(typeof stage.ln === 'undefined') {
 				stage.ln = this.latestLine;
 			}
 		});
-		this.addStage({
+		return {
 			stages: viableStages,
 			type: 'parallel',
-		});
+		};
 	}
 
 	defineGAgents(gAgents) {
@@ -554,26 +673,26 @@ export default class Generator {
 		this.currentNest = last(this.nesting);
 		this.currentSection = last(this.currentNest.sections);
 
-		if(nested.hasContent) {
-			this.defineGAgents(nested.gAgents);
-			addBounds(
-				this.gAgents,
-				nested.leftGAgent,
-				nested.rightGAgent,
-				nested.gAgents
-			);
-			nested.sections.forEach((section) => {
-				this.currentSection.stages.push(section.header);
-				this.currentSection.stages.push(...section.stages);
-			});
-			this.addStage({
-				left: nested.leftGAgent.id,
-				right: nested.rightGAgent.id,
-				type: 'block end',
-			});
-		} else {
+		if(!nested.hasContent) {
 			throw new Error('Empty block');
 		}
+
+		this.defineGAgents(nested.gAgents);
+		addBounds(
+			this.gAgents,
+			nested.leftGAgent,
+			nested.rightGAgent,
+			nested.gAgents
+		);
+		nested.sections.forEach((section) => {
+			this.currentSection.stages.push(section.header);
+			this.currentSection.stages.push(...section.stages);
+		});
+		this.addStage({
+			left: nested.leftGAgent.id,
+			right: nested.rightGAgent.id,
+			type: 'block end',
+		});
 	}
 
 	makeGroupDetails(pAgents, alias) {
@@ -615,7 +734,7 @@ export default class Generator {
 		};
 	}
 
-	handleGroupBegin({agents, blockType, tag, label, alias}) {
+	handleGroupBegin({agents, blockType, tag, label, alias, parallel}) {
 		const details = this.makeGroupDetails(agents, alias);
 
 		details.gAgentsContained.forEach((gAgent) => {
@@ -625,7 +744,10 @@ export default class Generator {
 			this.updateGAgentState(gAgent, {covered: true});
 		});
 		this.activeGroups.set(alias, details);
-		this.addStage(this.setGAgentVis(details.gAgents, true, 'box'));
+		this.addImpStage(
+			this.setGAgentVis(details.gAgents, true, 'box'),
+			{parallel}
+		);
 		this.addStage({
 			blockType,
 			canHide: false,
@@ -634,7 +756,7 @@ export default class Generator {
 			right: details.rightGAgent.id,
 			tag: this.textFormatter(tag),
 			type: 'block begin',
-		});
+		}, {parallel});
 	}
 
 	endGroup({name}) {
@@ -661,7 +783,7 @@ export default class Generator {
 
 	handleMark({name}) {
 		this.markers.add(name);
-		this.addStage({name, type: 'mark'}, false);
+		this.addStage({name, type: 'mark'}, {isVisible: false});
 	}
 
 	handleDivider({mode, height, label}) {
@@ -670,14 +792,14 @@ export default class Generator {
 			height,
 			mode,
 			type: 'divider',
-		}, false);
+		}, {isVisible: false});
 	}
 
 	handleAsync({target}) {
 		if(target !== '' && !this.markers.has(target)) {
 			throw new Error('Unknown marker: ' + target);
 		}
-		this.addStage({target, type: 'async'}, false);
+		this.addStage({target, type: 'async'}, {isVisible: false});
 	}
 
 	handleLabelPattern({pattern}) {
@@ -831,7 +953,7 @@ export default class Generator {
 		return gAgents;
 	}
 
-	_handlePartialConnect(agents) {
+	_handlePartialConnect(agents, parallel) {
 		const flags = this.filterConnectFlags(agents);
 
 		const gAgents = agents.map(this.toGAgent);
@@ -848,19 +970,22 @@ export default class Generator {
 			.map(this.toGAgent)
 			.filter((gAgent) => !gAgent.isVirtualSource)
 		);
-		this.addStage(this.setGAgentVis(implicitBeginGAgents, true, 'box'));
+		this.addImpStage(
+			this.setGAgentVis(implicitBeginGAgents, true, 'box'),
+			{parallel}
+		);
 
 		return {flags, gAgents};
 	}
 
 	_makeConnectParallelStages(flags, connectStage) {
-		return [
+		return this.makeParallel([
 			this.setGAgentVis(flags.beginGAgents, true, 'box', true),
 			this.setGAgentHighlight(flags.startGAgents, true, true),
 			connectStage,
 			this.setGAgentHighlight(flags.stopGAgents, false, true),
 			this.setGAgentVis(flags.endGAgents, false, 'cross', true),
-		];
+		]);
 	}
 
 	_isSelfConnect(agents) {
@@ -875,7 +1000,7 @@ export default class Generator {
 		return true;
 	}
 
-	handleConnect({agents, label, options}) {
+	handleConnect({agents, label, options, parallel}) {
 		if(this._isSelfConnect(agents)) {
 			const tag = {};
 			this.handleConnectDelayBegin({
@@ -883,6 +1008,7 @@ export default class Generator {
 				ln: 0,
 				options,
 				tag,
+				parallel,
 			});
 			this.handleConnectDelayEnd({
 				agent: agents[1],
@@ -893,7 +1019,7 @@ export default class Generator {
 			return;
 		}
 
-		let {flags, gAgents} = this._handlePartialConnect(agents);
+		let {flags, gAgents} = this._handlePartialConnect(agents, parallel);
 
 		gAgents = this.expandGroupedGAgentConnection(gAgents);
 		gAgents = this.expandVirtualSourceAgents(gAgents);
@@ -905,19 +1031,19 @@ export default class Generator {
 			type: 'connect',
 		};
 
-		this.addParallelStages(this._makeConnectParallelStages(
-			flags,
-			connectStage
-		));
+		this.addStage(
+			this._makeConnectParallelStages(flags, connectStage),
+			{parallel}
+		);
 	}
 
-	handleConnectDelayBegin({agent, tag, options, ln}) {
+	handleConnectDelayBegin({agent, tag, options, ln, parallel}) {
 		const dcs = this.currentSection.delayedConnections;
 		if(dcs.has(tag)) {
 			throw new Error('Duplicate delayed connection "' + tag + '"');
 		}
 
-		const {flags, gAgents} = this._handlePartialConnect([agent]);
+		const {flags, gAgents} = this._handlePartialConnect([agent], parallel);
 		const uniqueTag = this.nextVirtualAgentName();
 
 		const connectStage = {
@@ -930,20 +1056,20 @@ export default class Generator {
 
 		dcs.set(tag, {connectStage, gAgents, ln, tag, uniqueTag});
 
-		this.addParallelStages(this._makeConnectParallelStages(
-			flags,
-			connectStage
-		));
+		this.addStage(
+			this._makeConnectParallelStages(flags, connectStage),
+			{parallel}
+		);
 	}
 
-	handleConnectDelayEnd({agent, tag, label, options}) {
+	handleConnectDelayEnd({agent, tag, label, options, parallel}) {
 		const dcs = this.currentSection.delayedConnections;
 		const dcInfo = dcs.get(tag);
 		if(!dcInfo) {
 			throw new Error('Unknown delayed connection "' + tag + '"');
 		}
 
-		let {flags, gAgents} = this._handlePartialConnect([agent]);
+		let {flags, gAgents} = this._handlePartialConnect([agent], parallel);
 
 		gAgents = this.expandGroupedGAgentConnection([
 			...dcInfo.gAgents,
@@ -972,15 +1098,15 @@ export default class Generator {
 			type: 'connect-delay-end',
 		};
 
-		this.addParallelStages(this._makeConnectParallelStages(
-			flags,
-			connectEndStage
-		));
+		this.addStage(
+			this._makeConnectParallelStages(flags, connectEndStage),
+			{parallel}
+		);
 
 		dcs.delete(tag);
 	}
 
-	handleNote({type, agents, mode, label}) {
+	handleNote({type, agents, mode, label, parallel}) {
 		let gAgents = null;
 		if(agents.length === 0) {
 			gAgents = NOTE_DEFAULT_G_AGENTS[type] || [];
@@ -996,15 +1122,14 @@ export default class Generator {
 			throw new Error('note between requires at least 2 agents');
 		}
 
-		this.addStage(this.setGAgentVis(gAgents, true, 'box'));
 		this.defineGAgents(gAgents);
-
+		this.addImpStage(this.setGAgentVis(gAgents, true, 'box'), {parallel});
 		this.addStage({
 			agentIDs,
 			label: this.textFormatter(label),
 			mode,
 			type,
-		});
+		}, {parallel});
 	}
 
 	handleAgentDefine({agents}) {
@@ -1032,13 +1157,13 @@ export default class Generator {
 			});
 	}
 
-	handleAgentBegin({agents, mode}) {
+	handleAgentBegin({agents, mode, parallel}) {
 		const gAgents = agents.map(this.toGAgent);
 		this.validateGAgents(gAgents);
-		this.addStage(this.setGAgentVis(gAgents, true, mode, true));
+		this.addStage(this.setGAgentVis(gAgents, true, mode, true), {parallel});
 	}
 
-	handleAgentEnd({agents, mode}) {
+	handleAgentEnd({agents, mode, parallel}) {
 		const groupPAgents = (agents
 			.filter((pAgent) => this.activeGroups.has(pAgent.name))
 		);
@@ -1047,11 +1172,11 @@ export default class Generator {
 			.map(this.toGAgent)
 		);
 		this.validateGAgents(gAgents);
-		this.addParallelStages([
+		this.addStage(this.makeParallel([
 			this.setGAgentHighlight(gAgents, false),
 			this.setGAgentVis(gAgents, false, mode, true),
 			...groupPAgents.map(this.endGroup),
-		]);
+		]), {parallel});
 	}
 
 	handleStage(stage) {
@@ -1120,10 +1245,10 @@ export default class Generator {
 		this._checkSectionEnd();
 
 		const terminators = meta.terminators || 'none';
-		this.addParallelStages([
+		this.addStage(this.makeParallel([
 			this.setGAgentHighlight(this.gAgents, false),
 			this.setGAgentVis(this.gAgents, false, terminators),
-		]);
+		]));
 
 		this._finalise(globals);
 

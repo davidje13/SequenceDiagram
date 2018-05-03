@@ -41,6 +41,13 @@
 		},
 		{
 			code: (
+				'{Agent1} -> {Agent2}\n' +
+				'& {Agent1} -> {Agent3}: {Broadcast}'
+			),
+			title: 'Broadcast message',
+		},
+		{
+			code: (
 				'{Agent1} -> +{Agent2}: {Request}\n' +
 				'{Agent1} <-- -{Agent2}: {Response}'
 			),
@@ -177,6 +184,13 @@
 		{
 			code: 'note between {Agent1}, {Agent2}: {Message}',
 			title: 'Note between agents',
+		},
+		{
+			code: (
+				'{Agent1} -> {Agent2}\n' +
+				'& note right of {Agent2}: {Message}'
+			),
+			title: 'Inline note',
 		},
 		{
 			code: 'state over {Agent1}: {State}',

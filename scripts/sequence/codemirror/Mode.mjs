@@ -34,6 +34,14 @@ const AGENT_INFO_TYPES = [
 	'red',
 ];
 
+const PARALLEL_TASKS = [
+	'begin',
+	'end',
+	'note',
+	'state',
+	'text',
+];
+
 const makeCommands = ((() => {
 	function agentListTo(exit, next = 1) {
 		return {
@@ -394,10 +402,25 @@ const makeCommands = ((() => {
 		}},
 	};
 
-	return (arrows) => ({
-		type: 'error line-error',
-		then: Object.assign({}, BASE_THEN, makeCMConnect(arrows)),
-	});
+	return (arrows) => {
+		const arrowConnect = makeCMConnect(arrows);
+
+		const parallel = {};
+		for(const task of PARALLEL_TASKS) {
+			parallel[task] = BASE_THEN[task];
+		}
+		Object.assign(parallel, arrowConnect);
+
+		return {
+			type: 'error line-error',
+			then: Object.assign(
+				{},
+				BASE_THEN,
+				{'&': {type: 'keyword', then: parallel}},
+				arrowConnect
+			),
+		};
+	};
 })());
 
 /* eslint-enable sort-keys */
@@ -645,6 +668,7 @@ export default class Mode {
 		if(state.currentType === NO_TOKEN) {
 			if(stream.sol()) {
 				state.line.length = 0;
+				state.valid = true;
 			}
 			if(!this._tokenBegin(stream, state)) {
 				return '';
