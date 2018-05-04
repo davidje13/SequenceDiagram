@@ -17,10 +17,12 @@ describe('Sequence Parser', () => {
 		});
 	}
 
+	const any = () => jasmine.anything();
+
 	const PARSED = {
 		agentBegin: (agents, {
-			ln = jasmine.anything(),
-			mode = jasmine.anything(),
+			ln = any(),
+			mode = any(),
 			parallel = false,
 		} = {}) => ({
 			agents: makeParsedAgents(agents),
@@ -31,7 +33,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		agentDefine: (agents, {
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			agents: makeParsedAgents(agents),
@@ -41,8 +43,8 @@ describe('Sequence Parser', () => {
 		}),
 
 		agentEnd: (agents, {
-			ln = jasmine.anything(),
-			mode = jasmine.anything(),
+			ln = any(),
+			mode = any(),
 			parallel = false,
 		} = {}) => ({
 			agents: makeParsedAgents(agents),
@@ -53,7 +55,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		agentOptions: (agent, options, {
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			agent: makeParsedAgents([agent])[0],
@@ -64,7 +66,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		async: (target, {
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			ln,
@@ -73,14 +75,12 @@ describe('Sequence Parser', () => {
 			type: 'async',
 		}),
 
-		blockBegin: ({
-			blockType = jasmine.anything(),
-			label = jasmine.anything(),
-			ln = jasmine.anything(),
+		blockBegin: (tag, label, {
+			blockType = null,
+			ln = any(),
 			parallel = false,
-			tag = jasmine.anything(),
 		} = {}) => ({
-			blockType,
+			blockType: blockType || tag,
 			label,
 			ln,
 			parallel,
@@ -89,7 +89,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		blockEnd: ({
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			ln,
@@ -97,14 +97,12 @@ describe('Sequence Parser', () => {
 			type: 'block end',
 		}),
 
-		blockSplit: ({
-			blockType = jasmine.anything(),
-			label = jasmine.anything(),
-			ln = jasmine.anything(),
+		blockSplit: (tag, label, {
+			blockType = null,
+			ln = any(),
 			parallel = false,
-			tag = jasmine.anything(),
 		} = {}) => ({
-			blockType,
+			blockType: blockType || tag,
 			label,
 			ln,
 			parallel,
@@ -113,12 +111,12 @@ describe('Sequence Parser', () => {
 		}),
 
 		connect: (agents, {
-			label = jasmine.anything(),
-			left = jasmine.anything(),
-			line = jasmine.anything(),
-			ln = jasmine.anything(),
+			label = any(),
+			left = any(),
+			line = any(),
+			ln = any(),
 			parallel = false,
-			right = jasmine.anything(),
+			right = any(),
 		} = {}) => ({
 			agents: makeParsedAgents(agents),
 			label,
@@ -129,11 +127,11 @@ describe('Sequence Parser', () => {
 		}),
 
 		connectBegin: (agent, tag, {
-			left = jasmine.anything(),
-			line = jasmine.anything(),
-			ln = jasmine.anything(),
+			left = any(),
+			line = any(),
+			ln = any(),
 			parallel = false,
-			right = jasmine.anything(),
+			right = any(),
 		} = {}) => ({
 			agent: makeParsedAgents([agent])[0],
 			ln,
@@ -144,12 +142,12 @@ describe('Sequence Parser', () => {
 		}),
 
 		connectEnd: (agent, tag, {
-			label = jasmine.anything(),
-			left = jasmine.anything(),
-			line = jasmine.anything(),
-			ln = jasmine.anything(),
+			label = any(),
+			left = any(),
+			line = any(),
+			ln = any(),
 			parallel = false,
-			right = jasmine.anything(),
+			right = any(),
 		} = {}) => ({
 			agent: makeParsedAgents([agent])[0],
 			label,
@@ -161,10 +159,10 @@ describe('Sequence Parser', () => {
 		}),
 
 		divider: ({
-			height = jasmine.anything(),
-			label = jasmine.anything(),
-			ln = jasmine.anything(),
-			mode = jasmine.anything(),
+			height = any(),
+			label = any(),
+			ln = any(),
+			mode = any(),
 			parallel = false,
 		} = {}) => ({
 			height,
@@ -176,12 +174,12 @@ describe('Sequence Parser', () => {
 		}),
 
 		groupBegin: (agents, {
-			alias = jasmine.anything(),
-			blockType = jasmine.anything(),
-			label = jasmine.anything(),
-			ln = jasmine.anything(),
+			alias = any(),
+			blockType = any(),
+			label = any(),
+			ln = any(),
 			parallel = false,
-			tag = jasmine.anything(),
+			tag = any(),
 		} = {}) => ({
 			agents: makeParsedAgents(agents),
 			alias,
@@ -194,7 +192,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		labelPattern: (pattern, {
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			ln,
@@ -204,7 +202,7 @@ describe('Sequence Parser', () => {
 		}),
 
 		mark: (name, {
-			ln = jasmine.anything(),
+			ln = any(),
 			parallel = false,
 		} = {}) => ({
 			ln,
@@ -214,8 +212,8 @@ describe('Sequence Parser', () => {
 		}),
 
 		note: (position, agents, {
-			label = jasmine.anything(),
-			ln = jasmine.anything(),
+			label = any(),
+			ln = any(),
 			mode = 'note',
 			parallel = false,
 		} = {}) => ({
@@ -237,7 +235,7 @@ describe('Sequence Parser', () => {
 					code: '',
 					headers: 'box',
 					terminators: 'none',
-					textFormatter: jasmine.anything(),
+					textFormatter: any(),
 					theme: '',
 					title: '',
 				},
@@ -765,24 +763,12 @@ describe('Sequence Parser', () => {
 			);
 
 			expect(parsed.stages).toEqual([
-				PARSED.blockBegin({
-					blockType: 'if',
-					label: 'something happens',
-					tag: 'if',
-				}),
+				PARSED.blockBegin('if', 'something happens'),
 				PARSED.connect(['A', 'B']),
-				PARSED.blockSplit({
-					blockType: 'else',
-					label: 'something else',
-					tag: 'else',
-				}),
+				PARSED.blockSplit('else', 'something else'),
 				PARSED.connect(['A', 'C']),
 				PARSED.connect(['C', 'B']),
-				PARSED.blockSplit({
-					blockType: 'else',
-					label: '',
-					tag: 'else',
-				}),
+				PARSED.blockSplit('else', ''),
 				PARSED.connect(['A', 'D']),
 				PARSED.blockEnd(),
 			]);
@@ -792,11 +778,7 @@ describe('Sequence Parser', () => {
 			const parsed = parser.parse('repeat until something');
 
 			expect(parsed.stages).toEqual([
-				PARSED.blockBegin({
-					blockType: 'repeat',
-					label: 'until something',
-					tag: 'repeat',
-				}),
+				PARSED.blockBegin('repeat', 'until something'),
 			]);
 		});
 
@@ -804,11 +786,7 @@ describe('Sequence Parser', () => {
 			const parsed = parser.parse('group something');
 
 			expect(parsed.stages).toEqual([
-				PARSED.blockBegin({
-					blockType: 'group',
-					label: 'something',
-					tag: '',
-				}),
+				PARSED.blockBegin('', 'something', {blockType: 'group'}),
 			]);
 		});
 
