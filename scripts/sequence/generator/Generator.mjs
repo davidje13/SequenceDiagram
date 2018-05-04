@@ -1,5 +1,4 @@
 /* eslint-disable max-lines */
-/* eslint-disable sort-keys */ // Maybe later
 
 import {
 	flatMap,
@@ -13,19 +12,19 @@ import {
 
 class AgentState {
 	constructor({
-		visible = false,
-		locked = false,
 		blocked = false,
-		highlighted = false,
-		group = null,
 		covered = false,
+		group = null,
+		highlighted = false,
+		locked = false,
+		visible = false,
 	} = {}) {
-		this.visible = visible;
-		this.locked = locked;
 		this.blocked = blocked;
-		this.highlighted = highlighted;
-		this.group = group;
 		this.covered = covered;
+		this.group = group;
+		this.highlighted = highlighted;
+		this.locked = locked;
+		this.visible = visible;
 	}
 }
 AgentState.LOCKED = new AgentState({locked: true});
@@ -1044,8 +1043,8 @@ export default class Generator {
 				agent: agents[0],
 				ln: 0,
 				options,
-				tag,
 				parallel,
+				tag,
 			});
 			this.handleConnectDelayEnd({
 				agent: agents[1],

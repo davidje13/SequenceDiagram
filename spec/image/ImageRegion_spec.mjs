@@ -1,5 +1,3 @@
-/* eslint-disable max-statements */
-
 import ImageRegion from './ImageRegion.mjs';
 import {nodejs} from '../../scripts/core/browser.mjs';
 
@@ -99,15 +97,10 @@ describe('ImageRegion', () => {
 			expect(r.stepX).toEqual(1);
 			expect(r.stepY).toEqual(3);
 			expect(r.dim).toEqual(1);
-			expect(r.values[0]).toBeNear(0, PRECISION);
-			expect(r.values[1]).toBeNear(0, PRECISION);
-			expect(r.values[2]).toBeNear(0, PRECISION);
-			expect(r.values[3]).toBeNear(-1, PRECISION);
-			expect(r.values[4]).toBeNear(-1 / 3, PRECISION);
-			expect(r.values[5]).toBeNear(1, PRECISION);
-			expect(r.values[6]).toBeNear(-1 / 2, PRECISION);
-			expect(r.values[7]).toBeNear(-1 / 6, PRECISION);
-			expect(r.values[8]).toBeNear(1 / 2, PRECISION);
+			expect(r.values).toBeNear(
+				[0, 0, 0, -1, -1 / 3, 1, -1 / 2, -1 / 6, 1 / 2],
+				PRECISION
+			);
 		});
 	});
 
