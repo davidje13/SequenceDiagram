@@ -227,6 +227,19 @@ function checkAgentConflicts(allStages) {
 }
 
 function checkReferenceConflicts(allStages) {
+	const count = allStages
+		.filter((stage) => (
+			stage.type === 'block begin' ||
+			stage.type === 'block end'
+		))
+		.length;
+
+	if(!count) {
+		return null;
+	} else if(count !== allStages.length) {
+		return 'Cannot use parallel here';
+	}
+
 	const leftIDs = allStages
 		.filter((stage) => (stage.type === 'block begin'))
 		.map((stage) => stage.left);
@@ -258,6 +271,21 @@ function checkDelayedConflicts(allStages) {
 	return null;
 }
 
+const PARALLEL_STAGES = [
+	'agent begin',
+	'agent end',
+	'agent highlight',
+	'block begin',
+	'block end',
+	'connect',
+	'connect-delay-begin',
+	'connect-delay-end',
+	'note over',
+	'note right',
+	'note left',
+	'note between',
+];
+
 function errorForParallel(existing, latest) {
 	if(!existing) {
 		return 'Nothing to run statement in parallel with';
@@ -267,6 +295,9 @@ function errorForParallel(existing, latest) {
 	extractParallel(allStages, [existing]);
 	extractParallel(allStages, [latest]);
 
+	if(allStages.some((stage) => !PARALLEL_STAGES.includes(stage.type))) {
+		return 'Cannot use parallel here';
+	}
 	return (
 		checkAgentConflicts(allStages) ||
 		checkReferenceConflicts(allStages) ||
@@ -425,7 +456,7 @@ export default class Generator {
 		const {stages} = this.currentSection;
 		if(parallel) {
 			const target = stages[stages.length - 2];
-			if(!target) {
+			if(stages.length === 0) {
 				throw new Error('Nothing to run statement in parallel with');
 			}
 			if(errorForParallel(target, stage)) {
@@ -635,7 +666,10 @@ export default class Generator {
 		return name;
 	}
 
-	handleBlockBegin({ln, blockType, tag, label}) {
+	handleBlockBegin({ln, blockType, tag, label, parallel}) {
+		if(parallel) {
+			throw new Error('Cannot use parallel here');
+		}
 		this.beginNested(blockType, {
 			label,
 			ln,
@@ -644,7 +678,10 @@ export default class Generator {
 		});
 	}
 
-	handleBlockSplit({ln, blockType, tag, label}) {
+	handleBlockSplit({ln, blockType, tag, label, parallel}) {
+		if(parallel) {
+			throw new Error('Cannot use parallel here');
+		}
 		if(this.currentNest.blockType !== 'if') {
 			throw new Error(
 				'Invalid block nesting ("else" inside ' +
@@ -664,7 +701,7 @@ export default class Generator {
 		this.currentNest.sections.push(this.currentSection);
 	}
 
-	handleBlockEnd() {
+	handleBlockEnd({parallel}) {
 		if(this.nesting.length <= 1) {
 			throw new Error('Invalid block nesting (too many "end"s)');
 		}
@@ -692,7 +729,7 @@ export default class Generator {
 			left: nested.leftGAgent.id,
 			right: nested.rightGAgent.id,
 			type: 'block end',
-		});
+		}, {parallel});
 	}
 
 	makeGroupDetails(pAgents, alias) {
@@ -781,25 +818,25 @@ export default class Generator {
 		};
 	}
 
-	handleMark({name}) {
+	handleMark({name, parallel}) {
 		this.markers.add(name);
-		this.addStage({name, type: 'mark'}, {isVisible: false});
+		this.addStage({name, type: 'mark'}, {isVisible: false, parallel});
 	}
 
-	handleDivider({mode, height, label}) {
+	handleDivider({mode, height, label, parallel}) {
 		this.addStage({
 			formattedLabel: this.textFormatter(label),
 			height,
 			mode,
 			type: 'divider',
-		}, {isVisible: false});
+		}, {isVisible: false, parallel});
 	}
 
-	handleAsync({target}) {
+	handleAsync({target, parallel}) {
 		if(target !== '' && !this.markers.has(target)) {
 			throw new Error('Unknown marker: ' + target);
 		}
-		this.addStage({target, type: 'async'}, {isVisible: false});
+		this.addStage({target, type: 'async'}, {isVisible: false, parallel});
 	}
 
 	handleLabelPattern({pattern}) {

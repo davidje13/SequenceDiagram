@@ -2125,6 +2125,28 @@ describe('Sequence Generator', () => {
 			]);
 		});
 
+		it('adds implicit stages for parallel actions', () => {
+			const sequence = invoke([
+				PARSED.beginAgents(['A']),
+				PARSED.blockBegin('tag', ''),
+				PARSED.note('note over', ['A']),
+				PARSED.connect(['A', 'B'], {parallel: true}),
+				PARSED.blockEnd(),
+			]);
+
+			expect(sequence.stages).toEqual([
+				any(),
+				any(),
+				GENERATED.beginAgents(['B']),
+				GENERATED.parallel([
+					GENERATED.note('note over', ['A']),
+					GENERATED.connect(['A', 'B']),
+				]),
+				any(),
+				any(),
+			]);
+		});
+
 		it('combines parallel connects and implicit begins', () => {
 			const sequence = invoke([
 				PARSED.connect(['A', 'B']),
@@ -2228,6 +2250,42 @@ describe('Sequence Generator', () => {
 				PARSED.endAgents(['AB'], {parallel: true}),
 			])).toThrow(new Error(
 				'Cannot create and destroy reference simultaneously at line 1'
+			));
+		});
+
+		it('rejects using parallel with mixed actions', () => {
+			expect(() => invoke([
+				PARSED.connect(['A', 'B']),
+				{type: 'mark', name: 'foo', ln: 0, parallel: true},
+			])).toThrow(new Error(
+				'Cannot use parallel here at line 1'
+			));
+
+			expect(() => invoke([
+				{type: 'mark', name: 'foo', ln: 0},
+				PARSED.connect(['A', 'B'], {parallel: true}),
+			])).toThrow(new Error(
+				'Cannot use parallel here at line 1'
+			));
+		});
+
+		it('rejects using parallel with restricted actions', () => {
+			expect(() => invoke([
+				PARSED.connect(['A', 'B']),
+				PARSED.blockBegin('tag', '', {parallel: true}),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+			])).toThrow(new Error(
+				'Cannot use parallel here at line 1'
+			));
+
+			expect(() => invoke([
+				PARSED.blockBegin('tag', ''),
+				PARSED.connect(['A', 'B']),
+				PARSED.blockEnd(),
+				PARSED.connect(['A', 'B'], {parallel: true}),
+			])).toThrow(new Error(
+				'Cannot use parallel here at line 1'
 			));
 		});
 
