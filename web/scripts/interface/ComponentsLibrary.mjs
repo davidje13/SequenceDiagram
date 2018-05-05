@@ -259,6 +259,26 @@ export default [
 		title: 'Strikeout markdown',
 	},
 	{
+		code: '<u>{text}</u>',
+		preview: 'A -> B: <u>underline</u>',
+		title: 'Underline markdown',
+	},
+	{
+		code: '<o>{text}</o>',
+		preview: 'A -> B: <o>overline</o>',
+		title: 'Overline markdown',
+	},
+	{
+		code: '<sup>{text}</sup>',
+		preview: 'A -> B: super<sup>script</sup>',
+		title: 'Superscript markdown',
+	},
+	{
+		code: '<sub>{text}</sub>',
+		preview: 'A -> B: sub<sub>script</sub>',
+		title: 'Subscript markdown',
+	},
+	{
 		code: '`{text}`',
 		preview: 'A -> B: `mono`',
 		title: 'Monospace markdown',
