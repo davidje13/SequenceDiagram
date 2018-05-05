@@ -350,7 +350,7 @@ export default class SketchTheme extends BaseTheme {
 		this.random.reset();
 	}
 
-	addDefs(builder) {
+	addDefs(builder, textBuilder) {
 		builder('sketch_font', () => {
 			const style = this.svg.el('style', null);
 			// Font must be embedded for exporting as SVG / PNG
@@ -362,6 +362,8 @@ export default class SketchTheme extends BaseTheme {
 			);
 			return style;
 		});
+
+		super.addDefs(builder, textBuilder);
 	}
 
 	vary(range, centre = 0) {

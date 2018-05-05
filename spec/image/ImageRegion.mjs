@@ -461,9 +461,20 @@ ImageRegion.loadURL = function(url, size = {}) {
 };
 
 ImageRegion.loadSVG = function(svg, size = {}) {
-	const blob = new Blob([svg], {type: 'image/svg+xml'});
+	// Safari workaround:
+	// Tweak SVG size directly rather than resizing image to keep quality high
+	const resolution = size.resolution || 1;
+	const svgCode = svg.replace(
+		/<svg width="([^"]+)" height="([^"]+)"/,
+		(m, w, h) => (
+			'<svg width="' + (w * resolution) +
+			'" height="' + (h * resolution) + '"'
+		)
+	);
+
+	const blob = new Blob([svgCode], {type: 'image/svg+xml'});
 	const url = URL.createObjectURL(blob);
-	return ImageRegion.loadURL(url, size)
+	return ImageRegion.loadURL(url, Object.assign({}, size, {resolution: 1}))
 		.then((region) => {
 			URL.revokeObjectURL(url);
 			return region;

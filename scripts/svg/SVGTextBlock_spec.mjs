@@ -76,6 +76,17 @@ describe('SVGTextBlock', () => {
 				.toEqual('foo<tspan zig="zag">bar</tspan>');
 		});
 
+		it('converts filter attributes using the registered filters', () => {
+			svg.registerTextFilter('foo', 'local-foobar');
+			block.set({formatted: [[
+				{text: 'foo'},
+				{attrs: {'filter': 'foo'}, text: 'bar'},
+			]]});
+
+			expect(hold.childNodes[0].innerHTML)
+				.toEqual('foo<tspan filter="url(#local-foobar)">bar</tspan>');
+		});
+
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			const [line0, line1] = hold.childNodes;

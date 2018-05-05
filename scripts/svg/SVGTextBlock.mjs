@@ -15,11 +15,14 @@ function populateSvgTextLine(svg, node, formattedLine) {
 		throw new Error('Invalid formatted text line: ' + formattedLine);
 	}
 	formattedLine.forEach(({text, attrs}) => {
+		let element = text;
 		if(attrs) {
-			node.add(svg.el('tspan').attrs(attrs).add(text));
-		} else {
-			node.add(text);
+			element = svg.el('tspan').attrs(attrs).add(text);
+			if(attrs.filter) {
+				element.attr('filter', svg.getTextFilter(attrs.filter));
+			}
 		}
+		node.add(element);
 	});
 }
 

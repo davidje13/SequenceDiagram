@@ -164,7 +164,9 @@ class WrappedElement {
 	}
 
 	detach() {
-		this.element.parentNode.removeChild(this.element);
+		if(this.element.parentNode) {
+			this.element.parentNode.removeChild(this.element);
+		}
 		return this;
 	}
 }

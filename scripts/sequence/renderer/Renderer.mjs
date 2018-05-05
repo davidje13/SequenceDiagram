@@ -76,6 +76,7 @@ export default class Renderer extends EventObject {
 		this.components = components || getComponents();
 		this.svg = new SVG(new DOMWrapper(document), textSizerFactory);
 		this.knownThemeDefs = new Set();
+		this.knownTextFilterDefs = new Map();
 		this.knownDefs = new Set();
 		this.highlights = new Map();
 		this.collapsed = new Set();
@@ -92,6 +93,7 @@ export default class Renderer extends EventObject {
 			this.prepareMeasurementsStage.bind(this);
 		this.renderStage = this.renderStage.bind(this);
 		this.addThemeDef = this.addThemeDef.bind(this);
+		this.addThemeTextDef = this.addThemeTextDef.bind(this);
 		this.addDef = this.addDef.bind(this);
 	}
 
@@ -148,6 +150,15 @@ export default class Renderer extends EventObject {
 			this.themeDefs.add(generator().attr('id', namespacedName));
 		}
 		return namespacedName;
+	}
+
+	addThemeTextDef(name, generator) {
+		const namespacedName = this.namespace + name;
+		if(!this.knownTextFilterDefs.has(name)) {
+			const def = generator().attr('id', namespacedName);
+			this.knownTextFilterDefs.set(name, def);
+		}
+		this.svg.registerTextFilter(name, namespacedName);
 	}
 
 	addDef(name, generator) {
@@ -531,6 +542,7 @@ export default class Renderer extends EventObject {
 	_reset(theme) {
 		if(theme) {
 			this.knownThemeDefs.clear();
+			this.knownTextFilterDefs.clear();
 			this.themeDefs.empty();
 		}
 
@@ -628,7 +640,11 @@ export default class Renderer extends EventObject {
 		this._reset(themeChanged);
 
 		this.metaCode.nodeValue = sequence.meta.code;
-		this.theme.addDefs(this.addThemeDef);
+		this.svg.resetTextFilters();
+		this.theme.addDefs(this.addThemeDef, this.addThemeTextDef);
+		for(const def of this.knownTextFilterDefs.values()) {
+			def.detach();
+		}
 
 		this.title.set({
 			attrs: Object.assign({
@@ -661,6 +677,10 @@ export default class Renderer extends EventObject {
 
 		sequence.stages.forEach(this.renderStage);
 		const bottomY = this.checkAgentRange(['[', ']'], this.currentY);
+
+		this.svg.getUsedTextFilterNames().forEach((name) => {
+			this.themeDefs.add(this.knownTextFilterDefs.get(name));
+		});
 
 		const stagesHeight = Math.max(bottomY - this.theme.actionMargin, 0);
 		this.updateBounds(stagesHeight);

@@ -267,6 +267,16 @@
 			title: 'Monospace markdown',
 		},
 		{
+			code: '<red>{text}</red>',
+			preview: 'A -> B: <red>red</red>',
+			title: 'Red markdown',
+		},
+		{
+			code: '<highlight>{text}</highlight>',
+			preview: 'A -> B: <highlight>highlight</highlight>',
+			title: 'Highlight markdown',
+		},
+		{
 			code: '{Agent} is red',
 			preview: 'headers box\nA is red\nbegin A',
 			title: 'Red agent line',
@@ -479,7 +489,9 @@
 		}
 
 		detach() {
-			this.element.parentNode.removeChild(this.element);
+			if(this.element.parentNode) {
+				this.element.parentNode.removeChild(this.element);
+			}
 			return this;
 		}
 	}

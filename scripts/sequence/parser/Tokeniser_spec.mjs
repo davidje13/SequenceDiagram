@@ -1,3 +1,5 @@
+/* eslint-disable max-statements */
+
 import Tokeniser from './Tokeniser.mjs';
 
 describe('Sequence Tokeniser', () => {
@@ -86,6 +88,20 @@ describe('Sequence Tokeniser', () => {
 				token({s: '', v: '*'}),
 				token({s: '', v: '...'}),
 				token({s: '', v: 'abc'}),
+			]);
+		});
+
+		it('accepts XML tag-like syntax', () => {
+			const input = 'abc <def> >> ghi <<';
+			const tokens = tokeniser.tokenise(input);
+
+			expect(tokens).toEqual([
+				token({s: '', v: 'abc'}),
+				token({s: ' ', v: '<'}),
+				token({s: '', v: 'def>'}),
+				token({s: ' ', v: '>>'}),
+				token({s: ' ', v: 'ghi'}),
+				token({s: ' ', v: '<<'}),
 			]);
 		});
 

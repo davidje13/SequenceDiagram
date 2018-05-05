@@ -22,7 +22,7 @@ const TOKENS = [
 		start: /"/y,
 	},
 	{baseToken: {v: '...'}, start: /\.\.\./y},
-	{end: /(?=[ \t\r\n:+~\-*!<>,])|$/y, start: /(?=[^ \t\r\n:+~\-*!<>,])/y},
+	{end: /(?=[ \t\r\n:+~\-*!<,])|$/y, start: /(?=[^ \t\r\n:+~\-*!<,])/y},
 	{
 		end: /(?=[^~\-<>x])|[-~]x|[<>](?=x)|$/y,
 		includeEnd: true,

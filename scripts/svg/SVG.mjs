@@ -189,10 +189,38 @@ export default class SVG {
 		this.dom = domWrapper;
 		this.body = this.el('svg').attr('xmlns', NS).attr('version', '1.1');
 		const fn = (textSizerFactory || defaultTextSizerFactory);
+		this.textFilters = new Map();
 		this.textSizer = new TextSizerWrapper(fn(this));
 
 		this.txt = this.txt.bind(this);
 		this.el = this.el.bind(this);
+	}
+
+	resetTextFilters() {
+		this.textFilters.clear();
+	}
+
+	registerTextFilter(name, id) {
+		this.textFilters.set(name, {id, used: false});
+	}
+
+	getTextFilter(name) {
+		const filter = this.textFilters.get(name);
+		if(!filter) {
+			return 'none';
+		}
+		filter.used = true;
+		return 'url(#' + filter.id + ')';
+	}
+
+	getUsedTextFilterNames() {
+		const used = [];
+		for(const [name, filter] of this.textFilters) {
+			if(filter.used) {
+				used.push(name);
+			}
+		}
+		return used;
 	}
 
 	linearGradient(attrs, stops) {

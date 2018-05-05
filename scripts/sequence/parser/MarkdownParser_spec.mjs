@@ -117,6 +117,26 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
+	it('recognises red styling', () => {
+		const formatted = parser('a <red>b</red> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'fill': '#DD0000'}, text: 'b'},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
+	it('recognises highlight styling', () => {
+		const formatted = parser('a <highlight>b</highlight> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'filter': 'highlight'}, text: 'b'},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
 	it('allows dots around monospace styling', () => {
 		const formatted = parser('a.`b`.c');
 
@@ -137,6 +157,18 @@ describe('Markdown Parser', () => {
 				'font-weight': 'bolder',
 			}, text: 'b'},
 			{attrs: {'font-weight': 'bolder'}, text: ' c'},
+		]]);
+	});
+
+	it('recognises heavily combined styling', () => {
+		const formatted = parser('**_`abc`_**');
+
+		expect(formatted).toEqual([[
+			{attrs: {
+				'font-family': MONO_FONT,
+				'font-style': 'italic',
+				'font-weight': 'bolder',
+			}, text: 'abc'},
 		]]);
 	});
 

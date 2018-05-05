@@ -1,28 +1,36 @@
 const STYLES = [
 	{
 		attrs: {'font-style': 'italic'},
-		begin: /[\s_~`]\*(?=\S)/g,
-		end: /\S\*(?=[\s_~`])/g,
+		begin: {matcher: /[\s_~`>]\*(?=\S)/g, skip: 1},
+		end: {matcher: /\S\*(?=[\s_~`<])/g, skip: 1},
 	}, {
 		attrs: {'font-style': 'italic'},
-		begin: /[\s*~`]_(?=\S)/g,
-		end: /\S_(?=[\s*~`])/g,
+		begin: {matcher: /[\s*~`>]_(?=\S)/g, skip: 1},
+		end: {matcher: /\S_(?=[\s*~`<])/g, skip: 1},
 	}, {
 		attrs: {'font-weight': 'bolder'},
-		begin: /[\s_~`]\*\*(?=\S)/g,
-		end: /\S\*\*(?=[\s_~`])/g,
+		begin: {matcher: /[\s_~`>]\*\*(?=\S)/g, skip: 1},
+		end: {matcher: /\S\*\*(?=[\s_~`<])/g, skip: 1},
 	}, {
 		attrs: {'font-weight': 'bolder'},
-		begin: /[\s*~`]__(?=\S)/g,
-		end: /\S__(?=[\s*~`])/g,
+		begin: {matcher: /[\s*~`>]__(?=\S)/g, skip: 1},
+		end: {matcher: /\S__(?=[\s*~`<])/g, skip: 1},
 	}, {
 		attrs: {'text-decoration': 'line-through'},
-		begin: /[\s_*`]~(?=\S)/g,
-		end: /\S~(?=[\s_*`])/g,
+		begin: {matcher: /[\s_*`>]~(?=\S)/g, skip: 1},
+		end: {matcher: /\S~(?=[\s_*`<])/g, skip: 1},
 	}, {
 		attrs: {'font-family': 'Courier New,Liberation Mono,monospace'},
-		begin: /[\s_*~.]`(?=\S)/g,
-		end: /\S`(?=[\s_*~.])/g,
+		begin: {matcher: /[\s_*~.>]`(?=\S)/g, skip: 1},
+		end: {matcher: /\S`(?=[\s_*~.<])/g, skip: 1},
+	}, {
+		attrs: {'fill': '#DD0000'},
+		begin: {matcher: /<red>/g, skip: 0},
+		end: {matcher: /<\/red>/g, skip: 0},
+	}, {
+		attrs: {'filter': 'highlight'},
+		begin: {matcher: /<highlight>/g, skip: 0},
+		end: {matcher: /<\/highlight>/g, skip: 0},
 	},
 ];
 
@@ -34,19 +42,20 @@ function findNext(line, p, active) {
 
 	STYLES.forEach(({begin, end}, ind) => {
 		const search = active[ind] ? end : begin;
-		search.lastIndex = p;
-		const m = search.exec(virtLine);
-		if(m && (
-			m.index < bestStart ||
-			(m.index === bestStart && search.lastIndex > bestEnd)
-		)) {
+		search.matcher.lastIndex = p + 1 - search.skip;
+		const m = search.matcher.exec(virtLine);
+		const beginInd = m ? (m.index + search.skip) : Number.POSITIVE_INFINITY;
+		if(
+			beginInd < bestStart ||
+			(beginInd === bestStart && search.matcher.lastIndex > bestEnd)
+		) {
 			styleIndex = ind;
-			bestStart = m.index;
-			bestEnd = search.lastIndex;
+			bestStart = beginInd;
+			bestEnd = search.matcher.lastIndex;
 		}
 	});
 
-	return {end: bestEnd - 1, start: bestStart, styleIndex};
+	return {end: bestEnd - 1, start: bestStart - 1, styleIndex};
 }
 
 function combineAttrs(activeCount, active) {

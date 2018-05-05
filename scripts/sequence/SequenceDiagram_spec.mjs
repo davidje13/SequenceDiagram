@@ -171,4 +171,11 @@ describe('SequenceDiagram', () => {
 
 		expect(content).toContain('<g class="region collapsed"');
 	});
+
+	it('includes text filters if used', () => {
+		const diagram = makeDiagram('title <highlight>foo</highlight>');
+		const content = getSimplifiedContent(diagram);
+
+		expect(content).toContain('<filter id="highlight"');
+	});
 });

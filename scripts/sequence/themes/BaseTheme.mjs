@@ -57,8 +57,58 @@ export default class BaseTheme {
 		// No-op
 	}
 
-	addDefs() {
-		// No-op
+	addDefs(builder, textBuilder) {
+		// Thanks, https://stackoverflow.com/a/12263962/1180785
+		// https://bugs.chromium.org/p/chromium/issues/detail?id=603157
+		// https://bugzilla.mozilla.org/show_bug.cgi?id=917766
+		textBuilder('highlight', () => this.svg.el('filter')
+			.add(
+				// Morph makes characters consistent
+				this.svg.el('feMorphology').attrs({
+					'in': 'SourceAlpha',
+					'operator': 'dilate',
+					'radius': '4',
+				}),
+				// Blur+thresh makes edges smooth
+				this.svg.el('feGaussianBlur').attrs({
+					'edgeMode': 'none',
+					'stdDeviation': '3, 1.5',
+				}),
+				this.svg.el('feComponentTransfer').add(
+					this.svg.el('feFuncA').attrs({
+						'intercept': -70,
+						'slope': 100,
+						'type': 'linear',
+					})
+				),
+				// Add colour
+				this.svg.el('feComponentTransfer').add(
+					this.svg.el('feFuncR').attrs({
+						'intercept': 1,
+						'slope': 0,
+						'type': 'linear',
+					}),
+					this.svg.el('feFuncG').attrs({
+						'intercept': 0.9375,
+						'slope': 0,
+						'type': 'linear',
+					}),
+					this.svg.el('feFuncB').attrs({
+						'intercept': 0.09375,
+						'slope': 0,
+						'type': 'linear',
+					}),
+					this.svg.el('feFuncA').attrs({
+						'slope': 0.7,
+						'type': 'linear',
+					})
+				),
+				// Draw text on top
+				this.svg.el('feMerge').add(
+					this.svg.el('feMergeNode'),
+					this.svg.el('feMergeNode').attr('in', 'SourceGraphic')
+				)
+			));
 	}
 
 	getTitleAttrs() {
