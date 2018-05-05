@@ -143,6 +143,32 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
+	it('recognises superscript styling', () => {
+		const formatted = parser('a <sup>b</sup> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{
+				attrs: {'baseline-shift': '70%', 'font-size': '0.6em'},
+				text: 'b',
+			},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
+	it('recognises subscript styling', () => {
+		const formatted = parser('a <sub>b</sub> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{
+				attrs: {'baseline-shift': '-20%', 'font-size': '0.6em'},
+				text: 'b',
+			},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
 	it('recognises red styling', () => {
 		const formatted = parser('a <red>b</red> c');
 

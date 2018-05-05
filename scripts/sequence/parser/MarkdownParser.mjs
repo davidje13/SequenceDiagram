@@ -44,6 +44,14 @@ const STYLES = [
 		begin: {matcher: /<u>/g, skip: 0},
 		end: {matcher: /<\/u>/g, skip: 0},
 	}, {
+		attrs: {'baseline-shift': '70%', 'font-size': '0.6em'},
+		begin: {matcher: /<sup>/g, skip: 0},
+		end: {matcher: /<\/sup>/g, skip: 0},
+	}, {
+		attrs: {'baseline-shift': '-20%', 'font-size': '0.6em'},
+		begin: {matcher: /<sub>/g, skip: 0},
+		end: {matcher: /<\/sub>/g, skip: 0},
+	}, {
 		attrs: {'fill': '#DD0000'},
 		begin: {matcher: /<red>/g, skip: 0},
 		end: {matcher: /<\/red>/g, skip: 0},

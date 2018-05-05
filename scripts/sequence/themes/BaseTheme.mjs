@@ -89,17 +89,17 @@ export default class BaseTheme {
 						'type': 'linear',
 					}),
 					this.svg.el('feFuncG').attrs({
-						'intercept': 0.9375,
+						'intercept': 0.875,
 						'slope': 0,
 						'type': 'linear',
 					}),
 					this.svg.el('feFuncB').attrs({
-						'intercept': 0.09375,
+						'intercept': 0,
 						'slope': 0,
 						'type': 'linear',
 					}),
 					this.svg.el('feFuncA').attrs({
-						'slope': 0.7,
+						'slope': 0.8,
 						'type': 'linear',
 					})
 				),

@@ -77,6 +77,18 @@ describe('VirtualTextSizer', () => {
 			expect(sizeMonoBold.width).toBeNear(sizeMono.width, 1e-1);
 		});
 
+		it('uses relative font sizes', () => {
+			const size = safeMeasure(attrs, [[
+				{text: 'bar'},
+			]]);
+
+			const sizeSmall = safeMeasure(attrs, [[
+				{attrs: {'font-size': '0.5em'}, text: 'bar'},
+			]]);
+
+			expect(sizeSmall.width).toBeNear(size.width / 2, 1e-1);
+		});
+
 		it('returns 0, 0 for empty content', () => {
 			const size = safeMeasure(attrs, []);
 

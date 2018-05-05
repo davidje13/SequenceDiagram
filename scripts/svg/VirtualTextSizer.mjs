@@ -93,6 +93,21 @@ function measure(attrs, text) {
 	return variant.getAdvanceWidth(text, size, OPENTYPE_OPTIONS);
 }
 
+function combineAttrs(base, next) {
+	if(!next) {
+		return base;
+	}
+	const result = Object.assign({}, base, next);
+	const nextSize = next['font-size'];
+	if(typeof nextSize === 'string' && nextSize.endsWith('em')) {
+		const ratio = Number.parseFloat(
+			nextSize.substr(0, nextSize.length - 2)
+		);
+		result['font-size'] = base['font-size'] * ratio;
+	}
+	return result;
+}
+
 export default class VirtualTextSizer {
 	baseline({attrs}) {
 		return getFontSize(attrs);
@@ -118,7 +133,8 @@ export default class VirtualTextSizer {
 			if(!part.text) {
 				continue;
 			}
-			len += measure(Object.assign({}, attrs, part.attrs), part.text);
+			const combinedAttrs = combineAttrs(attrs, part.attrs);
+			len += measure(combinedAttrs, part.text);
 		}
 		return len;
 	}
