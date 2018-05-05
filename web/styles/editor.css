@@ -388,3 +388,36 @@ html, body {
 	background: #99EE99;
 	box-sizing: border-box;
 }
+
+@media print {
+	.drop-target:after {
+		display: none;
+	}
+
+	.pane-side {
+		display: none;
+	}
+
+	.pane-view {
+		min-width: 100%;
+	}
+
+	.pane-view-scroller {
+		overflow: visible;
+	}
+
+	.pane-view-inner {
+		/* https://bugs.chromium.org/p/chromium/issues/detail?id=449512 */
+		/* (not using this workaround for now
+		 * due to drastically lowered resolution) */
+		/*-webkit-filter: opacity(1);*/
+	}
+
+	.pane-view .region .outline {
+		stroke: none !important;
+	}
+
+	.options {
+		display: none;
+	}
+}

@@ -203,7 +203,8 @@ end Baz
 
 note over Foo, Bar: Using * / !
 
-# * and ! cause agents to be created and destroyed inline
+# * and ! cause agents to be
+# created and destroyed inline
 Bar -> *Baz: make Baz
 Foo <- !Baz: end Baz
 
@@ -257,7 +258,8 @@ Bar -> Baz
 ```
 begin Initiator as I, Receiver as R
 
-# the '...id' syntax allows connections to span multiple lines
+# the '...id' syntax allows connections
+# to span multiple lines
 
 I -> ...fin1
 ...fin1 -> R: FIN

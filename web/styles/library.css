@@ -21,14 +21,16 @@ article > header {
 	padding: 10px 20px;
 	background: linear-gradient(#DDEEFF, #FFFFFF);
 	border-radius: 2px;
+	page-break-inside: avoid;
+	break-inside: avoid;
 }
 
 article > header > h1 {
 	margin: 0 0 10px;
 	padding: 0;
 	font: 3.5em 'Vollkorn', serif;
-	text-align: center;
 	clear: both;
+	text-align: center;
 }
 
 article > header > .sequence-diagram {
@@ -40,19 +42,32 @@ article > h2 {
 	padding: 5px 20px 0;
 	font: 2em 'Vollkorn', serif;
 	clear: both;
+	page-break-before: always;
+	break-before: page;
+	page-break-after: avoid;
+	break-after: avoid;
 }
 
-article > h3 {
+article h3 {
 	margin: 25px -20px 10px;
 	padding: 5px 20px 0;
 	font: 1.5em 'Vollkorn', serif;
 	clear: both;
+	page-break-after: avoid;
+	break-after: avoid;
 }
 
-article > h4 {
+article h4 {
 	margin: 15px -20px 10px;
 	padding: 5px 20px 0;
 	font: 1.1em 'Vollkorn', serif;
+	page-break-after: avoid;
+	break-after: avoid;
+}
+
+.no-forced-break {
+	page-break-before: auto;
+	break-before: auto;
 }
 
 article > p {
@@ -64,6 +79,19 @@ article > p {
 article > ul {
 	margin: 10px 0;
 	padding: 0 0 0 30px;
+	page-break-before: avoid;
+	page-break-inside: avoid;
+	break-before: avoid;
+	break-inside: avoid;
+}
+
+section {
+	display: block;
+	margin: 0;
+	padding: 0;
+	clear: both;
+	page-break-inside: avoid;
+	break-inside: avoid;
 }
 
 a:link, a:visited {
@@ -87,6 +115,8 @@ a:hover, a:active {
 	margin-left: 20px;
 	background: #F8F8F8;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	page-break-inside: avoid;
+	break-inside: avoid;
 }
 
 .region.focus .outline {
@@ -114,6 +144,7 @@ pre {
 	min-width: 150px;
 	font-size: 1.1em;
 	line-height: 1.2;
+	page-break-inside: avoid;
 }
 
 nav {
@@ -138,4 +169,92 @@ nav a {
 
 nav a:hover {
 	background: #EEEEEE;
+}
+
+@media print {
+	body {
+		background: transparent;
+		margin: 0;
+	}
+
+	article {
+		max-width: none;
+		background: transparent;
+		box-shadow: none;
+		margin: 0;
+		padding: 0;
+		border-radius: 0;
+		color: #000000;
+	}
+
+	article > header {
+		margin: 0 0 30px;
+		background: transparent;
+		border-radius: 0;
+	}
+
+	article > header > h1 {
+		margin: 50px 0 80px;
+	}
+
+	article > h2 {
+		margin: 35px 0 10px;
+		padding: 5px 0 0;
+	}
+
+	article h3 {
+		margin: 25px 0 10px;
+		padding: 5px 0 0;
+	}
+
+	article h4 {
+		margin: 15px 0 10px;
+		padding: 5px 0 0;
+	}
+
+	article > header > .sequence-diagram {
+		/* filters print with low resolution */
+		filter: none;
+	}
+
+	a:link, a:visited, a:hover, a:active {
+		color: inherit;
+		text-decoration: underline;
+	}
+
+	pre {
+		background: #FFFFFF;
+		overflow: visible;
+		box-shadow: none;
+		border: 1px solid #666666;
+	}
+
+	pre.print-reduced {
+		display: inline-block;
+	}
+
+	pre.example {
+		font-size: 0.8em;
+		width: 50%;
+		box-sizing: border-box;
+		display: inline-block;
+	}
+
+	.example-diagram {
+		max-width: 50%;
+		max-height: 400px;
+		box-sizing: border-box;
+		margin-left: 0;
+		background: #FFFFFF;
+		box-shadow: none;
+	}
+
+	.right {
+		background: #FFFFFF;
+		margin: -2px;
+	}
+
+	nav {
+		display: none;
+	}
 }

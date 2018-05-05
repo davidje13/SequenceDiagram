@@ -154,7 +154,7 @@ converted when the page loads:
 </pre>
 </div>
 
-<pre data-lang="text/html">
+<pre data-lang="text/html" class="print-reduced">
 &lt;pre class="sequence-diagram"&gt;
   A -&gt; B: foo
   B -&gt; A: bar
@@ -163,6 +163,7 @@ converted when the page loads:
 
 <h2 id="Language">Language</h2>
 
+<section>
 <h3 id="ConnectionTypes">Connection Types</h3>
 <pre class="example" data-lang="sequence">
 title Connection Types
@@ -197,7 +198,9 @@ Foo <- ]: From the right
 [ ~> ]: Wavy left to right!
 # (etc.)
 </pre>
+</section>
 
+<section>
 <h3 id="Dividers">Dividers</h3>
 <pre class="example" data-lang="sequence">
 title Dividers
@@ -218,7 +221,9 @@ divider tear with height 20: Lots of stuff happens
 
 -Bar --> Foo
 </pre>
+</section>
 
+<section>
 <h3 id="NotesState">Notes &amp; State</h3>
 <pre class="example" data-lang="sequence">
 title Note Placements
@@ -234,7 +239,9 @@ text right: "Comments\nOver here!"
 
 state over Foo: Foo is ponderous
 </pre>
+</section>
 
+<section>
 <h3 id="Logic">Logic</h3>
 <pre class="example" data-lang="sequence">
 title At the Bank
@@ -256,7 +263,9 @@ else
   ATM -> Person: Error
 end
 </pre>
+</section>
 
+<section>
 <h3 id="LabelTemplates">Label Templates</h3>
 <pre class="example" data-lang="sequence">
 autolabel "[&lt;inc>] &lt;label>"
@@ -266,7 +275,9 @@ A <- ]: Collect underpants
 A <-> ]: ???
 A <- ]: Profit!
 </pre>
+</section>
 
+<section>
 <h3 id="MultilineText">Multiline Text</h3>
 <pre class="example" data-lang="sequence">
 title "My Multiline
@@ -283,7 +294,9 @@ end
 state over Foo: "Newlines here,
 too!"
 </pre>
+</section>
 
+<section>
 <h3 id="Themes">Themes</h3>
 <pre class="example" data-lang="sequence">
 theme sketch
@@ -304,7 +317,9 @@ end Another thing
 <li>sketch</li>
 <li>sketch left handed</li>
 </ul>
+</section>
 
+<section>
 <h3 id="ShortLivedAgents">Short-Lived Agents</h3>
 <pre class="example" data-lang="sequence">
 title "Baz doesn't live long"
@@ -318,7 +333,8 @@ end Baz
 
 note over Foo, Bar: Using * / !
 
-# * and ! cause agents to be created and destroyed inline
+# * and ! cause agents to be
+# created and destroyed inline
 Bar -> *Baz: make Baz
 Foo <- !Baz: end Baz
 
@@ -326,7 +342,9 @@ Foo <- !Baz: end Baz
 terminators bar
 # (options are: box, bar, cross, fade, none)
 </pre>
+</section>
 
+<section>
 <h3 id="AgentAliases">Agent Aliases</h3>
 <pre class="example" data-lang="sequence">
 define My complicated agent name as A
@@ -336,7 +354,9 @@ and this one's multi-line!" as B
 A -> B: this is much easier
 A <- B: than writing the whole name
 </pre>
+</section>
 
+<section>
 <h3 id="Markdown">Markdown</h3>
 <pre class="example" data-lang="sequence">
 define "Name with
@@ -347,7 +367,9 @@ and ~strikeout~" as B
 A -> B: "_**basic markdown
 is supported!**_"
 </pre>
+</section>
 
+<section>
 <h3 id="AlternativeAgentOrdering">Alternative Agent Ordering</h3>
 <pre class="example" data-lang="sequence">
 define Baz, Foo
@@ -355,12 +377,15 @@ define Baz, Foo
 Foo -> Bar
 Bar -> Baz
 </pre>
+</section>
 
+<section>
 <h3 id="AsynchronousCommunication">Asynchronous Communication</h3>
 <pre class="example" data-lang="sequence">
 begin Initiator as I, Receiver as R
 
-# the '...id' syntax allows connections to span multiple lines
+# the '...id' syntax allows connections
+# to span multiple lines
 
 I -> ...fin1
 ...fin1 -> R: FIN
@@ -374,7 +399,9 @@ R -> ...fin2
 !I -> ...ack2
 ...ack2 -> !R: ACK
 </pre>
+</section>
 
+<section>
 <h3 id="LanguageMore">More</h3>
 
 <p>
@@ -382,8 +409,9 @@ More features are supported. See the
 <a href="." target="_blank">online editor</a>&rsquo;s library and autocomplete
 features to discover them.
 </p>
+</section>
 
-<h2 id="BrowserSupport">Browser Support</h2>
+<h2 id="BrowserSupport" class="no-forced-break">Browser Support</h2>
 
 <p>
 This has been tested in the latest versions of Google Chrome, Mozilla Firefox,
@@ -401,11 +429,13 @@ For more advanced usage, an API is available:
 
 <div id="hold1" class="right"></div>
 
-<pre data-lang="javascript">
+<pre data-lang="javascript" class="print-reduced">
 var diagram = new SequenceDiagram();
 diagram.set('A -> B\nB -> A');
 document.body.appendChild(diagram.dom());
-diagram.setHighlight(1); // Highlight elements created in line 1 (0-based)
+
+// Highlight elements created in line 1 (0-based)
+diagram.setHighlight(1);
 </pre>
 
 <h3 id="API_Constructor">Constructor</h3>
