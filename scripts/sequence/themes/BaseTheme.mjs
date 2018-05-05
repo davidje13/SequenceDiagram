@@ -31,8 +31,24 @@ export class WavePattern {
 }
 
 export default class BaseTheme {
-	constructor(svg) {
+	constructor(svg, baseFontAttrs) {
 		this.svg = svg;
+		this.baseFontAttrs = baseFontAttrs;
+		this.fontSize = this.baseFontAttrs['font-size'];
+		this.connectLines = new Map();
+	}
+
+	addConnectLine(type, {
+		attrs = {},
+		pattern = null,
+	} = {}) {
+		const base = this.connectLines.get('solid') || {attrs: {}};
+		const fullAttrs = Object.assign({'fill': 'none'}, base.attrs, attrs);
+		this.connectLines.set(type, {
+			attrs: fullAttrs,
+			renderFlat: this.renderFlatConnect.bind(this, pattern, fullAttrs),
+			renderRev: this.renderRevConnect.bind(this, pattern, fullAttrs),
+		});
 	}
 
 	// PUBLIC API
@@ -43,6 +59,18 @@ export default class BaseTheme {
 
 	addDefs() {
 		// No-op
+	}
+
+	getTitleAttrs() {
+		return Object.assign({}, this.baseFontAttrs, {
+			'font-size': this.fontSize * 2.5,
+			'text-anchor': 'middle',
+		});
+	}
+
+	getConnectLine(type) {
+		const lines = this.connectLines;
+		return lines.get(type) || lines.get('solid');
 	}
 
 	getBlock(type) {

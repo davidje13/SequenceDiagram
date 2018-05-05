@@ -50,13 +50,13 @@ class Arrowhead {
 		return this.getConfig(theme).height;
 	}
 
-	lineGap(theme, lineAttrs) {
+	lineGap(theme, line) {
 		const arrow = this.getConfig(theme);
 		const short = this.short(theme);
 		if(arrow.attrs.fill === 'none') {
 			const h = arrow.height / 2;
 			const w = arrow.width;
-			const safe = short + (lineAttrs['stroke-width'] / 2) * (w / h);
+			const safe = short + (line.attrs['stroke-width'] / 2) * (w / h);
 			return (short + safe) / 2;
 		} else {
 			return short + arrow.width / 2;
@@ -174,15 +174,14 @@ export class Connect extends BaseComponent {
 	}
 
 	renderRevArrowLine({x1, y1, x2, y2, xR}, options, env, clickable) {
-		const config = env.theme.connect;
-		const line = config.line[options.line];
+		const line = env.theme.getConnectLine(options.line);
 		const lArrow = ARROWHEADS[options.left];
 		const rArrow = ARROWHEADS[options.right];
 
-		const dx1 = lArrow.lineGap(env.theme, line.attrs);
-		const dx2 = rArrow.lineGap(env.theme, line.attrs);
-		const rendered = line.renderRev(line.attrs, {
-			rad: config.loopbackRadius,
+		const dx1 = lArrow.lineGap(env.theme, line);
+		const dx2 = rArrow.lineGap(env.theme, line);
+		const rendered = line.renderRev({
+			rad: env.theme.connect.loopbackRadius,
 			x1: x1 + dx1,
 			x2: x2 + dx2,
 			xR,
@@ -273,8 +272,7 @@ export class Connect extends BaseComponent {
 	}
 
 	renderArrowLine({x1, y1, x2, y2}, options, env, clickable) {
-		const config = env.theme.connect;
-		const line = config.line[options.line];
+		const line = env.theme.getConnectLine(options.line);
 		const lArrow = ARROWHEADS[options.left];
 		const rArrow = ARROWHEADS[options.right];
 
@@ -282,12 +280,12 @@ export class Connect extends BaseComponent {
 			(x2 - x1) * (x2 - x1) +
 			(y2 - y1) * (y2 - y1)
 		);
-		const d1 = lArrow.lineGap(env.theme, line.attrs);
-		const d2 = rArrow.lineGap(env.theme, line.attrs);
+		const d1 = lArrow.lineGap(env.theme, line);
+		const d2 = rArrow.lineGap(env.theme, line);
 		const dx = (x2 - x1) / len;
 		const dy = (y2 - y1) / len;
 
-		const rendered = line.renderFlat(line.attrs, {
+		const rendered = line.renderFlat({
 			x1: x1 + d1 * dx,
 			x2: x2 - d2 * dx,
 			y1: y1 + d1 * dy,

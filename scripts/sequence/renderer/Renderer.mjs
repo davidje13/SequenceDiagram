@@ -631,7 +631,9 @@ export default class Renderer extends EventObject {
 		this.theme.addDefs(this.addThemeDef);
 
 		this.title.set({
-			attrs: this.theme.titleAttrs,
+			attrs: Object.assign({
+				'class': 'title',
+			}, this.theme.getTitleAttrs()),
 			formatted: sequence.meta.title,
 		});
 		this.svg.textSizer.expectMeasure(this.title);

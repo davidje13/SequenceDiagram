@@ -5,8 +5,6 @@ import BaseTheme, {WavePattern} from './BaseTheme.mjs';
 const FONT = 'Helvetica,Arial,Liberation Sans,sans-serif';
 const LINE_HEIGHT = 1.3;
 
-const WAVE = new WavePattern(6, 0.5);
-
 const NOTE_ATTRS = {
 	'font-family': FONT,
 	'font-size': 8,
@@ -22,7 +20,11 @@ const DIVIDER_LABEL_ATTRS = {
 
 export default class BasicTheme extends BaseTheme {
 	constructor(svg) {
-		super(svg);
+		super(svg, {
+			'font-family': FONT,
+			'font-size': 8,
+			'line-height': LINE_HEIGHT,
+		});
 
 		const sharedBlockSection = {
 			padding: {
@@ -146,38 +148,6 @@ export default class BasicTheme extends BaseTheme {
 
 			connect: {
 				loopbackRadius: 6,
-				line: {
-					'solid': {
-						attrs: {
-							'fill': 'none',
-							'stroke': '#000000',
-							'stroke-width': 1,
-						},
-						renderFlat: this.renderFlatConnect.bind(this, null),
-						renderRev: this.renderRevConnect.bind(this, null),
-					},
-					'dash': {
-						attrs: {
-							'fill': 'none',
-							'stroke': '#000000',
-							'stroke-width': 1,
-							'stroke-dasharray': '4, 2',
-						},
-						renderFlat: this.renderFlatConnect.bind(this, null),
-						renderRev: this.renderRevConnect.bind(this, null),
-					},
-					'wave': {
-						attrs: {
-							'fill': 'none',
-							'stroke': '#000000',
-							'stroke-width': 1,
-							'stroke-linejoin': 'round',
-							'stroke-linecap': 'round',
-						},
-						renderFlat: this.renderFlatConnect.bind(this, WAVE),
-						renderRev: this.renderRevConnect.bind(this, WAVE),
-					},
-				},
 				arrow: {
 					'single': {
 						width: 5,
@@ -241,14 +211,6 @@ export default class BasicTheme extends BaseTheme {
 						bottom: 1,
 					},
 				},
-			},
-
-			titleAttrs: {
-				'font-family': FONT,
-				'font-size': 20,
-				'line-height': LINE_HEIGHT,
-				'text-anchor': 'middle',
-				'class': 'title',
 			},
 
 			agentLineAttrs: {
@@ -387,6 +349,21 @@ export default class BasicTheme extends BaseTheme {
 					}),
 				},
 			},
+		});
+
+		this.addConnectLine('solid', {attrs: {
+			'stroke': '#000000',
+			'stroke-width': 1,
+		}});
+		this.addConnectLine('dash', {attrs: {
+			'stroke-dasharray': '4, 2',
+		}});
+		this.addConnectLine('wave', {
+			attrs: {
+				'stroke-linejoin': 'round',
+				'stroke-linecap': 'round',
+			},
+			pattern: new WavePattern(6, 0.5),
 		});
 	}
 }

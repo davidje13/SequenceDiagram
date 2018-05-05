@@ -72,11 +72,15 @@ function clamp(v, low, high) {
 
 export default class SketchTheme extends BaseTheme {
 	constructor(svg, handedness = RIGHT) {
-		super(svg);
+		super(svg, {
+			'font-family': FONT,
+			'font-size': 8,
+			'line-height': LINE_HEIGHT,
+		});
 
 		this.handedness = (handedness === RIGHT) ? 1 : -1;
 		this.random = new Random();
-		this.wave = new SketchWavePattern(4, handedness);
+		const wave = new SketchWavePattern(4, handedness);
 
 		const sharedBlockSection = {
 			padding: {
@@ -180,32 +184,6 @@ export default class SketchTheme extends BaseTheme {
 
 			connect: {
 				loopbackRadius: 6,
-				line: {
-					'solid': {
-						attrs: Object.assign({
-							'fill': 'none',
-						}, PENCIL.normal),
-						renderFlat: this.renderFlatConnect.bind(this),
-						renderRev: this.renderRevConnect.bind(this),
-					},
-					'dash': {
-						attrs: Object.assign({
-							'fill': 'none',
-							'stroke-dasharray': '4, 2',
-						}, PENCIL.normal),
-						renderFlat: this.renderFlatConnect.bind(this),
-						renderRev: this.renderRevConnect.bind(this),
-					},
-					'wave': {
-						attrs: Object.assign({
-							'fill': 'none',
-							'stroke-linejoin': 'round',
-							'stroke-linecap': 'round',
-						}, PENCIL.normal),
-						renderFlat: this.renderFlatConnectWave.bind(this),
-						renderRev: this.renderRevConnectWave.bind(this),
-					},
-				},
 				arrow: {
 					'single': {
 						width: 5,
@@ -260,14 +238,6 @@ export default class SketchTheme extends BaseTheme {
 						bottom: 1,
 					},
 				},
-			},
-
-			titleAttrs: {
-				'font-family': FONT_FAMILY,
-				'font-size': 20,
-				'line-height': LINE_HEIGHT,
-				'text-anchor': 'middle',
-				'class': 'title',
 			},
 
 			agentLineAttrs: {
@@ -356,11 +326,23 @@ export default class SketchTheme extends BaseTheme {
 					render: this.renderTearDivider.bind(this, {
 						fadeBegin: 5,
 						fadeSize: 10,
-						pattern: this.wave,
+						pattern: wave,
 						lineAttrs: PENCIL.normal,
 					}),
 				},
 			},
+		});
+
+		this.addConnectLine('solid', {attrs: PENCIL.normal});
+		this.addConnectLine('dash', {attrs: {
+			'stroke-dasharray': '4, 2',
+		}});
+		this.addConnectLine('wave', {
+			attrs: {
+				'stroke-linejoin': 'round',
+				'stroke-linecap': 'round',
+			},
+			pattern: wave,
 		});
 	}
 
@@ -566,85 +548,85 @@ export default class SketchTheme extends BaseTheme {
 		return {shape};
 	}
 
-	renderFlatConnect(attrs, {x1, y1, x2, y2}) {
-		const ln = this.lineNodes(
-			{x: x1, y: y1},
-			{x: x2, y: y2},
-			{varX: 0.3}
-		);
-		return {
-			shape: this.svg.el('path').attr('d', ln.nodes).attrs(attrs),
-			p1: ln.p1,
-			p2: ln.p2,
-		};
+	renderFlatConnect(pattern, attrs, {x1, y1, x2, y2}) {
+		if(pattern) {
+			const x1v = x1 + this.vary(0.3);
+			const x2v = x2 + this.vary(0.3);
+			const y1v = y1 + this.vary(1);
+			const y2v = y2 + this.vary(1);
+			return {
+				shape: this.svg.el('path')
+					.attr('d', this.svg.patternedLine(pattern)
+						.move(x1v, y1v)
+						.line(x2v, y2v)
+						.cap()
+						.asPath())
+					.attrs(attrs),
+				p1: {x: x1v, y: y1v},
+				p2: {x: x2v, y: y2v},
+			};
+		} else {
+			const ln = this.lineNodes(
+				{x: x1, y: y1},
+				{x: x2, y: y2},
+				{varX: 0.3}
+			);
+			return {
+				shape: this.svg.el('path').attr('d', ln.nodes).attrs(attrs),
+				p1: ln.p1,
+				p2: ln.p2,
+			};
+		}
 	}
 
-	renderRevConnect(attrs, {x1, y1, x2, y2, xR}) {
-		const variance = Math.min((xR - x1) * 0.06, 3);
-		const overshoot = Math.min((xR - x1) * 0.5, 6);
-		const p1x = x1 + this.vary(variance, -1);
-		const p1y = y1 + this.vary(variance, -1);
-		const b1x = xR - overshoot * this.vary(0.2, 1);
-		const b1y = y1 - this.vary(1, 2);
-		const p2x = xR;
-		const p2y = y1 + this.vary(1, 1);
-		const b2x = xR;
-		const b2y = y2 + this.vary(2);
-		const p3x = x2 + this.vary(variance, -1);
-		const p3y = y2 + this.vary(variance, -1);
+	renderRevConnect(pattern, attrs, {x1, y1, x2, y2, xR}) {
+		if(pattern) {
+			const x1v = x1 + this.vary(0.3);
+			const x2v = x2 + this.vary(0.3);
+			const y1v = y1 + this.vary(1);
+			const y2v = y2 + this.vary(1);
+			return {
+				shape: this.svg.el('path')
+					.attr('d', this.svg.patternedLine(pattern)
+						.move(x1v, y1v)
+						.line(xR, y1)
+						.arc(xR, (y1 + y2) / 2, Math.PI)
+						.line(x2v, y2v)
+						.cap()
+						.asPath())
+					.attrs(attrs),
+				p1: {x: x1v, y: y1v},
+				p2: {x: x2v, y: y2v},
+			};
+		} else {
+			const variance = Math.min((xR - x1) * 0.06, 3);
+			const overshoot = Math.min((xR - x1) * 0.5, 6);
+			const p1x = x1 + this.vary(variance, -1);
+			const p1y = y1 + this.vary(variance, -1);
+			const b1x = xR - overshoot * this.vary(0.2, 1);
+			const b1y = y1 - this.vary(1, 2);
+			const p2x = xR;
+			const p2y = y1 + this.vary(1, 1);
+			const b2x = xR;
+			const b2y = y2 + this.vary(2);
+			const p3x = x2 + this.vary(variance, -1);
+			const p3y = y2 + this.vary(variance, -1);
 
-		return {
-			shape: this.svg.el('path')
-				.attr('d', (
-					'M' + p1x + ' ' + p1y +
-					'C' + p1x + ' ' + p1y +
-					',' + b1x + ' ' + b1y +
-					',' + p2x + ' ' + p2y +
-					'S' + b2x + ' ' + b2y +
-					',' + p3x + ' ' + p3y
-				))
-				.attrs(attrs),
-			p1: {x: p1x, y: p1y},
-			p2: {x: p3x, y: p3y},
-		};
-	}
-
-	renderFlatConnectWave(attrs, {x1, y1, x2, y2}) {
-		const x1v = x1 + this.vary(0.3);
-		const x2v = x2 + this.vary(0.3);
-		const y1v = y1 + this.vary(1);
-		const y2v = y2 + this.vary(1);
-		return {
-			shape: this.svg.el('path')
-				.attr('d', this.svg.patternedLine(this.wave)
-					.move(x1v, y1v)
-					.line(x2v, y2v)
-					.cap()
-					.asPath())
-				.attrs(attrs),
-			p1: {x: x1v, y: y1v},
-			p2: {x: x2v, y: y2v},
-		};
-	}
-
-	renderRevConnectWave(attrs, {x1, y1, x2, y2, xR}) {
-		const x1v = x1 + this.vary(0.3);
-		const x2v = x2 + this.vary(0.3);
-		const y1v = y1 + this.vary(1);
-		const y2v = y2 + this.vary(1);
-		return {
-			shape: this.svg.el('path')
-				.attr('d', this.svg.patternedLine(this.wave)
-					.move(x1v, y1v)
-					.line(xR, y1)
-					.arc(xR, (y1 + y2) / 2, Math.PI)
-					.line(x2v, y2v)
-					.cap()
-					.asPath())
-				.attrs(attrs),
-			p1: {x: x1v, y: y1v},
-			p2: {x: x2v, y: y2v},
-		};
+			return {
+				shape: this.svg.el('path')
+					.attr('d', (
+						'M' + p1x + ' ' + p1y +
+						'C' + p1x + ' ' + p1y +
+						',' + b1x + ' ' + b1y +
+						',' + p2x + ' ' + p2y +
+						'S' + b2x + ' ' + b2y +
+						',' + p3x + ' ' + p3y
+					))
+					.attrs(attrs),
+				p1: {x: p1x, y: p1y},
+				p2: {x: p3x, y: p3y},
+			};
+		}
 	}
 
 	renderArrowHead(attrs, {x, y, width, height, dir}) {
