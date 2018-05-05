@@ -52,9 +52,8 @@ statics
 		'library.htm',
 		'lib',
 		'web/lib',
+		'web/resources',
 		'web/styles',
-		'favicon.png',
-		'apple-touch-icon.png',
 	], devMapper);
 
 if(DEV) {

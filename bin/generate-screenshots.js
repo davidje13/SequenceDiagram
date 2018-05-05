@@ -79,7 +79,7 @@ function findSamples(content) {
 	 *   'B -> A\n' +
 	 *   'terminators fade'
 	 *  ),
-	 *  file: 'favicon.png',
+	 *  file: 'web/resources/favicon.png',
 	 *  size: {height: 16, width: 16},
 	 * });
 	 */
