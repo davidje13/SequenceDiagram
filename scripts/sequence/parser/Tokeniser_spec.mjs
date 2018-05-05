@@ -1,5 +1,3 @@
-/* eslint-disable max-statements */
-
 import Tokeniser from './Tokeniser.mjs';
 
 describe('Sequence Tokeniser', () => {

@@ -10,6 +10,14 @@ module.exports = {
 		'plugin:jasmine/recommended',
 	],
 	'globals': {'SharedArrayBuffer': false},
+	'overrides': [
+		{
+			'files': ['**/*spec.*'],
+			'rules': {
+				'max-statements': ['off'],
+			},
+		},
+	],
 	'parserOptions': {
 		'sourceType': 'module',
 	},

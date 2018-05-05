@@ -54,14 +54,16 @@ describe('Markdown Parser', () => {
 	});
 
 	it('recognises bold styling', () => {
-		const formatted = parser('a **b** c __d__ e');
+		const formatted = parser('a **b** c __d__ e <b>f</b> g');
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a '},
 			{attrs: {'font-weight': 'bolder'}, text: 'b'},
 			{attrs: null, text: ' c '},
 			{attrs: {'font-weight': 'bolder'}, text: 'd'},
-			{attrs: null, text: ' e'},
+			{attrs: null, text: ' e '},
+			{attrs: {'font-weight': 'bolder'}, text: 'f'},
+			{attrs: null, text: ' g'},
 		]]);
 	});
 
@@ -86,23 +88,47 @@ describe('Markdown Parser', () => {
 	});
 
 	it('recognises italic styling', () => {
-		const formatted = parser('a *b* c _d_ e');
+		const formatted = parser('a *b* c _d_ e <i>f</i> g');
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a '},
 			{attrs: {'font-style': 'italic'}, text: 'b'},
 			{attrs: null, text: ' c '},
 			{attrs: {'font-style': 'italic'}, text: 'd'},
-			{attrs: null, text: ' e'},
+			{attrs: null, text: ' e '},
+			{attrs: {'font-style': 'italic'}, text: 'f'},
+			{attrs: null, text: ' g'},
 		]]);
 	});
 
 	it('recognises strikethrough styling', () => {
-		const formatted = parser('a ~b~ c');
+		const formatted = parser('a ~b~ c <s>d</s> e');
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a '},
 			{attrs: {'text-decoration': 'line-through'}, text: 'b'},
+			{attrs: null, text: ' c '},
+			{attrs: {'text-decoration': 'line-through'}, text: 'd'},
+			{attrs: null, text: ' e'},
+		]]);
+	});
+
+	it('recognises underline styling', () => {
+		const formatted = parser('a <u>b</u> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'text-decoration': 'underline'}, text: 'b'},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
+	it('recognises overline styling', () => {
+		const formatted = parser('a <o>b</o> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'text-decoration': 'overline'}, text: 'b'},
 			{attrs: null, text: ' c'},
 		]]);
 	});
@@ -169,6 +195,16 @@ describe('Markdown Parser', () => {
 				'font-style': 'italic',
 				'font-weight': 'bolder',
 			}, text: 'abc'},
+		]]);
+	});
+
+	it('combines text decorations', () => {
+		const formatted = parser('a <s><u>b</u></s> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'text-decoration': 'line-through underline'}, text: 'b'},
+			{attrs: null, text: ' c'},
 		]]);
 	});
 

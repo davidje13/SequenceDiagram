@@ -1,5 +1,3 @@
-/* eslint-disable max-statements */
-
 import SequenceDiagram from '../SequenceDiagram.mjs';
 
 const CM = window.CodeMirror;

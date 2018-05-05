@@ -20,6 +20,9 @@
       location = "container:.gitignore">
    </FileRef>
    <FileRef
+      location = "container:eslintrc.js">
+   </FileRef>
+   <FileRef
       location = "container:index.html">
    </FileRef>
    <FileRef

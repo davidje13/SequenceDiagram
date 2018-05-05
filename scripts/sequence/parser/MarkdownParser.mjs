@@ -1,12 +1,20 @@
 const STYLES = [
 	{
 		attrs: {'font-style': 'italic'},
+		begin: {matcher: /<i>/g, skip: 0},
+		end: {matcher: /<\/i>/g, skip: 0},
+	}, {
+		attrs: {'font-style': 'italic'},
 		begin: {matcher: /[\s_~`>]\*(?=\S)/g, skip: 1},
 		end: {matcher: /\S\*(?=[\s_~`<])/g, skip: 1},
 	}, {
 		attrs: {'font-style': 'italic'},
 		begin: {matcher: /[\s*~`>]_(?=\S)/g, skip: 1},
 		end: {matcher: /\S_(?=[\s*~`<])/g, skip: 1},
+	}, {
+		attrs: {'font-weight': 'bolder'},
+		begin: {matcher: /<b>/g, skip: 0},
+		end: {matcher: /<\/b>/g, skip: 0},
 	}, {
 		attrs: {'font-weight': 'bolder'},
 		begin: {matcher: /[\s_~`>]\*\*(?=\S)/g, skip: 1},
@@ -17,12 +25,24 @@ const STYLES = [
 		end: {matcher: /\S__(?=[\s*~`<])/g, skip: 1},
 	}, {
 		attrs: {'text-decoration': 'line-through'},
+		begin: {matcher: /<s>/g, skip: 0},
+		end: {matcher: /<\/s>/g, skip: 0},
+	}, {
+		attrs: {'text-decoration': 'line-through'},
 		begin: {matcher: /[\s_*`>]~(?=\S)/g, skip: 1},
 		end: {matcher: /\S~(?=[\s_*`<])/g, skip: 1},
+	}, {
+		attrs: {'text-decoration': 'overline'},
+		begin: {matcher: /<o>/g, skip: 0},
+		end: {matcher: /<\/o>/g, skip: 0},
 	}, {
 		attrs: {'font-family': 'Courier New,Liberation Mono,monospace'},
 		begin: {matcher: /[\s_*~.>]`(?=\S)/g, skip: 1},
 		end: {matcher: /\S`(?=[\s_*~.<])/g, skip: 1},
+	}, {
+		attrs: {'text-decoration': 'underline'},
+		begin: {matcher: /<u>/g, skip: 0},
+		end: {matcher: /<\/u>/g, skip: 0},
 	}, {
 		attrs: {'fill': '#DD0000'},
 		begin: {matcher: /<red>/g, skip: 0},
@@ -63,11 +83,21 @@ function combineAttrs(activeCount, active) {
 		return null;
 	}
 	const attrs = {};
+	const decorations = [];
 	active.forEach((on, ind) => {
-		if(on) {
-			Object.assign(attrs, STYLES[ind].attrs);
+		if(!on) {
+			return;
 		}
+		const activeAttrs = STYLES[ind].attrs;
+		const decoration = activeAttrs['text-decoration'];
+		if(decoration && !decorations.includes(decoration)) {
+			decorations.push(decoration);
+		}
+		Object.assign(attrs, activeAttrs);
 	});
+	if(decorations.length > 1) {
+		attrs['text-decoration'] = decorations.join(' ');
+	}
 	return attrs;
 }
 
