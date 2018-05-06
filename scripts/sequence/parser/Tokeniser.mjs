@@ -9,7 +9,10 @@ function unescape(match) {
 	if(match[1] === 'n') {
 		return '\n';
 	}
-	return match[1];
+	if('"\\'.indexOf(match[1]) !== -1) {
+		return match[1];
+	}
+	return '\u001B' + match[1];
 }
 
 const TOKENS = [
@@ -35,6 +38,10 @@ const TOKENS = [
 	{baseToken: {v: '*'}, start: /\*/y},
 	{baseToken: {v: '\n'}, start: /\n/y},
 ];
+
+/* eslint-disable no-control-regex */ // Removing control characters is the aim
+const CONTROL_CHARS = /[\x00-\x08\x0E-\x1F]/g;
+/* eslint-enable no-control-regex */
 
 function tokFindBegin(src, i) {
 	for(let j = 0; j < TOKENS.length; ++ j) {
@@ -116,7 +123,7 @@ function advancePos(pos, src, steps) {
 
 class TokenState {
 	constructor(src) {
-		this.src = src;
+		this.src = src.replace(CONTROL_CHARS, '');
 		this.block = null;
 		this.token = null;
 		this.pos = {ch: 0, i: 0, ln: 0};

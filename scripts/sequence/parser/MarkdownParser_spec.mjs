@@ -35,6 +35,14 @@ describe('Markdown Parser', () => {
 		]);
 	});
 
+	it('removes escape characters', () => {
+		const formatted = parser('a\u001Bb');
+
+		expect(formatted).toEqual([
+			[{attrs: null, text: 'ab'}],
+		]);
+	});
+
 	it('replaces sequences of whitespace with a single space', () => {
 		const formatted = parser('abc  \t \v def');
 
@@ -64,6 +72,14 @@ describe('Markdown Parser', () => {
 			{attrs: null, text: ' e '},
 			{attrs: {'font-weight': 'bolder'}, text: 'f'},
 			{attrs: null, text: ' g'},
+		]]);
+	});
+
+	it('ignores style characters if preceded by an escape', () => {
+		const formatted = parser('a \u001B*\u001B*b\u001B*\u001B* c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a **b** c'},
 		]]);
 	});
 

@@ -192,12 +192,31 @@ describe('Sequence Tokeniser', () => {
 		});
 
 		it('interprets special characters within quoted strings', () => {
-			const input = 'foo "zig\\" zag\\n"';
+			const input = 'foo "zig\\" \\\\zag\\n"';
 			const tokens = tokeniser.tokenise(input);
 
 			expect(tokens).toEqual([
 				token({q: false, s: '', v: 'foo'}),
-				token({q: true, s: ' ', v: 'zig" zag\n'}),
+				token({q: true, s: ' ', v: 'zig" \\zag\n'}),
+			]);
+		});
+
+		it('propagates backslashes as escape characters', () => {
+			const input = '"zig \\ zag"';
+			const tokens = tokeniser.tokenise(input);
+
+			expect(tokens).toEqual([
+				token({q: true, s: '', v: 'zig \u001B zag'}),
+			]);
+		});
+
+		it('removes control characters everywhere', () => {
+			const input = 'a\u001Bb\u0001c "a\u001Bb\u0001c"';
+			const tokens = tokeniser.tokenise(input);
+
+			expect(tokens).toEqual([
+				token({q: false, s: '', v: 'abc'}),
+				token({q: true, s: ' ', v: 'abc'}),
 			]);
 		});
 
