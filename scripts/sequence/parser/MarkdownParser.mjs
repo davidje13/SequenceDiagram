@@ -59,6 +59,10 @@ const STYLES = [
 		attrs: {'filter': 'highlight'},
 		begin: {matcher: /<highlight>/g, skip: 0},
 		end: {matcher: /<\/highlight>/g, skip: 0},
+	}, {
+		all: {matcher: /\[([^\]]+)\]\(([^)]+)\)/g, skip: 0},
+		attrs: (m) => ({'href': m[2], 'text-decoration': 'underline'}),
+		text: (m) => m[1],
 	},
 ];
 
@@ -67,62 +71,73 @@ const WHITE_END = /^[\t-\r ]+|[\t-\r ]+$/g;
 
 const ESC = -2;
 
-function findNext(line, p, active) {
-	const virtLine = ' ' + line + ' ';
-	let styleIndex = -1;
-	let bestStart = virtLine.length;
-	let bestEnd = 0;
-
-	STYLES.forEach(({begin, end}, ind) => {
-		const search = active[ind] ? end : begin;
-		search.matcher.lastIndex = p + 1 - search.skip;
-		const m = search.matcher.exec(virtLine);
-		const beginInd = m ? (m.index + search.skip) : Number.POSITIVE_INFINITY;
-		if(
-			beginInd < bestStart ||
-			(beginInd === bestStart && search.matcher.lastIndex > bestEnd)
-		) {
-			styleIndex = ind;
-			bestStart = beginInd;
-			bestEnd = search.matcher.lastIndex;
-		}
-	});
-
-	const escIndex = virtLine.indexOf('\u001B', p + 1);
-	if(escIndex !== -1 && escIndex < bestStart) {
-		styleIndex = ESC;
-		bestStart = escIndex;
-		bestEnd = escIndex + 1;
+function pickBest(best, styleIndex, search, match) {
+	if(!match) {
+		return best;
 	}
 
-	if(styleIndex === -1) {
-		return null;
+	const start = match.index + search.skip;
+	const end = search.matcher.lastIndex;
+	if(start < best.start || (start === best.start && end > best.end)) {
+		return {end, match, start, styleIndex};
 	}
-
-	return {end: bestEnd - 1, start: bestStart - 1, styleIndex};
+	return best;
 }
 
-function combineAttrs(activeCount, active) {
-	if(!activeCount) {
+function findNext(line, p, active) {
+	const virtLine = ' ' + line + ' ';
+	const pos = p + 1;
+	let best = {
+		end: 0,
+		match: null,
+		start: virtLine.length,
+		styleIndex: -1,
+	};
+
+	const escIndex = virtLine.indexOf('\u001B', pos);
+	if(escIndex !== -1) {
+		best = {
+			end: escIndex + 1,
+			match: null,
+			start: escIndex,
+			styleIndex: ESC,
+		};
+	}
+
+	STYLES.forEach(({all, begin, end}, ind) => {
+		const search = all || (active[ind] === null ? begin : end);
+		search.matcher.lastIndex = pos - search.skip;
+		best = pickBest(best, ind, search, search.matcher.exec(virtLine));
+	});
+
+	if(best.styleIndex === -1) {
 		return null;
 	}
+
+	-- best.end;
+	-- best.start;
+	return best;
+}
+
+function combineAttrs(active) {
 	const attrs = {};
 	const decorations = [];
-	active.forEach((on, ind) => {
-		if(!on) {
+	let any = false;
+	active.forEach((activeAttrs) => {
+		if(!activeAttrs) {
 			return;
 		}
-		const activeAttrs = STYLES[ind].attrs;
 		const decoration = activeAttrs['text-decoration'];
 		if(decoration && !decorations.includes(decoration)) {
 			decorations.push(decoration);
 		}
 		Object.assign(attrs, activeAttrs);
+		any = true;
 	});
 	if(decorations.length > 1) {
 		attrs['text-decoration'] = decorations.join(' ');
 	}
-	return attrs;
+	return any ? attrs : null;
 }
 
 function shrinkWhitespace(text) {
@@ -133,29 +148,44 @@ function trimCollapsible(text) {
 	return text.replace(WHITE_END, '');
 }
 
-function findStyles(line, active, toggleCallback, textCallback) {
+function getOrCall(v, params) {
+	if(typeof v === 'function') {
+		return v(...params);
+	}
+	return v;
+}
+
+function findStyles(line, active, textCallback) {
 	let ln = line;
 	let p = 0;
 	let s = 0;
-	let match = null;
-	while((match = findNext(ln, p, active))) {
-		const {styleIndex, start, end} = match;
+	for(let next = null; (next = findNext(ln, p, active));) {
+		const {styleIndex, start, end, match} = next;
+
 		if(styleIndex === ESC) {
 			ln = ln.substr(0, start) + ln.substr(end);
 			p = start + 1;
-		} else {
-			if(start > s) {
-				textCallback(ln.substring(s, start));
-			}
-			active[styleIndex] = !active[styleIndex];
-			toggleCallback(styleIndex);
-			s = end;
-			p = end;
+			continue;
 		}
+
+		textCallback(ln.substring(s, start));
+
+		if(active[styleIndex] === null) {
+			const style = STYLES[styleIndex];
+
+			active[styleIndex] = getOrCall(style.attrs, [match]);
+			if(style.all) {
+				textCallback(getOrCall(style.text, [match]));
+				active[styleIndex] = null;
+			}
+		} else {
+			active[styleIndex] = null;
+		}
+
+		s = end;
+		p = end;
 	}
-	if(s < ln.length) {
-		textCallback(ln.substr(s));
-	}
+	textCallback(ln.substr(s));
 }
 
 export default function parseMarkdown(markdown) {
@@ -163,21 +193,15 @@ export default function parseMarkdown(markdown) {
 		return [];
 	}
 
-	const active = STYLES.map(() => false);
-	let activeCount = 0;
-	let attrs = null;
+	const active = STYLES.map(() => null);
 	const lines = trimCollapsible(markdown).split('\n');
 	return lines.map((line) => {
 		const parts = [];
-		findStyles(
-			shrinkWhitespace(trimCollapsible(line)),
-			active,
-			(styleIndex) => {
-				activeCount += active[styleIndex] ? 1 : -1;
-				attrs = combineAttrs(activeCount, active);
-			},
-			(text) => parts.push({attrs, text})
-		);
+		findStyles(shrinkWhitespace(trimCollapsible(line)), active, (text) => {
+			if(text) {
+				parts.push({attrs: combineAttrs(active), text});
+			}
+		});
 		return parts;
 	});
 }

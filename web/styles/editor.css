@@ -389,6 +389,10 @@ html, body {
 	box-sizing: border-box;
 }
 
+svg a:active, svg a:hover {
+	fill: #0080CC;
+}
+
 @media print {
 	.drop-target:after {
 		display: none;

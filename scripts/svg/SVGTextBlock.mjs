@@ -17,7 +17,16 @@ function populateSvgTextLine(svg, node, formattedLine) {
 	formattedLine.forEach(({text, attrs}) => {
 		let element = text;
 		if(attrs) {
-			element = svg.el('tspan').attrs(attrs).add(text);
+			if(attrs.href) {
+				element = svg.el('a').attrs({
+					'cursor': 'pointer',
+					'rel': 'nofollow',
+					'target': '_blank',
+				});
+			} else {
+				element = svg.el('tspan');
+			}
+			element.attrs(attrs).add(text);
 			if(attrs.filter) {
 				element.attr('filter', svg.getTextFilter(attrs.filter));
 			}

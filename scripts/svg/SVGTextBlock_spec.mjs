@@ -87,6 +87,27 @@ describe('SVGTextBlock', () => {
 				.toEqual('foo<tspan filter="url(#local-foobar)">bar</tspan>');
 		});
 
+		it('converts href attributes into <a> tags', () => {
+			block.set({formatted: [[
+				{text: 'foo'},
+				{attrs: {'href': 'foo', 'zig': 'zag'}, text: 'bar'},
+			]]});
+
+			expect(hold.childNodes[0].innerHTML).toContain('foo<a ');
+			expect(hold.childNodes[0].innerHTML).toContain(' href="foo"');
+			expect(hold.childNodes[0].innerHTML).toContain('>bar</a>');
+		});
+
+		it('adds basic link attributes to <a>s', () => {
+			block.set({formatted: [[
+				{attrs: {'href': 'foo'}, text: 'bar'},
+			]]});
+
+			expect(hold.childNodes[0].innerHTML).toContain(' cursor="pointer"');
+			expect(hold.childNodes[0].innerHTML).toContain(' target="_blank"');
+			expect(hold.childNodes[0].innerHTML).toContain(' rel="nofollow"');
+		});
+
 		it('re-uses text nodes when possible, adding more if needed', () => {
 			block.set({formatted: [[{text: 'foo'}], [{text: 'bar'}]]});
 			const [line0, line1] = hold.childNodes;

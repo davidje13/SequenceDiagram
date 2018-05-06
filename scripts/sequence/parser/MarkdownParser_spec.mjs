@@ -205,6 +205,16 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
+	it('recognises link styling', () => {
+		const formatted = parser('a [b](c) d');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'href': 'c', 'text-decoration': 'underline'}, text: 'b'},
+			{attrs: null, text: ' d'},
+		]]);
+	});
+
 	it('allows dots around monospace styling', () => {
 		const formatted = parser('a.`b`.c');
 
