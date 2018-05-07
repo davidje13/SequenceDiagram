@@ -110,11 +110,14 @@ sudo tee /var/www/sequence/update.sh <<'EOF' > /dev/null;
 BASEDIR="$(dirname "$0")";
 
 cd "$BASEDIR";
-git pull;
+git fetch;
+if (( "$(git rev-list HEAD..origin/master --count)" > 0 )); then
+	git pull;
+	chmod -R g-w .;
+	systemctl restart sequence8080.service;
+	systemctl restart sequence8081.service;
+fi;
 cd - > /dev/null;
-chmod -R g-w "$BASEDIR";
-systemctl restart sequence8080.service;
-systemctl restart sequence8081.service;
 EOF
 
 sudo tee /var/www/https/index.htm <<EOF > /dev/null;
@@ -360,6 +363,11 @@ sudo nginx -s reload;
 
 sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null;
 sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null;
+
+sudo tee /etc/cron.daily/sequence-pull <<'EOF' > /dev/null;
+/var/www/sequence/update.sh;
+EOF
+sudo chmod 0755 /etc/cron.daily/sequence-pull;
 
 sudo rm /etc/cron.d/certbot;
 sudo tee /etc/cron.daily/certbot-renew <<'EOF' > /dev/null;
