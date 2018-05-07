@@ -215,6 +215,30 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
+	it('silently ignores link titles', () => {
+		// SVG has no concept of titles, so these serve no purpose
+
+		const formatted = parser('a [b](c "d") e');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'href': 'c', 'text-decoration': 'underline'}, text: 'b'},
+			{attrs: null, text: ' e'},
+		]]);
+	});
+
+	it('removes escapes from link text and destination', () => {
+		// SVG has no concept of titles, so these serve no purpose
+
+		const formatted = parser('a [b\u001Bc](d\u001Be) f');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'href': 'de', 'text-decoration': 'underline'}, text: 'bc'},
+			{attrs: null, text: ' f'},
+		]]);
+	});
+
 	it('allows dots around monospace styling', () => {
 		const formatted = parser('a.`b`.c');
 

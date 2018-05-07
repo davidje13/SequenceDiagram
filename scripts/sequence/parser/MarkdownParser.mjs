@@ -1,3 +1,7 @@
+/* eslint-disable no-control-regex */ // Removing control characters is the aim
+const CONTROL_CHARS = /[\x00-\x08\x0E-\x1F]/g;
+/* eslint-enable no-control-regex */
+
 const STYLES = [
 	{
 		attrs: {'font-style': 'italic'},
@@ -60,9 +64,12 @@ const STYLES = [
 		begin: {matcher: /<highlight>/g, skip: 0},
 		end: {matcher: /<\/highlight>/g, skip: 0},
 	}, {
-		all: {matcher: /\[([^\]]+)\]\(([^)]+)\)/g, skip: 0},
-		attrs: (m) => ({'href': m[2], 'text-decoration': 'underline'}),
-		text: (m) => m[1],
+		all: {matcher: /\[([^\]]+)\]\(([^)]+?)(?: "([^"]+)")?\)/g, skip: 0},
+		attrs: (m) => ({
+			'href': m[2].replace(CONTROL_CHARS, ''),
+			'text-decoration': 'underline',
+		}),
+		text: (m) => m[1].replace(CONTROL_CHARS, ''),
 	},
 ];
 
