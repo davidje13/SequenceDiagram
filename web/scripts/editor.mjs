@@ -28,9 +28,11 @@ window.addEventListener('load', () => {
 	const linkElements = nav.getElementsByTagName('a');
 	const links = [];
 	for(let i = 0; i < linkElements.length; ++ i) {
+		const element = linkElements[i];
 		links.push({
-			href: linkElements[i].getAttribute('href'),
-			label: linkElements[i].textContent,
+			href: element.getAttribute('href'),
+			label: element.textContent,
+			touchLabel: element.dataset.touch,
 		});
 	}
 
@@ -41,6 +43,7 @@ window.addEventListener('load', () => {
 		localStorage: 'src',
 		require,
 		sequenceDiagram: new SequenceDiagram(),
+		touchUI: ('ontouchstart' in window),
 	});
 	loader.parentNode.removeChild(loader);
 	ui.build(window.document.body);

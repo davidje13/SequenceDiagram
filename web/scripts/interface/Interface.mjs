@@ -86,14 +86,57 @@ function makeURL(code, {height, width, zoom}) {
 	return opts + uri + '.svg';
 }
 
-function makeSplit(require, nodes, options) {
+function makeSplit(nodes, options) {
+	const filteredNodes = [];
+	const filteredOpts = {
+		direction: options.direction,
+		minSize: [],
+		sizes: [],
+		snapOffset: options.snapOffset,
+	};
+
+	let total = 0;
+	for(let i = 0; i < nodes.length; ++ i) {
+		if(nodes[i]) {
+			filteredNodes.push(nodes[i]);
+			filteredOpts.minSize.push(options.minSize[i]);
+			filteredOpts.sizes.push(options.sizes[i]);
+			total += options.sizes[i];
+		}
+	}
+	for(let i = 0; i < filteredNodes.length; ++ i) {
+		filteredOpts.minSize[i] *= 100 / total;
+		filteredOpts.sizes[i] *= 100 / total;
+
+		const percent = filteredOpts.sizes[i] + '%';
+		if(filteredOpts.direction === 'vertical') {
+			nodes[i].styles({
+				boxSizing: 'border-box',
+				height: percent,
+				width: '100%',
+			});
+		} else {
+			nodes[i].styles({
+				boxSizing: 'border-box',
+				display: 'inline-block',
+				height: '100%',
+				verticalAlign: 'top', // Safari fix
+				width: percent,
+			});
+		}
+	}
+
+	if(filteredNodes.length < 2) {
+		return;
+	}
+
 	// Load on demand for progressive enhancement
 	// (failure to load external module will not block functionality)
-	require(['split'], (Split) => {
+	options.require(['split'], (Split) => {
 		// Patches for:
 		// https://github.com/nathancahill/Split.js/issues/97
 		// https://github.com/nathancahill/Split.js/issues/111
-		const parent = nodes[0].parentNode;
+		const parent = nodes[0].element.parentNode;
 		const oldAEL = parent.addEventListener;
 		const oldREL = parent.removeEventListener;
 		parent.addEventListener = (event, callback) => {
@@ -112,24 +155,33 @@ function makeSplit(require, nodes, options) {
 		};
 
 		let oldCursor = null;
-		const resolvedOptions = Object.assign({
-			cursor: (options.direction === 'vertical') ?
-				'row-resize' : 'col-resize',
-			direction: 'vertical',
-			gutterSize: 0,
-			onDragEnd: () => {
-				document.body.style.cursor = oldCursor;
-				oldCursor = null;
-			},
-			onDragStart: () => {
-				oldCursor = document.body.style.cursor;
-				document.body.style.cursor = resolvedOptions.cursor;
-			},
-		}, options);
+		const cursor = (filteredOpts.direction === 'vertical') ?
+			'row-resize' : 'col-resize';
 
-		return new Split(nodes, resolvedOptions);
+		return new Split(
+			filteredNodes.map((node) => node.element),
+			Object.assign({
+				cursor,
+				direction: 'vertical',
+				gutterSize: 0,
+				onDragEnd: () => {
+					document.body.style.cursor = oldCursor;
+					oldCursor = null;
+				},
+				onDragStart: () => {
+					oldCursor = document.body.style.cursor;
+					document.body.style.cursor = cursor;
+				},
+			}, filteredOpts)
+		);
 	});
 }
+
+DOMWrapper.WrappedElement.prototype.split = function(nodes, options) {
+	this.add(nodes);
+	makeSplit(nodes, options);
+	return this;
+};
 
 function hasDroppedFile(event, mime) {
 	if(!event.dataTransfer.items && event.dataTransfer.files.length === 0) {
@@ -164,6 +216,35 @@ function getFileContent(file) {
 	});
 }
 
+DOMWrapper.WrappedElement.prototype.fastClick = function() {
+	const pt = {x: -1, y: 0};
+	return this
+		.on('touchstart', (e) => {
+			const [touch] = e.touches;
+			pt.x = touch.pageX;
+			pt.y = touch.pageY;
+		})
+		.on('touchend', (e) => {
+			if(
+				pt.x === -1 ||
+				e.touches.length !== 0 ||
+				e.changedTouches.length !== 1
+			) {
+				pt.x = -1;
+				return;
+			}
+			const [touch] = e.changedTouches;
+			if(
+				Math.abs(pt.x - touch.pageX) < 10 &&
+				Math.abs(pt.y - touch.pageY) < 10
+			) {
+				e.preventDefault();
+				e.target.click();
+			}
+			pt.x = -1;
+		});
+};
+
 export default class Interface {
 	constructor({
 		sequenceDiagram,
@@ -172,6 +253,7 @@ export default class Interface {
 		library = [],
 		links = [],
 		require = null,
+		touchUI = false,
 	}) {
 		this.diagram = sequenceDiagram;
 		this.defaultCode = defaultCode;
@@ -180,6 +262,7 @@ export default class Interface {
 		this.links = links;
 		this.minScale = 1.5;
 		this.require = require || (() => null);
+		this.touchUI = touchUI;
 
 		this.debounced = null;
 		this.latestSeq = null;
@@ -193,7 +276,6 @@ export default class Interface {
 		this._downloadPNGClick = this._downloadPNGClick.bind(this);
 		this._downloadPNGFocus = this._downloadPNGFocus.bind(this);
 		this._downloadURLClick = this._downloadURLClick.bind(this);
-		this._showDropStyle = this._showDropStyle.bind(this);
 		this._hideDropStyle = this._hideDropStyle.bind(this);
 
 		this.diagram
@@ -258,14 +340,21 @@ export default class Interface {
 			});
 
 		const copy = this.dom.el('button').setClass('copy')
-			.add('\uD83D\uDCCB')
 			.attr('title', 'Copy to clipboard')
+			.fastClick()
 			.on('click', () => {
+				if(this.touchUI) {
+					this.urlOutput.styles({display: 'block'});
+				}
 				this.urlOutput
 					.focus()
 					.select(0, this.urlOutput.element.value.length)
 					.element.ownerDocument.execCommand('copy');
 				copy.focus();
+				this.container.delClass('keyinput');
+				if(this.touchUI) {
+					this.urlOutput.styles({display: 'none'});
+				}
 				copied.styles({
 					'display': 'block',
 					'opacity': 1,
@@ -320,7 +409,7 @@ export default class Interface {
 			copied
 		);
 
-		this.urlBuilder = this.dom.el('div').setClass('urlbuilder')
+		const urlBuilder = this.dom.el('div').setClass('urlbuilder')
 			.styles({'display': 'none'})
 			.add(
 				this.dom.el('div').setClass('message')
@@ -337,17 +426,17 @@ export default class Interface {
 					path = relativePath;
 				}
 				this.renderService = new URL(path, window.location.href).href;
-				this.urlBuilder.empty().add(urlOpts);
+				urlBuilder.empty().add(urlOpts);
 				this._refreshURL();
 			})
 			.catch(() => {
-				this.urlBuilder.empty().add(
+				urlBuilder.empty().add(
 					this.dom.el('div').setClass('message')
 						.add('No online rendering service available.')
 				);
 			});
 
-		return this.urlBuilder;
+		return urlBuilder;
 	}
 
 	_refreshURL() {
@@ -363,22 +452,33 @@ export default class Interface {
 			return;
 		}
 		this.builderVisible = true;
-		this.urlBuilder.styles({
-			'display': 'block',
-			'height': '0px',
-			'padding': '0px',
-			'width': this.optsHold.element.clientWidth + 'px',
-		});
+		if(this.touchUI) {
+			this.urlBuilder.styles({
+				'bottom': '-210px',
+				'display': 'block',
+			});
+		} else {
+			this.urlBuilder.styles({
+				'display': 'block',
+				'height': '0px',
+				'padding': '0px',
+				'width': this.optsHold.element.clientWidth + 'px',
+			});
+		}
 		clearTimeout(this.builderTm);
 		this.builderTm = setTimeout(() => {
-			this.urlBuilder.styles({
-				'height': '150px',
-				'padding': '10px',
-				'width': '400px',
-			});
-			this.optsHold.styles({
-				'box-shadow': '10px 10px 25px 12px rgba(0,0,0,0.3)',
-			});
+			if(this.touchUI) {
+				this.urlBuilder.styles({'bottom': 0});
+			} else {
+				this.urlBuilder.styles({
+					'height': '150px',
+					'padding': '10px',
+					'width': '400px',
+				});
+				this.optsHold.styles({
+					'box-shadow': '10px 10px 25px 12px rgba(0,0,0,0.3)',
+				});
+			}
 		}, 0);
 
 		this._refreshURL();
@@ -389,14 +489,21 @@ export default class Interface {
 			return;
 		}
 		this.builderVisible = false;
-		this.urlBuilder.styles({
-			'height': '0px',
-			'padding': '0px',
-			'width': '0px',
-		});
-		this.optsHold.styles({
-			'box-shadow': 'none',
-		});
+		if(this.touchUI) {
+			this.urlBuilder.styles({
+				'bottom': (-this.urlBuilder.element.clientHeight - 60) + 'px',
+			});
+		} else {
+			this.urlBuilder.styles({
+				'height': '0px',
+				'padding': '0px',
+				'width': '0px',
+			});
+			this.optsHold.styles({
+				'box-shadow': 'none',
+			});
+		}
+		this.container.delClass('keyinput');
 		clearTimeout(this.builderTm);
 		this.builderTm = setTimeout(() => {
 			this.urlBuilder.styles({'display': 'none'});
@@ -405,12 +512,14 @@ export default class Interface {
 
 	buildOptionsDownloads() {
 		this.downloadPNG = this.dom.el('a')
-			.text('Download PNG')
+			.text('Export PNG')
 			.attrs({
 				'download': 'SequenceDiagram.png',
 				'href': '#',
 			})
 			.on(['focus', 'mouseover', 'mousedown'], this._downloadPNGFocus)
+			// Exploit delay between touchend and click on mobile
+			.on('touchend', this._downloadPNGFocus)
 			.on('click', this._downloadPNGClick);
 
 		this.downloadSVG = this.dom.el('a')
@@ -419,18 +528,22 @@ export default class Interface {
 				'download': 'SequenceDiagram.svg',
 				'href': '#',
 			})
+			.fastClick()
 			.on('click', this._downloadSVGClick);
 
 		this.downloadURL = this.dom.el('a')
 			.text('URL')
 			.attrs({'href': '#'})
+			.fastClick()
 			.on('click', this._downloadURLClick);
+
+		this.urlBuilder = this.buildURLBuilder();
 
 		this.optsHold = this.dom.el('div').setClass('options downloads').add(
 			this.downloadPNG,
 			this.downloadSVG,
 			this.downloadURL,
-			this.buildURLBuilder()
+			this.urlBuilder
 		);
 
 		return this.optsHold;
@@ -444,6 +557,7 @@ export default class Interface {
 			const hold = this.dom.el('div')
 				.setClass('library-item')
 				.add(holdInner)
+				.fastClick()
 				.on('click', this.addCodeBlock.bind(this, lib.code))
 				.attach(container);
 
@@ -467,10 +581,33 @@ export default class Interface {
 		return container;
 	}
 
+	buildCodePane() {
+		this.code = this.dom.el('textarea')
+			.setClass('editor-simple')
+			.val(this.loadCode() || this.defaultCode)
+			.on('input', () => this.update(false));
+
+		return this.dom.el('div').setClass('pane-code')
+			.add(this.code);
+	}
+
+	buildLibPane() {
+		if(this.library.length === 0) {
+			return null;
+		}
+
+		return this.dom.el('div').setClass('pane-library')
+			.add(this.dom.el('div').setClass('pane-library-scroller')
+				.add(this.buildLibrary(
+					this.dom.el('div').setClass('pane-library-inner')
+				)));
+	}
+
 	buildViewPane() {
 		this.viewPaneInner = this.dom.el('div').setClass('pane-view-inner')
 			.add(this.diagram.dom())
-			.on('click', () => this._hideURLBuilder());
+			.on('touchstart', () => this._hideURLBuilder())
+			.on('mousedown', () => this._hideURLBuilder());
 
 		this.errorMsg = this.dom.el('div').setClass('msg-error');
 
@@ -482,53 +619,10 @@ export default class Interface {
 			);
 	}
 
-	buildLeftPanes() {
-		const container = this.dom.el('div').setClass('pane-side');
-
-		this.code = this.dom.el('textarea')
-			.setClass('editor-simple')
-			.val(this.loadCode() || this.defaultCode)
-			.on('input', () => this.update(false));
-
-		const codePane = this.dom.el('div').setClass('pane-code')
-			.add(this.code)
-			.attach(container);
-
-		if(this.library.length > 0) {
-			const libPane = this.dom.el('div').setClass('pane-library')
-				.add(this.dom.el('div').setClass('pane-library-scroller')
-					.add(this.buildLibrary(
-						this.dom.el('div').setClass('pane-library-inner')
-					)))
-				.attach(container);
-
-			makeSplit(this.require, [codePane.element, libPane.element], {
-				direction: 'vertical',
-				minSize: [100, 5],
-				sizes: [70, 30],
-				snapOffset: 5,
-			});
-		}
-
-		return container;
-	}
-
 	build(container) {
 		this.dom = new DOMWrapper(container.ownerDocument);
-		const lPane = this.buildLeftPanes();
-		const viewPane = this.buildViewPane();
 
 		this.container = this.dom.wrap(container)
-			.add(this.dom.el('div').setClass('pane-hold')
-				.add(
-					lPane,
-					viewPane,
-					this.dom.el('div').setClass('options links')
-						.add(this.links.map((link) => this.dom.el('a')
-							.attrs({'href': link.href, 'target': '_blank'})
-							.text(link.label))),
-					this.buildOptionsDownloads()
-				))
 			.on('dragover', (event) => {
 				event.preventDefault();
 				if(hasDroppedFile(event, 'image/svg+xml')) {
@@ -547,14 +641,66 @@ export default class Interface {
 				if(file) {
 					this.loadFile(file);
 				}
-			});
+			})
+			.on('focusin', () => this.container.addClass('keyinput'))
+			.on('focusout', () => this.container.delClass('keyinput'));
 
-		makeSplit(this.require, [lPane.element, viewPane.element], {
-			direction: 'horizontal',
-			minSize: [10, 10],
-			sizes: [30, 70],
-			snapOffset: 70,
-		});
+		const codePane = this.buildCodePane();
+		const libPane = this.buildLibPane();
+		const viewPane = this.buildViewPane();
+
+		const links = this.links.map((link) => this.dom.el('a')
+			.attrs({'href': link.href, 'target': '_blank'})
+			.text(this.touchUI ? link.touchLabel : link.label));
+
+		if(this.touchUI) {
+			this.buildOptionsDownloads();
+			this.container
+				.addClass('touch')
+				.add(
+					this.dom.el('div').setClass('pane-hold')
+						.split([viewPane, codePane], {
+							direction: 'vertical',
+							minSize: [10, 10],
+							require: this.require,
+							sizes: [80, 20],
+							snapOffset: 20,
+						}),
+					libPane.styles({'display': 'none', 'top': '100%'}),
+					this.urlBuilder,
+					this.dom.el('div').setClass('optbar')
+						.add(
+							...links,
+							this.downloadPNG.text('PNG'),
+							this.downloadSVG.text('SVG'),
+							this.downloadURL.text('URL')
+						)
+				);
+		} else {
+			this.container
+				.add(
+					this.dom.el('div').setClass('pane-hold')
+						.split([
+							this.dom.el('div').setClass('pane-side')
+								.split([codePane, libPane], {
+									direction: 'vertical',
+									minSize: [100, 5],
+									require: this.require,
+									sizes: [70, 30],
+									snapOffset: 5,
+								}),
+							viewPane,
+						], {
+							direction: 'horizontal',
+							minSize: [10, 10],
+							require: this.require,
+							sizes: [30, 70],
+							snapOffset: 70,
+						}),
+					this.dom.el('div').setClass('options links').add(links),
+					this.buildOptionsDownloads()
+				);
+		}
 
 		if(typeof window !== 'undefined') {
 			window.addEventListener('keydown', (e) => {
@@ -838,6 +984,8 @@ export default class Interface {
 					completeSingle: false,
 				});
 			});
+
+			code.on('focus', () => this._hideURLBuilder());
 
 			code.on('cursorActivity', () => {
 				const from = code.getCursor('from').line;

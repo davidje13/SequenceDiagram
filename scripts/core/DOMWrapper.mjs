@@ -204,3 +204,5 @@ export default class DOMWrapper {
 		return this.document.createTextNode(content);
 	}
 }
+
+DOMWrapper.WrappedElement = WrappedElement;

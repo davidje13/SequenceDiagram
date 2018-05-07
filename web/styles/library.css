@@ -1,9 +1,12 @@
 body {
 	background: rgb(140, 185, 231);
-	margin: 30px 30px 80px;
+	margin: 30px 0 80px;
 	padding: 0;
 	font-family: sans-serif;
 	line-height: 1.5;
+
+	text-size-adjust: none;
+	-webkit-text-size-adjust: none;
 }
 
 article {
@@ -21,6 +24,7 @@ article > header {
 	padding: 10px 20px;
 	background: linear-gradient(#DDEEFF, #FFFFFF);
 	border-radius: 2px;
+	text-align: center;
 	page-break-inside: avoid;
 	break-inside: avoid;
 }
@@ -30,11 +34,11 @@ article > header > h1 {
 	padding: 0;
 	font: 3.5em 'Vollkorn', serif;
 	clear: both;
-	text-align: center;
 }
 
 article > header > .sequence-diagram {
 	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+	text-align: left;
 }
 
 article > h2 {
@@ -128,6 +132,7 @@ a:hover, a:active {
 .sequence-diagram[data-sd-interactive] .region.expanded {
 	cursor: pointer;
 	user-select: none;
+	-webkit-user-select: none;
 }
 
 .sequence-diagram[data-sd-interactive] .region.collapsed:hover .outline,
@@ -169,6 +174,115 @@ nav a {
 
 nav a:hover {
 	background: #EEEEEE;
+}
+
+@media (max-width: 860px) {
+	body {
+		background: transparent;
+		margin: 0;
+	}
+
+	article {
+		max-width: 100%;
+		background: transparent;
+		box-shadow: none;
+		margin: 0px;
+		padding: 10px;
+		border-radius: 0;
+		padding-bottom: 80px;
+	}
+
+	article > header {
+		margin: -10px -10px 0;
+		border-radius: 0;
+	}
+
+	article > header > h1 {
+		font-size: 3em;
+	}
+
+	article > header > .sequence-diagram {
+		max-height: 200px;
+	}
+
+	article > h2 {
+		margin: 15px -10px 5px;
+		padding: 5px 10px 0;
+	}
+
+	article h3 {
+		margin: 10px -10px 5px;
+		padding: 5px 10px 0;
+	}
+
+	article h4 {
+		margin: 5px -10px 5px;
+		padding: 5px 10px 0;
+	}
+
+	.sequence-diagram {
+		max-height: calc(100vh - 100px);
+	}
+
+	pre.example {
+		padding: 5px;
+	}
+
+	nav {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		margin: 0;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+}
+
+@media (max-width: 800px) {
+	article {
+		font-size: 0.9em;
+	}
+}
+
+@media (max-width: 700px) {
+	pre {
+		box-shadow: none;
+	}
+
+	pre.example {
+		padding: 5px;
+		width: calc(100% - 205px);
+		box-sizing: border-box;
+	}
+
+	.example-diagram {
+		max-width: none;
+		width: 200px;
+		box-sizing: border-box;
+		margin-left: 0;
+		background: #FFFFFF;
+		box-shadow: none;
+	}
+}
+
+@media (max-width: 470px) {
+	article > header > h1 {
+		font-size: 2.5em;
+	}
+
+	pre.example {
+		width: auto;
+		margin: 5px -5px;
+	}
+
+	.example-diagram {
+		display: block;
+		float: none;
+		margin: 0 auto 10px;
+		width: 300px;
+		max-width: 80%;
+	}
 }
 
 @media print {
@@ -237,7 +351,6 @@ nav a:hover {
 		font-size: 0.8em;
 		width: 50%;
 		box-sizing: border-box;
-		display: inline-block;
 	}
 
 	.example-diagram {
