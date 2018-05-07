@@ -70,6 +70,13 @@ const STYLES = [
 			'text-decoration': 'underline',
 		}),
 		text: (m) => m[1].replace(CONTROL_CHARS, ''),
+	}, {
+		all: {matcher: /<([a-z]+:\/\/[^>]*)>/g, skip: 0},
+		attrs: (m) => ({
+			'href': m[1].replace(CONTROL_CHARS, ''),
+			'text-decoration': 'underline',
+		}),
+		text: (m) => m[1].replace(CONTROL_CHARS, ''),
 	},
 ];
 

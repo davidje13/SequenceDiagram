@@ -239,6 +239,19 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
+	it('recognises short link styling', () => {
+		const formatted = parser('a <http://b> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {
+				'href': 'http://b',
+				'text-decoration': 'underline',
+			}, text: 'http://b'},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
 	it('allows dots around monospace styling', () => {
 		const formatted = parser('a.`b`.c');
 
