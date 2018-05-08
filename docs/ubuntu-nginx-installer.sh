@@ -365,12 +365,14 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null;
 sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null;
 
 sudo tee /etc/cron.daily/sequence-pull <<'EOF' > /dev/null;
+#!/bin/sh
 /var/www/sequence/update.sh;
 EOF
 sudo chmod 0755 /etc/cron.daily/sequence-pull;
 
 sudo rm /etc/cron.d/certbot;
 sudo tee /etc/cron.daily/certbot-renew <<'EOF' > /dev/null;
+#!/bin/sh
 certbot renew -q --deploy-hook "nginx -s reload";
 EOF
 sudo chmod 0755 /etc/cron.daily/certbot-renew;
