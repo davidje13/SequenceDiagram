@@ -558,6 +558,8 @@
 	const DELAY_STAGECHANGE = 250;
 	const PNG_RESOLUTION = 4;
 
+	const PARAM_PATTERN = /\{[^}]+\}/g;
+
 	function addNewline(value) {
 		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
 			return value + '\n';
@@ -576,6 +578,23 @@
 			p = nextLn;
 			++ line;
 		}
+	}
+
+	function cmInRange(pos, {from, to}) {
+		return !(
+			pos.line < from.line || (pos.line === from.line && pos.ch < from.ch) ||
+			pos.line > to.line || (pos.line === to.line && pos.ch > to.ch)
+		);
+	}
+
+	function findNextToken(block, skip) {
+		PARAM_PATTERN.lastIndex = 0;
+		for(let m = null; (m = PARAM_PATTERN.exec(block));) {
+			if(!skip.includes(m[0])) {
+				return m[0];
+			}
+		}
+		return null;
 	}
 
 	function simplifyPreview(code) {
@@ -775,7 +794,7 @@
 				const [touch] = e.touches;
 				pt.x = touch.pageX;
 				pt.y = touch.pageY;
-			})
+			}, {passive: true})
 			.on('touchend', (e) => {
 				if(
 					pt.x === -1 ||
@@ -1158,7 +1177,7 @@
 		buildViewPane() {
 			this.viewPaneInner = this.dom.el('div').setClass('pane-view-inner')
 				.add(this.diagram.dom())
-				.on('touchstart', () => this._hideURLBuilder())
+				.on('touchstart', () => this._hideURLBuilder(), {passive: true})
 				.on('mousedown', () => this._hideURLBuilder());
 
 			this.errorMsg = this.dom.el('div').setClass('msg-error');
@@ -1269,19 +1288,107 @@
 			this._enhanceEditor();
 		}
 
+		enterParams(start, end, block) {
+			const doc = this.code.getDoc();
+			const endBookmark = doc.setBookmark(end);
+			const done = [];
+
+			const keydown = (cm, event) => {
+				switch(event.keyCode) {
+				case 13:
+				case 9:
+					event.preventDefault();
+					this.advanceParams();
+					break;
+				case 27:
+					event.preventDefault();
+					this.cancelParams();
+					break;
+				}
+			};
+
+			const move = () => {
+				if(this.paramMarkers.length === 0) {
+					return;
+				}
+				const m = this.paramMarkers[0].find();
+				const [r] = doc.listSelections();
+				if(!cmInRange(r.anchor, m) || !cmInRange(r.head, m)) {
+					this.cancelParams();
+					this.code.setSelection(r.anchor, r.head);
+				}
+			};
+
+			this.paramMarkers = [];
+			this.cancelParams = () => {
+				this.code.off('keydown', keydown);
+				this.code.off('cursorActivity', move);
+				this.paramMarkers.forEach((m) => m.clear());
+				this.paramMarkers = null;
+				endBookmark.clear();
+				this.code.setCursor(end);
+				this.cancelParams = null;
+				this.advanceParams = null;
+			};
+			this.advanceParams = () => {
+				this.paramMarkers.forEach((m) => m.clear());
+				this.paramMarkers.length = 0;
+				this.nextParams(start, endBookmark, block, done);
+			};
+
+			this.code.on('keydown', keydown);
+			this.code.on('cursorActivity', move);
+
+			this.advanceParams();
+		}
+
+		nextParams(start, endBookmark, block, done) {
+			const tok = findNextToken(block, done);
+			if(!tok) {
+				this.cancelParams();
+				return;
+			}
+			done.push(tok);
+
+			const doc = this.code.getDoc();
+			const ranges = [];
+			let {ch} = start;
+			for(let ln = start.line; ln < endBookmark.find().line; ++ ln) {
+				const line = doc.getLine(ln).slice(ch);
+				for(let p = 0; (p = line.indexOf(tok, p)) !== -1; p += tok.length) {
+					const anchor = {ch: p, line: ln};
+					const head = {ch: p + tok.length, line: ln};
+					ranges.push({anchor, head});
+					this.paramMarkers.push(doc.markText(anchor, head, {
+						className: 'param',
+						clearWhenEmpty: false,
+						inclusiveLeft: true,
+						inclusiveRight: true,
+					}));
+				}
+				ch = 0;
+			}
+
+			if(ranges.length > 0) {
+				doc.setSelections(ranges, 0);
+			} else {
+				this.cancelParams();
+			}
+		}
+
 		addCodeBlock(block) {
 			const lines = block.split('\n').length;
 
 			if(this.code.getCursor) {
 				const cur = this.code.getCursor('head');
 				const pos = {ch: 0, line: cur.line + ((cur.ch > 0) ? 1 : 0)};
-				this.code.replaceRange(
-					addNewline(block),
-					pos,
-					null,
-					'library'
-				);
-				this.code.setCursor({ch: 0, line: pos.line + lines});
+				let replaced = addNewline(block);
+				if(pos.line >= this.code.lineCount()) {
+					replaced = '\n' + replaced;
+				}
+				this.code.replaceRange(replaced, pos, null, 'library');
+				const end = {ch: 0, line: pos.line + lines};
+				this.enterParams(pos, end, block);
 			} else {
 				const value = this.value();
 				const cur = this.code.element.selectionStart;

@@ -148,6 +148,11 @@ html, body {
 	background: rgba(255, 0, 0, 0.2);
 }
 
+.param {
+	border: 1px solid #CC0000;
+	margin: -1px;
+}
+
 .hover {
 	background: #FFFF00;
 }
