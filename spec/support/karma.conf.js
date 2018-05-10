@@ -1,12 +1,8 @@
 const manual = Boolean(process.env.MANUAL);
 
-/*
- * Firefox is supported, but tests will fail until version 60 is out
- * due to the use of es6 modules, so exclude it for now.
- */
 const SUPPORTED_BROWSERS = [
 	'chrome',
-	// 'firefox',
+	'firefox',
 	'safari',
 ];
 

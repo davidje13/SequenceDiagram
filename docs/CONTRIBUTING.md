@@ -27,12 +27,6 @@ several pages:
 * [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
   the library sample page
 
-**NOTE**: When running in `dev` mode, this project uses web modules,
-which are only supported by recent browsers. In particular, note that
-FireFox 59 does not support web modules unless a flag is set (FireFox
-60 will support them fully). Production mode does not require web
-modules, so should have wider support.
-
 To run the tests and linter, run the command:
 
 ```shell
@@ -60,7 +54,8 @@ server if you make changes)
 The available commands are:
 
 * `npm start`: runs a webserver on
-  [localhost:8080](http://localhost:8080)
+  [localhost:8080](http://localhost:8080) (using minified sources)
+* `npm start -- dev`: runs a webserver using non-minified sources
 * `npm test`: runs the `unit-test`, `web-test` and `lint` commands
 * `npm run unit-test`: runs non-browser-based unit tests in NodeJS
 * `npm run web-test`: runs browser-based unit tests via Karma
