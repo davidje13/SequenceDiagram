@@ -16,30 +16,12 @@
 ">
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no, minimal-ui">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 
 <title>Sequence Diagram</title>
 <link rel="icon" href="web/resources/favicon.png">
 <link rel="apple-touch-icon" href="web/resources/apple-touch-icon.png">
-
-<!-- DEV
-<link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
-/DEV -->
-
-<!-- LIVE -->
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css"
-	integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs="
-	crossorigin="anonymous"
->
-<!-- /LIVE -->
-
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/hint/show-hint.min.css"
-	integrity="sha256-Ng5EdzHS/CC37tR7tE75e4Th9+fBvOB4eYITOkXS22Q="
-	crossorigin="anonymous"
->
-
 <link rel="stylesheet" href="web/styles/editor.css">
 
 <meta
@@ -53,6 +35,31 @@
 	name="cdn-cm/lib/codemirror"
 	content="node_modules/codemirror/lib/codemirror.js"
 >
+
+<link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+
+<meta
+	name="cdn-cm/addon/hint/show-hint"
+	content="node_modules/codemirror/addon/hint/show-hint.js"
+>
+
+<link rel="stylesheet"
+	href="node_modules/codemirror/addon/hint/show-hint.css"
+>
+
+<meta
+	name="cdn-cm/addon/edit/trailingspace"
+	content="node_modules/codemirror/addon/edit/trailingspace.js"
+>
+
+<meta
+	name="cdn-cm/addon/comment/comment"
+	content="node_modules/codemirror/addon/comment/comment.js"
+>
+
+<script src="node_modules/requirejs/require.js"></script>
+<link rel="stylesheet" href="web/styles/codemirror-override.css">
+<script src="web/scripts/editor.mjs" type="module"></script>
 /DEV -->
 
 <!-- LIVE -->
@@ -61,12 +68,23 @@
 	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js"
 	data-integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk="
 >
-<!-- /LIVE -->
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css"
+	integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs="
+	crossorigin="anonymous"
+>
 
 <meta
 	name="cdn-cm/addon/hint/show-hint"
 	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/hint/show-hint.min.js"
 	data-integrity="sha256-/Cxd7R7oycnq3vuRycj68ToCzdZ73tux8nSULZiWWK0="
+>
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/hint/show-hint.min.css"
+	integrity="sha256-Ng5EdzHS/CC37tR7tE75e4Th9+fBvOB4eYITOkXS22Q="
+	crossorigin="anonymous"
 >
 
 <meta
@@ -81,21 +99,13 @@
 	data-integrity="sha256-xRNygSqAYMT9wcso0FgZEY3ROGoD6JdvYd8M9IjSuNg="
 >
 
-<!-- DEV
-<script
-	src="node_modules/requirejs/require.js"
-	crossorigin="anonymous"
-></script>
-<script src="web/scripts/editor.mjs" type="module"></script>
-/DEV -->
-
-<!-- LIVE -->
 <script src="lib/sequence-diagram-web.min.js"></script>
 <script
 	src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
 	integrity="sha256-0SGl1PJNDyJwcV5T+weg2zpEMrh7xvlwO4oXgvZCeZk="
 	crossorigin="anonymous"
 ></script>
+<link rel="stylesheet" href="web/styles/codemirror-override.css">
 <script src="web/lib/editor.min.js"></script>
 <!-- /LIVE -->
 

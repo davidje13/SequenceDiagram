@@ -133,21 +133,6 @@ html, body {
 	white-space: pre;
 }
 
-.CodeMirror-line.error {
-	background: rgba(255, 0, 0, 0.2);
-}
-
-.cm-s-default .cm-keyword  {color: #0055CC;}
-.cm-s-default .cm-variable {color: #AA5500;}
-.cm-s-default .cm-operator {color: #0055CC;}
-.cm-s-default .cm-comment  {color: #558800;}
-.cm-s-default .cm-string   {color: #221111;}
-.cm-s-default .cm-error    {color: #FF0000;}
-
-.cm-s-default .cm-trailingspace {
-	background: rgba(255, 0, 0, 0.2);
-}
-
 .param {
 	border: 1px solid #CC0000;
 	margin: -1px;

@@ -60,6 +60,7 @@ if(DEV) {
 	statics.addResources('/', BASEDIR, [
 		'node_modules/requirejs/require.js',
 		'node_modules/codemirror/lib',
+		'node_modules/codemirror/addon',
 		'scripts',
 		'web/scripts',
 	]);
