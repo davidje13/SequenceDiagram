@@ -42,6 +42,7 @@ const CONNECT = {
 			{tok: '', type: 0},
 			{tok: '<', type: 1},
 			{tok: '<<', type: 2},
+			{tok: '~', type: 3},
 		];
 		const mTypes = [
 			{tok: '-', type: 'solid'},
@@ -52,19 +53,27 @@ const CONNECT = {
 			{tok: '', type: 0},
 			{tok: '>', type: 1},
 			{tok: '>>', type: 2},
-			{tok: 'x', type: 3},
+			{tok: '~', type: 3},
+			{tok: 'x', type: 4},
 		];
-		const arrows = (combine([lTypes, mTypes, rTypes])
-			.filter((arrow) => (arrow[0].type !== 0 || arrow[2].type !== 0))
-		);
 
 		const types = new Map();
 
-		arrows.forEach((arrow) => {
+		combine([lTypes, mTypes, rTypes]).forEach((arrow) => {
+			const [left, line, right] = arrow;
+			if(left.type === 0 && right.type === 0) {
+				// A line without arrows cannot be a connector
+				return;
+			}
+			if(left.type === 3 && line.type === 'wave' && right.type === 0) {
+				// ~~ could be fade-wave-none or none-wave-fade
+				// We allow only none-wave-fade to resolve this
+				return;
+			}
 			types.set(arrow.map((part) => part.tok).join(''), {
-				left: arrow[0].type,
-				line: arrow[1].type,
-				right: arrow[2].type,
+				left: left.type,
+				line: line.type,
+				right: right.type,
 			});
 		});
 

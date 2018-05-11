@@ -6,6 +6,18 @@ const OUTLINE_ATTRS = {
 	'fill': 'transparent',
 };
 
+const MASK_PAD = 5;
+
+function applyMask(shape, maskShapes, env, bounds) {
+	if(!maskShapes.length) {
+		return;
+	}
+	const mask = env.svg.el('mask')
+		.attr('maskUnits', 'userSpaceOnUse')
+		.add(env.svg.box({'fill': '#FFFFFF'}, bounds), ...maskShapes);
+	shape.attr('mask', 'url(#' + env.addDef(mask) + ')');
+}
+
 class Arrowhead {
 	constructor(propName) {
 		this.propName = propName;
@@ -30,9 +42,9 @@ class Arrowhead {
 		}
 	}
 
-	render(layer, theme, pt, dir) {
-		const config = this.getConfig(theme);
-		const short = this.short(theme);
+	render({layer}, env, pt, dir) {
+		const config = this.getConfig(env.theme);
+		const short = this.short(env.theme);
 		layer.add(config.render(config.attrs, {
 			dir,
 			height: config.height,
@@ -64,13 +76,58 @@ class Arrowhead {
 	}
 }
 
+class Arrowfade {
+	getConfig(theme) {
+		return theme.connect.arrow.fade;
+	}
+
+	render({lineMask}, env, pt, dir) {
+		const config = this.getConfig(env.theme);
+		const {short, size} = config;
+		let fadeID = null;
+		const delta = MASK_PAD / (size + MASK_PAD * 2);
+		if(dir.dx >= 0) {
+			fadeID = env.addDef('arrowFadeL', () => env.svg.linearGradient({}, [
+				{'offset': delta * 100 + '%', 'stop-color': '#000000'},
+				{'offset': (100 - delta * 100) + '%', 'stop-color': '#FFFFFF'},
+			]));
+		} else {
+			fadeID = env.addDef('arrowFadeR', () => env.svg.linearGradient({}, [
+				{'offset': delta * 100 + '%', 'stop-color': '#FFFFFF'},
+				{'offset': (100 - delta * 100) + '%', 'stop-color': '#000000'},
+			]));
+		}
+		const p1 = {x: pt.x + dir.dx * short, y: pt.y + dir.dy * short};
+		const p2 = {x: p1.x + dir.dx * size, y: p1.y + dir.dy * size};
+		const box = env.svg.box({'fill': 'url(#' + fadeID + ')'}, {
+			height: Math.abs(p1.y - p2.y) + MASK_PAD * 2,
+			width: size + MASK_PAD * 2,
+			x: Math.min(p1.x, p2.x) - MASK_PAD,
+			y: Math.min(p1.y, p2.y) - MASK_PAD,
+		});
+		lineMask.push(box);
+	}
+
+	width(theme) {
+		return this.getConfig(theme).short;
+	}
+
+	height() {
+		return 0;
+	}
+
+	lineGap(theme) {
+		return this.getConfig(theme).short;
+	}
+}
+
 class Arrowcross {
 	getConfig(theme) {
 		return theme.connect.arrow.cross;
 	}
 
-	render(layer, theme, pt, dir) {
-		const config = this.getConfig(theme);
+	render({layer}, env, pt, dir) {
+		const config = this.getConfig(env.theme);
 		layer.add(config.render({
 			radius: config.radius,
 			x: pt.x + config.short * dir.dx,
@@ -101,6 +158,7 @@ const ARROWHEADS = [
 	},
 	new Arrowhead('single'),
 	new Arrowhead('double'),
+	new Arrowfade(),
 	new Arrowcross(),
 ];
 
@@ -180,8 +238,9 @@ export class Connect extends BaseComponent {
 
 		const dx1 = lArrow.lineGap(env.theme, line);
 		const dx2 = rArrow.lineGap(env.theme, line);
+		const rad = env.theme.connect.loopbackRadius;
 		const rendered = line.renderRev({
-			rad: env.theme.connect.loopbackRadius,
+			rad,
 			x1: x1 + dx1,
 			x2: x2 + dx2,
 			xR,
@@ -190,15 +249,24 @@ export class Connect extends BaseComponent {
 		});
 		clickable.add(rendered.shape);
 
-		lArrow.render(clickable, env.theme, {
+		const lineMask = [];
+
+		lArrow.render({layer: clickable, lineMask}, env, {
 			x: rendered.p1.x - dx1,
 			y: rendered.p1.y,
 		}, {dx: 1, dy: 0});
 
-		rArrow.render(clickable, env.theme, {
+		rArrow.render({layer: clickable, lineMask}, env, {
 			x: rendered.p2.x - dx2,
 			y: rendered.p2.y,
 		}, {dx: 1, dy: 0});
+
+		applyMask(rendered.shape, lineMask, env, {
+			height: y2 - y1 + MASK_PAD * 2,
+			width: xR + rad - Math.min(x1, x2) + MASK_PAD * 2,
+			x: Math.min(x1, x2) - MASK_PAD,
+			y: y1 - MASK_PAD,
+		});
 	}
 
 	renderSelfConnect({label, agentIDs, options}, env, from, yBegin) {
@@ -296,8 +364,20 @@ export class Connect extends BaseComponent {
 		const p1 = {x: rendered.p1.x - d1 * dx, y: rendered.p1.y - d1 * dy};
 		const p2 = {x: rendered.p2.x + d2 * dx, y: rendered.p2.y + d2 * dy};
 
-		lArrow.render(clickable, env.theme, p1, {dx, dy});
-		rArrow.render(clickable, env.theme, p2, {dx: -dx, dy: -dy});
+		const lineMask = [];
+
+		lArrow.render({layer: clickable, lineMask}, env, p1, {dx, dy});
+		rArrow.render({layer: clickable, lineMask}, env, p2, {
+			dx: -dx,
+			dy: -dy,
+		});
+
+		applyMask(rendered.shape, lineMask, env, {
+			height: Math.abs(y2 - y1) + MASK_PAD * 2,
+			width: Math.abs(x2 - x1) + MASK_PAD * 2,
+			x: Math.min(x1, x2) - MASK_PAD,
+			y: Math.min(y1, y2) - MASK_PAD,
+		});
 
 		return {
 			lArrow,

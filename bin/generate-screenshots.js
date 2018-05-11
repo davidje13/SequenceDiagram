@@ -81,9 +81,12 @@ function findSamples(content) {
 	 *  code: (
 	 *   'theme chunky\n' +
 	 *   'define ABC as A, DEF as B\n' +
+	 *   'A is red\n' +
+	 *   'B is blue\n' +
 	 *   'A -> B\n' +
-	 *   'B -> ]\n' +
-	 *   '] -> B\n' +
+	 *   'B -~ ]\n' +
+	 *   'divider space with height 0\n' +
+	 *   '] ~-> B\n' +
 	 *   'B -> A\n' +
 	 *   'terminators fade'
 	 *  ),

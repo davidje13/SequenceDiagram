@@ -179,6 +179,10 @@ export default class ChunkyTheme extends BaseTheme {
 							'stroke-linecap': 'round',
 						},
 					},
+					'fade': {
+						short: 3,
+						size: 12,
+					},
 					'cross': {
 						short: 10,
 						radius: 5,

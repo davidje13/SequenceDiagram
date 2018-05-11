@@ -170,6 +170,10 @@ export default class MonospaceTheme extends BaseTheme {
 							'stroke-linejoin': 'miter',
 						},
 					},
+					'fade': {
+						short: 2,
+						size: 10,
+					},
 					'cross': {
 						short: 8,
 						radius: 4,

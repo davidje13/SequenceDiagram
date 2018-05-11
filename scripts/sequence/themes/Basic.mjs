@@ -170,6 +170,10 @@ export default class BasicTheme extends BaseTheme {
 							'stroke-linejoin': 'miter',
 						},
 					},
+					'fade': {
+						short: 2,
+						size: 16,
+					},
 					'cross': {
 						short: 7,
 						radius: 3,

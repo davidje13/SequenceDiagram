@@ -201,6 +201,10 @@ export default class SketchTheme extends BaseTheme {
 						}, PENCIL.normal),
 						render: this.renderArrowHead.bind(this),
 					},
+					'fade': {
+						short: 0,
+						size: 12,
+					},
 					'cross': {
 						short: 5,
 						radius: 3,

@@ -201,6 +201,10 @@
 			title: 'Arrows to/from the sides',
 		},
 		{
+			code: '{Agent1} -~ ]: {Message1}\n{Agent1} <-~ ]: {Message2}',
+			title: 'Fading arrows',
+		},
+		{
 			code: 'text right: {Message}',
 			preview: (
 				'A -> B\n' +
