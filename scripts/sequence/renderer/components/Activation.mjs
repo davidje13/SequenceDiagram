@@ -1,12 +1,12 @@
 import BaseComponent, {register} from './BaseComponent.mjs';
 
-export default class AgentHighlight extends BaseComponent {
-	radius(highlighted, env) {
-		return highlighted ? env.theme.agentLineHighlightRadius : 0;
+export default class Activation extends BaseComponent {
+	radius(activated, env) {
+		return activated ? env.theme.agentLineActivationRadius : 0;
 	}
 
-	separationPre({agentIDs, highlighted}, env) {
-		const r = this.radius(highlighted, env);
+	separationPre({agentIDs, activated}, env) {
+		const r = this.radius(activated, env);
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			agentInfo.currentRad = r;
@@ -14,16 +14,16 @@ export default class AgentHighlight extends BaseComponent {
 		});
 	}
 
-	renderPre({agentIDs, highlighted}, env) {
-		const r = this.radius(highlighted, env);
+	renderPre({agentIDs, activated}, env) {
+		const r = this.radius(activated, env);
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 		});
 	}
 
-	render({agentIDs, highlighted}, env) {
-		const r = this.radius(highlighted, env);
+	render({agentIDs, activated}, env) {
+		const r = this.radius(activated, env);
 		agentIDs.forEach((id) => {
 			env.drawAgentLine(id, env.primaryY);
 			env.agentInfos.get(id).currentRad = r;
@@ -36,4 +36,4 @@ export default class AgentHighlight extends BaseComponent {
 	}
 }
 
-register('agent highlight', new AgentHighlight());
+register('agent activation', new Activation());

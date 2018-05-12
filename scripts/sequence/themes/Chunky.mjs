@@ -76,7 +76,7 @@ export default class ChunkyTheme extends BaseTheme {
 			agentMargin: 8,
 			actionMargin: 5,
 			minActionMargin: 5,
-			agentLineHighlightRadius: 4,
+			agentLineActivationRadius: 4,
 
 			agentCap: {
 				box: {

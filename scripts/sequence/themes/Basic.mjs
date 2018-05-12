@@ -76,7 +76,7 @@ export default class BasicTheme extends BaseTheme {
 			agentMargin: 10,
 			actionMargin: 10,
 			minActionMargin: 3,
-			agentLineHighlightRadius: 4,
+			agentLineActivationRadius: 4,
 
 			agentCap: {
 				box: {

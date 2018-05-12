@@ -15,14 +15,14 @@ class AgentState {
 		blocked = false,
 		covered = false,
 		group = null,
-		highlighted = false,
+		activated = false,
 		locked = false,
 		visible = false,
 	} = {}) {
 		this.blocked = blocked;
 		this.covered = covered;
 		this.group = group;
-		this.highlighted = highlighted;
+		this.activated = activated;
 		this.locked = locked;
 		this.visible = visible;
 	}
@@ -75,20 +75,20 @@ const NOTE_DEFAULT_G_AGENTS = {
 const SPECIAL_AGENT_IDS = ['[', ']'];
 
 const MERGABLE = {
+	'agent activation': {
+		check: ['activated'],
+		merge: ['agentIDs'],
+		siblings: new Set(['agent begin', 'agent end']),
+	},
 	'agent begin': {
 		check: ['mode'],
 		merge: ['agentIDs'],
-		siblings: new Set(['agent highlight']),
+		siblings: new Set(['agent activation']),
 	},
 	'agent end': {
 		check: ['mode'],
 		merge: ['agentIDs'],
-		siblings: new Set(['agent highlight']),
-	},
-	'agent highlight': {
-		check: ['highlighted'],
-		merge: ['agentIDs'],
-		siblings: new Set(['agent begin', 'agent end']),
+		siblings: new Set(['agent activation']),
 	},
 };
 
@@ -273,7 +273,7 @@ function checkDelayedConflicts(allStages) {
 const PARALLEL_STAGES = [
 	'agent begin',
 	'agent end',
-	'agent highlight',
+	'agent activation',
 	'block begin',
 	'block end',
 	'connect',
@@ -578,29 +578,29 @@ export default class Generator {
 		};
 	}
 
-	setGAgentHighlight(gAgents, highlighted, checked = false) {
+	setGAgentActivation(gAgents, activated, checked = false) {
 		const filteredGAgents = gAgents.filter((gAgent) => {
 			const state = this.getGAgentState(gAgent);
 			if(state.locked || state.blocked) {
 				if(checked) {
-					throw new Error('Cannot highlight agent: ' + gAgent.id);
+					throw new Error('Cannot activate agent: ' + gAgent.id);
 				} else {
 					return false;
 				}
 			}
-			return state.visible && (state.highlighted !== highlighted);
+			return state.visible && (state.activated !== activated);
 		});
 		if(filteredGAgents.length === 0) {
 			return null;
 		}
 		filteredGAgents.forEach((gAgent) => {
-			this.updateGAgentState(gAgent, {highlighted});
+			this.updateGAgentState(gAgent, {activated});
 		});
 
 		return {
+			activated,
 			agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
-			highlighted,
-			type: 'agent highlight',
+			type: 'agent activation',
 		};
 	}
 
@@ -927,7 +927,7 @@ export default class Generator {
 		);
 		mergeSets(stopGAgents, endGAgents);
 		if(GAgent.hasIntersection(startGAgents, stopGAgents)) {
-			throw new Error('Cannot set agent highlighting multiple times');
+			throw new Error('Cannot set agent activation multiple times');
 		}
 
 		this.validateGAgents(beginGAgents);
@@ -1017,9 +1017,9 @@ export default class Generator {
 	_makeConnectParallelStages(flags, connectStage) {
 		return this.makeParallel([
 			this.setGAgentVis(flags.beginGAgents, true, 'box', true),
-			this.setGAgentHighlight(flags.startGAgents, true, true),
+			this.setGAgentActivation(flags.startGAgents, true, true),
 			connectStage,
-			this.setGAgentHighlight(flags.stopGAgents, false, true),
+			this.setGAgentActivation(flags.stopGAgents, false, true),
 			this.setGAgentVis(flags.endGAgents, false, 'cross', true),
 		]);
 	}
@@ -1209,7 +1209,7 @@ export default class Generator {
 		);
 		this.validateGAgents(gAgents);
 		this.addStage(this.makeParallel([
-			this.setGAgentHighlight(gAgents, false),
+			this.setGAgentActivation(gAgents, false),
 			this.setGAgentVis(gAgents, false, mode, true),
 			...groupPAgents.map(this.endGroup),
 		]), {parallel});
@@ -1282,7 +1282,7 @@ export default class Generator {
 
 		const terminators = meta.terminators || 'none';
 		this.addStage(this.makeParallel([
-			this.setGAgentHighlight(this.gAgents, false),
+			this.setGAgentActivation(this.gAgents, false),
 			this.setGAgentVis(this.gAgents, false, terminators),
 		]));
 

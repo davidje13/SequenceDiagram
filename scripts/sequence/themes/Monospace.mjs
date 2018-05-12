@@ -76,7 +76,7 @@ export default class MonospaceTheme extends BaseTheme {
 			agentMargin: 12,
 			actionMargin: 12,
 			minActionMargin: 4,
-			agentLineHighlightRadius: 4,
+			agentLineActivationRadius: 4,
 
 			agentCap: {
 				box: {

@@ -227,6 +227,15 @@ describe('Sequence Generator', () => {
 	};
 
 	const GENERATED = {
+		activation: (agentIDs, activated, {
+			ln = any(),
+		} = {}) => ({
+			activated,
+			agentIDs,
+			ln,
+			type: 'agent activation',
+		}),
+
 		agent: (id, {
 			anchorRight = any(),
 			formattedLabel = any(),
@@ -371,15 +380,6 @@ describe('Sequence Generator', () => {
 			ln,
 			mode,
 			type: 'divider',
-		}),
-
-		highlight: (agentIDs, highlighted, {
-			ln = any(),
-		} = {}) => ({
-			agentIDs,
-			highlighted,
-			ln,
-			type: 'agent highlight',
 		}),
 
 		mark: (name, {
@@ -860,7 +860,7 @@ describe('Sequence Generator', () => {
 			]);
 		});
 
-		it('adds parallel highlighting stages to self connections', () => {
+		it('adds parallel activation stages to self connections', () => {
 			const sequence = invoke([
 				PARSED.connect([
 					{flags: ['start'], name: 'A'},
@@ -871,12 +871,12 @@ describe('Sequence Generator', () => {
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
-					GENERATED.highlight(['A'], true),
+					GENERATED.activation(['A'], true),
 					GENERATED.connectBegin(['A', 'A'], {label: 'woo!'}),
 				]),
 				GENERATED.parallel([
 					GENERATED.connectEnd(),
-					GENERATED.highlight(['A'], false),
+					GENERATED.activation(['A'], false),
 				]),
 				any(),
 			]);
@@ -1185,7 +1185,7 @@ describe('Sequence Generator', () => {
 			]);
 		});
 
-		it('adds parallel highlighting stages', () => {
+		it('adds parallel activation stages', () => {
 			const sequence = invoke([
 				PARSED.connect(['A', {flags: ['start'], name: 'B'}]),
 				PARSED.connect(['A', {flags: ['stop'], name: 'B'}]),
@@ -1194,12 +1194,12 @@ describe('Sequence Generator', () => {
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
-					GENERATED.highlight(['B'], true),
+					GENERATED.activation(['B'], true),
 					GENERATED.connect(['A', 'B']),
 				]),
 				GENERATED.parallel([
 					GENERATED.connect(['A', 'B']),
-					GENERATED.highlight(['B'], false),
+					GENERATED.activation(['B'], false),
 				]),
 				any(),
 			]);
@@ -1235,7 +1235,7 @@ describe('Sequence Generator', () => {
 			]);
 		});
 
-		it('implicitly ends highlighting when ending a stage', () => {
+		it('implicitly ends activation when ending a stage', () => {
 			const sequence = invoke([
 				PARSED.connect(['A', {flags: ['start'], name: 'B'}]),
 				PARSED.connect(['A', {flags: ['end'], name: 'B'}]),
@@ -1246,7 +1246,7 @@ describe('Sequence Generator', () => {
 				any(),
 				GENERATED.parallel([
 					GENERATED.connect(['A', 'B']),
-					GENERATED.highlight(['B'], false),
+					GENERATED.activation(['B'], false),
 					GENERATED.agentEnd(['B']),
 				]),
 				GENERATED.agentEnd(['A']),
@@ -1260,7 +1260,7 @@ describe('Sequence Generator', () => {
 					{flags: ['start', 'stop'], name: 'B'},
 				]),
 			])).toThrow(new Error(
-				'Cannot set agent highlighting multiple times at line 1'
+				'Cannot set agent activation multiple times at line 1'
 			));
 
 			expect(() => invoke([
@@ -1273,7 +1273,7 @@ describe('Sequence Generator', () => {
 			));
 		});
 
-		it('adds implicit highlight end with implicit terminator', () => {
+		it('adds implicit deactivation with implicit terminator', () => {
 			const sequence = invoke([
 				PARSED.connect([
 					'A',
@@ -1285,13 +1285,13 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.highlight(['B'], false),
+					GENERATED.activation(['B'], false),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);
 		});
 
-		it('adds implicit highlight end with explicit terminator', () => {
+		it('adds implicit deactivation with explicit terminator', () => {
 			const sequence = invoke([
 				PARSED.connect(['A', {flags: ['start'], name: 'B'}]),
 				PARSED.agentEnd(['A', 'B']),
@@ -1301,13 +1301,13 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.highlight(['B'], false),
+					GENERATED.activation(['B'], false),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);
 		});
 
-		it('collapses adjacent end statements containing highlighting', () => {
+		it('collapses adjacent end statements containing activation', () => {
 			const sequence = invoke([
 				PARSED.connect([
 					{flags: ['start'], name: 'A'},
@@ -1321,7 +1321,7 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.highlight(['A', 'B'], false),
+					GENERATED.activation(['A', 'B'], false),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);
