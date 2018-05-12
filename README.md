@@ -160,6 +160,8 @@ A <- ]: Profit!
 title "My Multiline
 Title"
 
+begin Foo, Bar
+
 note over Foo: "Also possible\nwith escapes"
 
 Foo -> Bar: "Lines of text\non this arrow"
@@ -249,6 +251,22 @@ define Baz, Foo
 
 Foo -> Bar
 Bar -> Baz
+```
+
+### Agent Types
+
+<img src="screenshots/AgentTypes.png" alt="Agent Types preview" width="200" align="right" />
+
+```
+begin User, Application, PostgreSQL
+
+User -> +Application
+Application -> +PostgreSQL
+-PostgreSQL --> Application
+-Application --> User
+
+User is a person
+PostgreSQL is a database
 ```
 
 ### Asynchronous Communication
