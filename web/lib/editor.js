@@ -997,7 +997,7 @@
 				.then((response) => response.text())
 				.then((content) => {
 					let path = content.trim();
-					if(!path || path.startsWith('<svg')) {
+					if(!path || path.startsWith('<')) {
 						path = relativePath;
 					}
 					this.renderService = new URL(path, window.location.href).href;

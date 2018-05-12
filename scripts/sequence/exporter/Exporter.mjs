@@ -1,5 +1,7 @@
 import {safari} from '../../core/browser.mjs';
 
+const FIRST_SVG_TAG = /<svg ?/;
+
 export default class Exporter {
 	constructor() {
 		this.latestSVG = null;
@@ -20,12 +22,12 @@ export default class Exporter {
 		 * exporting from any environment, in case it is opened in FireFox
 		 */
 		code = code.replace(
-			(/^<svg ?/),
+			FIRST_SVG_TAG,
 			'<svg width="' + (renderer.width || 1) +
 			'" height="' + (renderer.height || 1) + '" '
 		);
 
-		return code;
+		return '<?xml version="1.0" encoding="UTF-8" ?>' + code;
 	}
 
 	getSVGBlob(renderer) {

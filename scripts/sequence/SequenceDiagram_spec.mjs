@@ -178,4 +178,11 @@ describe('SequenceDiagram', () => {
 
 		expect(content).toContain('<filter id="highlight"');
 	});
+
+	it('returns a full SVG with explicit sizes when exported', () => {
+		const svg = makeDiagram('').getSVGCodeSynchronous();
+
+		expect(svg).toContain('<?xml version="1.0" encoding="UTF-8" ?>');
+		expect(svg).toContain('<svg width="');
+	});
 });
