@@ -99,6 +99,31 @@ export default class MonospaceTheme extends BaseTheme {
 						'text-anchor': 'middle',
 					},
 				},
+				person: {
+					padding: {
+						top: 16,
+						left: 8,
+						right: 8,
+						bottom: 4,
+					},
+					arrowBottom: 12,
+					boxRenderer: this.renderPerson.bind(this, {
+						iconHeight: 12,
+						iconWidth: 14,
+					}, {
+						'fill': '#000000',
+					}, {
+						'fill': '#FFFFFF',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					}),
+					labelAttrs: {
+						'font-family': FONT,
+						'font-size': 12,
+						'line-height': LINE_HEIGHT,
+						'text-anchor': 'middle',
+					},
+				},
 				database: {
 					padding: {
 						top: 9,
@@ -107,11 +132,10 @@ export default class MonospaceTheme extends BaseTheme {
 						bottom: 3,
 					},
 					arrowBottom: 12,
-					boxRenderer: this.renderDB.bind(this, {
+					boxRenderer: this.renderDB.bind(this, {tilt: 4}, {
 						'fill': '#FFFFFF',
 						'stroke': '#000000',
 						'stroke-width': 1,
-						'db-z': 4,
 					}),
 					labelAttrs: {
 						'font-family': FONT,

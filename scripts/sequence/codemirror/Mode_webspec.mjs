@@ -712,6 +712,7 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A is a ');
 			const hints = getHintTexts({ch: 7, line: 0});
 
+			expect(hints).toContain('person ');
 			expect(hints).toContain('database ');
 			expect(hints).toContain('red ');
 			expect(hints).not.toContain('\n');

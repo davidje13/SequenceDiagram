@@ -145,6 +145,22 @@ export default class SketchTheme extends BaseTheme {
 					},
 					boxRenderer: this.renderBox.bind(this),
 				},
+				person: {
+					padding: {
+						top: 20,
+						left: 10,
+						right: 10,
+						bottom: 5,
+					},
+					arrowBottom: 5 + 12 * 1.3 / 2,
+					labelAttrs: {
+						'font-family': FONT_FAMILY,
+						'font-size': 12,
+						'line-height': LINE_HEIGHT,
+						'text-anchor': 'middle',
+					},
+					boxRenderer: this.renderPerson.bind(this),
+				},
 				database: {
 					padding: {
 						top: 12,
@@ -153,10 +169,7 @@ export default class SketchTheme extends BaseTheme {
 						bottom: 2,
 					},
 					arrowBottom: 5 + 12 * 1.3 / 2,
-					boxRenderer: this.renderDB.bind(this, Object.assign({
-						'fill': '#FFFFFF',
-						'db-z': 5,
-					}, PENCIL.normal)),
+					boxRenderer: this.renderDB.bind(this),
 					labelAttrs: {
 						'font-family': FONT,
 						'font-size': 12,
@@ -466,6 +479,99 @@ export default class SketchTheme extends BaseTheme {
 				'fill': fill || '#FFFFFF',
 			})
 			.attrs(attrs || (thick ? PENCIL.thick : PENCIL.normal));
+	}
+
+	renderPerson(position) {
+		const sx = 18 / 2;
+		const sy = 15;
+		const iconAttrs = Object.assign({'fill': 'none'}, PENCIL.normal);
+		const cx = position.x + position.width / 2;
+
+		const v = this.vary.bind(this);
+		const lean = v(0.1, 0.05 * this.handedness);
+		const skew = v(0.1, 0.05 * this.handedness);
+		const shoulders = v(0.05, 0.35);
+
+		return this.svg.el('g').add(
+			this.svg.el('path')
+				.attr('d', (
+					'M' + (cx - sx) + ' ' + (position.y + sy) +
+					'c' + (sx * lean) + ' ' + (-sy * (shoulders - skew)) +
+					' ' + (sx * (2 + lean)) + ' ' + (-sy * (shoulders + skew)) +
+					' ' + (sx * 2) + ' 0'
+				))
+				.attrs(iconAttrs),
+			this.svg.el('path')
+				.attr('d', (
+					'M' + cx + ' ' + position.y +
+					'c' + (sx * v(0.05, 0.224)) + ' ' + v(0.02, 0) +
+					' ' + (sx * v(0.07, 0.4)) + ' ' + (sy * v(0.02, 0.1)) +
+					' ' + (sx * 0.4) + ' ' + (sy * v(0.05, 0.275)) +
+					's' + (-sx * v(0.05, 0.176)) + ' ' + (sy * 0.35) +
+					' ' + (-sx * 0.4) + ' ' + (sy * v(0.05, 0.35)) +
+					's' + (-sx * v(0.07, 0.4)) + ' ' + (-sy * 0.175) +
+					' ' + (-sx * 0.4) + ' ' + (-sy * v(0.05, 0.35)) +
+					's' + (sx * v(0.05, 0.176)) + ' ' + (-sy * 0.275) +
+					' ' + (sx * v(0.05, 0.4)) + ' ' + (-sy * v(0.02, 0.275))
+				))
+				.attrs(iconAttrs),
+			this.renderBox({
+				height: position.height - sy,
+				width: position.width,
+				x: position.x,
+				y: position.y + sy,
+			})
+		);
+	}
+
+	renderDB(pos) {
+		const tilt = 5;
+		const tiltC = tilt * 1.2;
+
+		const l1 = this.lineNodes(
+			{x: pos.x, y: pos.y + tilt},
+			{x: pos.x, y: pos.y + pos.height - tilt},
+			{}
+		);
+
+		const l2 = this.lineNodes(
+			{x: pos.x + pos.width, y: pos.y + pos.height - tilt},
+			{x: pos.x + pos.width, y: pos.y + tilt},
+			{move: false}
+		);
+
+		const v = this.vary.bind(this);
+
+		const cx = pos.x + pos.width / 2;
+		const dx = -pos.width * this.handedness / 2;
+		const topX1 = cx - dx * v(0.03, 1.02);
+		const topY1 = pos.y + tilt * v(0.15, 1);
+		const topX2 = cx + dx * v(0.03, 1.02);
+		const topY2 = pos.y + tilt * v(0.15, 1);
+
+		return this.svg.el('g').add(
+			this.svg.el('path')
+				.attr('d', (
+					l1.nodes +
+					'C' + l1.p2.x + ' ' + (l1.p2.y + v(0.1, tiltC)) +
+					' ' + l2.p1.x + ' ' + (l2.p1.y + v(0.1, tiltC)) +
+					' ' + l2.p1.x + ' ' + l2.p1.y +
+					l2.nodes
+				))
+				.attrs(PENCIL.normal)
+				.attr('fill', '#FFFFFF'),
+			this.svg.el('path')
+				.attr('d', (
+					'M' + topX1 + ' ' + topY1 +
+					'C' + (topX1 + dx * 0.2) + ' ' + (topY1 - v(0.2, tiltC)) +
+					' ' + topX2 + ' ' + (topY2 - v(0.2, tiltC)) +
+					' ' + topX2 + ' ' + topY2 +
+					'S' + topX1 + ' ' + (topY1 + v(0.2, tiltC)) +
+					' ' + v(1, topX1) + ' ' + v(0.5, topY1)
+				))
+				.attrs(PENCIL.normal)
+				.attr('fill', '#FFFFFF')
+		);
 	}
 
 	renderNote({x, y, width, height}) {

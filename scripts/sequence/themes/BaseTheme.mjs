@@ -204,17 +204,52 @@ export default class BaseTheme {
 		return g;
 	}
 
-	renderDB(attrs, position) {
-		const z = attrs['db-z'];
+	renderPerson({iconHeight, iconWidth}, iconAttrs, boxAttrs, position) {
+		const cx = position.x + position.width / 2;
+		const sx = iconWidth / 2;
+		const sy = iconHeight;
+
+		return this.svg.el('g').add(
+			this.svg.el('path')
+				.attr('d', (
+					'M' + (cx - sx) + ' ' + (position.y + iconHeight) +
+					'a' + sx + ' ' + (sy * 0.3) + ' 0 0 1' +
+					' ' + (sx * 2) + ' 0'
+				))
+				.attrs(iconAttrs),
+			this.svg.el('path')
+				.attr('d', (
+					'M' + cx + ' ' + position.y +
+					'c' + (sx * 0.224) + ' 0' +
+					' ' + (sx * 0.4) + ' ' + (sy * 0.1) +
+					' ' + (sx * 0.4) + ' ' + (sy * 0.275) +
+					's' + (-sx * 0.176) + ' ' + (sy * 0.35) +
+					' ' + (-sx * 0.4) + ' ' + (sy * 0.35) +
+					's' + (-sx * 0.4) + ' ' + (-sy * 0.175) +
+					' ' + (-sx * 0.4) + ' ' + (-sy * 0.35) +
+					's' + (sx * 0.176) + ' ' + (-sy * 0.275) +
+					' ' + (sx * 0.4) + ' ' + (-sy * 0.275)
+				))
+				.attrs(iconAttrs),
+			this.svg.box(boxAttrs, {
+				height: position.height - iconHeight,
+				width: position.width,
+				x: position.x,
+				y: position.y + iconHeight,
+			})
+		);
+	}
+
+	renderDB({tilt}, attrs, position) {
 		return this.svg.el('g').add(
 			this.svg.box({
 				'rx': position.width / 2,
-				'ry': z,
+				'ry': tilt,
 			}, position).attrs(attrs),
 			this.svg.el('path')
 				.attr('d', (
-					'M' + position.x + ' ' + (position.y + z) +
-					'a' + (position.width / 2) + ' ' + z +
+					'M' + position.x + ' ' + (position.y + tilt) +
+					'a' + (position.width / 2) + ' ' + tilt +
 					' 0 0 0 ' + position.width + ' 0'
 				))
 				.attrs(attrs)

@@ -99,6 +99,31 @@ export default class BasicTheme extends BaseTheme {
 						'text-anchor': 'middle',
 					},
 				},
+				person: {
+					padding: {
+						top: 20,
+						left: 10,
+						right: 10,
+						bottom: 5,
+					},
+					arrowBottom: 5 + 12 * 1.3 / 2,
+					boxRenderer: this.renderPerson.bind(this, {
+						iconHeight: 15,
+						iconWidth: 18,
+					}, {
+						'fill': '#000000',
+					}, {
+						'fill': '#FFFFFF',
+						'stroke': '#000000',
+						'stroke-width': 1,
+					}),
+					labelAttrs: {
+						'font-family': FONT,
+						'font-size': 12,
+						'line-height': LINE_HEIGHT,
+						'text-anchor': 'middle',
+					},
+				},
 				database: {
 					padding: {
 						top: 12,
@@ -107,11 +132,10 @@ export default class BasicTheme extends BaseTheme {
 						bottom: 3,
 					},
 					arrowBottom: 5 + 12 * 1.3 / 2,
-					boxRenderer: this.renderDB.bind(this, {
+					boxRenderer: this.renderDB.bind(this, {tilt: 5}, {
 						'fill': '#FFFFFF',
 						'stroke': '#000000',
 						'stroke-width': 1,
-						'db-z': 5,
 					}),
 					labelAttrs: {
 						'font-family': FONT,

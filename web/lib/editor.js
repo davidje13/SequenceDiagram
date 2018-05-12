@@ -306,6 +306,11 @@
 			title: 'Red agent line',
 		},
 		{
+			code: '{Agent} is a person',
+			preview: 'headers box\nA is a person\nbegin A',
+			title: 'Person indicator',
+		},
+		{
 			code: '{Agent} is a database',
 			preview: 'headers box\nA is a database\nbegin A',
 			title: 'Database indicator',

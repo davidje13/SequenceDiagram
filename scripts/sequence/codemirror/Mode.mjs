@@ -30,6 +30,7 @@ function suggestionsEqual(a, b) {
 }
 
 const AGENT_INFO_TYPES = [
+	'person',
 	'database',
 	'red',
 ];

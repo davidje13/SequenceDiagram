@@ -7,21 +7,23 @@ const OUTLINE_ATTRS = {
 };
 
 class CapBox {
-	getConfig(options, env) {
+	getConfig(options, env, isBegin) {
 		let config = null;
 		if(options.includes('database')) {
 			config = env.theme.agentCap.database;
+		} else if(isBegin && options.includes('person')) {
+			config = env.theme.agentCap.person;
 		}
 		return config || env.theme.agentCap.box;
 	}
 
-	prepareMeasurements({formattedLabel, options}, env) {
-		const config = this.getConfig(options, env);
+	prepareMeasurements({formattedLabel, options}, env, isBegin) {
+		const config = this.getConfig(options, env, isBegin);
 		env.textSizer.expectMeasure(config.labelAttrs, formattedLabel);
 	}
 
-	separation({formattedLabel, options}, env) {
-		const config = this.getConfig(options, env);
+	separation({formattedLabel, options}, env, isBegin) {
+		const config = this.getConfig(options, env, isBegin);
 		const width = (
 			env.textSizer.measure(config.labelAttrs, formattedLabel).width +
 			config.padding.left +
@@ -35,8 +37,8 @@ class CapBox {
 		};
 	}
 
-	topShift({formattedLabel, options}, env) {
-		const config = this.getConfig(options, env);
+	topShift({formattedLabel, options}, env, isBegin) {
+		const config = this.getConfig(options, env, isBegin);
 		const height = (
 			env.textSizer.measureHeight(config.labelAttrs, formattedLabel) +
 			config.padding.top +
@@ -45,8 +47,8 @@ class CapBox {
 		return Math.max(0, height - config.arrowBottom);
 	}
 
-	render(y, {x, formattedLabel, options}, env) {
-		const config = this.getConfig(options, env);
+	render(y, {x, formattedLabel, options}, env, isBegin) {
+		const config = this.getConfig(options, env, isBegin);
 
 		const text = env.svg.boxedText(config, formattedLabel, {x, y});
 
