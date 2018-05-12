@@ -102,6 +102,8 @@ divider tear with height 20: Lots of stuff happens
 ```
 title Note Placements
 
+begin Foo, Bar
+
 note over Foo: Foo says something
 note left of Foo: Stuff
 note right of Bar: More stuff
