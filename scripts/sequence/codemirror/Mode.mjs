@@ -36,7 +36,9 @@ const AGENT_INFO_TYPES = [
 ];
 
 const PARALLEL_TASKS = [
+	'activate',
 	'begin',
+	'deactivate',
 	'end',
 	'note',
 	'state',
@@ -345,6 +347,8 @@ const makeCommands = ((() => {
 			'as': CM_ERROR,
 			'\n': end,
 		}},
+		'activate': {type: 'keyword', then: {'': agentListTo({'\n': end})}},
+		'deactivate': {type: 'keyword', then: {'': agentListTo({'\n': end})}},
 		'if': commonGroup,
 		'else': {type: 'keyword', suggest: ['else\n', 'else if: '], then: {
 			'if': {type: 'keyword', suggest: ['if: '], then: {

@@ -270,6 +270,22 @@ function checkDelayedConflicts(allStages) {
 	return null;
 }
 
+function checkActivationConflicts(allStages) {
+	const seen = new Set();
+	for(const stage of allStages) {
+		if(stage.type !== 'agent activation') {
+			continue;
+		}
+		for(const agentID of stage.agentIDs) {
+			if(seen.has(agentID)) {
+				return 'Conflicting agent activation';
+			}
+			seen.add(agentID);
+		}
+	}
+	return null;
+}
+
 const PARALLEL_STAGES = [
 	'agent begin',
 	'agent end',
@@ -300,7 +316,8 @@ function errorForParallel(existing, latest) {
 	return (
 		checkAgentConflicts(allStages) ||
 		checkReferenceConflicts(allStages) ||
-		checkDelayedConflicts(allStages)
+		checkDelayedConflicts(allStages) ||
+		checkActivationConflicts(allStages)
 	);
 }
 
@@ -365,6 +382,7 @@ export default class Generator {
 		this.currentNest = null;
 
 		this.stageHandlers = {
+			'agent activation': this.handleAgentActivation.bind(this),
 			'agent begin': this.handleAgentBegin.bind(this),
 			'agent define': this.handleAgentDefine.bind(this),
 			'agent end': this.handleAgentEnd.bind(this),
@@ -1191,6 +1209,14 @@ export default class Generator {
 			.forEach((storedGAgent) => {
 				mergeSets(storedGAgent.options, options);
 			});
+	}
+
+	handleAgentActivation({agents, activated, parallel}) {
+		const gAgents = agents.map(this.toGAgent);
+		this.validateGAgents(gAgents);
+		this.defineGAgents(gAgents);
+		this.addImpStage(this.setGAgentVis(gAgents, true, 'box'), {parallel});
+		this.addStage(this.setGAgentActivation(gAgents, activated), {parallel});
 	}
 
 	handleAgentBegin({agents, mode, parallel}) {

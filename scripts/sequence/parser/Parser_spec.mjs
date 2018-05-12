@@ -19,6 +19,18 @@ describe('Sequence Parser', () => {
 	const any = () => jasmine.anything();
 
 	const PARSED = {
+		agentActivation: (agents, {
+			ln = any(),
+			activated = any(),
+			parallel = false,
+		} = {}) => ({
+			activated,
+			agents: makeParsedAgents(agents),
+			ln,
+			parallel,
+			type: 'agent activation',
+		}),
+
 		agentBegin: (agents, {
 			ln = any(),
 			mode = any(),
@@ -689,12 +701,16 @@ describe('Sequence Parser', () => {
 			const parsed = parser.parse(
 				'define A, B\n' +
 				'begin A, B\n' +
+				'activate A, B\n' +
+				'deactivate A, B\n' +
 				'end A, B\n'
 			);
 
 			expect(parsed.stages).toEqual([
 				PARSED.agentDefine(['A', 'B']),
 				PARSED.agentBegin(['A', 'B'], {mode: 'box'}),
+				PARSED.agentActivation(['A', 'B'], {activated: true}),
+				PARSED.agentActivation(['A', 'B'], {activated: false}),
 				PARSED.agentEnd(['A', 'B'], {mode: 'cross'}),
 			]);
 		});

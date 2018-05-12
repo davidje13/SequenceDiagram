@@ -154,6 +154,16 @@ AGENT_MANIPULATION_TYPES.set('define', {type: 'agent define'});
 AGENT_MANIPULATION_TYPES.set('begin', {mode: 'box', type: 'agent begin'});
 AGENT_MANIPULATION_TYPES.set('end', {mode: 'cross', type: 'agent end'});
 
+const AGENT_ACTIVATION_TYPES = new Map();
+AGENT_MANIPULATION_TYPES.set('activate', {
+	activated: true,
+	type: 'agent activation',
+});
+AGENT_MANIPULATION_TYPES.set('deactivate', {
+	activated: false,
+	type: 'agent activation',
+});
+
 function makeError(message, token = null) {
 	let suffix = '';
 	if(token) {
@@ -447,6 +457,16 @@ const PARSERS = [
 		}
 		return Object.assign({
 			agents: readAgentList(line, 1, line.length, {aliases: true}),
+		}, type);
+	}},
+
+	{begin: [], fn: (line) => { // Activation
+		const type = AGENT_ACTIVATION_TYPES.get(tokenKeyword(line[0]));
+		if(!type || line.length <= 1) {
+			return null;
+		}
+		return Object.assign({
+			agents: readAgentList(line, 1, line.length, {aliases: false}),
 		}, type);
 	}},
 
