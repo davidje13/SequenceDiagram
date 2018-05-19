@@ -1162,6 +1162,8 @@
 		}
 
 		buildCodePane() {
+			this.isAutocompleting = false;
+
 			this.code = this.dom.el('textarea')
 				.setClass('editor-simple')
 				.val(this.loadCode() || this.defaultCode)
@@ -1306,12 +1308,16 @@
 				switch(event.keyCode) {
 				case 13:
 				case 9:
-					event.preventDefault();
+					if(!this.isAutocompleting) {
+						event.preventDefault();
+					}
 					this.advanceParams();
 					break;
 				case 27:
-					event.preventDefault();
-					this.cancelParams();
+					if(!this.isAutocompleting) {
+						event.preventDefault();
+						this.cancelParams();
+					}
 					break;
 				}
 			};
@@ -1659,6 +1665,20 @@
 					const from = code.getCursor('from').line;
 					const to = code.getCursor('to').line;
 					this.diagram.setHighlight(Math.min(from, to));
+				});
+
+				/*
+				 * See https://github.com/codemirror/CodeMirror/issues/3092
+				 * startCompletion will fire even if there are no completions, so
+				 * we cannot rely on it. Instead we hack the hints function to
+				 * propagate 'shown' as 'hint-shown', which we pick up here
+				 */
+				code.on('hint-shown', () => {
+					this.isAutocompleting = true;
+				});
+
+				code.on('endCompletion', () => {
+					this.isAutocompleting = false;
 				});
 
 				if(focussed) {

@@ -221,9 +221,15 @@ export function getHints(cm, options) {
 		list.unshift(makeHintItem(selfValid, ranges, pVar.quote));
 	}
 
-	return {
+	const data = {
 		from: suggestDropdownLocation(list, ranges.fromKey),
 		list,
 		to: ranges.to.word,
 	};
+
+	// Workaround for https://github.com/codemirror/CodeMirror/issues/3092
+	const CM = cm.constructor;
+	CM.on(data, 'shown', CM.signal.bind(cm, cm, 'hint-shown'));
+
+	return data;
 }
