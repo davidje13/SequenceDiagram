@@ -561,112 +561,36 @@
 
 	DOMWrapper.WrappedElement = WrappedElement;
 
-	/* eslint-disable max-lines */
-
-	const DELAY_AGENTCHANGE = 500;
-	const DELAY_STAGECHANGE = 250;
-	const PNG_RESOLUTION = 4;
-
-	const PARAM_PATTERN = /\{[^}]+\}/g;
-
-	function addNewline(value) {
-		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
-			return value + '\n';
-		}
-		return value;
-	}
-
-	function findPos(content, index) {
-		let p = 0;
-		let line = 0;
-		for(;;) {
-			const nextLn = content.indexOf('\n', p) + 1;
-			if(index < nextLn || nextLn === 0) {
-				return {ch: index - p, line};
-			}
-			p = nextLn;
-			++ line;
-		}
-	}
-
-	function cmInRange(pos, {from, to}) {
-		return !(
-			pos.line < from.line || (pos.line === from.line && pos.ch < from.ch) ||
-			pos.line > to.line || (pos.line === to.line && pos.ch > to.ch)
-		);
-	}
-
-	function findNextToken(block, skip) {
-		PARAM_PATTERN.lastIndex = 0;
-		for(let m = null; (m = PARAM_PATTERN.exec(block));) {
-			if(!skip.includes(m[0])) {
-				return m[0];
-			}
-		}
-		return null;
-	}
-
-	function simplifyPreview(code) {
-		return 'headers fade\nterminators fade\n' + code
-			.replace(/\{Agent([0-9]*)\}/g, (match, num) => {
-				if(typeof num === 'undefined') {
-					return 'A';
-				} else {
-					return String.fromCharCode('A'.charCodeAt(0) + Number(num) - 1);
+	DOMWrapper.WrappedElement.prototype.fastClick = function() {
+		const pt = {x: -1, y: 0};
+		return this
+			.on('touchstart', (e) => {
+				const [touch] = e.touches;
+				pt.x = touch.pageX;
+				pt.y = touch.pageY;
+			}, {passive: true})
+			.on('touchend', (e) => {
+				if(
+					pt.x === -1 ||
+					e.touches.length !== 0 ||
+					e.changedTouches.length !== 1
+				) {
+					pt.x = -1;
+					return;
 				}
-			})
-			.replace(/[{}]/g, '');
-	}
-
-	function toCappedFixed(v, cap) {
-		const s = v.toString();
-		const p = s.indexOf('.');
-		if(p === -1 || s.length - p - 1 <= cap) {
-			return s;
-		}
-		return v.toFixed(cap);
-	}
-
-	function fetchResource(path) {
-		if(typeof fetch === 'undefined') {
-			return Promise.reject(new Error());
-		}
-		return fetch(path)
-			.then((response) => {
-				if(!response.ok) {
-					throw new Error(response.statusText);
+				const [touch] = e.changedTouches;
+				if(
+					Math.abs(pt.x - touch.pageX) < 10 &&
+					Math.abs(pt.y - touch.pageY) < 10
+				) {
+					e.preventDefault();
+					e.target.click();
 				}
-				return response;
+				pt.x = -1;
 			});
-	}
+	};
 
-	/* eslint-disable complexity */
-	function makeURL(code, {height, width, zoom}) {
-		/* eslint-enable complexity */
-		const uri = code
-			.split('\n')
-			.map(encodeURIComponent)
-			.filter((ln) => ln !== '')
-			.join('/');
-
-		let opts = '';
-		if(!Number.isNaN(width) || !Number.isNaN(height)) {
-			if(!Number.isNaN(width)) {
-				opts += 'w' + toCappedFixed(Math.max(width, 0), 4);
-			}
-			if(!Number.isNaN(height)) {
-				opts += 'h' + toCappedFixed(Math.max(height, 0), 4);
-			}
-			opts += '/';
-		} else if(!Number.isNaN(zoom) && zoom !== 1) {
-			opts += 'z' + toCappedFixed(Math.max(zoom, 0), 4);
-			opts += '/';
-		}
-
-		return opts + uri + '.svg';
-	}
-
-	function makeSplit(nodes, options) {
+	function split(nodes, options) {
 		const filteredNodes = [];
 		const filteredOpts = {
 			direction: options.direction,
@@ -759,7 +683,7 @@
 
 	DOMWrapper.WrappedElement.prototype.split = function(nodes, options) {
 		this.add(nodes);
-		makeSplit(nodes, options);
+		split(nodes, options);
 		return this;
 	};
 
@@ -796,34 +720,533 @@
 		});
 	}
 
-	DOMWrapper.WrappedElement.prototype.fastClick = function() {
-		const pt = {x: -1, y: 0};
-		return this
-			.on('touchstart', (e) => {
-				const [touch] = e.touches;
-				pt.x = touch.pageX;
-				pt.y = touch.pageY;
-			}, {passive: true})
-			.on('touchend', (e) => {
-				if(
-					pt.x === -1 ||
-					e.touches.length !== 0 ||
-					e.changedTouches.length !== 1
-				) {
-					pt.x = -1;
+	class EventObject {
+		constructor() {
+			this.listeners = new Map();
+			this.forwards = new Set();
+		}
+
+		addEventListener(type, callback) {
+			const l = this.listeners.get(type);
+			if(l) {
+				l.push(callback);
+			} else {
+				this.listeners.set(type, [callback]);
+			}
+		}
+
+		removeEventListener(type, fn) {
+			const l = this.listeners.get(type);
+			if(!l) {
+				return;
+			}
+			const i = l.indexOf(fn);
+			if(i !== -1) {
+				l.splice(i, 1);
+			}
+		}
+
+		on(type, fn) {
+			this.addEventListener(type, fn);
+			return this;
+		}
+
+		off(type, fn) {
+			this.removeEventListener(type, fn);
+			return this;
+		}
+
+		countEventListeners(type) {
+			return (this.listeners.get(type) || []).length;
+		}
+
+		removeAllEventListeners(type) {
+			if(type) {
+				this.listeners.delete(type);
+			} else {
+				this.listeners.clear();
+			}
+		}
+
+		addEventForwarding(target) {
+			this.forwards.add(target);
+		}
+
+		removeEventForwarding(target) {
+			this.forwards.delete(target);
+		}
+
+		removeAllEventForwardings() {
+			this.forwards.clear();
+		}
+
+		trigger(type, params = []) {
+			(this.listeners.get(type) || []).forEach(
+				(listener) => listener(...params)
+			);
+			this.forwards.forEach((fwd) => fwd.trigger(type, params));
+		}
+	}
+
+	const PARAM_PATTERN = /\{[^}]+\}/g;
+
+	function addNewline(value) {
+		if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
+			return value + '\n';
+		}
+		return value;
+	}
+
+	function findPos(content, index) {
+		let p = 0;
+		let line = 0;
+		for(;;) {
+			const nextLn = content.indexOf('\n', p) + 1;
+			if(index < nextLn || nextLn === 0) {
+				return {ch: index - p, line};
+			}
+			p = nextLn;
+			++ line;
+		}
+	}
+
+	function cmInRange(pos, {from, to}) {
+		return !(
+			pos.line < from.line || (pos.line === from.line && pos.ch < from.ch) ||
+			pos.line > to.line || (pos.line === to.line && pos.ch > to.ch)
+		);
+	}
+
+	function findNextToken(block, skip) {
+		PARAM_PATTERN.lastIndex = 0;
+		for(let m = null; (m = PARAM_PATTERN.exec(block));) {
+			if(!skip.includes(m[0])) {
+				return m[0];
+			}
+		}
+		return null;
+	}
+
+	class CodeEditor extends EventObject {
+		constructor(dom, container, {
+			mode = '',
+			require = null,
+			value = '',
+		}) {
+			super();
+
+			this.mode = mode;
+			this.require = require || (() => null);
+
+			this.marker = null;
+
+			this.isAutocompleting = false;
+			this.enhanced = false;
+
+			this.code = dom.el('textarea')
+				.setClass('editor-simple')
+				.val(value)
+				.on('input', () => this.trigger('change'))
+				.on('focus', () => this.trigger('focus'))
+				.attach(container);
+
+			this._enhance();
+		}
+
+		markLineHover(ln = null) {
+			this.unmarkLineHover();
+			if(ln !== null && this.enhanced) {
+				this.marker = this.code.markText(
+					{ch: 0, line: ln},
+					{ch: 0, line: ln + 1},
+					{
+						className: 'hover',
+						clearOnEnter: true,
+						inclusiveLeft: false,
+						inclusiveRight: false,
+					}
+				);
+			}
+		}
+
+		unmarkLineHover() {
+			if(this.marker) {
+				this.marker.clear();
+				this.marker = null;
+			}
+		}
+
+		selectLine(ln = null) {
+			if(ln === null) {
+				return;
+			}
+			if(this.enhanced) {
+				this.code.setSelection(
+					{ch: 0, line: ln},
+					{ch: 0, line: ln + 1},
+					{bias: -1, origin: '+focus'}
+				);
+				this.code.focus();
+			}
+		}
+
+		enterParams(start, end, block) {
+			const doc = this.code.getDoc();
+			const endBookmark = doc.setBookmark(end);
+			const done = [];
+
+			const keydown = (cm, event) => {
+				switch(event.keyCode) {
+				case 13:
+				case 9:
+					if(!this.isAutocompleting) {
+						event.preventDefault();
+					}
+					this.advanceParams();
+					break;
+				case 27:
+					if(!this.isAutocompleting) {
+						event.preventDefault();
+						this.cancelParams();
+					}
+					break;
+				}
+			};
+
+			const move = () => {
+				if(this.paramMarkers.length === 0) {
 					return;
 				}
-				const [touch] = e.changedTouches;
-				if(
-					Math.abs(pt.x - touch.pageX) < 10 &&
-					Math.abs(pt.y - touch.pageY) < 10
-				) {
-					e.preventDefault();
-					e.target.click();
+				const m = this.paramMarkers[0].find();
+				const [r] = doc.listSelections();
+				if(!cmInRange(r.anchor, m) || !cmInRange(r.head, m)) {
+					this.cancelParams();
+					this.code.setSelection(r.anchor, r.head);
 				}
-				pt.x = -1;
+			};
+
+			this.paramMarkers = [];
+			this.cancelParams = () => {
+				this.code.off('keydown', keydown);
+				this.code.off('cursorActivity', move);
+				this.paramMarkers.forEach((m) => m.clear());
+				this.paramMarkers = null;
+				endBookmark.clear();
+				this.code.setCursor(end);
+				this.cancelParams = null;
+				this.advanceParams = null;
+			};
+			this.advanceParams = () => {
+				this.paramMarkers.forEach((m) => m.clear());
+				this.paramMarkers.length = 0;
+				this.nextParams(start, endBookmark, block, done);
+			};
+
+			this.code.on('keydown', keydown);
+			this.code.on('cursorActivity', move);
+
+			this.advanceParams();
+		}
+
+		nextParams(start, endBookmark, block, done) {
+			const tok = findNextToken(block, done);
+			if(!tok) {
+				this.cancelParams();
+				return;
+			}
+			done.push(tok);
+
+			const doc = this.code.getDoc();
+			const ranges = [];
+			let {ch} = start;
+			for(let ln = start.line; ln < endBookmark.find().line; ++ ln) {
+				const line = doc.getLine(ln).slice(ch);
+				for(let p = 0; (p = line.indexOf(tok, p)) !== -1; p += tok.length) {
+					const anchor = {ch: p, line: ln};
+					const head = {ch: p + tok.length, line: ln};
+					ranges.push({anchor, head});
+					this.paramMarkers.push(doc.markText(anchor, head, {
+						className: 'param',
+						clearWhenEmpty: false,
+						inclusiveLeft: true,
+						inclusiveRight: true,
+					}));
+				}
+				ch = 0;
+			}
+
+			if(ranges.length > 0) {
+				doc.setSelections(ranges, 0);
+			} else {
+				this.cancelParams();
+			}
+		}
+
+		addCodeBlock(block) {
+			const lines = block.split('\n').length;
+
+			this.code.focus();
+
+			if(this.enhanced) {
+				const cur = this.code.getCursor('head');
+				const pos = {ch: 0, line: cur.line + ((cur.ch > 0) ? 1 : 0)};
+				let replaced = addNewline(block);
+				if(pos.line >= this.code.lineCount()) {
+					replaced = '\n' + replaced;
+				}
+				this.code.replaceRange(replaced, pos, null, 'library');
+				const end = {ch: 0, line: pos.line + lines};
+				this.enterParams(pos, end, block);
+			} else {
+				const value = this.value();
+				const cur = this.code.element.selectionStart;
+				const pos = ('\n' + value + '\n').indexOf('\n', cur);
+				const replaced = (
+					addNewline(value.substr(0, pos)) +
+					addNewline(block)
+				);
+				this.code
+					.val(replaced + value.substr(pos))
+					.select(replaced.length);
+				this.trigger('change');
+			}
+		}
+
+		value() {
+			if(this.enhanced) {
+				return this.code.getDoc().getValue();
+			} else {
+				return this.code.element.value;
+			}
+		}
+
+		setValue(code) {
+			if(this.enhanced) {
+				const doc = this.code.getDoc();
+				doc.setValue(code);
+				doc.clearHistory();
+			} else {
+				this.code.val(code);
+			}
+		}
+
+		_enhance() {
+			// Load on demand for progressive enhancement
+			// (failure to load external module will not block functionality)
+			this.require([
+				'cm/lib/codemirror',
+				'cm/addon/hint/show-hint',
+				'cm/addon/edit/trailingspace',
+				'cm/addon/comment/comment',
+			], (CodeMirror) => {
+				const globals = {};
+				this.trigger('enhance', [CodeMirror, globals]);
+
+				const oldCode = this.code;
+
+				const {selectionStart, selectionEnd, value} = oldCode.element;
+				const focussed = oldCode.focussed();
+
+				const code = new CodeMirror(oldCode.element.parentNode, {
+					extraKeys: {
+						'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
+						'Cmd-Enter': 'autocomplete',
+						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
+						'Ctrl-Enter': 'autocomplete',
+						'Ctrl-Space': 'autocomplete',
+						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
+						'Tab': (cm) => cm.execCommand('indentMore'),
+					},
+					globals,
+					lineNumbers: true,
+					mode: this.mode,
+					showTrailingSpace: true,
+					value,
+				});
+				oldCode.detach();
+
+				code.getDoc().setSelection(
+					findPos(value, selectionStart),
+					findPos(value, selectionEnd)
+				);
+
+				let lastKey = 0;
+				code.on('keydown', (cm, event) => {
+					lastKey = event.keyCode;
+				});
+
+				code.on('change', (cm, change) => {
+					this.trigger('change');
+
+					if(change.origin === '+input') {
+						if(lastKey === 13) {
+							lastKey = 0;
+							return;
+						}
+					} else if(change.origin !== 'complete') {
+						return;
+					}
+					CodeMirror.commands.autocomplete(cm, null, {
+						completeSingle: false,
+					});
+				});
+
+				code.on('focus', () => this.trigger('focus'));
+
+				code.on('cursorActivity', () => {
+					const from = code.getCursor('from');
+					const to = code.getCursor('to');
+					this.trigger('cursorActivity', [from, to]);
+				});
+
+				/*
+				 * See https://github.com/codemirror/CodeMirror/issues/3092
+				 * startCompletion will fire even if there are no completions, so
+				 * we cannot rely on it. Instead we hack the hints function to
+				 * propagate 'shown' as 'hint-shown', which we pick up here
+				 */
+				code.on('hint-shown', () => {
+					this.isAutocompleting = true;
+				});
+
+				code.on('endCompletion', () => {
+					this.isAutocompleting = false;
+				});
+
+				if(focussed) {
+					code.focus();
+				}
+
+				this.code = code;
+				this.enhanced = true;
 			});
-	};
+		}
+	}
+
+	class LocalStorage {
+		constructor(id) {
+			this.id = id;
+		}
+
+		set(value) {
+			if(!this.id) {
+				return;
+			}
+			try {
+				window.localStorage.setItem(this.id, value);
+			} catch(ignore) {
+				// Ignore
+			}
+		}
+
+		get() {
+			if(!this.id) {
+				return '';
+			}
+			try {
+				return window.localStorage.getItem(this.id) || '';
+			} catch(e) {
+				return '';
+			}
+		}
+	}
+
+	function toCappedFixed(v, cap) {
+		const s = v.toString();
+		const p = s.indexOf('.');
+		if(p === -1 || s.length - p - 1 <= cap) {
+			return s;
+		}
+		return v.toFixed(cap);
+	}
+
+	function valid(v = null) {
+		return v !== null && !Number.isNaN(v);
+	}
+
+	class URLExporter {
+		constructor(base = '') {
+			this.base = base;
+		}
+
+		setBase(base) {
+			this.base = base;
+		}
+
+		_convertCode(code) {
+			return code
+				.split('\n')
+				.map(encodeURIComponent)
+				.filter((ln) => ln !== '')
+				.join('/');
+		}
+
+		_convertWidthHeight(width, height) {
+			let opts = '';
+			if(valid(width)) {
+				opts += 'w' + toCappedFixed(Math.max(width, 0), 4);
+			}
+			if(valid(height)) {
+				opts += 'h' + toCappedFixed(Math.max(height, 0), 4);
+			}
+			return opts + '/';
+		}
+
+		_convertZoom(zoom) {
+			if(zoom === 1) {
+				return '';
+			}
+			return 'z' + toCappedFixed(Math.max(zoom, 0), 4) + '/';
+		}
+
+		_convertSize({height, width, zoom}) {
+			if(valid(width) || valid(height)) {
+				return this._convertWidthHeight(width, height);
+			}
+			if(valid(zoom)) {
+				return this._convertZoom(zoom);
+			}
+			return '';
+		}
+
+		getURL(code, size = {}) {
+			return (
+				this.base +
+				this._convertSize(size) +
+				this._convertCode(code) +
+				'.svg'
+			);
+		}
+	}
+
+	const DELAY_AGENTCHANGE = 500;
+	const DELAY_STAGECHANGE = 250;
+	const PNG_RESOLUTION = 4;
+
+	function simplifyPreview(code) {
+		return 'headers fade\nterminators fade\n' + code
+			.replace(/\{Agent([0-9]*)\}/g, (match, num) => {
+				if(typeof num === 'undefined') {
+					return 'A';
+				} else {
+					return String.fromCharCode('A'.charCodeAt(0) + Number(num) - 1);
+				}
+			})
+			.replace(/[{}]/g, '');
+	}
+
+	function fetchResource(path) {
+		if(typeof fetch === 'undefined') {
+			return Promise.reject(new Error());
+		}
+		return fetch(path)
+			.then((response) => {
+				if(!response.ok) {
+					throw new Error(response.statusText);
+				}
+				return response;
+			});
+	}
 
 	class Interface {
 		constructor({
@@ -837,7 +1260,7 @@
 		}) {
 			this.diagram = sequenceDiagram;
 			this.defaultCode = defaultCode;
-			this.localStorage = localStorage;
+			this.localStorage = new LocalStorage(localStorage);
 			this.library = library;
 			this.links = links;
 			this.minScale = 1.5;
@@ -863,45 +1286,11 @@
 					this.updateMinSize(this.diagram.getSize());
 					this.pngDirty = true;
 				})
-				.on('mouseover', (element) => {
-					if(this.marker) {
-						this.marker.clear();
-					}
-					if(typeof element.ln !== 'undefined' && this.code.markText) {
-						this.marker = this.code.markText(
-							{ch: 0, line: element.ln},
-							{ch: 0, line: element.ln + 1},
-							{
-								className: 'hover',
-								clearOnEnter: true,
-								inclusiveLeft: false,
-								inclusiveRight: false,
-							}
-						);
-					}
-				})
-				.on('mouseout', () => {
-					if(this.marker) {
-						this.marker.clear();
-						this.marker = null;
-					}
-				})
+				.on('mouseover', (element) => this.code.markLineHover(element.ln))
+				.on('mouseout', () => this.code.unmarkLineHover())
 				.on('click', (element) => {
-					if(this.marker) {
-						this.marker.clear();
-						this.marker = null;
-					}
-					if(
-						typeof element.ln !== 'undefined' &&
-						this.code.setSelection
-					) {
-						this.code.setSelection(
-							{ch: 0, line: element.ln},
-							{ch: 0, line: element.ln + 1},
-							{bias: -1, origin: '+focus'}
-						);
-						this.code.focus();
-					}
+					this.code.unmarkLineHover();
+					this.code.selectLine(element.ln);
 					this._hideURLBuilder();
 				})
 				.on('dblclick', (element) => {
@@ -996,7 +1385,7 @@
 						.add('Loading\u2026')
 				);
 
-			this.renderService = '';
+			this.renderService = new URLExporter();
 			const relativePath = 'render/';
 			fetchResource(relativePath)
 				.then((response) => response.text())
@@ -1005,7 +1394,9 @@
 					if(!path || path.startsWith('<')) {
 						path = relativePath;
 					}
-					this.renderService = new URL(path, window.location.href).href;
+					this.renderService.setBase(
+						new URL(path, window.location.href).href
+					);
 					urlBuilder.empty().add(urlOpts);
 					this._refreshURL();
 				})
@@ -1020,7 +1411,7 @@
 		}
 
 		_refreshURL() {
-			this.urlOutput.val(this.renderService + makeURL(this.value(), {
+			this.urlOutput.val(this.renderService.getURL(this.code.value(), {
 				height: Number.parseFloat(this.urlHeight.element.value),
 				width: Number.parseFloat(this.urlWidth.element.value),
 				zoom: Number.parseFloat(this.urlZoom.element.value || '1'),
@@ -1138,7 +1529,7 @@
 					.setClass('library-item')
 					.add(holdInner)
 					.fastClick()
-					.on('click', this.addCodeBlock.bind(this, lib.code))
+					.on('click', () => this.code.addCodeBlock(lib.code))
 					.attach(container);
 
 				return this.diagram.clone({
@@ -1162,15 +1553,26 @@
 		}
 
 		buildCodePane() {
-			this.isAutocompleting = false;
+			const container = this.dom.el('div').setClass('pane-code');
 
-			this.code = this.dom.el('textarea')
-				.setClass('editor-simple')
-				.val(this.loadCode() || this.defaultCode)
-				.on('input', () => this.update(false));
+			this.code = new CodeEditor(this.dom, container, {
+				mode: 'sequence',
+				require: this.require,
+				value: this.localStorage.get() || this.defaultCode,
+			});
 
-			return this.dom.el('div').setClass('pane-code')
-				.add(this.code);
+			this.code
+				.on('enhance', (CM, globals) => {
+					this.diagram.registerCodeMirrorMode(CM);
+					globals.themes = this.diagram.getThemeNames();
+				})
+				.on('change', () => this.update(false))
+				.on('cursorActivity', (from, to) => {
+					this.diagram.setHighlight(Math.min(from.line, to.line));
+				})
+				.on('focus', () => this._hideURLBuilder());
+
+			return container;
 		}
 
 		buildLibPane() {
@@ -1295,130 +1697,6 @@
 			// Delay first update 1 frame to ensure render target is ready
 			// (prevents initial incorrect font calculations for custom fonts)
 			setTimeout(this.update.bind(this), 0);
-
-			this._enhanceEditor();
-		}
-
-		enterParams(start, end, block) {
-			const doc = this.code.getDoc();
-			const endBookmark = doc.setBookmark(end);
-			const done = [];
-
-			const keydown = (cm, event) => {
-				switch(event.keyCode) {
-				case 13:
-				case 9:
-					if(!this.isAutocompleting) {
-						event.preventDefault();
-					}
-					this.advanceParams();
-					break;
-				case 27:
-					if(!this.isAutocompleting) {
-						event.preventDefault();
-						this.cancelParams();
-					}
-					break;
-				}
-			};
-
-			const move = () => {
-				if(this.paramMarkers.length === 0) {
-					return;
-				}
-				const m = this.paramMarkers[0].find();
-				const [r] = doc.listSelections();
-				if(!cmInRange(r.anchor, m) || !cmInRange(r.head, m)) {
-					this.cancelParams();
-					this.code.setSelection(r.anchor, r.head);
-				}
-			};
-
-			this.paramMarkers = [];
-			this.cancelParams = () => {
-				this.code.off('keydown', keydown);
-				this.code.off('cursorActivity', move);
-				this.paramMarkers.forEach((m) => m.clear());
-				this.paramMarkers = null;
-				endBookmark.clear();
-				this.code.setCursor(end);
-				this.cancelParams = null;
-				this.advanceParams = null;
-			};
-			this.advanceParams = () => {
-				this.paramMarkers.forEach((m) => m.clear());
-				this.paramMarkers.length = 0;
-				this.nextParams(start, endBookmark, block, done);
-			};
-
-			this.code.on('keydown', keydown);
-			this.code.on('cursorActivity', move);
-
-			this.advanceParams();
-		}
-
-		nextParams(start, endBookmark, block, done) {
-			const tok = findNextToken(block, done);
-			if(!tok) {
-				this.cancelParams();
-				return;
-			}
-			done.push(tok);
-
-			const doc = this.code.getDoc();
-			const ranges = [];
-			let {ch} = start;
-			for(let ln = start.line; ln < endBookmark.find().line; ++ ln) {
-				const line = doc.getLine(ln).slice(ch);
-				for(let p = 0; (p = line.indexOf(tok, p)) !== -1; p += tok.length) {
-					const anchor = {ch: p, line: ln};
-					const head = {ch: p + tok.length, line: ln};
-					ranges.push({anchor, head});
-					this.paramMarkers.push(doc.markText(anchor, head, {
-						className: 'param',
-						clearWhenEmpty: false,
-						inclusiveLeft: true,
-						inclusiveRight: true,
-					}));
-				}
-				ch = 0;
-			}
-
-			if(ranges.length > 0) {
-				doc.setSelections(ranges, 0);
-			} else {
-				this.cancelParams();
-			}
-		}
-
-		addCodeBlock(block) {
-			const lines = block.split('\n').length;
-
-			if(this.code.getCursor) {
-				const cur = this.code.getCursor('head');
-				const pos = {ch: 0, line: cur.line + ((cur.ch > 0) ? 1 : 0)};
-				let replaced = addNewline(block);
-				if(pos.line >= this.code.lineCount()) {
-					replaced = '\n' + replaced;
-				}
-				this.code.replaceRange(replaced, pos, null, 'library');
-				const end = {ch: 0, line: pos.line + lines};
-				this.enterParams(pos, end, block);
-			} else {
-				const value = this.value();
-				const cur = this.code.element.selectionStart;
-				const pos = ('\n' + value + '\n').indexOf('\n', cur);
-				const replaced = (
-					addNewline(value.substr(0, pos)) +
-					addNewline(block)
-				);
-				this.code
-					.val(replaced + value.substr(pos))
-					.select(replaced.length);
-				this.update(false);
-			}
-
-			this.code.focus();
 		}
 
 		updateMinSize({width, height}) {
@@ -1445,28 +1723,6 @@
 			this.diagram.render(sequence);
 		}
 
-		saveCode(src) {
-			if(!this.localStorage) {
-				return;
-			}
-			try {
-				window.localStorage.setItem(this.localStorage, src);
-			} catch(ignore) {
-				// Ignore
-			}
-		}
-
-		loadCode() {
-			if(!this.localStorage) {
-				return '';
-			}
-			try {
-				return window.localStorage.getItem(this.localStorage) || '';
-			} catch(e) {
-				return '';
-			}
-		}
-
 		markError(error) {
 			if(typeof error === 'object' && error.message) {
 				this.errorMsg.text(error.message);
@@ -1480,40 +1736,22 @@
 			this.errorMsg.text('').delClass('error');
 		}
 
-		value() {
-			if(this.code.getDoc) {
-				return this.code.getDoc().getValue();
-			} else {
-				return this.code.element.value;
-			}
-		}
-
-		setValue(code) {
-			if(this.code.getDoc) {
-				const doc = this.code.getDoc();
-				doc.setValue(code);
-				doc.clearHistory();
-			} else {
-				this.code.val(code);
-			}
-			this.diagram.expandAll({render: false});
-			this.update(true);
-			this.diagram.setHighlight(null);
-		}
-
 		loadFile(file) {
 			return getFileContent(file).then((svg) => {
 				const code = this.diagram.extractCodeFromSVG(svg);
 				if(code) {
-					this.setValue(code);
+					this.code.setValue(code);
+					this.diagram.expandAll({render: false});
+					this.update(true);
+					this.diagram.setHighlight(null);
 				}
 			});
 		}
 
 		update(immediate = true) {
 			this._hideURLBuilder();
-			const src = this.value();
-			this.saveCode(src);
+			const src = this.code.value();
+			this.localStorage.set(src);
 			let sequence = null;
 			try {
 				sequence = this.diagram.process(src);
@@ -1596,97 +1834,6 @@
 			} else {
 				this._showURLBuilder();
 			}
-		}
-
-		_enhanceEditor() {
-			// Load on demand for progressive enhancement
-			// (failure to load external module will not block functionality)
-			this.require([
-				'cm/lib/codemirror',
-				'cm/addon/hint/show-hint',
-				'cm/addon/edit/trailingspace',
-				'cm/addon/comment/comment',
-			], (CodeMirror) => {
-				this.diagram.registerCodeMirrorMode(CodeMirror);
-
-				const selBegin = this.code.element.selectionStart;
-				const selEnd = this.code.element.selectionEnd;
-				const val = this.code.element.value;
-				const focussed = this.code.focussed();
-
-				const code = new CodeMirror(this.code.element.parentNode, {
-					extraKeys: {
-						'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
-						'Cmd-Enter': 'autocomplete',
-						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
-						'Ctrl-Enter': 'autocomplete',
-						'Ctrl-Space': 'autocomplete',
-						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
-						'Tab': (cm) => cm.execCommand('indentMore'),
-					},
-					globals: {
-						themes: this.diagram.getThemeNames(),
-					},
-					lineNumbers: true,
-					mode: 'sequence',
-					showTrailingSpace: true,
-					value: val,
-				});
-				this.code.detach();
-				code.getDoc().setSelection(
-					findPos(val, selBegin),
-					findPos(val, selEnd)
-				);
-
-				let lastKey = 0;
-				code.on('keydown', (cm, event) => {
-					lastKey = event.keyCode;
-				});
-
-				code.on('change', (cm, change) => {
-					this.update(false);
-
-					if(change.origin === '+input') {
-						if(lastKey === 13) {
-							lastKey = 0;
-							return;
-						}
-					} else if(change.origin !== 'complete') {
-						return;
-					}
-					CodeMirror.commands.autocomplete(cm, null, {
-						completeSingle: false,
-					});
-				});
-
-				code.on('focus', () => this._hideURLBuilder());
-
-				code.on('cursorActivity', () => {
-					const from = code.getCursor('from').line;
-					const to = code.getCursor('to').line;
-					this.diagram.setHighlight(Math.min(from, to));
-				});
-
-				/*
-				 * See https://github.com/codemirror/CodeMirror/issues/3092
-				 * startCompletion will fire even if there are no completions, so
-				 * we cannot rely on it. Instead we hack the hints function to
-				 * propagate 'shown' as 'hint-shown', which we pick up here
-				 */
-				code.on('hint-shown', () => {
-					this.isAutocompleting = true;
-				});
-
-				code.on('endCompletion', () => {
-					this.isAutocompleting = false;
-				});
-
-				if(focussed) {
-					code.focus();
-				}
-
-				this.code = code;
-			});
 		}
 	}
 

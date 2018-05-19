@@ -48,7 +48,7 @@ describe('Interface', () => {
 		it('creates a code mirror instance with the given code', (done) => {
 			ui.build(container);
 			const check = setInterval(() => {
-				const constructorArgs = ui.code.constructor;
+				const constructorArgs = ui.code.code.constructor;
 				if(!constructorArgs.options) {
 					return;
 				}

@@ -1,49 +1,18 @@
-/* eslint-disable max-lines */
-
+import './fastClick.mjs';
+import './split.mjs';
+import {
+	getDroppedFile,
+	getFileContent,
+	hasDroppedFile,
+} from './fileHelpers.mjs';
+import CodeEditor from './CodeEditor.mjs';
 import DOMWrapper from '../../../scripts/core/DOMWrapper.mjs';
+import LocalStorage from './LocalStorage.mjs';
+import URLExporter from './URLExporter.mjs';
 
 const DELAY_AGENTCHANGE = 500;
 const DELAY_STAGECHANGE = 250;
 const PNG_RESOLUTION = 4;
-
-const PARAM_PATTERN = /\{[^}]+\}/g;
-
-function addNewline(value) {
-	if(value.length > 0 && value.charAt(value.length - 1) !== '\n') {
-		return value + '\n';
-	}
-	return value;
-}
-
-function findPos(content, index) {
-	let p = 0;
-	let line = 0;
-	for(;;) {
-		const nextLn = content.indexOf('\n', p) + 1;
-		if(index < nextLn || nextLn === 0) {
-			return {ch: index - p, line};
-		}
-		p = nextLn;
-		++ line;
-	}
-}
-
-function cmInRange(pos, {from, to}) {
-	return !(
-		pos.line < from.line || (pos.line === from.line && pos.ch < from.ch) ||
-		pos.line > to.line || (pos.line === to.line && pos.ch > to.ch)
-	);
-}
-
-function findNextToken(block, skip) {
-	PARAM_PATTERN.lastIndex = 0;
-	for(let m = null; (m = PARAM_PATTERN.exec(block));) {
-		if(!skip.includes(m[0])) {
-			return m[0];
-		}
-	}
-	return null;
-}
 
 function simplifyPreview(code) {
 	return 'headers fade\nterminators fade\n' + code
@@ -55,15 +24,6 @@ function simplifyPreview(code) {
 			}
 		})
 		.replace(/[{}]/g, '');
-}
-
-function toCappedFixed(v, cap) {
-	const s = v.toString();
-	const p = s.indexOf('.');
-	if(p === -1 || s.length - p - 1 <= cap) {
-		return s;
-	}
-	return v.toFixed(cap);
 }
 
 function fetchResource(path) {
@@ -79,191 +39,6 @@ function fetchResource(path) {
 		});
 }
 
-/* eslint-disable complexity */
-function makeURL(code, {height, width, zoom}) {
-	/* eslint-enable complexity */
-	const uri = code
-		.split('\n')
-		.map(encodeURIComponent)
-		.filter((ln) => ln !== '')
-		.join('/');
-
-	let opts = '';
-	if(!Number.isNaN(width) || !Number.isNaN(height)) {
-		if(!Number.isNaN(width)) {
-			opts += 'w' + toCappedFixed(Math.max(width, 0), 4);
-		}
-		if(!Number.isNaN(height)) {
-			opts += 'h' + toCappedFixed(Math.max(height, 0), 4);
-		}
-		opts += '/';
-	} else if(!Number.isNaN(zoom) && zoom !== 1) {
-		opts += 'z' + toCappedFixed(Math.max(zoom, 0), 4);
-		opts += '/';
-	}
-
-	return opts + uri + '.svg';
-}
-
-function makeSplit(nodes, options) {
-	const filteredNodes = [];
-	const filteredOpts = {
-		direction: options.direction,
-		minSize: [],
-		sizes: [],
-		snapOffset: options.snapOffset,
-	};
-
-	let total = 0;
-	for(let i = 0; i < nodes.length; ++ i) {
-		if(nodes[i]) {
-			filteredNodes.push(nodes[i]);
-			filteredOpts.minSize.push(options.minSize[i]);
-			filteredOpts.sizes.push(options.sizes[i]);
-			total += options.sizes[i];
-		}
-	}
-	for(let i = 0; i < filteredNodes.length; ++ i) {
-		filteredOpts.minSize[i] *= 100 / total;
-		filteredOpts.sizes[i] *= 100 / total;
-
-		const percent = filteredOpts.sizes[i] + '%';
-		if(filteredOpts.direction === 'vertical') {
-			nodes[i].styles({
-				boxSizing: 'border-box',
-				height: percent,
-				width: '100%',
-			});
-		} else {
-			nodes[i].styles({
-				boxSizing: 'border-box',
-				display: 'inline-block',
-				height: '100%',
-				verticalAlign: 'top', // Safari fix
-				width: percent,
-			});
-		}
-	}
-
-	if(filteredNodes.length < 2) {
-		return;
-	}
-
-	// Load on demand for progressive enhancement
-	// (failure to load external module will not block functionality)
-	options.require(['split'], (Split) => {
-		// Patches for:
-		// https://github.com/nathancahill/Split.js/issues/97
-		// https://github.com/nathancahill/Split.js/issues/111
-		const parent = nodes[0].element.parentNode;
-		const oldAEL = parent.addEventListener;
-		const oldREL = parent.removeEventListener;
-		parent.addEventListener = (event, callback) => {
-			if(event === 'mousemove' || event === 'touchmove') {
-				window.addEventListener(event, callback, {passive: true});
-			} else {
-				oldAEL.call(parent, event, callback);
-			}
-		};
-		parent.removeEventListener = (event, callback) => {
-			if(event === 'mousemove' || event === 'touchmove') {
-				window.removeEventListener(event, callback);
-			} else {
-				oldREL.call(parent, event, callback);
-			}
-		};
-
-		let oldCursor = null;
-		const cursor = (filteredOpts.direction === 'vertical') ?
-			'row-resize' : 'col-resize';
-
-		return new Split(
-			filteredNodes.map((node) => node.element),
-			Object.assign({
-				cursor,
-				direction: 'vertical',
-				gutterSize: 0,
-				onDragEnd: () => {
-					document.body.style.cursor = oldCursor;
-					oldCursor = null;
-				},
-				onDragStart: () => {
-					oldCursor = document.body.style.cursor;
-					document.body.style.cursor = cursor;
-				},
-			}, filteredOpts)
-		);
-	});
-}
-
-DOMWrapper.WrappedElement.prototype.split = function(nodes, options) {
-	this.add(nodes);
-	makeSplit(nodes, options);
-	return this;
-};
-
-function hasDroppedFile(event, mime) {
-	if(!event.dataTransfer.items && event.dataTransfer.files.length === 0) {
-		// Work around Safari not supporting dataTransfer.items
-		return [...event.dataTransfer.types].includes('Files');
-	}
-
-	const items = (event.dataTransfer.items || event.dataTransfer.files);
-	return (items.length === 1 && items[0].type === mime);
-}
-
-function getDroppedFile(event, mime) {
-	const items = (event.dataTransfer.items || event.dataTransfer.files);
-	if(items.length !== 1 || items[0].type !== mime) {
-		return null;
-	}
-	const [item] = items;
-	if(item.getAsFile) {
-		return item.getAsFile();
-	} else {
-		return item;
-	}
-}
-
-function getFileContent(file) {
-	return new Promise((resolve) => {
-		const reader = new FileReader();
-		reader.addEventListener('loadend', () => {
-			resolve(reader.result);
-		}, {once: true});
-		reader.readAsText(file);
-	});
-}
-
-DOMWrapper.WrappedElement.prototype.fastClick = function() {
-	const pt = {x: -1, y: 0};
-	return this
-		.on('touchstart', (e) => {
-			const [touch] = e.touches;
-			pt.x = touch.pageX;
-			pt.y = touch.pageY;
-		}, {passive: true})
-		.on('touchend', (e) => {
-			if(
-				pt.x === -1 ||
-				e.touches.length !== 0 ||
-				e.changedTouches.length !== 1
-			) {
-				pt.x = -1;
-				return;
-			}
-			const [touch] = e.changedTouches;
-			if(
-				Math.abs(pt.x - touch.pageX) < 10 &&
-				Math.abs(pt.y - touch.pageY) < 10
-			) {
-				e.preventDefault();
-				e.target.click();
-			}
-			pt.x = -1;
-		});
-};
-
 export default class Interface {
 	constructor({
 		sequenceDiagram,
@@ -276,7 +51,7 @@ export default class Interface {
 	}) {
 		this.diagram = sequenceDiagram;
 		this.defaultCode = defaultCode;
-		this.localStorage = localStorage;
+		this.localStorage = new LocalStorage(localStorage);
 		this.library = library;
 		this.links = links;
 		this.minScale = 1.5;
@@ -302,45 +77,11 @@ export default class Interface {
 				this.updateMinSize(this.diagram.getSize());
 				this.pngDirty = true;
 			})
-			.on('mouseover', (element) => {
-				if(this.marker) {
-					this.marker.clear();
-				}
-				if(typeof element.ln !== 'undefined' && this.code.markText) {
-					this.marker = this.code.markText(
-						{ch: 0, line: element.ln},
-						{ch: 0, line: element.ln + 1},
-						{
-							className: 'hover',
-							clearOnEnter: true,
-							inclusiveLeft: false,
-							inclusiveRight: false,
-						}
-					);
-				}
-			})
-			.on('mouseout', () => {
-				if(this.marker) {
-					this.marker.clear();
-					this.marker = null;
-				}
-			})
+			.on('mouseover', (element) => this.code.markLineHover(element.ln))
+			.on('mouseout', () => this.code.unmarkLineHover())
 			.on('click', (element) => {
-				if(this.marker) {
-					this.marker.clear();
-					this.marker = null;
-				}
-				if(
-					typeof element.ln !== 'undefined' &&
-					this.code.setSelection
-				) {
-					this.code.setSelection(
-						{ch: 0, line: element.ln},
-						{ch: 0, line: element.ln + 1},
-						{bias: -1, origin: '+focus'}
-					);
-					this.code.focus();
-				}
+				this.code.unmarkLineHover();
+				this.code.selectLine(element.ln);
 				this._hideURLBuilder();
 			})
 			.on('dblclick', (element) => {
@@ -435,7 +176,7 @@ export default class Interface {
 					.add('Loading\u2026')
 			);
 
-		this.renderService = '';
+		this.renderService = new URLExporter();
 		const relativePath = 'render/';
 		fetchResource(relativePath)
 			.then((response) => response.text())
@@ -444,7 +185,9 @@ export default class Interface {
 				if(!path || path.startsWith('<')) {
 					path = relativePath;
 				}
-				this.renderService = new URL(path, window.location.href).href;
+				this.renderService.setBase(
+					new URL(path, window.location.href).href
+				);
 				urlBuilder.empty().add(urlOpts);
 				this._refreshURL();
 			})
@@ -459,7 +202,7 @@ export default class Interface {
 	}
 
 	_refreshURL() {
-		this.urlOutput.val(this.renderService + makeURL(this.value(), {
+		this.urlOutput.val(this.renderService.getURL(this.code.value(), {
 			height: Number.parseFloat(this.urlHeight.element.value),
 			width: Number.parseFloat(this.urlWidth.element.value),
 			zoom: Number.parseFloat(this.urlZoom.element.value || '1'),
@@ -577,7 +320,7 @@ export default class Interface {
 				.setClass('library-item')
 				.add(holdInner)
 				.fastClick()
-				.on('click', this.addCodeBlock.bind(this, lib.code))
+				.on('click', () => this.code.addCodeBlock(lib.code))
 				.attach(container);
 
 			return this.diagram.clone({
@@ -601,15 +344,26 @@ export default class Interface {
 	}
 
 	buildCodePane() {
-		this.isAutocompleting = false;
+		const container = this.dom.el('div').setClass('pane-code');
 
-		this.code = this.dom.el('textarea')
-			.setClass('editor-simple')
-			.val(this.loadCode() || this.defaultCode)
-			.on('input', () => this.update(false));
+		this.code = new CodeEditor(this.dom, container, {
+			mode: 'sequence',
+			require: this.require,
+			value: this.localStorage.get() || this.defaultCode,
+		});
 
-		return this.dom.el('div').setClass('pane-code')
-			.add(this.code);
+		this.code
+			.on('enhance', (CM, globals) => {
+				this.diagram.registerCodeMirrorMode(CM);
+				globals.themes = this.diagram.getThemeNames();
+			})
+			.on('change', () => this.update(false))
+			.on('cursorActivity', (from, to) => {
+				this.diagram.setHighlight(Math.min(from.line, to.line));
+			})
+			.on('focus', () => this._hideURLBuilder());
+
+		return container;
 	}
 
 	buildLibPane() {
@@ -734,130 +488,6 @@ export default class Interface {
 		// Delay first update 1 frame to ensure render target is ready
 		// (prevents initial incorrect font calculations for custom fonts)
 		setTimeout(this.update.bind(this), 0);
-
-		this._enhanceEditor();
-	}
-
-	enterParams(start, end, block) {
-		const doc = this.code.getDoc();
-		const endBookmark = doc.setBookmark(end);
-		const done = [];
-
-		const keydown = (cm, event) => {
-			switch(event.keyCode) {
-			case 13:
-			case 9:
-				if(!this.isAutocompleting) {
-					event.preventDefault();
-				}
-				this.advanceParams();
-				break;
-			case 27:
-				if(!this.isAutocompleting) {
-					event.preventDefault();
-					this.cancelParams();
-				}
-				break;
-			}
-		};
-
-		const move = () => {
-			if(this.paramMarkers.length === 0) {
-				return;
-			}
-			const m = this.paramMarkers[0].find();
-			const [r] = doc.listSelections();
-			if(!cmInRange(r.anchor, m) || !cmInRange(r.head, m)) {
-				this.cancelParams();
-				this.code.setSelection(r.anchor, r.head);
-			}
-		};
-
-		this.paramMarkers = [];
-		this.cancelParams = () => {
-			this.code.off('keydown', keydown);
-			this.code.off('cursorActivity', move);
-			this.paramMarkers.forEach((m) => m.clear());
-			this.paramMarkers = null;
-			endBookmark.clear();
-			this.code.setCursor(end);
-			this.cancelParams = null;
-			this.advanceParams = null;
-		};
-		this.advanceParams = () => {
-			this.paramMarkers.forEach((m) => m.clear());
-			this.paramMarkers.length = 0;
-			this.nextParams(start, endBookmark, block, done);
-		};
-
-		this.code.on('keydown', keydown);
-		this.code.on('cursorActivity', move);
-
-		this.advanceParams();
-	}
-
-	nextParams(start, endBookmark, block, done) {
-		const tok = findNextToken(block, done);
-		if(!tok) {
-			this.cancelParams();
-			return;
-		}
-		done.push(tok);
-
-		const doc = this.code.getDoc();
-		const ranges = [];
-		let {ch} = start;
-		for(let ln = start.line; ln < endBookmark.find().line; ++ ln) {
-			const line = doc.getLine(ln).slice(ch);
-			for(let p = 0; (p = line.indexOf(tok, p)) !== -1; p += tok.length) {
-				const anchor = {ch: p, line: ln};
-				const head = {ch: p + tok.length, line: ln};
-				ranges.push({anchor, head});
-				this.paramMarkers.push(doc.markText(anchor, head, {
-					className: 'param',
-					clearWhenEmpty: false,
-					inclusiveLeft: true,
-					inclusiveRight: true,
-				}));
-			}
-			ch = 0;
-		}
-
-		if(ranges.length > 0) {
-			doc.setSelections(ranges, 0);
-		} else {
-			this.cancelParams();
-		}
-	}
-
-	addCodeBlock(block) {
-		const lines = block.split('\n').length;
-
-		if(this.code.getCursor) {
-			const cur = this.code.getCursor('head');
-			const pos = {ch: 0, line: cur.line + ((cur.ch > 0) ? 1 : 0)};
-			let replaced = addNewline(block);
-			if(pos.line >= this.code.lineCount()) {
-				replaced = '\n' + replaced;
-			}
-			this.code.replaceRange(replaced, pos, null, 'library');
-			const end = {ch: 0, line: pos.line + lines};
-			this.enterParams(pos, end, block);
-		} else {
-			const value = this.value();
-			const cur = this.code.element.selectionStart;
-			const pos = ('\n' + value + '\n').indexOf('\n', cur);
-			const replaced = (
-				addNewline(value.substr(0, pos)) +
-				addNewline(block)
-			);
-			this.code
-				.val(replaced + value.substr(pos))
-				.select(replaced.length);
-			this.update(false);
-		}
-
-		this.code.focus();
 	}
 
 	updateMinSize({width, height}) {
@@ -884,28 +514,6 @@ export default class Interface {
 		this.diagram.render(sequence);
 	}
 
-	saveCode(src) {
-		if(!this.localStorage) {
-			return;
-		}
-		try {
-			window.localStorage.setItem(this.localStorage, src);
-		} catch(ignore) {
-			// Ignore
-		}
-	}
-
-	loadCode() {
-		if(!this.localStorage) {
-			return '';
-		}
-		try {
-			return window.localStorage.getItem(this.localStorage) || '';
-		} catch(e) {
-			return '';
-		}
-	}
-
 	markError(error) {
 		if(typeof error === 'object' && error.message) {
 			this.errorMsg.text(error.message);
@@ -919,40 +527,22 @@ export default class Interface {
 		this.errorMsg.text('').delClass('error');
 	}
 
-	value() {
-		if(this.code.getDoc) {
-			return this.code.getDoc().getValue();
-		} else {
-			return this.code.element.value;
-		}
-	}
-
-	setValue(code) {
-		if(this.code.getDoc) {
-			const doc = this.code.getDoc();
-			doc.setValue(code);
-			doc.clearHistory();
-		} else {
-			this.code.val(code);
-		}
-		this.diagram.expandAll({render: false});
-		this.update(true);
-		this.diagram.setHighlight(null);
-	}
-
 	loadFile(file) {
 		return getFileContent(file).then((svg) => {
 			const code = this.diagram.extractCodeFromSVG(svg);
 			if(code) {
-				this.setValue(code);
+				this.code.setValue(code);
+				this.diagram.expandAll({render: false});
+				this.update(true);
+				this.diagram.setHighlight(null);
 			}
 		});
 	}
 
 	update(immediate = true) {
 		this._hideURLBuilder();
-		const src = this.value();
-		this.saveCode(src);
+		const src = this.code.value();
+		this.localStorage.set(src);
 		let sequence = null;
 		try {
 			sequence = this.diagram.process(src);
@@ -1035,96 +625,5 @@ export default class Interface {
 		} else {
 			this._showURLBuilder();
 		}
-	}
-
-	_enhanceEditor() {
-		// Load on demand for progressive enhancement
-		// (failure to load external module will not block functionality)
-		this.require([
-			'cm/lib/codemirror',
-			'cm/addon/hint/show-hint',
-			'cm/addon/edit/trailingspace',
-			'cm/addon/comment/comment',
-		], (CodeMirror) => {
-			this.diagram.registerCodeMirrorMode(CodeMirror);
-
-			const selBegin = this.code.element.selectionStart;
-			const selEnd = this.code.element.selectionEnd;
-			const val = this.code.element.value;
-			const focussed = this.code.focussed();
-
-			const code = new CodeMirror(this.code.element.parentNode, {
-				extraKeys: {
-					'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
-					'Cmd-Enter': 'autocomplete',
-					'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
-					'Ctrl-Enter': 'autocomplete',
-					'Ctrl-Space': 'autocomplete',
-					'Shift-Tab': (cm) => cm.execCommand('indentLess'),
-					'Tab': (cm) => cm.execCommand('indentMore'),
-				},
-				globals: {
-					themes: this.diagram.getThemeNames(),
-				},
-				lineNumbers: true,
-				mode: 'sequence',
-				showTrailingSpace: true,
-				value: val,
-			});
-			this.code.detach();
-			code.getDoc().setSelection(
-				findPos(val, selBegin),
-				findPos(val, selEnd)
-			);
-
-			let lastKey = 0;
-			code.on('keydown', (cm, event) => {
-				lastKey = event.keyCode;
-			});
-
-			code.on('change', (cm, change) => {
-				this.update(false);
-
-				if(change.origin === '+input') {
-					if(lastKey === 13) {
-						lastKey = 0;
-						return;
-					}
-				} else if(change.origin !== 'complete') {
-					return;
-				}
-				CodeMirror.commands.autocomplete(cm, null, {
-					completeSingle: false,
-				});
-			});
-
-			code.on('focus', () => this._hideURLBuilder());
-
-			code.on('cursorActivity', () => {
-				const from = code.getCursor('from').line;
-				const to = code.getCursor('to').line;
-				this.diagram.setHighlight(Math.min(from, to));
-			});
-
-			/*
-			 * See https://github.com/codemirror/CodeMirror/issues/3092
-			 * startCompletion will fire even if there are no completions, so
-			 * we cannot rely on it. Instead we hack the hints function to
-			 * propagate 'shown' as 'hint-shown', which we pick up here
-			 */
-			code.on('hint-shown', () => {
-				this.isAutocompleting = true;
-			});
-
-			code.on('endCompletion', () => {
-				this.isAutocompleting = false;
-			});
-
-			if(focussed) {
-				code.focus();
-			}
-
-			this.code = code;
-		});
 	}
 }
