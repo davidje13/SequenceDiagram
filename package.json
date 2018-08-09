@@ -23,7 +23,12 @@
   "bin": {
     "sequence-diagram-svg": "./bin/sequence-diagram-svg.js"
   },
-  "eslintIgnore": ["lib", "web/lib", "ephemeral", "*FontData.mjs"],
+  "eslintIgnore": [
+    "lib",
+    "web/lib",
+    "ephemeral",
+    "*FontData.mjs"
+  ],
   "scripts": {
     "lint": "eslint . --config eslintrc.js --ext .js --ext .mjs",
     "generate-screenshots": "bin/generate-screenshots.js README.md",
@@ -39,22 +44,22 @@
   },
   "devDependencies": {
     "buffer-to-stream": "^1.0.0",
-    "codemirror": "^5.37.0",
-    "eslint": "^4.19.1",
-    "eslint-plugin-jasmine": "^2.9.3",
-    "jasmine": "^3.1.0",
-    "karma": "^2.0.2",
+    "codemirror": "5.37.0",
+    "eslint": "^5.3.0",
+    "eslint-plugin-jasmine": "^2.10.1",
+    "jasmine": "^3.2.0",
+    "karma": "^2.0.5",
     "karma-chrome-launcher": "^2.2.0",
     "karma-detect-browsers": "^2.3.2",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-jasmine": "^1.1.1",
+    "karma-jasmine": "^1.1.2",
     "karma-safari-launcher": "^1.0.0",
-    "pngcrush": "^1.1.1",
+    "pngcrush": "^2.0.0",
     "requirejs": "2.3.5",
-    "rollup": "^0.57.1",
+    "rollup": "^0.64.1",
     "rollup-plugin-hypothetical": "^2.1.0",
     "rollup-plugin-multi-entry": "^2.0.2",
-    "source-map-support": "^0.5.4",
+    "source-map-support": "^0.5.6",
     "svg2png": "^4.1.1",
     "uglify-es": "3.2.2"
   },

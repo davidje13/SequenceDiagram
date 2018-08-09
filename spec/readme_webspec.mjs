@@ -69,7 +69,7 @@ describe('Readme', () => {
 			.then((response) => response.text())
 			.then(findSamples)
 			.then((samples) => Promise.all(samples.map(performSampleTests)))
-			.catch((err) => fail(readError(err)))
-			.then(done);
+			.catch((err) => Promise.reject(readError(err)))
+			.then(done, done.fail);
 	});
 });

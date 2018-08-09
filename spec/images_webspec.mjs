@@ -64,8 +64,8 @@ describe('SequenceDiagram Visuals', () => {
 						details: 'Code is:\n\n' + code,
 					});
 				})
-				.catch((err) => fail(readError(err)))
-				.then(done);
+				.catch((err) => Promise.reject(readError(err)))
+				.then(done, done.fail);
 		});
 	});
 });
