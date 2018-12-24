@@ -3,7 +3,7 @@ const manual = Boolean(process.env.MANUAL);
 const SUPPORTED_BROWSERS = [
 	'chrome',
 	'firefox',
-	'safari',
+//	'safari', // https://github.com/karma-runner/karma-safari-launcher/issues/29
 ];
 
 if(manual) {

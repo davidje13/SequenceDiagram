@@ -4,9 +4,8 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;
+	script-src 'self' 'unsafe-inline';
 	style-src 'self'
-		https://cdnjs.cloudflare.com
 		https://fonts.googleapis.com
 		'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E='
 	;
@@ -21,48 +20,24 @@
 <link rel="apple-touch-icon" href="web/resources/apple-touch-icon.png">
 
 <link href="https://fonts.googleapis.com/css?family=Vollkorn" rel="stylesheet">
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css"
-	integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs="
-	crossorigin="anonymous"
->
 <link rel="stylesheet" href="web/styles/library.css">
 
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js"
-	integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk="
-	crossorigin="anonymous"
-></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/xml/xml.min.js"
-	integrity="sha256-QmQ8vh5c1+UzpnyWXYB7nnY1aqpJmXPVkFWtJHJkLnE="
-	crossorigin="anonymous"
-></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/javascript/javascript.min.js"
-	integrity="sha256-MyRbKGolllWYWwxW8jH3jYdhK0p0LpgNjR8PqCa/UNQ="
-	crossorigin="anonymous"
-></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/runmode/runmode.min.js"
-	integrity="sha256-Y2iV9vZZs9GsyRIV5HgmKgmfGIsXHpdcknYcbIFkz4M="
-	crossorigin="anonymous"
-></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/runmode/colorize.min.js"
-	integrity="sha256-SBZCwL2uLGWKTMqzecOp2O/ES1NHSKt5QSwtGBVZEoE="
-	crossorigin="anonymous"
-></script>
-
 <!-- DEV
+<script src="node_modules/codemirror/lib/codemirror.js"></script>
+<link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+<script src="node_modules/codemirror/mode/xml/xml.js"></script>
+<script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+<script src="node_modules/codemirror/addon/runmode/runmode.js"></script>
+<script src="node_modules/codemirror/addon/runmode/colorize.js"></script>
+
 <script src="scripts/standalone-web.mjs" type="module"></script>
 /DEV -->
 
 <!-- LIVE -->
+<link rel="stylesheet" href="web/lib/codemirror.css">
+<script src="web/lib/codemirror.js"></script>
+<script src="web/lib/cm-addons-library.js"></script>
+
 <script src="lib/sequence-diagram-web.min.js"></script>
 <!-- /LIVE -->
 
@@ -92,7 +67,9 @@ for(let i = 0; i < elements.length; ++ i) {
 
 SequenceDiagram.renderAll(diagrams);
 
-CodeMirror.colorize();
+if (CodeMirror && CodeMirror.colorize) {
+	CodeMirror.colorize();
+}
 
 }, {once: true});</script>
 

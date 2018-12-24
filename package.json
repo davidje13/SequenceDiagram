@@ -29,11 +29,13 @@
     "ephemeral",
     "*FontData.mjs"
   ],
+
   "scripts": {
+    "copy-third-party": "cat node_modules/codemirror/lib/codemirror.css node_modules/codemirror/addon/hint/show-hint.css > web/lib/codemirror.css && uglifyjs --compress --mangle --output web/lib/codemirror.js -- node_modules/codemirror/lib/codemirror.js && uglifyjs --compress --mangle --output web/lib/show-hint.js -- node_modules/codemirror/addon/hint/show-hint.js && uglifyjs --compress --mangle --output web/lib/trailingspace.js -- node_modules/codemirror/addon/edit/trailingspace.js && uglifyjs --compress --mangle --output web/lib/comment.js -- node_modules/codemirror/addon/comment/comment.js && cat node_modules/codemirror/mode/xml/xml.js node_modules/codemirror/mode/javascript/javascript.js node_modules/codemirror/addon/runmode/runmode.js node_modules/codemirror/addon/runmode/colorize.js | uglifyjs --compress --mangle --output web/lib/cm-addons-library.js && uglifyjs --compress --mangle --warn --output web/lib/require.js -- node_modules/requirejs/require.js",
     "lint": "eslint . --config eslintrc.js --ext .js --ext .mjs",
     "generate-screenshots": "bin/generate-screenshots.js README.md",
     "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js",
-    "minify-web": "rollup --config web/scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output web/lib/editor.min.js -- web/lib/editor.js",
+    "minify-web": "rollup --config web/scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output web/lib/editor.min.js -- web/lib/editor.js && npm run copy-third-party",
     "minify": "npm run minify-lib && npm run minify-web",
     "prepublishOnly": "npm run minify-lib && npm run generate-screenshots && npm test",
     "start": "bin/server.js",
@@ -44,26 +46,26 @@
   },
   "devDependencies": {
     "buffer-to-stream": "^1.0.0",
-    "codemirror": "5.37.0",
-    "eslint": "^5.3.0",
+    "codemirror": "^5.42.2",
+    "eslint": "^5.11.0",
     "eslint-plugin-jasmine": "^2.10.1",
-    "jasmine": "^3.2.0",
-    "karma": "^2.0.5",
+    "jasmine": "^3.3.1",
+    "karma": "^3.1.4",
     "karma-chrome-launcher": "^2.2.0",
-    "karma-detect-browsers": "^2.3.2",
+    "karma-detect-browsers": "^2.3.3",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-jasmine": "^1.1.2",
+    "karma-jasmine": "^2.0.1",
     "karma-safari-launcher": "^1.0.0",
     "pngcrush": "^2.0.0",
-    "requirejs": "2.3.5",
-    "rollup": "^0.64.1",
+    "requirejs": "^2.3.6",
+    "rollup": "^0.68.2",
     "rollup-plugin-hypothetical": "^2.1.0",
-    "rollup-plugin-multi-entry": "^2.0.2",
-    "source-map-support": "^0.5.6",
+    "rollup-plugin-multi-entry": "^2.1.0",
+    "source-map-support": "^0.5.9",
     "svg2png": "^4.1.1",
     "uglify-es": "3.2.2"
   },
   "dependencies": {
-    "opentype.js": "^0.8.0"
+    "opentype.js": "^0.11.0"
   }
 }

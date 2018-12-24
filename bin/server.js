@@ -61,6 +61,7 @@ if(DEV) {
 		'node_modules/requirejs/require.js',
 		'node_modules/codemirror/lib',
 		'node_modules/codemirror/addon',
+		'node_modules/codemirror/mode',
 		'scripts',
 		'web/scripts',
 	]);

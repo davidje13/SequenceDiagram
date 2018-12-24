@@ -4,11 +4,8 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com;
-	style-src 'self'
-		https://cdnjs.cloudflare.com
-		'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E='
-	;
+	script-src 'self' https://unpkg.com;
+	style-src 'self' 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 	connect-src 'self';
 	font-src 'self' data:;
 	img-src 'self' blob:;
@@ -63,48 +60,14 @@
 /DEV -->
 
 <!-- LIVE -->
-<meta
-	name="cdn-cm/lib/codemirror"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js"
-	data-integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk="
->
-
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css"
-	integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs="
-	crossorigin="anonymous"
->
-
-<meta
-	name="cdn-cm/addon/hint/show-hint"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/hint/show-hint.min.js"
-	data-integrity="sha256-/Cxd7R7oycnq3vuRycj68ToCzdZ73tux8nSULZiWWK0="
->
-
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/hint/show-hint.min.css"
-	integrity="sha256-Ng5EdzHS/CC37tR7tE75e4Th9+fBvOB4eYITOkXS22Q="
-	crossorigin="anonymous"
->
-
-<meta
-	name="cdn-cm/addon/edit/trailingspace"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/edit/trailingspace.min.js"
-	data-integrity="sha256-IazJOM2ma6yJ/doWlcIy+Ica+UAgYJDDyYf/qgkLUNM="
->
-
-<meta
-	name="cdn-cm/addon/comment/comment"
-	content="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/addon/comment/comment.min.js"
-	data-integrity="sha256-xRNygSqAYMT9wcso0FgZEY3ROGoD6JdvYd8M9IjSuNg="
->
+<link rel="stylesheet" href="web/lib/codemirror.css">
+<meta name="cdn-cm/lib/codemirror" content="web/lib/codemirror.js">
+<meta name="cdn-cm/addon/hint/show-hint" content="web/lib/show-hint.js">
+<meta name="cdn-cm/addon/edit/trailingspace" content="web/lib/trailingspace.js">
+<meta name="cdn-cm/addon/comment/comment" content="web/lib/comment.js">
 
 <script src="lib/sequence-diagram-web.min.js"></script>
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
-	integrity="sha256-0SGl1PJNDyJwcV5T+weg2zpEMrh7xvlwO4oXgvZCeZk="
-	crossorigin="anonymous"
-></script>
+<script src="web/lib/require.js"></script>
 <link rel="stylesheet" href="web/styles/codemirror-override.css">
 <script src="web/lib/editor.min.js"></script>
 <!-- /LIVE -->

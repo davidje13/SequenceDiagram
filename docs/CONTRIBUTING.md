@@ -60,6 +60,10 @@ The available commands are:
 * `npm run unit-test`: runs non-browser-based unit tests in NodeJS
 * `npm run web-test`: runs browser-based unit tests via Karma
   (currently only Chrome is used)
+* `npm run web-test:manual`: same as `web-test` but does not
+  automatically open browsers; you may follow the terminal instructions
+  to open the tests in any browser, and the tests will stay open for a
+  minute after completing (this helps with debugging failures)
 * `npm run lint`: runs the linter against all source and test files
 * `npm run minify`: runs the `minify-lib` and `minify-web` commands
 * `npm run minify-lib`: minifies the library code in `/lib`
