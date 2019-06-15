@@ -29,7 +29,6 @@
     "ephemeral",
     "*FontData.mjs"
   ],
-
   "scripts": {
     "copy-third-party": "cat node_modules/codemirror/lib/codemirror.css node_modules/codemirror/addon/hint/show-hint.css > web/lib/codemirror.css && uglifyjs --compress --mangle --output web/lib/codemirror.js -- node_modules/codemirror/lib/codemirror.js && uglifyjs --compress --mangle --output web/lib/show-hint.js -- node_modules/codemirror/addon/hint/show-hint.js && uglifyjs --compress --mangle --output web/lib/trailingspace.js -- node_modules/codemirror/addon/edit/trailingspace.js && uglifyjs --compress --mangle --output web/lib/comment.js -- node_modules/codemirror/addon/comment/comment.js && cat node_modules/codemirror/mode/xml/xml.js node_modules/codemirror/mode/javascript/javascript.js node_modules/codemirror/addon/runmode/runmode.js node_modules/codemirror/addon/runmode/colorize.js | uglifyjs --compress --mangle --output web/lib/cm-addons-library.js && uglifyjs --compress --mangle --warn --output web/lib/require.js -- node_modules/requirejs/require.js",
     "lint": "eslint . --config eslintrc.js --ext .js --ext .mjs",
@@ -46,26 +45,26 @@
   },
   "devDependencies": {
     "buffer-to-stream": "^1.0.0",
-    "codemirror": "^5.42.2",
-    "eslint": "^5.11.0",
+    "codemirror": "^5.47.0",
+    "eslint": "^5.16.0",
     "eslint-plugin-jasmine": "^2.10.1",
-    "jasmine": "^3.3.1",
-    "karma": "^3.1.4",
+    "jasmine": "^3.4.0",
+    "karma": "^4.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-detect-browsers": "^2.3.3",
     "karma-firefox-launcher": "^1.1.0",
     "karma-jasmine": "^2.0.1",
     "karma-safari-launcher": "^1.0.0",
-    "pngcrush": "^2.0.0",
+    "pngcrush": "^2.0.1",
     "requirejs": "^2.3.6",
-    "rollup": "^0.68.2",
+    "rollup": "^1.15.5",
     "rollup-plugin-hypothetical": "^2.1.0",
     "rollup-plugin-multi-entry": "^2.1.0",
-    "source-map-support": "^0.5.9",
+    "source-map-support": "^0.5.12",
     "svg2png": "^4.1.1",
     "uglify-es": "3.2.2"
   },
   "dependencies": {
-    "opentype.js": "^0.11.0"
+    "opentype.js": "0.12.0"
   }
 }

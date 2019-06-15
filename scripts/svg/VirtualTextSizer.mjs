@@ -1,4 +1,3 @@
-const fs = require('fs');
 const opentype = require('opentype.js');
 const path = require('path');
 
@@ -8,9 +7,8 @@ const FONTS = new Map();
 function loadFont(relativePath) {
 	// Must be synchronous so that measurements are ready once startup completes
 	/* eslint-disable no-sync */
-	const data = fs.readFileSync(path.join(FONTDIR, relativePath));
+	return opentype.loadSync(path.join(FONTDIR, relativePath));
 	/* eslint-enable no-sync */
-	return opentype.parse(data.buffer);
 }
 
 function addFont(name, variants) {

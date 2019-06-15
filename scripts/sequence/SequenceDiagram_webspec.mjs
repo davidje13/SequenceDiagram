@@ -18,7 +18,7 @@ describe('Browser-backed SequenceDiagram', () => {
 			expect(sd.getSize().width).toEqual(widthImmediate);
 
 			done();
-		}, 500);
+		}, 400);
 	});
 
 	it('measures embedded fonts correctly on the first render', (done) => {
@@ -38,6 +38,6 @@ describe('Browser-backed SequenceDiagram', () => {
 			expect(sd.getSize().width).toEqual(widthImmediate);
 
 			done();
-		}, 500);
+		}, 400);
 	});
 });
