@@ -232,6 +232,8 @@ const makeCommands = ((() => {
 							'\n': end,
 						},
 					},
+					':': CM_ERROR,
+					'\n': end,
 				}},
 			}),
 		};
@@ -278,9 +280,10 @@ const makeCommands = ((() => {
 		});
 
 		return Object.assign({
-			'...': {type: 'operator', then: {
+			'...': {type: 'operator', then: Object.assign({
 				'': firstAgentDelayed,
-			}},
+				':': CM_ERROR,
+			}, connectors)},
 		}, makeOpBlock({
 			exit: firstAgent,
 			sourceExit: Object.assign({

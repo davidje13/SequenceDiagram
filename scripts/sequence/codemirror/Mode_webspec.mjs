@@ -705,7 +705,14 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue('A -> ...woo\n... ');
 			const hints = getHintTexts({ch: 4, line: 1});
 
-			expect(hints).toEqual(['woo ']);
+			expect(hints).toContain('woo ');
+		});
+
+		it('suggests anonymous delayed agents', () => {
+			cm.getDoc().setValue('A -> ...\n... ');
+			const hints = getHintTexts({ch: 4, line: 1});
+
+			expect(hints).toContain('-> ');
 		});
 
 		it('suggests agent properties', () => {
