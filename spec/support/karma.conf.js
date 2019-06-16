@@ -24,9 +24,6 @@ module.exports = (config) => {
 	config.set({
 		basePath: '../..',
 
-		// See https://github.com/karma-runner/karma/pull/2834
-		customContextFile: 'spec/support/karma_context.html',
-
 		detectBrowsers: {
 			postDetection: (browsers) => browsers.filter(is_supported_browser),
 			preferHeadless: true,
