@@ -41,7 +41,14 @@ addFont('handlee', {
 
 const DEFAULT_FONT = 'sans-serif';
 
-const OPENTYPE_OPTIONS = {hinting: true};
+const OPENTYPE_OPTIONS = {
+	features: [
+		{script: 'arab', tags: ['init', 'medi', 'fina', 'rlig']},
+		{script: 'latn', tags: ['liga', 'rlig']},
+	],
+	hinting: true,
+	kerning: true,
+};
 
 function getFont(attrs) {
 	const family = (attrs['font-family'] || DEFAULT_FONT).split(',');
