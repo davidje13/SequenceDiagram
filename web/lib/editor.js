@@ -1123,34 +1123,6 @@
 		}
 	}
 
-	class LocalStorage {
-		constructor(id) {
-			this.id = id;
-		}
-
-		set(value) {
-			if(!this.id) {
-				return;
-			}
-			try {
-				window.localStorage.setItem(this.id, value);
-			} catch(ignore) {
-				// Ignore
-			}
-		}
-
-		get() {
-			if(!this.id) {
-				return '';
-			}
-			try {
-				return window.localStorage.getItem(this.id) || '';
-			} catch(e) {
-				return '';
-			}
-		}
-	}
-
 	function toCappedFixed(v, cap) {
 		const s = v.toString();
 		const p = s.indexOf('.');
@@ -1219,6 +1191,20 @@
 		}
 	}
 
+	class VoidStorage {
+		constructor() {
+			this.value = '';
+		}
+
+		set(value) {
+			this.value = value;
+		}
+
+		get() {
+			return this.value;
+		}
+	}
+
 	const DELAY_AGENTCHANGE = 500;
 	const DELAY_STAGECHANGE = 250;
 	const PNG_RESOLUTION = 4;
@@ -1252,15 +1238,15 @@
 		constructor({
 			sequenceDiagram,
 			defaultCode = '',
-			localStorage = '',
 			library = [],
 			links = [],
 			require = null,
+			storage = new VoidStorage(),
 			touchUI = false,
 		}) {
 			this.diagram = sequenceDiagram;
 			this.defaultCode = defaultCode;
-			this.localStorage = new LocalStorage(localStorage);
+			this.storage = storage;
 			this.library = library;
 			this.links = links;
 			this.minScale = 1.5;
@@ -1558,7 +1544,7 @@
 			this.code = new CodeEditor(this.dom, container, {
 				mode: 'sequence',
 				require: this.require,
-				value: this.localStorage.get() || this.defaultCode,
+				value: this.storage.get() || this.defaultCode,
 			});
 
 			this.code
@@ -1751,7 +1737,7 @@
 		update(immediate = true) {
 			this._hideURLBuilder();
 			const src = this.code.value();
-			this.localStorage.set(src);
+			this.storage.set(src);
 			let sequence = null;
 			try {
 				sequence = this.diagram.process(src);
@@ -1837,6 +1823,34 @@
 		}
 	}
 
+	class LocalStorage {
+		constructor(id) {
+			this.id = id;
+		}
+
+		set(value) {
+			if(!this.id) {
+				return;
+			}
+			try {
+				window.localStorage.setItem(this.id, value);
+			} catch(ignore) {
+				// Ignore
+			}
+		}
+
+		get() {
+			if(!this.id) {
+				return '';
+			}
+			try {
+				return window.localStorage.getItem(this.id) || '';
+			} catch(e) {
+				return '';
+			}
+		}
+	}
+
 	var SequenceDiagram = window.SequenceDiagram;
 
 	const require = window.requirejs;
@@ -1909,13 +1923,15 @@
 			});
 		}
 
+		const storage = new LocalStorage('src');
+
 		const ui = new Interface({
 			defaultCode,
 			library: ComponentsLibrary,
 			links,
-			localStorage: 'src',
 			require,
 			sequenceDiagram: new SequenceDiagram(),
+			storage,
 			touchUI: ('ontouchstart' in window),
 		});
 		loader.parentNode.removeChild(loader);

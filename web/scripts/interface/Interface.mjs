@@ -7,8 +7,8 @@ import {
 } from './fileHelpers.mjs';
 import CodeEditor from './CodeEditor.mjs';
 import DOMWrapper from '../../../scripts/core/DOMWrapper.mjs';
-import LocalStorage from './LocalStorage.mjs';
 import URLExporter from './URLExporter.mjs';
+import VoidStorage from '../storage/VoidStorage.mjs';
 
 const DELAY_AGENTCHANGE = 500;
 const DELAY_STAGECHANGE = 250;
@@ -43,15 +43,15 @@ export default class Interface {
 	constructor({
 		sequenceDiagram,
 		defaultCode = '',
-		localStorage = '',
 		library = [],
 		links = [],
 		require = null,
+		storage = new VoidStorage(),
 		touchUI = false,
 	}) {
 		this.diagram = sequenceDiagram;
 		this.defaultCode = defaultCode;
-		this.localStorage = new LocalStorage(localStorage);
+		this.storage = storage;
 		this.library = library;
 		this.links = links;
 		this.minScale = 1.5;
@@ -349,7 +349,7 @@ export default class Interface {
 		this.code = new CodeEditor(this.dom, container, {
 			mode: 'sequence',
 			require: this.require,
-			value: this.localStorage.get() || this.defaultCode,
+			value: this.storage.get() || this.defaultCode,
 		});
 
 		this.code
@@ -542,7 +542,7 @@ export default class Interface {
 	update(immediate = true) {
 		this._hideURLBuilder();
 		const src = this.code.value();
-		this.localStorage.set(src);
+		this.storage.set(src);
 		let sequence = null;
 		try {
 			sequence = this.diagram.process(src);
