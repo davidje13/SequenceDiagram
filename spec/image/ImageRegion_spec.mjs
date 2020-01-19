@@ -4,6 +4,7 @@ import {nodejs} from '../../scripts/core/browser.mjs';
 describe('ImageRegion', () => {
 	function makeCanvas(w, h) {
 		if(nodejs) {
+			// eslint-disable-next-line jasmine/no-pending-tests
 			return pending('No canvas support in NodeJS');
 		}
 		const canvas = document.createElement('canvas');
