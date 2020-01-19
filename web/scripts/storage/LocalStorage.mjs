@@ -4,9 +4,6 @@ export default class LocalStorage {
 	}
 
 	set(value) {
-		if(!this.id) {
-			return;
-		}
 		try {
 			window.localStorage.setItem(this.id, value);
 		} catch(ignore) {
@@ -15,9 +12,6 @@ export default class LocalStorage {
 	}
 
 	get() {
-		if(!this.id) {
-			return '';
-		}
 		try {
 			return window.localStorage.getItem(this.id) || '';
 		} catch(e) {
