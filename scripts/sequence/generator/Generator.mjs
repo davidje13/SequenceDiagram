@@ -539,9 +539,8 @@ export default class Generator {
 		allowCovered = false,
 		allowVirtual = false,
 	} = {}) {
-		/* eslint-disable complexity */ // The checks are quite simple
+		/* eslint-disable-next-line complexity */ // The checks are quite simple
 		gAgents.forEach((gAgent) => {
-			/* eslint-enable complexity */
 			const state = this.getGAgentState(gAgent);
 			const name = gAgent.id;
 

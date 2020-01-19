@@ -74,9 +74,8 @@ function pickDocument(container) {
 }
 
 export default class SequenceDiagram extends EventObject {
-	/* eslint-disable complexity */ // Just some defaults
+	/* eslint-disable-next-line complexity */ // Just some defaults
 	constructor(code = null, options = {}) {
-		/* eslint-enable complexity */
 		super();
 
 		let opts = null;
