@@ -352,6 +352,45 @@
 		},
 	];
 
+	const VALID_HASH = /^[0-9]{1,2}$/;
+
+	function getHash() {
+		const full = window.location.hash;
+		return full ? full.substr(1) : '';
+	}
+
+	class HashSlotNav {
+		constructor(changeListener = () => null) {
+			this.hash = getHash();
+			window.addEventListener('hashchange', () => {
+				// Only trigger listener if change wasn't caused by us
+				if(getHash() !== this.hash) {
+					changeListener();
+				}
+			});
+		}
+
+		maxSlots() {
+			// Capacity of localStorage is limited
+			// So avoid allowing too many documents
+			// (also acts as a fail-safe if anything gets loop-ey)
+			return 100;
+		}
+
+		getSlot() {
+			const hash = getHash();
+			if(VALID_HASH.test(hash)) {
+				return Number(hash);
+			}
+			return null;
+		}
+
+		setSlot(v) {
+			this.hash = v.toFixed(0);
+			window.location.hash = this.hash;
+		}
+	}
+
 	function make(value, document) {
 		if(typeof value === 'string') {
 			return document.createTextNode(value);
@@ -1203,6 +1242,10 @@
 		get() {
 			return this.value;
 		}
+
+		remove() {
+			this.value = '';
+		}
 	}
 
 	const DELAY_AGENTCHANGE = 500;
@@ -1843,9 +1886,267 @@
 				return '';
 			}
 		}
+
+		remove() {
+			try {
+				window.localStorage.removeItem(this.id);
+			} catch(e) {
+				// Ignore
+			}
+		}
+	}
+
+	class MultiLocalStorage {
+		constructor(slotManager, slotStorage) {
+			this.slotManager = slotManager;
+			this.slotStorage = slotStorage;
+			this.slot = this.slotManager.getSlot();
+			this.value = this.get();
+			this.originalValue = this.value;
+			this.loadTime = Date.now();
+			this.internalStorageListener = this.internalStorageListener.bind(this);
+
+			window.addEventListener('storage', this.internalStorageListener);
+			this.checkSlot();
+		}
+
+		getCurrentValue() {
+			// If the page just loaded, clone the original document
+			// (works around glitches with CodeMirror when duplicating tabs)
+			if(Date.now() < this.loadTime + 500) {
+				return this.originalValue;
+			}
+			return this.value;
+		}
+
+		key() {
+			return this.slotStorage.getSlotKey(this.slot);
+		}
+
+		checkSlot() {
+			const key = this.key();
+			window.localStorage.removeItem(`chk-${key}`);
+			window.localStorage.removeItem(`res-${key}`);
+			window.localStorage.removeItem(`ack-${key}`);
+
+			// Check if any other tabs are viewing the same document
+			window.localStorage.setItem(`chk-${key}`, '1');
+		}
+
+		cloneSlot() {
+			const slotLimit = this.slotManager.maxSlots();
+			const newSlot = this.slotStorage.nextAvailableSlot(slotLimit);
+			if(!newSlot) {
+				return;
+			}
+
+			const value = this.getCurrentValue();
+			this.slotStorage.set(newSlot, value);
+			this.slot = newSlot;
+			this.slotManager.setSlot(newSlot);
+
+			// Force editor to load corrected content if needed
+			if(value !== this.value) {
+				document.location.reload();
+			}
+		}
+
+		// eslint-disable-next-line complexity
+		internalStorageListener({ storageArea, key, newValue }) {
+			if(storageArea !== window.localStorage) {
+				return;
+			}
+
+			const ownKey = this.key();
+			if(key === ownKey && newValue !== this.value) {
+				if(newValue === null) {
+					// Somebody deleted our document; put it back
+					// (a nicer explanation for the deleter may be nice, but later)
+					window.localStorage.setItem(ownKey, this.value);
+				}
+				// Another tab unexpectedly changed a value we own
+				// Remind them that we own the document
+				window.localStorage.removeItem(`res-${ownKey}`);
+				window.localStorage.setItem(`res-${ownKey}`, '1');
+			}
+
+			if(key === `chk-${ownKey}` && newValue) {
+				// Another tab is checking if our slot is in use; reply yes
+				window.localStorage.setItem(`res-${ownKey}`, '1');
+			}
+
+			if(key === `res-${ownKey}` && newValue) {
+				// Another tab owns our slot; clone the document
+				window.localStorage.removeItem(`chk-${ownKey}`);
+				window.localStorage.removeItem(`res-${ownKey}`);
+				window.localStorage.setItem(`ack-${ownKey}`, '1');
+				this.cloneSlot();
+			}
+
+			if(key === `ack-${ownKey}` && newValue) {
+				// Another tab has acknowledged us as the owner of the document
+				// Restore 'correct' value in case it was clobbered accidentally
+				window.localStorage.removeItem(`ack-${ownKey}`, '1');
+				window.localStorage.setItem(ownKey, this.value);
+			}
+		}
+
+		set(value) {
+			this.value = value;
+			this.slotStorage.set(this.slot, value);
+		}
+
+		get() {
+			return this.slotStorage.get(this.slot);
+		}
+
+		remove() {
+			this.slotStorage.remove(this.slot);
+		}
+
+		close() {
+			window.removeEventListener('storage', this.internalStorageListener);
+		}
 	}
 
 	var SequenceDiagram = window.SequenceDiagram;
+
+	const VALID_SLOT_KEY = /^s[0-9]+$/;
+
+	class SlotLocalStores {
+		getSlotKey(slot) {
+			return `s${slot}`;
+		}
+
+		getAllSlots() {
+			const result = [];
+			try {
+				for(const key in window.localStorage) {
+					if(VALID_SLOT_KEY.test(key)) {
+						result.push(Number(key.substr(1)));
+					}
+				}
+			} catch(e) {
+				// Ignore
+			}
+			return result;
+		}
+
+		nextAvailableSlot(limit = Number.MAX_SAFE_INTEGER) {
+			try {
+				for(let i = 1; i < limit; ++ i) {
+					if(window.localStorage.getItem(this.getSlotKey(i)) === null) {
+						return i;
+					}
+				}
+				return null;
+			} catch(e) {
+				return null;
+			}
+		}
+
+		set(slot, value) {
+			try {
+				window.localStorage.setItem(this.getSlotKey(slot), value);
+			} catch(ignore) {
+				// Ignore
+			}
+		}
+
+		get(slot) {
+			try {
+				return window.localStorage.getItem(this.getSlotKey(slot)) || '';
+			} catch(e) {
+				return '';
+			}
+		}
+
+		remove(slot) {
+			try {
+				window.localStorage.removeItem(this.getSlotKey(slot));
+			} catch(ignore) {
+				// Ignore
+			}
+		}
+	}
+
+	var requestSlot = (hashNav, slotStorage) => {
+		if(hashNav.getSlot() !== null) {
+			return Promise.resolve();
+		}
+
+		const slots = slotStorage.getAllSlots().sort((a, b) => (a - b));
+		if(!slots.length) {
+			hashNav.setSlot(1);
+			return Promise.resolve();
+		}
+
+		const dom = new DOMWrapper(window.document);
+		const container = dom.el('div').setClass('pick-document')
+			.add(dom.el('h1').text('Available documents on this computer:'))
+			.add(dom.el('p').text('(right-click to delete)'))
+			.attach(document.body);
+
+		function remove(slot) {
+			// eslint-disable-next-line no-alert
+			if(window.confirm('Delete this document?')) {
+				slotStorage.remove(slot);
+				window.location.reload();
+			}
+		}
+
+		const diagram = new SequenceDiagram();
+		return new Promise((resolve) => {
+			const diagrams = slots.map((slot) => {
+				const code = slotStorage.get(slot);
+
+				const holdInner = dom.el('div')
+					.attr('title', code.trim());
+
+				const hold = dom.el('a')
+					.attr('href', `#${slot}`)
+					.setClass('pick-document-item')
+					.add(holdInner)
+					.fastClick()
+					.on('click', (e) => {
+						e.preventDefault();
+						resolve(slot);
+					})
+					.on('contextmenu', (e) => {
+						e.preventDefault();
+						remove(slot);
+					})
+					.attach(container);
+
+				return diagram.clone({
+					code,
+					container: holdInner.element,
+					render: false,
+				}).on('error', (sd, e) => {
+					window.console.warn('Failed to render preview', e);
+					hold.attr('class', 'pick-document-item broken');
+					holdInner.text(code);
+				});
+			});
+
+			try {
+				diagram.renderAll(diagrams);
+			} catch(ignore) {
+				// Ignore
+			}
+
+			if(slots.length < hashNav.maxSlots()) {
+				dom.el('div')
+					.setClass('pick-document-item new')
+					.add(dom.el('div').attr('title', 'New document'))
+					.on('click', () => resolve(slotStorage.nextAvailableSlot()))
+					.attach(container);
+			}
+		}).then((slot) => {
+			container.detach();
+			hashNav.setSlot(slot);
+		});
+	};
 
 	const require = window.requirejs;
 
@@ -1903,6 +2204,16 @@
 		'terminators box\n'
 	);
 
+	function migrateOldDocument(slotStorage) {
+		const oldStorage = new LocalStorage('src');
+		const doc = oldStorage.get();
+		if(doc) {
+			const newSlot = slotStorage.nextAvailableSlot();
+			slotStorage.set(newSlot, doc);
+			oldStorage.remove();
+		}
+	}
+
 	window.addEventListener('load', () => {
 		const loader = window.document.getElementById('loader');
 		const [nav] = loader.getElementsByTagName('nav');
@@ -1917,19 +2228,28 @@
 			});
 		}
 
-		const storage = new LocalStorage('src');
+		const slotStorage = new SlotLocalStores();
+		migrateOldDocument(slotStorage);
 
-		const ui = new Interface({
-			defaultCode,
-			library: ComponentsLibrary,
-			links,
-			require,
-			sequenceDiagram: new SequenceDiagram(),
-			storage,
-			touchUI: ('ontouchstart' in window),
+		const hashNav = new HashSlotNav(() => {
+			// If the slot is changed by the user, reload to force a document load
+			window.location.reload();
 		});
+
 		loader.parentNode.removeChild(loader);
-		ui.build(window.document.body);
+
+		requestSlot(hashNav, slotStorage).then(() => {
+			const ui = new Interface({
+				defaultCode,
+				library: ComponentsLibrary,
+				links,
+				require,
+				sequenceDiagram: new SequenceDiagram(),
+				storage: new MultiLocalStorage(hashNav, slotStorage),
+				touchUI: ('ontouchstart' in window),
+			});
+			ui.build(window.document.body);
+		});
 	});
 
 }());

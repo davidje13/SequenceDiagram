@@ -10,4 +10,8 @@ export default class VoidStorage {
 	get() {
 		return this.value;
 	}
+
+	remove() {
+		this.value = '';
+	}
 }

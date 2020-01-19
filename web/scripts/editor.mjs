@@ -1,7 +1,11 @@
 import ComponentsLibrary from './interface/ComponentsLibrary.mjs';
+import HashSlotNav from './slots/HashSlotNav.mjs';
 import Interface from './interface/Interface.mjs';
 import LocalStorage from './storage/LocalStorage.mjs';
+import MultiLocalStorage from './storage/MultiLocalStorage.mjs';
 import SequenceDiagram from '../../scripts/sequence/SequenceDiagram.mjs';
+import SlotLocalStores from './slots/SlotLocalStores.mjs';
+import requestSlot from './slots/requestSlot.mjs';
 import {require} from './requireCDN.mjs';
 
 const defaultCode = (
@@ -23,6 +27,16 @@ const defaultCode = (
 	'terminators box\n'
 );
 
+function migrateOldDocument(slotStorage) {
+	const oldStorage = new LocalStorage('src');
+	const doc = oldStorage.get();
+	if(doc) {
+		const newSlot = slotStorage.nextAvailableSlot();
+		slotStorage.set(newSlot, doc);
+		oldStorage.remove();
+	}
+}
+
 window.addEventListener('load', () => {
 	const loader = window.document.getElementById('loader');
 	const [nav] = loader.getElementsByTagName('nav');
@@ -37,17 +51,26 @@ window.addEventListener('load', () => {
 		});
 	}
 
-	const storage = new LocalStorage('src');
+	const slotStorage = new SlotLocalStores();
+	migrateOldDocument(slotStorage);
 
-	const ui = new Interface({
-		defaultCode,
-		library: ComponentsLibrary,
-		links,
-		require,
-		sequenceDiagram: new SequenceDiagram(),
-		storage,
-		touchUI: ('ontouchstart' in window),
+	const hashNav = new HashSlotNav(() => {
+		// If the slot is changed by the user, reload to force a document load
+		window.location.reload();
 	});
+
 	loader.parentNode.removeChild(loader);
-	ui.build(window.document.body);
+
+	requestSlot(hashNav, slotStorage).then(() => {
+		const ui = new Interface({
+			defaultCode,
+			library: ComponentsLibrary,
+			links,
+			require,
+			sequenceDiagram: new SequenceDiagram(),
+			storage: new MultiLocalStorage(hashNav, slotStorage),
+			touchUI: ('ontouchstart' in window),
+		});
+		ui.build(window.document.body);
+	});
 });

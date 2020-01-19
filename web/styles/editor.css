@@ -508,6 +508,78 @@ svg a:active, svg a:hover {
 	text-align: center;
 }
 
+.pick-document {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+	overflow-y: auto;
+	padding: 20px 30px;
+	text-align: center;
+}
+
+.pick-document h1 {
+	font: 2em sans-serif;
+	margin: 0 0 10px;
+}
+
+.pick-document p {
+	font-size: 0.8em;
+	font-style: italic;
+	margin: 0 0 20px;
+}
+
+.pick-document-item {
+	display: inline-block;
+	width: 200px;
+	height: 200px;
+	margin: 10px;
+	user-select: none;
+}
+
+.pick-document-item > div {
+	width: 200px;
+	height: 200px;
+	border: 2px solid #EEEEEE;
+	background: #FFFFFF;
+	box-sizing: border-box;
+	cursor: pointer;
+	overflow: hidden;
+	transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.pick-document-item.broken > div {
+	padding: 5px;
+	font: 6px monospace;
+	white-space: pre;
+}
+
+.pick-document-item svg {
+	width: 100%;
+	height: 100%;
+}
+
+.pick-document-item:hover > div {
+	border-color: #FFCC00;
+	background: #FFFFDD;
+	transform: scale(1.1);
+	z-index: 10;
+}
+
+.pick-document-item.new > div:before {
+	content: '+';
+	line-height: 170px;
+	font-size: 120px;
+	color: #EEEEEE;
+	transition: color 0.2s;
+}
+
+.pick-document-item.new:hover > div:before {
+	color: #FFCC00;
+}
+
 @media print {
 	.drop-target:after {
 		display: none;

@@ -18,4 +18,12 @@ export default class LocalStorage {
 			return '';
 		}
 	}
+
+	remove() {
+		try {
+			window.localStorage.removeItem(this.id);
+		} catch(e) {
+			// Ignore
+		}
+	}
 }
