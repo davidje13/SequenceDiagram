@@ -537,6 +537,9 @@ svg a:active, svg a:hover {
 	height: 200px;
 	margin: 10px;
 	user-select: none;
+	text-align: left;
+	vertical-align: top;
+	text-decoration: none;
 }
 
 .pick-document-item > div {
@@ -562,10 +565,14 @@ svg a:active, svg a:hover {
 }
 
 .pick-document-item:hover > div {
-	border-color: #FFCC00;
+	border-color: #FFCC00 !important;
 	background: #FFFFDD;
 	transform: scale(1.1);
 	z-index: 10;
+}
+
+.pick-document-item.new {
+	text-align: center;
 }
 
 .pick-document-item.new > div:before {
