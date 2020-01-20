@@ -380,6 +380,7 @@ html, body {
 	width: calc(100% - 20px);
 	line-height: 28px;
 	background: #99EE99;
+	color: #000000;
 	box-sizing: border-box;
 }
 
@@ -585,6 +586,96 @@ svg a:active, svg a:hover {
 
 .pick-document-item.new:hover > div:before {
 	color: #FFCC00;
+}
+
+@media (prefers-color-scheme: dark) {
+	body, #loader p.noscript {
+		background: #222222;
+		color: #EEEEEE;
+	}
+
+	.drop-target:after {
+		background: rgba(64, 64, 64, 0.6);
+		text-shadow: 0 0 3px #000000;
+		border-color: #66AA55;
+	}
+
+	.pane-view {
+		background: #888888;
+	}
+
+	.pane-library {
+		background: #555555;
+	}
+
+	.pane-code .CodeMirror {
+		background: #222222;
+	}
+
+	.pane-code .editor-simple {
+		background: #222222;
+		color: #EEEEEE;
+	}
+
+	.param {
+		border-color: #AA0000;
+	}
+
+	.hover {
+		background: #807700;
+	}
+
+	.library-item > div {
+		border-color: #555555;
+		background: #888888;
+	}
+
+	.library-item:hover > div {
+		background: #999977;
+	}
+
+	.msg-error {
+		color: #440000;
+		background: #AA6666;
+	}
+
+	.options {
+		background: #333333;
+	}
+
+	.options, .options a, .urlbuilder {
+		border-color: #222222 !important;
+	}
+
+	.options a:link, .options a:visited {
+		color: #4488DD;
+	}
+
+	.options a:active, .options a:hover {
+		background: #444444;
+		color: #22AAFF;
+	}
+
+	.urlbuilder .message {
+		color: #AAAAAA;
+	}
+
+	.urlbuilder .or {
+		color: #999999;
+	}
+
+	.pick-document-item > div {
+		border-color: #999999;
+		background: #666666;
+	}
+
+	.pick-document-item:hover > div {
+		background: #888866;
+	}
+
+	.pick-document-item.new > div:before {
+		color: #999999;
+	}
 }
 
 @media print {

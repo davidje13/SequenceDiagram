@@ -12,3 +12,27 @@
 .cm-s-default .cm-trailingspace {
 	background: rgba(255, 0, 0, 0.2);
 }
+
+@media (prefers-color-scheme: dark) {
+	.CodeMirror-cursor {border-color: #FFFFFF;}
+	.CodeMirror-selected {background: #666666;}
+	.CodeMirror-focused .CodeMirror-selected {background: #666699;}
+	.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection {background: #666699;}
+	.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection {background: #666699;}
+
+	.CodeMirror-gutters {
+		border-color: #444444;
+		background: #222222;
+	}
+
+	.cm-s-default .cm-keyword  {color: #44AAFF;}
+	.cm-s-default .cm-variable {color: #FF9900;}
+	.cm-s-default .cm-operator {color: #44AAFF;}
+	.cm-s-default .cm-comment  {color: #88FF00;}
+	.cm-s-default .cm-string   {color: #FFEEDD;}
+	.cm-s-default .cm-error    {color: #FF0000;}
+
+	.cm-s-default .cm-trailingspace {
+		background: rgba(255, 0, 0, 0.2);
+	}
+}
