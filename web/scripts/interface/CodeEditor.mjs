@@ -112,6 +112,13 @@ export default class CodeEditor extends EventObject {
 	}
 
 	enterParams(start, end, block) {
+		if(!block.includes('{')) {
+			return;
+		}
+		if(this.cancelParams) {
+			this.cancelParams();
+		}
+
 		const doc = this.code.getDoc();
 		const endBookmark = doc.setBookmark(end);
 		const done = [];
