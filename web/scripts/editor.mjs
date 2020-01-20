@@ -37,6 +37,32 @@ function migrateOldDocument(slotStorage) {
 	}
 }
 
+function loadHashDocument(hashNav, slotStorage) {
+	const editPrefix = 'edit:';
+	const hash = hashNav.getRawHash();
+	if(!hash.startsWith(editPrefix)) {
+		return;
+	}
+
+	let doc = hash
+		.substr(editPrefix.length)
+		.split('/')
+		.map(decodeURIComponent)
+		.join('\n');
+
+	if(!doc) {
+		return;
+	}
+
+	if(!doc.endsWith('\n')) {
+		doc += '\n';
+	}
+
+	const newSlot = slotStorage.nextAvailableSlot();
+	slotStorage.set(newSlot, doc);
+	hashNav.setSlot(newSlot);
+}
+
 window.addEventListener('load', () => {
 	const loader = window.document.getElementById('loader');
 	const [nav] = loader.getElementsByTagName('nav');
@@ -58,6 +84,7 @@ window.addEventListener('load', () => {
 		// If the slot is changed by the user, reload to force a document load
 		window.location.reload();
 	});
+	loadHashDocument(hashNav, slotStorage);
 
 	loader.parentNode.removeChild(loader);
 

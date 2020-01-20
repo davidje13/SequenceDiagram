@@ -12,20 +12,34 @@ function valid(v = null) {
 }
 
 export default class URLExporter {
-	constructor(base = '') {
-		this.base = base;
+	constructor(renderBase = '', editBase = '') {
+		this.renderBase = renderBase;
+		this.editBase = editBase;
 	}
 
-	setBase(base) {
-		this.base = base;
+	setRenderBase(renderBase) {
+		this.renderBase = renderBase;
 	}
 
-	_convertCode(code) {
-		return code
+	setEditBase(editBase) {
+		this.editBase = editBase;
+	}
+
+	_convertCode(code, keepBlankLines = false) {
+		let lines = code
 			.split('\n')
-			.map(encodeURIComponent)
-			.filter((ln) => ln !== '')
-			.join('/');
+			.map(encodeURIComponent);
+
+		if(keepBlankLines) {
+			// Always trim trailing blank lines
+			while(lines.length > 0 && lines[lines.length - 1] === '') {
+				-- lines.length;
+			}
+		} else {
+			lines = lines.filter((ln) => ln !== '');
+		}
+
+		return lines.join('/');
 	}
 
 	_convertWidthHeight(width, height) {
@@ -56,12 +70,20 @@ export default class URLExporter {
 		return '';
 	}
 
-	getURL(code, size = {}) {
+	getRenderURL(code, size = {}) {
 		return (
-			this.base +
+			this.renderBase +
 			this._convertSize(size) +
 			this._convertCode(code) +
 			'.svg'
+		);
+	}
+
+	getEditURL(code) {
+		return (
+			this.editBase +
+			'#edit:' +
+			this._convertCode(code, true)
 		);
 	}
 }

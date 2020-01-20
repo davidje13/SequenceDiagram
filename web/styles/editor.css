@@ -315,7 +315,16 @@ html, body {
 }
 
 .urlbuilder .config {
-	padding-top: 10px;
+	padding-top: 0;
+}
+
+.urlbuilder .export-mode input {
+	margin-right: 5px;
+}
+
+.urlbuilder .export-mode label {
+	display: inline-block;
+	margin: 0 10px 10px;
 }
 
 .urlbuilder input[type=number] {
@@ -325,7 +334,7 @@ html, body {
 
 .urlbuilder .or {
 	display: block;
-	margin: 10px 0;
+	margin: 5px 0;
 	color: #333333;
 	font-size: 1.2em;
 }

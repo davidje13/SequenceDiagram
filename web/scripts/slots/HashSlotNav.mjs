@@ -16,6 +16,10 @@ export default class HashSlotNav {
 		});
 	}
 
+	getRawHash() {
+		return getHash();
+	}
+
 	maxSlots() {
 		// Capacity of localStorage is limited
 		// So avoid allowing too many documents

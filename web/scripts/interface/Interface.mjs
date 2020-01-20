@@ -39,6 +39,14 @@ function fetchResource(path) {
 		});
 }
 
+function setDocumentTitle(diagramTitle) {
+	let title = diagramTitle.trim();
+	if(title.length > 20) {
+		title = title.substr(0, 18).trim() + '\u2026';
+	}
+	document.title = (title ? `${title} \u2014 ` : '') + 'Sequence Diagram';
+}
+
 export default class Interface {
 	constructor({
 		sequenceDiagram,
@@ -75,6 +83,7 @@ export default class Interface {
 		this.diagram
 			.on('render', () => {
 				this.updateMinSize(this.diagram.getSize());
+				setDocumentTitle(this.diagram.getTitle());
 				this.pngDirty = true;
 			})
 			.on('mouseover', (element) => this.code.markLineHover(element.ln))
@@ -127,6 +136,32 @@ export default class Interface {
 				setTimeout(() => copied.styles({'display': 'none'}), 1500);
 			});
 
+		const updateMode = () => {
+			this.renderOpts.styles({
+				'display': this.modeEdit.element.checked ? 'none' : 'block',
+			});
+			this._refreshURL();
+		};
+
+		this.modeRender = this.dom.el('input').attrs({
+			'checked': 'checked',
+			'name': 'export-mode',
+			'type': 'radio',
+			'value': 'render',
+		}).on('change', updateMode);
+
+		this.modeEdit = this.dom.el('input').attrs({
+			'name': 'export-mode',
+			'type': 'radio',
+			'value': 'edit',
+		}).on('change', updateMode);
+
+		this.modeMarkdown = this.dom.el('input').attrs({
+			'name': 'export-mode',
+			'type': 'radio',
+			'value': 'markdown',
+		}).on('change', updateMode);
+
 		this.urlWidth = this.dom.el('input').attrs({
 			'min': 0,
 			'placeholder': 'auto',
@@ -158,12 +193,21 @@ export default class Interface {
 			this._refreshURL();
 		});
 
-		const urlOpts = this.dom.el('div').setClass('config').add(
+		this.renderOpts = this.dom.el('div').add(
 			this.dom.el('label').add('width ', this.urlWidth),
 			', ',
 			this.dom.el('label').add('height ', this.urlHeight),
 			this.dom.el('span').setClass('or').add('or'),
-			this.dom.el('label').add('zoom ', this.urlZoom),
+			this.dom.el('label').add('zoom ', this.urlZoom)
+		);
+
+		const urlOpts = this.dom.el('div').setClass('config').add(
+			this.dom.el('div').setClass('export-mode').add(
+				this.dom.el('label').add(this.modeRender, 'View'),
+				this.dom.el('label').add(this.modeEdit, 'Edit'),
+				this.dom.el('label').add(this.modeMarkdown, 'Markdown')
+			),
+			this.renderOpts,
 			this.urlOutput,
 			copy,
 			copied
@@ -176,7 +220,10 @@ export default class Interface {
 					.add('Loading\u2026')
 			);
 
+		const ownURL = (typeof window === 'undefined') ? 'http://localhost' : window.location.href;
 		this.renderService = new URLExporter();
+		this.renderService.setEditBase(new URL('.', ownURL).href);
+
 		const relativePath = 'render/';
 		fetchResource(relativePath)
 			.then((response) => response.text())
@@ -185,9 +232,7 @@ export default class Interface {
 				if(!path || path.startsWith('<')) {
 					path = relativePath;
 				}
-				this.renderService.setBase(
-					new URL(path, window.location.href).href
-				);
+				this.renderService.setRenderBase(new URL(path, ownURL).href);
 				urlBuilder.empty().add(urlOpts);
 				this._refreshURL();
 			})
@@ -202,11 +247,27 @@ export default class Interface {
 	}
 
 	_refreshURL() {
-		this.urlOutput.val(this.renderService.getURL(this.code.value(), {
+		const code = this.code.value();
+		const viewOpts = {
 			height: Number.parseFloat(this.urlHeight.element.value),
 			width: Number.parseFloat(this.urlWidth.element.value),
 			zoom: Number.parseFloat(this.urlZoom.element.value || '1'),
-		}));
+		};
+
+		let url = '';
+		if(this.modeMarkdown.element.checked) {
+			const edit = this.renderService.getEditURL(code);
+			const view = this.renderService.getRenderURL(code, viewOpts);
+			const title = this.diagram.getTitle()
+				.replace(/[^a-zA-Z0-9 \-_'"]/g, '')
+				.trim();
+			url = `[![${title}](${view})](${edit})`;
+		} else if(this.modeEdit.element.checked) {
+			url = this.renderService.getEditURL(code);
+		} else {
+			url = this.renderService.getRenderURL(code, viewOpts);
+		}
+		this.urlOutput.val(url);
 	}
 
 	_showURLBuilder() {
