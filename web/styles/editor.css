@@ -678,6 +678,16 @@ svg a:active, svg a:hover {
 	}
 }
 
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none !important;
+	}
+
+	.pick-document-item:hover > div {
+		transform: none;
+	}
+}
+
 @media print {
 	.drop-target:after {
 		display: none;
