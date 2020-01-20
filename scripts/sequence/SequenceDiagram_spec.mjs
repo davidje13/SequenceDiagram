@@ -185,4 +185,10 @@ describe('SequenceDiagram', () => {
 		expect(svg).toContain('<?xml version="1.0" encoding="UTF-8" ?>');
 		expect(svg).toContain('<svg width="');
 	});
+
+	it('makes the raw title text available', () => {
+		const diagram = makeDiagram('title "foo **bold**\nbar"');
+
+		expect(diagram.getTitle()).toEqual('foo bold bar');
+	});
 });

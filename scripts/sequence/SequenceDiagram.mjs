@@ -92,6 +92,7 @@ export default class SequenceDiagram extends EventObject {
 			generator: SharedGenerator,
 			isInteractive: false,
 			latestProcessed: null,
+			latestTitle: '',
 			parser: SharedParser,
 			registerCodeMirrorMode,
 			renderer: new Renderer(Object.assign({
@@ -257,6 +258,10 @@ export default class SequenceDiagram extends EventObject {
 		};
 	}
 
+	getTitle() {
+		return this.latestTitle;
+	}
+
 	_revertParent(state) {
 		const dom = this.renderer.dom();
 		if(dom.parentNode !== state.originalParent) {
@@ -293,6 +298,10 @@ export default class SequenceDiagram extends EventObject {
 			if(!state.processed) {
 				state.processed = this.process(this.code);
 			}
+			const titleParts = state.processed.meta.title || [];
+			this.latestTitle = titleParts
+				.map((ln) => ln.map((p) => p.text).join(''))
+				.join(' ');
 			this.renderer.optimisedRenderPreReflow(state.processed);
 		} catch(e) {
 			this._sendRenderError(e);

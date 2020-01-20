@@ -15,6 +15,7 @@ describe('Interface', () => {
 			'render',
 			'clone',
 			'getSize',
+			'getTitle',
 			'process',
 			'getThemeNames',
 			'on',
@@ -28,6 +29,7 @@ describe('Interface', () => {
 		});
 		sequenceDiagram.on.and.returnValue(sequenceDiagram);
 		sequenceDiagram.getSize.and.returnValue({height: 20, width: 10});
+		sequenceDiagram.getTitle.and.returnValue('');
 		sequenceDiagram.dom.and.returnValue(dom.createElement('svg'));
 		container = dom.createElement('div');
 
