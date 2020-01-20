@@ -253,51 +253,61 @@
 		{
 			code: '**{text}**',
 			preview: 'A -> B: **bold**',
+			surround: true,
 			title: 'Bold markdown',
 		},
 		{
 			code: '_{text}_',
 			preview: 'A -> B: _italic_',
+			surround: true,
 			title: 'Italic markdown',
 		},
 		{
 			code: '~{text}~',
 			preview: 'A -> B: ~strikeout~',
+			surround: true,
 			title: 'Strikeout markdown',
 		},
 		{
 			code: '<u>{text}</u>',
 			preview: 'A -> B: <u>underline</u>',
+			surround: true,
 			title: 'Underline markdown',
 		},
 		{
 			code: '<o>{text}</o>',
 			preview: 'A -> B: <o>overline</o>',
+			surround: true,
 			title: 'Overline markdown',
 		},
 		{
 			code: '<sup>{text}</sup>',
 			preview: 'A -> B: super<sup>script</sup>',
+			surround: true,
 			title: 'Superscript markdown',
 		},
 		{
 			code: '<sub>{text}</sub>',
 			preview: 'A -> B: sub<sub>script</sub>',
+			surround: true,
 			title: 'Subscript markdown',
 		},
 		{
 			code: '`{text}`',
 			preview: 'A -> B: `mono`',
+			surround: true,
 			title: 'Monospace markdown',
 		},
 		{
 			code: '<red>{text}</red>',
 			preview: 'A -> B: <red>red</red>',
+			surround: true,
 			title: 'Red markdown',
 		},
 		{
 			code: '<highlight>{text}</highlight>',
 			preview: 'A -> B: <highlight>highlight</highlight>',
+			surround: true,
 			title: 'Highlight markdown',
 		},
 		{
@@ -870,6 +880,15 @@
 		return null;
 	}
 
+	function lineWithinRange(doc, ln, start, end) {
+		const full = doc.getLine(ln);
+		const begin = (ln === start.line) ? start.ch : 0;
+		return {
+			chOffset: begin,
+			line: (ln === end.line) ? full.slice(begin, end.ch) : full.slice(begin),
+		};
+	}
+
 	class CodeEditor extends EventObject {
 		constructor(dom, container, {
 			mode = '',
@@ -974,8 +993,8 @@
 				this.code.off('cursorActivity', move);
 				this.paramMarkers.forEach((m) => m.clear());
 				this.paramMarkers = null;
+				this.code.setCursor(endBookmark.find());
 				endBookmark.clear();
-				this.code.setCursor(end);
 				this.cancelParams = null;
 				this.advanceParams = null;
 			};
@@ -1001,12 +1020,12 @@
 
 			const doc = this.code.getDoc();
 			const ranges = [];
-			let {ch} = start;
-			for(let ln = start.line; ln < endBookmark.find().line; ++ ln) {
-				const line = doc.getLine(ln).slice(ch);
+			const end = endBookmark.find();
+			for(let ln = start.line; ln <= end.line; ++ ln) {
+				const {chOffset, line} = lineWithinRange(doc, ln, start, end);
 				for(let p = 0; (p = line.indexOf(tok, p)) !== -1; p += tok.length) {
-					const anchor = {ch: p, line: ln};
-					const head = {ch: p + tok.length, line: ln};
+					const anchor = {ch: chOffset + p, line: ln};
+					const head = {ch: chOffset + p + tok.length, line: ln};
 					ranges.push({anchor, head});
 					this.paramMarkers.push(doc.markText(anchor, head, {
 						className: 'param',
@@ -1015,7 +1034,6 @@
 						inclusiveRight: true,
 					}));
 				}
-				ch = 0;
 			}
 
 			if(ranges.length > 0) {
@@ -1025,11 +1043,39 @@
 			}
 		}
 
-		addCodeBlock(block) {
-			const lines = block.split('\n').length;
+		hasSelection() {
+			const from = this.code.getCursor('from');
+			const to = this.code.getCursor('to');
+			return from.line !== to.line || from.ch !== to.ch;
+		}
 
-			this.code.focus();
+		internalAddSurroundCode(block) {
+			if(this.enhanced) {
+				if(this.hasSelection()) {
+					this.code.replaceSelection(
+						block.replace(/\{.*\}/, this.code.getSelection()),
+						'end',
+						'library'
+					);
+				} else {
+					const cur = this.code.getCursor('head');
+					this.code.replaceSelection(block, null, 'library');
+					const end = {ch: cur.ch + block.length, line: cur.line};
+					this.enterParams(cur, end, block);
+				}
+			} else {
+				const value = this.value();
+				const s1 = this.code.element.selectionStart;
+				const s2 = this.code.element.selectionEnd;
+				const wrapped = block.replace(/\{.*\}/, value.substring(s1, s2));
+				this.code
+					.val(value.substr(0, s1) + wrapped + value.substr(s2))
+					.select(s1 + wrapped.length);
+				this.trigger('change');
+			}
+		}
 
+		internalAddIndependentCode(block) {
 			if(this.enhanced) {
 				const cur = this.code.getCursor('head');
 				const pos = {ch: 0, line: cur.line + ((cur.ch > 0) ? 1 : 0)};
@@ -1038,6 +1084,7 @@
 					replaced = '\n' + replaced;
 				}
 				this.code.replaceRange(replaced, pos, null, 'library');
+				const lines = block.split('\n').length;
 				const end = {ch: 0, line: pos.line + lines};
 				this.enterParams(pos, end, block);
 			} else {
@@ -1052,6 +1099,16 @@
 					.val(replaced + value.substr(pos))
 					.select(replaced.length);
 				this.trigger('change');
+			}
+		}
+
+		addCodeBlock(block, surround = false) {
+			this.code.focus();
+
+			if(surround) {
+				this.internalAddSurroundCode(block);
+			} else {
+				this.internalAddIndependentCode(block);
 			}
 		}
 
@@ -1645,7 +1702,10 @@
 					.setClass('library-item')
 					.add(holdInner)
 					.fastClick()
-					.on('click', () => this.code.addCodeBlock(lib.code))
+					.on('click', () => this.code.addCodeBlock(
+						lib.code,
+						lib.surround
+					))
 					.attach(container);
 
 				return this.diagram.clone({

@@ -250,51 +250,61 @@ export default [
 	{
 		code: '**{text}**',
 		preview: 'A -> B: **bold**',
+		surround: true,
 		title: 'Bold markdown',
 	},
 	{
 		code: '_{text}_',
 		preview: 'A -> B: _italic_',
+		surround: true,
 		title: 'Italic markdown',
 	},
 	{
 		code: '~{text}~',
 		preview: 'A -> B: ~strikeout~',
+		surround: true,
 		title: 'Strikeout markdown',
 	},
 	{
 		code: '<u>{text}</u>',
 		preview: 'A -> B: <u>underline</u>',
+		surround: true,
 		title: 'Underline markdown',
 	},
 	{
 		code: '<o>{text}</o>',
 		preview: 'A -> B: <o>overline</o>',
+		surround: true,
 		title: 'Overline markdown',
 	},
 	{
 		code: '<sup>{text}</sup>',
 		preview: 'A -> B: super<sup>script</sup>',
+		surround: true,
 		title: 'Superscript markdown',
 	},
 	{
 		code: '<sub>{text}</sub>',
 		preview: 'A -> B: sub<sub>script</sub>',
+		surround: true,
 		title: 'Subscript markdown',
 	},
 	{
 		code: '`{text}`',
 		preview: 'A -> B: `mono`',
+		surround: true,
 		title: 'Monospace markdown',
 	},
 	{
 		code: '<red>{text}</red>',
 		preview: 'A -> B: <red>red</red>',
+		surround: true,
 		title: 'Red markdown',
 	},
 	{
 		code: '<highlight>{text}</highlight>',
 		preview: 'A -> B: <highlight>highlight</highlight>',
+		surround: true,
 		title: 'Highlight markdown',
 	},
 	{

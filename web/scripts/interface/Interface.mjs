@@ -381,7 +381,10 @@ export default class Interface {
 				.setClass('library-item')
 				.add(holdInner)
 				.fastClick()
-				.on('click', () => this.code.addCodeBlock(lib.code))
+				.on('click', () => this.code.addCodeBlock(
+					lib.code,
+					lib.surround
+				))
 				.attach(container);
 
 			return this.diagram.clone({
