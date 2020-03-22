@@ -44,27 +44,27 @@
     "web-test:manual": "MANUAL=1 karma start spec/support/karma.conf.js"
   },
   "devDependencies": {
-    "@rollup/plugin-multi-entry": "^3.0.0",
-    "buffer-to-stream": "^1.0.0",
-    "codemirror": "^5.50.2",
-    "eslint": "^6.8.0",
-    "eslint-plugin-jasmine": "^4.1.0",
-    "jasmine": "^3.5.0",
-    "karma": "^4.4.1",
-    "karma-chrome-launcher": "^3.1.0",
-    "karma-detect-browsers": "^2.3.3",
-    "karma-firefox-launcher": "^1.3.0",
-    "karma-jasmine": "^3.1.0",
-    "karma-safari-launcher": "^1.0.0",
-    "pngcrush": "^2.0.1",
-    "requirejs": "^2.3.6",
-    "rollup": "^1.29.0",
-    "rollup-plugin-hypothetical": "^2.1.0",
-    "source-map-support": "^0.5.16",
-    "svg2png": "^4.1.1",
+    "@rollup/plugin-multi-entry": "3.x",
+    "buffer-to-stream": "1.x",
+    "codemirror": "5.52.x",
+    "eslint": "6.x",
+    "eslint-plugin-jasmine": "4.x",
+    "jasmine": "3.x",
+    "karma": "4.x",
+    "karma-chrome-launcher": "3.x",
+    "karma-detect-browsers": "2.x",
+    "karma-firefox-launcher": "1.x",
+    "karma-jasmine": "3.x",
+    "karma-safari-launcher": "1.x",
+    "pngcrush": "2.x",
+    "requirejs": "2.x",
+    "rollup": "2.x",
+    "rollup-plugin-hypothetical": "2.x",
+    "source-map-support": "0.x",
+    "svg2png": "4.x",
     "uglify-es": "3.2.2"
   },
   "dependencies": {
-    "opentype.js": "^1.1.0"
+    "opentype.js": "1.x"
   }
 }
