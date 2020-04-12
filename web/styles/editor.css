@@ -609,12 +609,12 @@ svg a:active, svg a:hover {
 		border-color: #66AA55;
 	}
 
-	.pane-view {
-		background: #888888;
+	.pane-view, .pane-view-scroller {
+		background: #111111;
 	}
 
-	.pane-library {
-		background: #555555;
+	.pane-library, .pane-library-scroller {
+		background: #222222;
 	}
 
 	.pane-code .CodeMirror {
@@ -634,18 +634,35 @@ svg a:active, svg a:hover {
 		background: #807700;
 	}
 
+	.pane-view .region:hover .outline {
+		stroke: rgba(150, 140, 0, 0.5);
+	}
+
+	.pane-view .region.focus .outline {
+		stroke: rgba(190, 140, 0, 0.5);
+	}
+
+	.pane-view .region.focus:hover .outline {
+		stroke: rgba(170, 140, 0, 0.5);
+	}
+
 	.library-item > div {
-		border-color: #555555;
-		background: #888888;
+		border-color: #222222;
+		background: #111111;
 	}
 
 	.library-item:hover > div {
-		background: #999977;
+		border-color: #FFCC00;
+		background: #444433;
 	}
 
 	.msg-error {
 		color: #440000;
 		background: #AA6666;
+	}
+
+	.pane-view svg, .library-item svg {
+		filter: invert(1) hue-rotate(180deg);
 	}
 
 	.options {
@@ -675,15 +692,19 @@ svg a:active, svg a:hover {
 
 	.pick-document-item > div {
 		border-color: #999999;
-		background: #666666;
+		background: #111111;
 	}
 
 	.pick-document-item:hover > div {
-		background: #888866;
+		background: #444433;
 	}
 
 	.pick-document-item.new > div:before {
 		color: #999999;
+	}
+
+	.pane-view svg, .library-item svg, .pick-document-item svg {
+		filter: invert(1) hue-rotate(180deg);
 	}
 }
 
