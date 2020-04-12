@@ -14,13 +14,13 @@ export default (hashNav, slotStorage) => {
 
 	const dom = new DOMWrapper(window.document);
 	const container = dom.el('div').setClass('pick-document')
-		.add(dom.el('h1').text('Available documents on this computer:'))
+		.add(dom.el('h1').text('Diagrams on this device:'))
 		.add(dom.el('p').text('(right-click to delete)'))
 		.attach(document.body);
 
 	function remove(slot) {
 		// eslint-disable-next-line no-alert
-		if(window.confirm('Delete this document?')) {
+		if(window.confirm('Delete this diagram?')) {
 			slotStorage.remove(slot);
 			window.location.reload();
 		}
@@ -38,7 +38,6 @@ export default (hashNav, slotStorage) => {
 				.attr('href', `#${slot}`)
 				.setClass('pick-document-item')
 				.add(holdInner)
-				.fastClick()
 				.on('click', (e) => {
 					e.preventDefault();
 					resolve(slot);

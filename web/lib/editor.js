@@ -1816,9 +1816,12 @@
 			const libPane = this.buildLibPane();
 			const viewPane = this.buildViewPane();
 
-			const links = this.links.map((link) => this.dom.el('a')
-				.attrs({'href': link.href, 'target': '_blank'})
-				.text(this.touchUI ? link.touchLabel : link.label));
+			const links = this.links.map((link) => {
+				const label = this.touchUI ? link.touchLabel : link.label;
+				return label && this.dom.el('a')
+					.attrs({'href': link.href, 'target': link.target || ''})
+					.text(label);
+			}).filter((x) => x);
 
 			if(this.touchUI) {
 				this.buildOptionsDownloads();
@@ -2237,13 +2240,13 @@
 
 		const dom = new DOMWrapper(window.document);
 		const container = dom.el('div').setClass('pick-document')
-			.add(dom.el('h1').text('Available documents on this computer:'))
+			.add(dom.el('h1').text('Diagrams on this device:'))
 			.add(dom.el('p').text('(right-click to delete)'))
 			.attach(document.body);
 
 		function remove(slot) {
 			// eslint-disable-next-line no-alert
-			if(window.confirm('Delete this document?')) {
+			if(window.confirm('Delete this diagram?')) {
 				slotStorage.remove(slot);
 				window.location.reload();
 			}
@@ -2261,7 +2264,6 @@
 					.attr('href', `#${slot}`)
 					.setClass('pick-document-item')
 					.add(holdInner)
-					.fastClick()
 					.on('click', (e) => {
 						e.preventDefault();
 						resolve(slot);
@@ -2404,6 +2406,7 @@
 			links.push({
 				href: element.getAttribute('href'),
 				label: element.textContent,
+				target: element.getAttribute('target'),
 				touchLabel: element.dataset.touch,
 			});
 		}

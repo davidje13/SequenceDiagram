@@ -73,6 +73,7 @@ window.addEventListener('load', () => {
 		links.push({
 			href: element.getAttribute('href'),
 			label: element.textContent,
+			target: element.getAttribute('target'),
 			touchLabel: element.dataset.touch,
 		});
 	}

@@ -488,9 +488,12 @@ export default class Interface {
 		const libPane = this.buildLibPane();
 		const viewPane = this.buildViewPane();
 
-		const links = this.links.map((link) => this.dom.el('a')
-			.attrs({'href': link.href, 'target': '_blank'})
-			.text(this.touchUI ? link.touchLabel : link.label));
+		const links = this.links.map((link) => {
+			const label = this.touchUI ? link.touchLabel : link.label;
+			return label && this.dom.el('a')
+				.attrs({'href': link.href, 'target': link.target || ''})
+				.text(label);
+		}).filter((x) => x);
 
 		if(this.touchUI) {
 			this.buildOptionsDownloads();
