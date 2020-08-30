@@ -1,5 +1,5 @@
 {
-  "name": "sequence-diagram",
+  "name": "svg-sequence-diagram",
   "version": "1.0.0",
   "description": "Generates SVG Sequence Diagrams from code in the browser",
   "homepage": "https://github.com/davidje13/SequenceDiagram",
@@ -18,8 +18,8 @@
     "lib/sequence-diagram-web.js",
     "scripts"
   ],
-  "main": "lib/sequence-diagram",
-  "module": "scripts/standalone",
+  "main": "lib/sequence-diagram.js",
+  "module": "scripts/standalone.mjs",
   "bin": {
     "sequence-diagram-svg": "./bin/sequence-diagram-svg.js"
   },
@@ -36,7 +36,7 @@
     "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js",
     "minify-web": "rollup --config web/scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output web/lib/editor.min.js -- web/lib/editor.js && npm run copy-third-party",
     "minify": "npm run minify-lib && npm run minify-web",
-    "prepublishOnly": "npm run minify-lib && npm run generate-screenshots && npm test",
+    "prepublishOnly": "npm run minify-lib && npm test",
     "start": "bin/server.js",
     "test": "npm run unit-test && npm run web-test && npm run lint && echo 'PASSED :)'",
     "unit-test": "rollup --config spec/support/rollup.config.js && node -r source-map-support/register node_modules/.bin/jasmine --config=spec/support/jasmine.json",
