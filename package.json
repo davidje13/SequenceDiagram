@@ -21,7 +21,7 @@
   "main": "lib/sequence-diagram.js",
   "module": "scripts/standalone.mjs",
   "bin": {
-    "sequence-diagram-svg": "./bin/sequence-diagram-svg.js"
+    "sequence-diagram-svg": "bin/sequence-diagram-svg.js"
   },
   "eslintIgnore": [
     "lib",
@@ -46,17 +46,17 @@
   "devDependencies": {
     "@rollup/plugin-multi-entry": "4.x",
     "buffer-to-stream": "1.x",
-    "codemirror": "5.58.x",
+    "codemirror": "5.59.x",
     "eslint": "7.x",
     "eslint-plugin-jasmine": "4.x",
     "jasmine": "3.x",
     "karma": "5.x",
     "karma-chrome-launcher": "3.x",
     "karma-detect-browsers": "2.x",
-    "karma-firefox-launcher": "1.x",
+    "karma-firefox-launcher": "2.x",
     "karma-jasmine": "4.x",
     "karma-safari-launcher": "1.x",
-    "pngcrush": "2.x",
+    "pngcrush": "3.x",
     "requirejs": "2.x",
     "rollup": "2.x",
     "rollup-plugin-hypothetical": "2.x",
