@@ -90,7 +90,7 @@ module.exports = {
 		'linebreak-style': ['error', 'unix'],
 		'lines-between-class-members': ['error'],
 		'max-depth': ['error', 4],
-		'max-len': ['error', {'ignoreUrls': true}],
+		'max-len': ['error', {'ignorePattern': '^#!', 'ignoreUrls': true}],
 		'max-lines': ['error', 800],
 		'max-nested-callbacks': ['error', 4], // Includes jasmine blocks
 		'max-params': ['error', 4],
