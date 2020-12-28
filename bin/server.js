@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --disable-proto=delete --disallow-code-generation-from-strings
+#!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
 const {Server} = require('./server/Server');
 const {StaticRequestHandler} = require('./server/StaticRequestHandler');

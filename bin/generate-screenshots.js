@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --disable-proto=delete --disallow-code-generation-from-strings
+#!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
 const {VirtualSequenceDiagram} = require('../lib/sequence-diagram');
 const buffer2stream = require('buffer-to-stream');
