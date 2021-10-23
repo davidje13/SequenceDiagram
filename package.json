@@ -50,7 +50,7 @@
     "eslint": "7.x",
     "eslint-plugin-jasmine": "4.x",
     "jasmine": "3.x",
-    "karma": "5.x",
+    "karma": "6.x",
     "karma-chrome-launcher": "3.x",
     "karma-detect-browsers": "2.x",
     "karma-firefox-launcher": "2.x",
