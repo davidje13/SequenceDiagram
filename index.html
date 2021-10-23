@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -9,7 +10,8 @@
 	connect-src 'self';
 	font-src 'self' data:;
 	img-src 'self' blob:;
-	form-action 'none';
+	frame-src 'self';
+	form-action 'self';
 ">
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no, minimal-ui">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -78,13 +80,44 @@
 <div id="loader">
 <h1>Sequence Diagram Online Editor</h1>
 <p class="loadmsg">Loading&hellip;</p>
-<noscript><p class="noscript">This tool requires Javascript!</p></noscript>
 <nav>
 <a href="#" data-touch="Files">My Diagrams</a>
 <a href="library.htm" target="_blank" data-touch="API">Library</a>
 <a href="https://github.com/davidje13/SequenceDiagram" target="_blank" data-touch="">GitHub</a>
 </nav>
 </div>
+
+<noscript>
+<link rel="stylesheet" href="web/styles/noscript.css">
+<main>
+<section class="banner">
+Enable JavaScript for live rendering, templates, PNG export, and local file saving.
+<nav><a href="library.htm" target="_blank">Library</a><a href="https://github.com/davidje13/SequenceDiagram" target="_blank">GitHub</a></nav>
+</section>
+<form target="preview" action="preview" method="GET">
+<textarea name="c">
+title Labyrinth
+
+Bowie -> Goblin: You remind me of the babe
+Goblin -> Bowie: What babe?
+Bowie -> Goblin: The babe with the power
+Goblin -> Bowie: What power?
+note right of Bowie, Goblin: Most people get muddled here!
+Bowie -> Goblin: "The power of voodoo"
+Goblin -> Bowie: "Who-do?"
+Bowie -> Goblin: You do!
+Goblin -> Bowie: Do what?
+Bowie -> Goblin: Remind me of the babe!
+
+Bowie -> Audience: Sings
+
+terminators box
+</textarea>
+<button type="submit">Update</button>
+</form>
+<iframe name="preview" src="web/resources/preview.htm"></iframe>
+</main>
+</noscript>
 
 </body>
 </html>

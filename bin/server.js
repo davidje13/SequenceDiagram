@@ -3,6 +3,7 @@
 const {Server} = require('./server/Server');
 const {StaticRequestHandler} = require('./server/StaticRequestHandler');
 const {RenderRequestHandler} = require('./handlers/RenderRequestHandler');
+const {PreviewRequestHandler} = require('./handlers/PreviewRequestHandler');
 const path = require('path');
 
 const DEV = process.argv.includes('dev');
@@ -45,8 +46,9 @@ const statics = new StaticRequestHandler('')
 		'connect-src \'self\'',
 		'font-src \'self\' data:',
 		'img-src \'self\' blob:',
-		'form-action \'none\'',
-		'frame-ancestors \'none\'',
+		'form-action \'self\'',
+		'frame-ancestors \'self\'',
+		'frame-src \'self\'',
 	].join('; '))
 	.addHeader('X-Content-Type-Options', 'nosniff')
 	.addHeader('X-Frame-Options', 'DENY')
@@ -96,8 +98,23 @@ const render = new RenderRequestHandler('/render')
 	].join('; '))
 	.addHeader('X-Content-Type-Options', 'nosniff');
 
+const preview = new PreviewRequestHandler('/preview')
+	.setCacheMaxAge(DEV ? 0 : RENDER_MAX_AGE)
+	.addHeader('Content-Security-Policy', [
+		'base-uri \'self\'',
+		'default-src \'none\'',
+		'style-src \'self\'',
+		'connect-src \'none\'',
+		'img-src \'self\'',
+		'form-action \'none\'',
+		'frame-ancestors \'self\'',
+		'frame-src \'self\'',
+	].join('; '))
+	.addHeader('X-Content-Type-Options', 'nosniff');
+
 new Server()
 	.addHandler(render)
+	.addHandler(preview)
 	.addHandler(statics)
 	.listen(PORT, HOSTNAME)
 	.then((server) => server.printListeningInfo(process.stdout));

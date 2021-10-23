@@ -121,6 +121,7 @@ cd - > /dev/null;
 EOF
 
 sudo tee /var/www/https/index.htm <<EOF > /dev/null;
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <title>$DOMAIN</title>
