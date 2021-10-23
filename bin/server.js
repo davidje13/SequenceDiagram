@@ -33,9 +33,24 @@ function devMapper(file, type, data) {
 
 const STATIC_MAX_AGE = 10 * 60; // 10 minutes
 const RENDER_MAX_AGE = 60 * 60 * 24 * 7; // 1 week
+const SKETCH_CSS_SHA = 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 
 const statics = new StaticRequestHandler('')
 	.setCacheMaxAge(DEV ? 0 : STATIC_MAX_AGE)
+	.addHeader('Content-Security-Policy', [
+		'base-uri \'self\'',
+		'default-src \'none\'',
+		'script-src \'self\' https://unpkg.com',
+		`style-src 'self' '${SKETCH_CSS_SHA}'`,
+		'connect-src \'self\'',
+		'font-src \'self\' data:',
+		'img-src \'self\' blob:',
+		'form-action \'none\'',
+		'frame-ancestors \'none\'',
+	].join('; '))
+	.addHeader('X-Content-Type-Options', 'nosniff')
+	.addHeader('X-Frame-Options', 'DENY')
+	.addHeader('X-XSS-Protection', '1; mode=block')
 	.addMimeType('txt', 'text/plain; charset=utf-8')
 	.addMimeType('htm', 'text/html; charset=utf-8')
 	.addMimeType('html', 'text/html; charset=utf-8')
@@ -70,7 +85,16 @@ if(DEV) {
 
 const render = new RenderRequestHandler('/render')
 	.setCacheMaxAge(DEV ? 0 : RENDER_MAX_AGE)
-	.setCrossOrigin(true);
+	.setCrossOrigin(true)
+	.addHeader('Content-Security-Policy', [
+		'base-uri \'self\'',
+		'default-src \'none\'',
+		`style-src '${SKETCH_CSS_SHA}'`,
+		'connect-src \'none\'',
+		'font-src data:',
+		'form-action \'none\'',
+	].join('; '))
+	.addHeader('X-Content-Type-Options', 'nosniff');
 
 new Server()
 	.addHandler(render)

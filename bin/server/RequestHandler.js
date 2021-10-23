@@ -5,6 +5,7 @@ class RequestHandler {
 		this.handleFn = handleFn;
 		this.cacheMaxAge = 0;
 		this.allowAllOrigins = false;
+		this.staticHeaders = [];
 		this.info = `Custom handler at ${this.method} ${this.matcher}`;
 	}
 
@@ -18,6 +19,11 @@ class RequestHandler {
 		return this;
 	}
 
+	addHeader(name, value) {
+		this.staticHeaders.push({ name, value });
+		return this;
+	}
+
 	applyCommonHeaders(req, res) {
 		if(this.allowAllOrigins) {
 			res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,6 +33,9 @@ class RequestHandler {
 				'Cache-Control',
 				`public, max-age=${this.cacheMaxAge}`
 			);
+		}
+		for(const header of this.staticHeaders) {
+			res.setHeader(header.name, header.value);
 		}
 	}
 
