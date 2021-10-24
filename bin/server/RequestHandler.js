@@ -4,13 +4,17 @@ class RequestHandler {
 		this.matcher = matcher;
 		this.handleFn = handleFn;
 		this.cacheMaxAge = 0;
+		this.cacheStale = 0;
+		this.immutable = false;
 		this.allowAllOrigins = false;
 		this.staticHeaders = [];
 		this.info = `Custom handler at ${this.method} ${this.matcher}`;
 	}
 
-	setCacheMaxAge(seconds) {
-		this.cacheMaxAge = seconds;
+	setCache({ maxAgeSeconds = 0, staleSeconds = 0, immutable = false }) {
+		this.cacheMaxAge = maxAgeSeconds;
+		this.cacheStale = staleSeconds;
+		this.immutable = immutable;
 		return this;
 	}
 
@@ -31,7 +35,9 @@ class RequestHandler {
 		if(this.cacheMaxAge > 0) {
 			res.setHeader(
 				'Cache-Control',
-				`public, max-age=${this.cacheMaxAge}`
+				`public, max-age=${this.cacheMaxAge}` +
+				(this.cacheStale ? `, stale-if-error=${this.cacheStale}` : '') +
+				(this.immutable ? ', immutable' : '')
 			);
 		}
 		for(const header of this.staticHeaders) {

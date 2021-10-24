@@ -32,12 +32,23 @@ function devMapper(file, type, data) {
 	}
 }
 
-const STATIC_MAX_AGE = 10 * 60; // 10 minutes
-const RENDER_MAX_AGE = 60 * 60 * 24 * 7; // 1 week
+const STATIC_CACHE = {
+	maxAgeSeconds: 10 * 60, // 10 minutes
+	staleSeconds: 60 * 60 * 24 * 365, // 1 year
+};
+const RENDER_CACHE = {
+	immutable: true,
+	maxAgeSeconds: 60 * 60 * 24 * 30, // 1 month
+	staleSeconds: 60 * 60 * 24 * 365, // 1 year
+};
+const PREVIEW_CACHE = {
+	maxAgeSeconds: 60 * 60, // 1 hour
+	staleSeconds: 60 * 60 * 24, // 1 day
+};
 const SKETCH_CSS_SHA = 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 
 const statics = new StaticRequestHandler('')
-	.setCacheMaxAge(DEV ? 0 : STATIC_MAX_AGE)
+	.setCache(DEV ? {} : STATIC_CACHE)
 	.addHeader('Content-Security-Policy', [
 		'base-uri \'self\'',
 		'default-src \'none\'',
@@ -86,7 +97,7 @@ if(DEV) {
 }
 
 const render = new RenderRequestHandler('/render')
-	.setCacheMaxAge(DEV ? 0 : RENDER_MAX_AGE)
+	.setCache(DEV ? {} : RENDER_CACHE)
 	.setCrossOrigin(true)
 	.addHeader('Content-Security-Policy', [
 		'base-uri \'self\'',
@@ -99,7 +110,7 @@ const render = new RenderRequestHandler('/render')
 	.addHeader('X-Content-Type-Options', 'nosniff');
 
 const preview = new PreviewRequestHandler('/preview')
-	.setCacheMaxAge(DEV ? 0 : RENDER_MAX_AGE)
+	.setCache(DEV ? {} : PREVIEW_CACHE)
 	.addHeader('Content-Security-Policy', [
 		'base-uri \'self\'',
 		'default-src \'none\'',
