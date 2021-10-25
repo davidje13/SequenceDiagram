@@ -125,6 +125,7 @@ html, body {
 	padding: 4px 8px 16px 8px;
 	resize: none;
 	white-space: pre;
+	box-sizing: border-box;
 }
 
 .param {
