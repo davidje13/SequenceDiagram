@@ -32,18 +32,26 @@ function devMapper(file, type, data) {
 	}
 }
 
+const MINUTE = 60;
+const HOUR = MINUTE * 60;
+const DAY = HOUR * 24;
+const YEAR = DAY * 365;
+
 const STATIC_CACHE = {
-	maxAgeSeconds: 10 * 60, // 10 minutes
-	staleSeconds: 60 * 60 * 24 * 365, // 1 year
+	maxAgeSeconds: 10 * MINUTE,
+	staleIfErrorSeconds: YEAR,
+	staleWhileRevalidateSeconds: YEAR,
 };
 const RENDER_CACHE = {
 	immutable: true,
-	maxAgeSeconds: 60 * 60 * 24 * 30, // 1 month
-	staleSeconds: 60 * 60 * 24 * 365, // 1 year
+	maxAgeSeconds: 30 * DAY,
+	staleIfErrorSeconds: YEAR,
+	staleWhileRevalidateSeconds: YEAR,
 };
 const PREVIEW_CACHE = {
-	maxAgeSeconds: 60 * 60, // 1 hour
-	staleSeconds: 60 * 60 * 24, // 1 day
+	maxAgeSeconds: HOUR,
+	staleIfErrorSeconds: DAY,
+	staleWhileRevalidateSeconds: DAY,
 };
 const SKETCH_CSS_SHA = 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 

@@ -1,20 +1,42 @@
+function makeCacheControlHeader({
+	mode = 'public',
+	maxAgeSeconds = -1,
+	staleIfErrorSeconds = -1,
+	staleWhileRevalidateSeconds = -1,
+	immutable = false,
+}) {
+	const parts = [];
+	if(mode) {
+		parts.push(mode);
+	}
+	if(maxAgeSeconds >= 0) {
+		parts.push(`max-age=${maxAgeSeconds}`);
+	}
+	if(staleIfErrorSeconds >= 0) {
+		parts.push(`stale-if-error=${staleIfErrorSeconds}`);
+	}
+	if(staleWhileRevalidateSeconds >= 0) {
+		parts.push(`stale-while-revalidate=${staleWhileRevalidateSeconds}`);
+	}
+	if(immutable) {
+		parts.push('immutable');
+	}
+	return parts.join(', ');
+}
+
 class RequestHandler {
 	constructor(method, matcher, handleFn) {
 		this.method = method;
 		this.matcher = matcher;
 		this.handleFn = handleFn;
-		this.cacheMaxAge = 0;
-		this.cacheStale = 0;
-		this.immutable = false;
+		this.cacheControl = '';
 		this.allowAllOrigins = false;
 		this.staticHeaders = [];
 		this.info = `Custom handler at ${this.method} ${this.matcher}`;
 	}
 
-	setCache({ maxAgeSeconds = 0, staleSeconds = 0, immutable = false }) {
-		this.cacheMaxAge = maxAgeSeconds;
-		this.cacheStale = staleSeconds;
-		this.immutable = immutable;
+	setCache(options) {
+		this.cacheControl = options ? makeCacheControlHeader(options) : '';
 		return this;
 	}
 
@@ -32,13 +54,8 @@ class RequestHandler {
 		if(this.allowAllOrigins) {
 			res.setHeader('Access-Control-Allow-Origin', '*');
 		}
-		if(this.cacheMaxAge > 0) {
-			res.setHeader(
-				'Cache-Control',
-				`public, max-age=${this.cacheMaxAge}` +
-				(this.cacheStale ? `, stale-if-error=${this.cacheStale}` : '') +
-				(this.immutable ? ', immutable' : '')
-			);
+		if(this.cacheControl) {
+			res.setHeader('Cache-Control', this.cacheControl);
 		}
 		for(const header of this.staticHeaders) {
 			res.setHeader(header.name, header.value);
