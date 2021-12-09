@@ -491,7 +491,11 @@ export default class Interface {
 		const links = this.links.map((link) => {
 			const label = this.touchUI ? link.touchLabel : link.label;
 			return label && this.dom.el('a')
-				.attrs({'href': link.href, 'target': link.target || ''})
+				.attrs({
+					'href': link.href,
+					'rel': 'noopener',
+					'target': link.target || '',
+				})
 				.text(label);
 		}).filter((x) => x);
 

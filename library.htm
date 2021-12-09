@@ -42,37 +42,7 @@
 <script src="lib/sequence-diagram-web.min.js"></script>
 <!-- /LIVE -->
 
-<script>document.addEventListener('DOMContentLoaded', () => {
-
-const diagrams = [];
-
-// Example 1:
-(() => {
-	const diagram = new SequenceDiagram();
-	diagram.set('A -> B\nB -> A', {render: false});
-	diagram.dom().setAttribute('class', 'sequence-diagram');
-	document.getElementById('hold1').appendChild(diagram.dom());
-	diagram.setHighlight(1);
-	diagrams.push(diagram);
-})();
-
-// Snippets:
-const elements = document.getElementsByClassName('example');
-for(let i = 0; i < elements.length; ++ i) {
-	const el = elements[i];
-	const diagram = new SequenceDiagram(el.textContent, {render: false});
-	diagram.dom().setAttribute('class', 'example-diagram');
-	el.parentNode.insertBefore(diagram.dom(), el);
-	diagrams.push(diagram);
-}
-
-SequenceDiagram.renderAll(diagrams);
-
-if (CodeMirror && CodeMirror.colorize) {
-	CodeMirror.colorize();
-}
-
-}, {once: true});</script>
+<script src="web/resources/library.js"></script>
 
 </head>
 <body>
@@ -102,11 +72,11 @@ if (CodeMirror && CodeMirror.colorize) {
 
 <p>
 Want to draw a Sequence Diagram?
-<a href="." target="_blank">Go to the online editor</a>.
+<a href="." target="_blank" rel="noopener">Go to the online editor</a>.
 </p>
 <p>
 This library renders sequence diagrams from code. It is
-<a href="https://github.com/davidje13/SequenceDiagram" target="_blank">open-source</a>
+<a href="https://github.com/davidje13/SequenceDiagram" target="_blank" rel="noopener">open-source</a>
 (LGPL-3.0), and including it in a website is as simple as adding the script:</p>
 
 <pre data-lang="text/html">
@@ -406,7 +376,7 @@ R -> ...fin2
 
 <p>
 More features are supported. See the
-<a href="." target="_blank">online editor</a>&rsquo;s library and autocomplete
+<a href="." target="_blank" rel="noopener">online editor</a>&rsquo;s library and autocomplete
 features to discover them.
 </p>
 </section>
@@ -418,7 +388,7 @@ This has been tested in the latest versions of Google Chrome, Mozilla Firefox,
 and Apple Safari. Versions of Microsoft Internet Explorer / Edge have not been
 tested and probably won&rsquo;t work. Any bugs found in a supported browser
 should be reported in the
-<a href="https://github.com/davidje13/SequenceDiagram/issues" target="_blank">Issue Tracker</a>.
+<a href="https://github.com/davidje13/SequenceDiagram/issues" target="_blank" rel="noopener">Issue Tracker</a>.
 </p>
 
 <h2 id="API">API</h2>
@@ -877,29 +847,29 @@ for all types.
 There are quite a lot of sequence diagram drawing tools available. If this one
 doesn&rsquo;t fit your needs for whatever reason, you might want to take a look
 at the alternatives: (but also feel free to raise feature requests in the
-<a href="https://github.com/davidje13/SequenceDiagram/issues" target="_blank">issue tracker</a>!)
+<a href="https://github.com/davidje13/SequenceDiagram/issues" target="_blank" rel="noopener">issue tracker</a>!)
 </p>
 <ul>
 
-<li><a href="https://www.websequencediagrams.com/" target="_blank">websequencediagrams.com</a>
+<li><a href="https://www.websequencediagrams.com/" target="_blank" rel="noopener">websequencediagrams.com</a>
 is a commercial offering which inspired the syntax of this project and many
 others. It has a wide range of themes but limited functionality. Also offers a
 hosted image generation service.</li>
 
-<li><a href="https://github.com/bramp/js-sequence-diagrams" target="_blank">js-sequence-diagrams</a>
+<li><a href="https://github.com/bramp/js-sequence-diagrams" target="_blank" rel="noopener">js-sequence-diagrams</a>
 is a Javascript library which has wider browser support via snap.svg but very
 limited functionality.</li>
 
-<li><a href="https://github.com/knsv/mermaid" target="_blank">mermaid</a>
+<li><a href="https://github.com/knsv/mermaid" target="_blank" rel="noopener">mermaid</a>
 is a Javascript library and online editor which can render multiple types of UML
 diagram, including simple sequence diagrams.</li>
 
-<li><a href="https://github.com/aivarsk/scruffy" target="_blank">Scruffy UML</a>
+<li><a href="https://github.com/aivarsk/scruffy" target="_blank" rel="noopener">Scruffy UML</a>
 is a Python library which can render multiple types of UML diagram, including
 simple sequence diagrams, from the commandline. Uses yUML syntax rather than the
 human friendly syntax used by most other projects.</li>
 
-<li><a href="https://github.com/plantuml/plantuml" target="_blank">PlantUML</a>
+<li><a href="https://github.com/plantuml/plantuml" target="_blank" rel="noopener">PlantUML</a>
 is a Java project and online editor which can render multiple types of UML
 diagram, including sequence diagrams. Has a good range of features and allows a
 high degree of customisation (e.g. diagram colours).</li>
@@ -911,7 +881,7 @@ high degree of customisation (e.g. diagram colours).</li>
 <p>
 Thanks to the other tools mentioned above for inspiring parts of the syntax of
 this project, and to
-<a href="https://fonts.google.com/specimen/Handlee" target="_blank">the Handlee font</a>
+<a href="https://fonts.google.com/specimen/Handlee" target="_blank" rel="noopener">the Handlee font</a>
 which is used in the sketch theme.
 </p>
 
@@ -935,7 +905,7 @@ which is used in the sketch theme.
 </pre>
 
 <nav>
-<a href="." target="_blank">Online Editor</a><a href="https://github.com/davidje13/SequenceDiagram" target="_blank">GitHub</a>
+<a href="." target="_blank" rel="noopener">Online Editor</a><a href="https://github.com/davidje13/SequenceDiagram" target="_blank" rel="noopener">GitHub</a>
 </nav>
 
 </article>

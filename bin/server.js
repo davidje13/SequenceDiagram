@@ -55,20 +55,41 @@ const PREVIEW_CACHE = {
 };
 const SKETCH_CSS_SHA = 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 
+const PERMISSIONS_POLICY = [
+	'accelerometer=()',
+	'autoplay=()',
+	'camera=()',
+	'geolocation=()',
+	'gyroscope=()',
+	'interest-cohort=()',
+	'magnetometer=()',
+	'microphone=()',
+	'payment=()',
+	'sync-xhr=()',
+	'usb=()',
+].join(', ');
+
 const statics = new StaticRequestHandler('')
 	.setCache(DEV ? {} : STATIC_CACHE)
 	.addHeader('Content-Security-Policy', [
 		'base-uri \'self\'',
 		'default-src \'none\'',
 		'script-src \'self\' https://unpkg.com',
-		`style-src 'self' '${SKETCH_CSS_SHA}'`,
+		// Using fonts.googleapis.com for library.htm only
+		`style-src 'self' https://fonts.googleapis.com '${SKETCH_CSS_SHA}'`,
 		'connect-src \'self\'',
-		'font-src \'self\' data:',
+		// Using fonts.gstatic.com for library.htm only
+		'font-src \'self\' data: https://fonts.gstatic.com',
 		'img-src \'self\' blob:',
 		'form-action \'self\'',
 		'frame-ancestors \'self\'',
 		'frame-src \'self\'',
 	].join('; '))
+	.addHeader('Cross-Origin-Embedder-Policy', 'require-corp')
+	.addHeader('Cross-Origin-Opener-Policy', 'same-origin')
+	.addHeader('Cross-Origin-Resource-Policy', 'same-origin')
+	.addHeader('Permissions-Policy', PERMISSIONS_POLICY)
+	.addHeader('Referrer-Policy', 'no-referrer')
 	.addHeader('X-Content-Type-Options', 'nosniff')
 	.addHeader('X-Frame-Options', 'DENY')
 	.addHeader('X-XSS-Protection', '1; mode=block')
@@ -83,6 +104,15 @@ const statics = new StaticRequestHandler('')
 
 statics
 	.add('/robots.txt', '')
+	.add('/ads.txt', [
+		'# Deny inclusion in any advertising system\n',
+		'placeholder.example.com, placeholder, DIRECT, placeholder\n',
+	].join(''))
+	.add('/.well-known/security.txt', [
+		'Contact: https://github.com/davidje13/SequenceDiagram/issues\n',
+		'Preferred-Languages: en\n',
+		'Expires: 3000-01-01T00:00:00Z\n',
+	].join(''))
 	.addResources('/', BASEDIR, [
 		'index.html',
 		'library.htm',
@@ -115,6 +145,11 @@ const render = new RenderRequestHandler('/render')
 		'font-src data:',
 		'form-action \'none\'',
 	].join('; '))
+	.addHeader('Cross-Origin-Embedder-Policy', 'require-corp')
+	.addHeader('Cross-Origin-Opener-Policy', 'unsafe-none')
+	.addHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+	.addHeader('Permissions-Policy', PERMISSIONS_POLICY)
+	.addHeader('Referrer-Policy', 'no-referrer')
 	.addHeader('X-Content-Type-Options', 'nosniff');
 
 const preview = new PreviewRequestHandler('/preview')
@@ -129,6 +164,11 @@ const preview = new PreviewRequestHandler('/preview')
 		'frame-ancestors \'self\'',
 		'frame-src \'self\'',
 	].join('; '))
+	.addHeader('Cross-Origin-Embedder-Policy', 'require-corp')
+	.addHeader('Cross-Origin-Opener-Policy', 'same-origin')
+	.addHeader('Cross-Origin-Resource-Policy', 'same-origin')
+	.addHeader('Permissions-Policy', PERMISSIONS_POLICY)
+	.addHeader('Referrer-Policy', 'no-referrer')
 	.addHeader('X-Content-Type-Options', 'nosniff');
 
 new Server()

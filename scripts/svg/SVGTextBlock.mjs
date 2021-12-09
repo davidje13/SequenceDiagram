@@ -20,7 +20,7 @@ function populateSvgTextLine(svg, node, formattedLine) {
 			if(attrs.href) {
 				element = svg.el('a').attrs({
 					'cursor': 'pointer',
-					'rel': 'nofollow',
+					'rel': 'nofollow noopener',
 					'target': '_blank',
 				});
 			} else {

@@ -105,7 +105,8 @@ describe('SVGTextBlock', () => {
 
 			expect(hold.childNodes[0].innerHTML).toContain(' cursor="pointer"');
 			expect(hold.childNodes[0].innerHTML).toContain(' target="_blank"');
-			expect(hold.childNodes[0].innerHTML).toContain(' rel="nofollow"');
+			expect(hold.childNodes[0].innerHTML)
+				.toContain(' rel="nofollow noopener"');
 		});
 
 		it('re-uses text nodes when possible, adding more if needed', () => {
