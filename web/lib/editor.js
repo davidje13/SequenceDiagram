@@ -76,6 +76,32 @@
 			title: 'Agent creation / destruction',
 		},
 		{
+			code: (
+				'relabel'
+			),
+			preview: (
+				'begin A, B\n' +
+				'::\n' +
+				'A -> B: Message\n' +
+				'relabel\n' +
+				'A -> B: Message'
+			),
+			title: 'Relabel all agents',
+		},
+		{
+			code: (
+				'relabel {Agent}'
+			),
+			preview: (
+				'begin A, B\n' +
+				'::\n' +
+				'A -> B: Message\n' +
+				'relabel A\n' +
+				'A -> B: Message'
+			),
+			title: 'Relabel specific agents',
+		},
+		{
 			code: 'autolabel "[<inc>] <label>"',
 			preview: (
 				'autolabel "[<inc>] <label>"\n' +

@@ -150,18 +150,35 @@ DIVIDER_TYPES.set('delay', {defaultHeight: 30});
 DIVIDER_TYPES.set('tear', {defaultHeight: 6});
 
 const AGENT_MANIPULATION_TYPES = new Map();
-AGENT_MANIPULATION_TYPES.set('define', {type: 'agent define'});
-AGENT_MANIPULATION_TYPES.set('begin', {mode: 'box', type: 'agent begin'});
-AGENT_MANIPULATION_TYPES.set('end', {mode: 'cross', type: 'agent end'});
-
-const AGENT_ACTIVATION_TYPES = new Map();
+AGENT_MANIPULATION_TYPES.set('define', {
+	alias: true,
+	base: {type: 'agent define'},
+	min: 1,
+});
+AGENT_MANIPULATION_TYPES.set('begin', {
+	alias: true,
+	base: {mode: 'box', type: 'agent begin'},
+	min: 1,
+});
+AGENT_MANIPULATION_TYPES.set('relabel', {
+	alias: false,
+	base: {type: 'agent relabel'},
+	min: 0,
+});
+AGENT_MANIPULATION_TYPES.set('end', {
+	alias: false,
+	base: {mode: 'cross', type: 'agent end'},
+	min: 1,
+});
 AGENT_MANIPULATION_TYPES.set('activate', {
-	activated: true,
-	type: 'agent activation',
+	alias: false,
+	base: {activated: true, type: 'agent activation'},
+	min: 1,
 });
 AGENT_MANIPULATION_TYPES.set('deactivate', {
-	activated: false,
-	type: 'agent activation',
+	alias: false,
+	base: {activated: false, type: 'agent activation'},
+	min: 1,
 });
 
 function makeError(message, token = null) {
@@ -452,22 +469,12 @@ const PARSERS = [
 
 	{begin: [], fn: (line) => { // Agent
 		const type = AGENT_MANIPULATION_TYPES.get(tokenKeyword(line[0]));
-		if(!type || line.length <= 1) {
+		if(!type || line.length < 1 + type.min) {
 			return null;
 		}
 		return Object.assign({
-			agents: readAgentList(line, 1, line.length, {aliases: true}),
-		}, type);
-	}},
-
-	{begin: [], fn: (line) => { // Activation
-		const type = AGENT_ACTIVATION_TYPES.get(tokenKeyword(line[0]));
-		if(!type || line.length <= 1) {
-			return null;
-		}
-		return Object.assign({
-			agents: readAgentList(line, 1, line.length, {aliases: false}),
-		}, type);
+			agents: readAgentList(line, 1, line.length, {aliases: type.alias}),
+		}, type.base);
 	}},
 
 	{begin: ['simultaneously'], fn: (line) => { // Async

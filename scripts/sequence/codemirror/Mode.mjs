@@ -345,8 +345,13 @@ const makeCommands = ((() => {
 			'reference': refDef,
 			'as': CM_ERROR,
 		}},
+		'relabel': {type: 'keyword', then: {
+			'': agentListTo({'\n': end}),
+			'as': CM_ERROR,
+			'\n': end,
+		}},
 		'end': {type: 'keyword', then: {
-			'': aliasListToEnd,
+			'': agentListTo({'\n': end}),
 			'as': CM_ERROR,
 			'\n': end,
 		}},

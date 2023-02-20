@@ -76,6 +76,16 @@ describe('Sequence Parser', () => {
 			type: 'agent options',
 		}),
 
+		agentRelabel: (agents, {
+			ln = any(),
+			parallel = false,
+		} = {}) => ({
+			agents: makeParsedAgents(agents),
+			ln,
+			parallel,
+			type: 'agent relabel',
+		}),
+
 		async: (target, {
 			ln = any(),
 			parallel = false,
@@ -701,6 +711,8 @@ describe('Sequence Parser', () => {
 			const parsed = parser.parse(
 				'define A, B\n' +
 				'begin A, B\n' +
+				'relabel\n' +
+				'relabel A, B\n' +
 				'activate A, B\n' +
 				'deactivate A, B\n' +
 				'end A, B\n'
@@ -709,6 +721,8 @@ describe('Sequence Parser', () => {
 			expect(parsed.stages).toEqual([
 				PARSED.agentDefine(['A', 'B']),
 				PARSED.agentBegin(['A', 'B'], {mode: 'box'}),
+				PARSED.agentRelabel([]),
+				PARSED.agentRelabel(['A', 'B']),
 				PARSED.agentActivation(['A', 'B'], {activated: true}),
 				PARSED.agentActivation(['A', 'B'], {activated: false}),
 				PARSED.agentEnd(['A', 'B'], {mode: 'cross'}),

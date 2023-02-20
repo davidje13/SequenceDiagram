@@ -387,6 +387,7 @@ export default class Generator {
 			'agent define': this.handleAgentDefine.bind(this),
 			'agent end': this.handleAgentEnd.bind(this),
 			'agent options': this.handleAgentOptions.bind(this),
+			'agent relabel': this.handleAgentRelabel.bind(this),
 			'async': this.handleAsync.bind(this),
 			'block begin': this.handleBlockBegin.bind(this),
 			'block end': this.handleBlockEnd.bind(this),
@@ -563,8 +564,9 @@ export default class Generator {
 		});
 	}
 
-	setGAgentVis(gAgents, visible, mode, checked = false) {
+	setGAgentVis(gAgents, action, mode, checked = false) {
 		const seen = new Set();
+		const filterVisible = action !== 'begin';
 		const filteredGAgents = gAgents.filter((gAgent) => {
 			if(seen.has(gAgent.id)) {
 				return false;
@@ -578,20 +580,24 @@ export default class Generator {
 					return false;
 				}
 			}
-			return state.visible !== visible;
+			return state.visible === filterVisible;
 		});
 		if(filteredGAgents.length === 0) {
 			return null;
 		}
-		filteredGAgents.forEach((gAgent) => {
-			this.updateGAgentState(gAgent, {visible});
-		});
-		this.defineGAgents(filteredGAgents);
+
+		if(action !== 'relabel') {
+			filteredGAgents.forEach((gAgent) => {
+				this.updateGAgentState(gAgent, {visible: action === 'begin'});
+			});
+			// Register new agents and expand currently active group
+			this.defineGAgents(filteredGAgents);
+		}
 
 		return {
 			agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
 			mode,
-			type: (visible ? 'agent begin' : 'agent end'),
+			type: 'agent ' + action,
 		};
 	}
 
@@ -798,7 +804,7 @@ export default class Generator {
 		});
 		this.activeGroups.set(alias, details);
 		this.addImpStage(
-			this.setGAgentVis(details.gAgents, true, 'box'),
+			this.setGAgentVis(details.gAgents, 'begin', 'box'),
 			{parallel}
 		);
 		this.addStage({
@@ -1024,7 +1030,7 @@ export default class Generator {
 			.filter((gAgent) => !gAgent.isVirtualSource)
 		);
 		this.addImpStage(
-			this.setGAgentVis(implicitBeginGAgents, true, 'box'),
+			this.setGAgentVis(implicitBeginGAgents, 'begin', 'box'),
 			{parallel}
 		);
 
@@ -1033,11 +1039,11 @@ export default class Generator {
 
 	_makeConnectParallelStages(flags, connectStage) {
 		return this.makeParallel([
-			this.setGAgentVis(flags.beginGAgents, true, 'box', true),
+			this.setGAgentVis(flags.beginGAgents, 'begin', 'box', true),
 			this.setGAgentActivation(flags.startGAgents, true, true),
 			connectStage,
 			this.setGAgentActivation(flags.stopGAgents, false, true),
-			this.setGAgentVis(flags.endGAgents, false, 'cross', true),
+			this.setGAgentVis(flags.endGAgents, 'end', 'cross', true),
 		]);
 	}
 
@@ -1176,7 +1182,9 @@ export default class Generator {
 		}
 
 		this.defineGAgents(gAgents);
-		this.addImpStage(this.setGAgentVis(gAgents, true, 'box'), {parallel});
+		this.addImpStage(this.setGAgentVis(gAgents, 'begin', 'box'), {
+			parallel,
+		});
 		this.addStage({
 			agentIDs,
 			label: this.textFormatter(label),
@@ -1214,14 +1222,38 @@ export default class Generator {
 		const gAgents = agents.map(this.toGAgent);
 		this.validateGAgents(gAgents);
 		this.defineGAgents(gAgents);
-		this.addImpStage(this.setGAgentVis(gAgents, true, 'box'), {parallel});
+		this.addImpStage(this.setGAgentVis(gAgents, 'begin', 'box'), {
+			parallel,
+		});
 		this.addStage(this.setGAgentActivation(gAgents, activated), {parallel});
 	}
 
 	handleAgentBegin({agents, mode, parallel}) {
 		const gAgents = agents.map(this.toGAgent);
 		this.validateGAgents(gAgents);
-		this.addStage(this.setGAgentVis(gAgents, true, mode, true), {parallel});
+		this.addStage(this.setGAgentVis(gAgents, 'begin', mode, true), {
+			parallel,
+		});
+	}
+
+	handleAgentRelabel({agents, parallel}) {
+		let gAgents = null;
+		if(agents.length === 0) {
+			gAgents = this.gAgents.filter((gAgent) => {
+				const state = this.getGAgentState(gAgent);
+				return (
+					!state.covered &&
+					!state.group &&
+					!state.locked &&
+					!state.blocked &&
+					!gAgent.isVirtualSource
+				);
+			});
+		} else {
+			gAgents = agents.map(this.toGAgent);
+			this.validateGAgents(gAgents);
+		}
+		this.addStage(this.setGAgentVis(gAgents, 'relabel', 'box'), {parallel});
 	}
 
 	handleAgentEnd({agents, mode, parallel}) {
@@ -1235,7 +1267,7 @@ export default class Generator {
 		this.validateGAgents(gAgents);
 		this.addStage(this.makeParallel([
 			this.setGAgentActivation(gAgents, false),
-			this.setGAgentVis(gAgents, false, mode, true),
+			this.setGAgentVis(gAgents, 'end', mode, true),
 			...groupPAgents.map(this.endGroup),
 		]), {parallel});
 	}
@@ -1308,7 +1340,7 @@ export default class Generator {
 		const terminators = meta.terminators || 'none';
 		this.addStage(this.makeParallel([
 			this.setGAgentActivation(this.gAgents, false),
-			this.setGAgentVis(this.gAgents, false, terminators),
+			this.setGAgentVis(this.gAgents, 'end', terminators),
 		]));
 
 		this._finalise(globals);

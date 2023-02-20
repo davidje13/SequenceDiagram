@@ -496,6 +496,7 @@ describe('Code Mirror Mode', () => {
 			expect(hints).toContain('divider ');
 			expect(hints).toContain('define ');
 			expect(hints).toContain('begin ');
+			expect(hints).toContain('relabel ');
 			expect(hints).toContain('end ');
 			expect(hints).toContain('if ');
 			expect(hints).toContain('else\n');

@@ -111,6 +111,9 @@ note over Foo, Bar: "Foo and Bar
 on multiple lines"
 note between Foo, Bar: Link
 
+# in long diagrams, we can add reminders of which agent is which:
+relabel
+
 text right: "Comments\nOver here!"
 
 state over Foo: Foo is ponderous

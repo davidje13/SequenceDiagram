@@ -153,6 +153,7 @@ describe('SequenceDiagram', () => {
 
 		expect(content).toContain('<svg viewBox="-5 -5 60 39">');
 
+		// Agents defined inside the block should still continue after it
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
 			' x1="20" x2="20" y1="7" y2="29"'

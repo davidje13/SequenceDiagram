@@ -7,23 +7,23 @@ const OUTLINE_ATTRS = {
 };
 
 class CapBox {
-	getConfig(options, env, isBegin) {
+	getConfig(options, env, action) {
 		let config = null;
 		if(options.includes('database')) {
 			config = env.theme.agentCap.database;
-		} else if(isBegin && options.includes('person')) {
+		} else if(action === 'begin' && options.includes('person')) {
 			config = env.theme.agentCap.person;
 		}
 		return config || env.theme.agentCap.box;
 	}
 
-	prepareMeasurements({formattedLabel, options}, env, isBegin) {
-		const config = this.getConfig(options, env, isBegin);
+	prepareMeasurements({formattedLabel, options}, env, action) {
+		const config = this.getConfig(options, env, action);
 		env.textSizer.expectMeasure(config.labelAttrs, formattedLabel);
 	}
 
-	separation({formattedLabel, options}, env, isBegin) {
-		const config = this.getConfig(options, env, isBegin);
+	separation({formattedLabel, options}, env, action) {
+		const config = this.getConfig(options, env, action);
 		const width = (
 			env.textSizer.measure(config.labelAttrs, formattedLabel).width +
 			config.padding.left +
@@ -37,8 +37,8 @@ class CapBox {
 		};
 	}
 
-	topShift({formattedLabel, options}, env, isBegin) {
-		const config = this.getConfig(options, env, isBegin);
+	topShift({formattedLabel, options}, env, action) {
+		const config = this.getConfig(options, env, action);
 		const height = (
 			env.textSizer.measureHeight(config.labelAttrs, formattedLabel) +
 			config.padding.top +
@@ -47,8 +47,8 @@ class CapBox {
 		return Math.max(0, height - config.arrowBottom);
 	}
 
-	render(y, {x, formattedLabel, options}, env, isBegin) {
-		const config = this.getConfig(options, env, isBegin);
+	render(y, {x, formattedLabel, options}, env, action) {
+		const config = this.getConfig(options, env, action);
 
 		const text = env.svg.boxedText(config, formattedLabel, {x, y});
 
@@ -189,12 +189,22 @@ class CapFade {
 		};
 	}
 
-	topShift(agentInfo, env, isBegin) {
+	topShift(agentInfo, env, action) {
 		const config = env.theme.agentCap.fade;
-		return isBegin ? config.height : 0;
+		return action === 'begin' ? config.height : 0;
 	}
 
-	render(y, {x}, env, isBegin) {
+	render(y, {x}, env, action) {
+		if(action === 'relabel') {
+			return {
+				height: 0,
+				lineBottom: 0,
+				lineTop: 0,
+			};
+		}
+
+		const isBegin = action === 'begin';
+
 		const config = env.theme.agentCap.fade;
 		const ratio = config.height / (config.height + config.extend);
 
@@ -286,16 +296,16 @@ const AGENT_CAPS = {
 };
 
 export default class AgentCap extends BaseComponent {
-	constructor(begin) {
+	constructor(action) {
 		super();
-		this.begin = begin;
+		this.action = action;
 	}
 
 	prepareMeasurements({mode, agentIDs}, env) {
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			const cap = AGENT_CAPS[mode];
-			cap.prepareMeasurements(agentInfo, env, this.begin);
+			cap.prepareMeasurements(agentInfo, env, this.action);
 		});
 	}
 
@@ -303,7 +313,7 @@ export default class AgentCap extends BaseComponent {
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			const cap = AGENT_CAPS[mode];
-			const sep = cap.separation(agentInfo, env, this.begin);
+			const sep = cap.separation(agentInfo, env, this.action);
 			env.addSpacing(id, sep);
 			agentInfo.currentMaxRad = Math.max(
 				agentInfo.currentMaxRad,
@@ -313,9 +323,9 @@ export default class AgentCap extends BaseComponent {
 	}
 
 	separation({agentIDs}, env) {
-		if(this.begin) {
+		if(this.action === 'begin') {
 			mergeSets(env.visibleAgentIDs, agentIDs);
-		} else {
+		} else if(this.action === 'end') {
 			removeAll(env.visibleAgentIDs, agentIDs);
 		}
 	}
@@ -325,10 +335,10 @@ export default class AgentCap extends BaseComponent {
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			const cap = AGENT_CAPS[mode];
-			const topShift = cap.topShift(agentInfo, env, this.begin);
+			const topShift = cap.topShift(agentInfo, env, this.action);
 			maxTopShift = Math.max(maxTopShift, topShift);
 
-			const r = cap.separation(agentInfo, env, this.begin).radius;
+			const r = cap.separation(agentInfo, env, this.action).radius;
 			agentInfo.currentMaxRad = Math.max(agentInfo.currentMaxRad, r);
 		});
 		return {
@@ -342,14 +352,15 @@ export default class AgentCap extends BaseComponent {
 		agentIDs.forEach((id) => {
 			const agentInfo = env.agentInfos.get(id);
 			const cap = AGENT_CAPS[mode];
-			const topShift = cap.topShift(agentInfo, env, this.begin);
+			const topShift = cap.topShift(agentInfo, env, this.action);
 			const y0 = env.primaryY - topShift;
-			const shifts = cap.render(y0, agentInfo, env, this.begin);
+			const shifts = cap.render(y0, agentInfo, env, this.action);
 			maxEnd = Math.max(maxEnd, y0 + shifts.height);
-			if(this.begin) {
-				env.drawAgentLine(id, y0 + shifts.lineBottom);
-			} else {
+			if(this.action !== 'begin') {
 				env.drawAgentLine(id, y0 + shifts.lineTop, true);
+			}
+			if(this.action !== 'end') {
+				env.drawAgentLine(id, y0 + shifts.lineBottom);
 			}
 		});
 		return maxEnd + env.theme.actionMargin;
@@ -357,10 +368,11 @@ export default class AgentCap extends BaseComponent {
 
 	renderHidden({agentIDs}, env) {
 		agentIDs.forEach((id) => {
-			env.drawAgentLine(id, env.topY, !this.begin);
+			env.drawAgentLine(id, env.topY, this.action === 'end');
 		});
 	}
 }
 
-register('agent begin', new AgentCap(true));
-register('agent end', new AgentCap(false));
+register('agent begin', new AgentCap('begin'));
+register('agent relabel', new AgentCap('relabel'));
+register('agent end', new AgentCap('end'));
