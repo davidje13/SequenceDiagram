@@ -13,6 +13,10 @@ html, body {
 	overflow: hidden;
 }
 
+svg {
+	display: block;
+}
+
 #loader {
 	margin: 140px 50px;
 	text-align: center;
@@ -187,6 +191,7 @@ html, body {
 
 .library-item {
 	display: inline-block;
+	vertical-align: middle;
 	width: 80px;
 	height: 80px;
 }
