@@ -45,7 +45,6 @@
   },
   "devDependencies": {
     "@rollup/plugin-multi-entry": "4.x",
-    "buffer-to-stream": "1.x",
     "codemirror": "5.59.x",
     "eslint": "7.x",
     "eslint-plugin-jasmine": "4.x",

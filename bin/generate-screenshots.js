@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
 const {VirtualSequenceDiagram} = require('../lib/sequence-diagram');
-const buffer2stream = require('buffer-to-stream');
+const { Readable } = require('stream');
 const fs = require('fs');
 const PngCrush = require('pngcrush');
 const svg2png = require('svg2png');
@@ -149,7 +149,7 @@ function stream2buffer(stream) {
 }
 
 function compressImageBuffer(buffer) {
-	const compressed = buffer2stream(buffer)
+	const compressed = Readable.from(buffer)
 		.pipe(new PngCrush(['-rem', 'allb', '-brute', '-l', '9']));
 	return stream2buffer(compressed);
 }
