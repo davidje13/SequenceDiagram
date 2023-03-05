@@ -75,11 +75,9 @@ const statics = new StaticRequestHandler('')
 		'base-uri \'self\'',
 		'default-src \'none\'',
 		'script-src \'self\' https://unpkg.com',
-		// Using fonts.googleapis.com for library.htm only
-		`style-src 'self' https://fonts.googleapis.com '${SKETCH_CSS_SHA}'`,
+		`style-src 'self' '${SKETCH_CSS_SHA}'`,
 		'connect-src \'self\'',
-		// Using fonts.gstatic.com for library.htm only
-		'font-src \'self\' data: https://fonts.gstatic.com',
+		'font-src \'self\' data:',
 		'img-src \'self\' blob:',
 		'form-action \'self\'',
 		'frame-ancestors \'self\'',

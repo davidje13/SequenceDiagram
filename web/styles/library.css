@@ -32,7 +32,7 @@ article > header {
 article > header > h1 {
 	margin: 0 0 10px;
 	padding: 0;
-	font: 3.5em 'Vollkorn', serif;
+	font: 3.5em Vollkorn, Palatino, Georgia, serif;
 	clear: both;
 }
 
@@ -44,7 +44,7 @@ article > header > .sequence-diagram {
 article > h2 {
 	margin: 35px -20px 10px;
 	padding: 5px 20px 0;
-	font: 2em 'Vollkorn', serif;
+	font: 2em Vollkorn, Palatino, Georgia, serif;
 	clear: both;
 	page-break-before: always;
 	break-before: page;
@@ -55,7 +55,7 @@ article > h2 {
 article h3 {
 	margin: 25px -20px 10px;
 	padding: 5px 20px 0;
-	font: 1.5em 'Vollkorn', serif;
+	font: 1.5em Vollkorn, Palatino, Georgia, serif;
 	clear: both;
 	page-break-after: avoid;
 	break-after: avoid;
@@ -64,7 +64,7 @@ article h3 {
 article h4 {
 	margin: 15px -20px 10px;
 	padding: 5px 20px 0;
-	font: 1.1em 'Vollkorn', serif;
+	font: 1.1em Vollkorn, Palatino, Georgia, serif;
 	page-break-after: avoid;
 	break-after: avoid;
 }
