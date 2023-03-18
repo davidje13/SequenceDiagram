@@ -47,6 +47,7 @@ module.exports = (config) => {
 			{included: false, pattern: 'spec/**/*'},
 			{included: false, pattern: 'web/scripts/**/*'},
 			{included: false, pattern: 'bin/**/*'},
+			{included: false, pattern: 'dev-bin/**/*'},
 			{included: false, pattern: 'README.md'},
 		],
 		frameworks: ['detectBrowsers', 'jasmine'],

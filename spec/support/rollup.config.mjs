@@ -22,6 +22,8 @@ export default [
 			'web/**/*_nodespec.mjs',
 			'bin/**/*_spec.mjs',
 			'bin/**/*_nodespec.mjs',
+			'dev-bin/**/*_spec.mjs',
+			'dev-bin/**/*_nodespec.mjs',
 		],
 		output: {
 			file: 'ephemeral/spec_bundle.js',
