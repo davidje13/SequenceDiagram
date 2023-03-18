@@ -1,4 +1,4 @@
-export default function CodeMirror(container, options) {
+function CodeMirror(container, options) {
 	/* eslint-disable jasmine/no-unsafe-spy */ // Whole object is a spy
 	const spy = jasmine.createSpyObj('CodeMirror', ['on']);
 	spy.constructor = {
@@ -16,3 +16,5 @@ export default function CodeMirror(container, options) {
 
 CodeMirror.defineMode = () => null;
 CodeMirror.registerHelper = () => null;
+
+globalThis.CodeMirror = CodeMirror;

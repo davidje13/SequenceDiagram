@@ -152,7 +152,7 @@ const makeCommands = ((() => {
 	const agentInfoList = optionalKeywords(
 		'keyword',
 		['a', 'an'],
-		simpleList('keyword', AGENT_INFO_TYPES, {'\n': end})
+		simpleList('keyword', AGENT_INFO_TYPES, {'\n': end}),
 	);
 
 	function makeSideNote(side) {
@@ -430,7 +430,7 @@ const makeCommands = ((() => {
 				{},
 				BASE_THEN,
 				{'&': {type: 'keyword', then: parallel}},
-				arrowConnect
+				arrowConnect,
 			),
 		};
 	};
@@ -477,7 +477,7 @@ function cmMakeCompletions(state, path) {
 		mergeSets(
 			comp,
 			cmGetSuggestions(state, token, next),
-			suggestionsEqual
+			suggestionsEqual,
 		);
 	});
 	return comp;
@@ -500,7 +500,7 @@ function storeKnownEntity(state, type, value) {
 	mergeSets(
 		state['known' + type],
 		[{q: true, suffix: ' ', v: value}],
-		suggestionsEqual
+		suggestionsEqual,
 	);
 }
 

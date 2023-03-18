@@ -369,11 +369,11 @@ describe('Sequence Parser', () => {
 
 		it('rejects empty agent options', () => {
 			expect(() => parser.parse('Foo is')).toThrow(new Error(
-				'Empty agent options at line 1, character 6'
+				'Empty agent options at line 1, character 6',
 			));
 
 			expect(() => parser.parse('Foo is a')).toThrow(new Error(
-				'Empty agent options at line 1, character 8'
+				'Empty agent options at line 1, character 8',
 			));
 		});
 
@@ -406,23 +406,23 @@ describe('Sequence Parser', () => {
 
 		it('rejects duplicate flags', () => {
 			expect(() => parser.parse('A -> +*+B')).toThrow(new Error(
-				'Duplicate agent flag: + at line 1, character 7'
+				'Duplicate agent flag: + at line 1, character 7',
 			));
 
 			expect(() => parser.parse('A -> **B')).toThrow(new Error(
-				'Duplicate agent flag: * at line 1, character 6'
+				'Duplicate agent flag: * at line 1, character 6',
 			));
 		});
 
 		it('rejects missing agent names', () => {
 			expect(() => parser.parse('A -> +')).toThrow(new Error(
-				'Missing agent name at line 1, character 6'
+				'Missing agent name at line 1, character 6',
 			));
 		});
 
 		it('rejects missing agent names with aliases', () => {
 			expect(() => parser.parse('define as A')).toThrow(new Error(
-				'Missing agent name at line 1, character 7'
+				'Missing agent name at line 1, character 7',
 			));
 		});
 
@@ -530,7 +530,7 @@ describe('Sequence Parser', () => {
 				'A~~>B\n' +
 				'A~~>>B\n' +
 				'A~~~B\n' +
-				'A~~xB\n'
+				'A~~xB\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -603,7 +603,7 @@ describe('Sequence Parser', () => {
 		it('ignores arrows within the label', () => {
 			const parsed = parser.parse(
 				'A <- B: B -> A\n' +
-				'A -> B: B <- A\n'
+				'A -> B: B <- A\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -629,12 +629,12 @@ describe('Sequence Parser', () => {
 				PARSED.connectBegin(
 					{flags: ['start'], name: 'A'},
 					'foo',
-					{left: 1, line: 'solid', right: 0}
+					{left: 1, line: 'solid', right: 0},
 				),
 				PARSED.connectEnd(
 					{flags: ['stop'], name: 'B'},
 					'foo',
-					{label: 'woo', left: 0, line: 'solid', right: 1}
+					{label: 'woo', left: 0, line: 'solid', right: 1},
 				),
 			]);
 		});
@@ -653,7 +653,7 @@ describe('Sequence Parser', () => {
 				'note left of A: hello there\n' +
 				'note right A: hello there\n' +
 				'note right of A: hello there\n' +
-				'note between A, B: hi\n'
+				'note between A, B: hi\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -675,7 +675,7 @@ describe('Sequence Parser', () => {
 
 		it('rejects note between for a single agent', () => {
 			expect(() => parser.parse('note between A: hi')).toThrow(new Error(
-				'Too few agents for note at line 1, character 0'
+				'Too few agents for note at line 1, character 0',
 			));
 		});
 
@@ -692,7 +692,7 @@ describe('Sequence Parser', () => {
 
 		it('rejects multiple agents for state', () => {
 			expect(() => parser.parse('state over A, B: hi')).toThrow(new Error(
-				'Too many agents for state at line 1, character 0'
+				'Too many agents for state at line 1, character 0',
 			));
 		});
 
@@ -715,7 +715,7 @@ describe('Sequence Parser', () => {
 				'relabel A, B\n' +
 				'activate A, B\n' +
 				'deactivate A, B\n' +
-				'end A, B\n'
+				'end A, B\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -742,7 +742,7 @@ describe('Sequence Parser', () => {
 				'divider line\n' +
 				'divider space\n' +
 				'divider delay\n' +
-				'divider tear\n'
+				'divider tear\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -756,7 +756,7 @@ describe('Sequence Parser', () => {
 		it('converts explicit divider heights', () => {
 			const parsed = parser.parse(
 				'divider with height 40\n' +
-				'divider delay with height 0\n'
+				'divider delay with height 0\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -769,7 +769,7 @@ describe('Sequence Parser', () => {
 			const parsed = parser.parse(
 				'divider: message 1\n' +
 				'divider tear: message 2\n' +
-				'divider delay with height 40: message 3\n'
+				'divider delay with height 40: message 3\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -782,7 +782,7 @@ describe('Sequence Parser', () => {
 		it('converts reference commands', () => {
 			const parsed = parser.parse(
 				'begin reference: Foo bar as baz\n' +
-				'begin reference over A, B: Foo bar as baz\n'
+				'begin reference over A, B: Foo bar as baz\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -850,7 +850,7 @@ describe('Sequence Parser', () => {
 				'  C -> B\n' +
 				'else\n' +
 				'  A -> D\n' +
-				'end\n'
+				'end\n',
 			);
 
 			expect(parsed.stages).toEqual([
@@ -891,7 +891,7 @@ describe('Sequence Parser', () => {
 
 		it('rejects parallel markers on metadata', () => {
 			expect(() => parser.parse('& title foo')).toThrow(new Error(
-				'Metadata cannot be parallel at line 1, character 0'
+				'Metadata cannot be parallel at line 1, character 0',
 			));
 		});
 
@@ -901,7 +901,7 @@ describe('Sequence Parser', () => {
 
 		it('rejects invalid inputs', () => {
 			expect(() => parser.parse('huh')).toThrow(new Error(
-				'Unrecognised command: huh at line 1, character 0'
+				'Unrecognised command: huh at line 1, character 0',
 			));
 		});
 
@@ -914,31 +914,31 @@ describe('Sequence Parser', () => {
 		it('rejects messages on delayed connections', () => {
 			expect(() => parser.parse('A -> ...a: nope')).toThrow(new Error(
 				'Cannot label beginning of delayed connection' +
-				' at line 1, character 9'
+				' at line 1, character 9',
 			));
 		});
 
 		it('rejects invalid terminators', () => {
 			expect(() => parser.parse('terminators foo')).toThrow(new Error(
-				'Unknown termination "foo" at line 1, character 12'
+				'Unknown termination "foo" at line 1, character 12',
 			));
 		});
 
 		it('rejects missing terminators', () => {
 			expect(() => parser.parse('terminators')).toThrow(new Error(
-				'Unspecified termination at line 1, character 0'
+				'Unspecified termination at line 1, character 0',
 			));
 		});
 
 		it('rejects invalid headers', () => {
 			expect(() => parser.parse('headers foo')).toThrow(new Error(
-				'Unknown header "foo" at line 1, character 8'
+				'Unknown header "foo" at line 1, character 8',
 			));
 		});
 
 		it('rejects missing headers', () => {
 			expect(() => parser.parse('headers')).toThrow(new Error(
-				'Unspecified header at line 1, character 0'
+				'Unspecified header at line 1, character 0',
 			));
 		});
 
@@ -948,7 +948,7 @@ describe('Sequence Parser', () => {
 
 		it('rejects malformed block commands', () => {
 			expect(() => parser.parse('else nope foo')).toThrow(new Error(
-				'Invalid block command; expected "if" at line 1, character 5'
+				'Invalid block command; expected "if" at line 1, character 5',
 			));
 		});
 
@@ -958,23 +958,23 @@ describe('Sequence Parser', () => {
 
 		it('rejects unknown divider types', () => {
 			expect(() => parser.parse('divider foo')).toThrow(new Error(
-				'Unknown divider type at line 1, character 8'
+				'Unknown divider type at line 1, character 8',
 			));
 		});
 
 		it('rejects negative divider heights', () => {
 			expect(() => parser.parse(
-				'divider with height -5'
+				'divider with height -5',
 			)).toThrow(new Error(
-				'Invalid divider height at line 1, character 20'
+				'Invalid divider height at line 1, character 20',
 			));
 		});
 
 		it('rejects invalid divider heights', () => {
 			expect(() => parser.parse(
-				'divider with height a'
+				'divider with height a',
 			)).toThrow(new Error(
-				'Invalid divider height at line 1, character 20'
+				'Invalid divider height at line 1, character 20',
 			));
 		});
 	});

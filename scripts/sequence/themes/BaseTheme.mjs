@@ -79,7 +79,7 @@ export default class BaseTheme {
 						'intercept': -70,
 						'slope': 100,
 						'type': 'linear',
-					})
+					}),
 				),
 				// Add colour
 				this.svg.el('feComponentTransfer').add(
@@ -101,13 +101,13 @@ export default class BaseTheme {
 					this.svg.el('feFuncA').attrs({
 						'slope': 0.8,
 						'type': 'linear',
-					})
+					}),
 				),
 				// Draw text on top
 				this.svg.el('feMerge').add(
 					this.svg.el('feMergeNode'),
-					this.svg.el('feMergeNode').attr('in', 'SourceGraphic')
-				)
+					this.svg.el('feMergeNode').attr('in', 'SourceGraphic'),
+				),
 			));
 	}
 
@@ -236,7 +236,7 @@ export default class BaseTheme {
 				width: position.width,
 				x: position.x,
 				y: position.y + iconHeight,
-			})
+			}),
 		);
 	}
 
@@ -253,7 +253,7 @@ export default class BaseTheme {
 					' 0 0 0 ' + position.width + ' 0'
 				))
 				.attrs(attrs)
-				.attr('fill', 'none')
+				.attr('fill', 'none'),
 		);
 	}
 
@@ -271,7 +271,7 @@ export default class BaseTheme {
 	renderFlatConnect(
 		pattern,
 		attrs,
-		{x1, y1, x2, y2}
+		{x1, y1, x2, y2},
 	) {
 		return {
 			p1: {x: x1, y: y1},
@@ -289,7 +289,7 @@ export default class BaseTheme {
 	renderRevConnect(
 		pattern,
 		attrs,
-		{rad, x1, x2, xR, y1, y2}
+		{rad, x1, x2, xR, y1, y2},
 	) {
 		const maxRad = (y2 - y1) / 2;
 		const line = this.svg.patternedLine(pattern)
@@ -317,7 +317,7 @@ export default class BaseTheme {
 
 	renderLineDivider(
 		{lineAttrs},
-		{height, labelWidth, width, x, y}
+		{height, labelWidth, width, x, y},
 	) {
 		let shape = null;
 		const yPos = y + height / 2;
@@ -334,7 +334,7 @@ export default class BaseTheme {
 					'x2': x + width,
 					'y1': yPos,
 					'y2': yPos,
-				}).attrs(lineAttrs)
+				}).attrs(lineAttrs),
 			);
 		} else {
 			shape = this.svg.line({'fill': 'none'}, {
@@ -349,7 +349,7 @@ export default class BaseTheme {
 
 	renderDelayDivider(
 		{dotSize, gapSize},
-		{height, width, x, y}
+		{height, width, x, y},
 	) {
 		const mask = this.svg.el('g');
 		for(let i = 0; i + gapSize <= height; i += dotSize + gapSize) {
@@ -367,7 +367,7 @@ export default class BaseTheme {
 
 	renderTearDivider(
 		{fadeBegin, fadeSize, lineAttrs, pattern, zigHeight, zigWidth},
-		{env, height, labelHeight, labelWidth, width, x, y}
+		{env, height, labelHeight, labelWidth, width, x, y},
 	) {
 		const maskGradID = env.addDef('tear-grad', () => {
 			const px = 100 / width;
@@ -400,7 +400,7 @@ export default class BaseTheme {
 					width,
 					x,
 					y: y - 5,
-				})
+				}),
 			);
 		const shapeMaskID = env.addDef(shapeMask);
 
@@ -432,7 +432,7 @@ export default class BaseTheme {
 						'd': pathTop.asPath(),
 						'fill': 'none',
 					})
-					.attrs(lineAttrs)
+					.attrs(lineAttrs),
 			);
 
 		if(height > 0) {
@@ -445,7 +445,7 @@ export default class BaseTheme {
 						'd': pathBase.asPath(),
 						'fill': 'none',
 					})
-					.attrs(lineAttrs)
+					.attrs(lineAttrs),
 			);
 			pathTop
 				.line(pathBase.x, pathBase.y, {patterned: false})

@@ -5,14 +5,14 @@ function encodeChar(c) {
 function escapeHTML(text) {
 	return text.replace(
 		/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\r\n\t -%'-;=?-~]/g,
-		encodeChar
+		encodeChar,
 	);
 }
 
 function escapeQuoted(text) {
 	return text.replace(
 		/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\r\n\t !#$%'-;=?-~]/g,
-		encodeChar
+		encodeChar,
 	);
 }
 

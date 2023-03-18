@@ -23,7 +23,7 @@ describe('NoteBetween', () => {
 		const components = getComponents();
 
 		expect(components.get('note between')).toEqual(
-			jasmine.any(NoteBetween)
+			jasmine.any(NoteBetween),
 		);
 	});
 });

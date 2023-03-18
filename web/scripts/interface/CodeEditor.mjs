@@ -51,13 +51,11 @@ function lineWithinRange(doc, ln, start, end) {
 export default class CodeEditor extends EventObject {
 	constructor(dom, container, {
 		mode = '',
-		require = null,
 		value = '',
 	}) {
 		super();
 
 		this.mode = mode;
-		this.require = require || (() => null);
 
 		this.marker = null;
 
@@ -85,7 +83,7 @@ export default class CodeEditor extends EventObject {
 					clearOnEnter: true,
 					inclusiveLeft: false,
 					inclusiveRight: false,
-				}
+				},
 			);
 		}
 	}
@@ -105,7 +103,7 @@ export default class CodeEditor extends EventObject {
 			this.code.setSelection(
 				{ch: 0, line: ln},
 				{ch: 0, line: ln + 1},
-				{bias: -1, origin: '+focus'}
+				{bias: -1, origin: '+focus'},
 			);
 			this.code.focus();
 		}
@@ -221,7 +219,7 @@ export default class CodeEditor extends EventObject {
 				this.code.replaceSelection(
 					block.replace(/\{.*\}/, this.code.getSelection()),
 					'end',
-					'library'
+					'library',
 				);
 			} else {
 				const cur = this.code.getCursor('head');
@@ -298,22 +296,18 @@ export default class CodeEditor extends EventObject {
 
 	_enhance() {
 		// Load on demand for progressive enhancement
-		// (failure to load external module will not block functionality)
-		this.require([
-			'cm/lib/codemirror',
-			'cm/addon/hint/show-hint',
-			'cm/addon/edit/trailingspace',
-			'cm/addon/comment/comment',
-		], (CodeMirror) => {
+		// (failure to load will not block functionality)
+		import('../ext/codemirror-editor.mjs').then(({CodeMirror}) => {
+			const CM = globalThis.overrideCodeMirror || CodeMirror;
 			const globals = {};
-			this.trigger('enhance', [CodeMirror, globals]);
+			this.trigger('enhance', [CM, globals]);
 
 			const oldCode = this.code;
 
 			const {selectionStart, selectionEnd, value} = oldCode.element;
 			const focussed = oldCode.focussed();
 
-			const code = new CodeMirror(oldCode.element.parentNode, {
+			const code = new CM(oldCode.element.parentNode, {
 				extraKeys: {
 					'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
 					'Cmd-Enter': 'autocomplete',
@@ -333,7 +327,7 @@ export default class CodeEditor extends EventObject {
 
 			code.getDoc().setSelection(
 				findPos(value, selectionStart),
-				findPos(value, selectionEnd)
+				findPos(value, selectionEnd),
 			);
 
 			let lastKey = 0;
@@ -352,7 +346,7 @@ export default class CodeEditor extends EventObject {
 				} else if(change.origin !== 'complete') {
 					return;
 				}
-				CodeMirror.commands.autocomplete(cm, null, {
+				CM.commands.autocomplete(cm, null, {
 					completeSingle: false,
 				});
 			});
@@ -366,11 +360,11 @@ export default class CodeEditor extends EventObject {
 			});
 
 			/*
-			 * See https://github.com/codemirror/CodeMirror/issues/3092
-			 * startCompletion will fire even if there are no completions, so
-			 * we cannot rely on it. Instead we hack the hints function to
-			 * propagate 'shown' as 'hint-shown', which we pick up here
-			 */
+				* See https://github.com/codemirror/CodeMirror/issues/3092
+				* startCompletion will fire even if there are no completions, so
+				* we cannot rely on it. Instead we hack the hints function to
+				* propagate 'shown' as 'hint-shown', which we pick up here
+				*/
 			code.on('hint-shown', () => {
 				this.isAutocompleting = true;
 			});
@@ -385,6 +379,6 @@ export default class CodeEditor extends EventObject {
 
 			this.code = code;
 			this.enhanced = true;
-		});
+		}).catch(console.warn);
 	}
 }

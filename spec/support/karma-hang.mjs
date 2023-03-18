@@ -11,7 +11,7 @@ let originalTimeout = 0;
 afterAll((done) => {
 	window.console.log(
 		'Waiting ' + delay / 1000 +
-		' seconds before clearing (see karma-hang.mjs)...'
+		' seconds before clearing (see karma-hang.mjs)...',
 	);
 	setTimeout(() => {
 		jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;

@@ -11,7 +11,7 @@ describe('TextSizer', () => {
 	beforeEach(() => {
 		svg = new SVG(
 			new DOMWrapper(window.document),
-			(svgBase) => new TextSizer(svgBase)
+			(svgBase) => new TextSizer(svgBase),
 		);
 		document.body.appendChild(svg.body.element);
 	});

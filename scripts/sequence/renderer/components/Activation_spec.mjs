@@ -12,7 +12,7 @@ describe('Activation', () => {
 		const components = getComponents();
 
 		expect(components.get('agent activation')).toEqual(
-			jasmine.any(Activation)
+			jasmine.any(Activation),
 		);
 	});
 

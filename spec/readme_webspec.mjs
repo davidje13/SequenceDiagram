@@ -4,7 +4,7 @@ import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
 const RESOLUTION = 4;
 
 const SAMPLE_REGEX = new RegExp(
-	/(?:<img src="([^"]*)"[^>]*>[\s]*)?```(?!shell).*\n([^]+?)```/g
+	/(?:<img src="([^"]*)"[^>]*>[\s]*)?```(?!shell).*\n([^]+?)```/g,
 );
 
 const SCREENSHOT_BLACKLIST = [
@@ -48,7 +48,7 @@ function performSampleTests({file, code}, index) {
 			})
 			.then(() => ImageRegion.loadURL(
 				file,
-				{height: actual.height, width: actual.width}
+				{height: actual.height, width: actual.width},
 			))
 			.then((expected) => {
 				expect(actual).toLookLike(expected, {
@@ -70,6 +70,6 @@ describe('Readme', () => {
 			.then(findSamples)
 			.then((samples) => Promise.all(samples.map(performSampleTests)))
 			.catch((err) => Promise.reject(readError(err)))
-			.then(done, done.fail);
+			.then(() => done(), done.fail);
 	});
 });

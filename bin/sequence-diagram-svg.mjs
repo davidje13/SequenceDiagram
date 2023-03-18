@@ -1,6 +1,6 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
-const {VirtualSequenceDiagram} = require('../lib/sequence-diagram');
+import {VirtualSequenceDiagram} from '../lib/sequence-diagram.mjs';
 
 function read(pipe) {
 	return new Promise((resolve) => {

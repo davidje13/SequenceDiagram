@@ -24,7 +24,7 @@ function makeCacheControlHeader({
 	return parts.join(', ');
 }
 
-class RequestHandler {
+export class RequestHandler {
 	constructor(method, matcher, handleFn) {
 		this.method = method;
 		this.matcher = matcher;
@@ -92,5 +92,3 @@ class RequestHandler {
 		return true;
 	}
 }
-
-module.exports = {RequestHandler};

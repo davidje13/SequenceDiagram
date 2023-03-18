@@ -231,7 +231,7 @@ function skipOver(line, start, skip, error = null) {
 			if(error) {
 				throw makeError(
 					error + '; expected "' + expected + '"',
-					token
+					token,
 				);
 			} else {
 				return start;
@@ -388,7 +388,7 @@ const PARSERS = [
 			line,
 			heightSep + 2,
 			labelSep,
-			DIVIDER_TYPES.get(mode).defaultHeight
+			DIVIDER_TYPES.get(mode).defaultHeight,
 		);
 		if(Number.isNaN(height) || height < 0) {
 			throw makeError('Invalid divider height', line[heightSep + 2]);
@@ -452,7 +452,7 @@ const PARSERS = [
 			line,
 			labelSep + 1,
 			line.length,
-			{aliases: true}
+			{aliases: true},
 		);
 		if(!def.alias) {
 			throw makeError('Reference must have an alias', line[labelSep]);
@@ -526,7 +526,7 @@ const PARSERS = [
 		const connectionToken = findFirstToken(
 			line,
 			CONNECT.types,
-			{limit: labelSep - 1, start: 0}
+			{limit: labelSep - 1, start: 0},
 		);
 		if(!connectionToken) {
 			return null;
@@ -550,7 +550,7 @@ const PARSERS = [
 			if(labelSep !== line.length) {
 				throw makeError(
 					'Cannot label beginning of delayed connection',
-					line[labelSep]
+					line[labelSep],
 				);
 			}
 			return {
@@ -647,7 +647,7 @@ const SHARED_TOKENISER = new Tokeniser();
 export default class Parser {
 	getCodeMirrorMode() {
 		return SHARED_TOKENISER.getCodeMirrorMode(
-			Array.from(CONNECT.types.keys())
+			Array.from(CONNECT.types.keys()),
 		);
 	}
 

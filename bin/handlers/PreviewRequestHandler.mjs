@@ -1,11 +1,11 @@
-const {RequestHandler} = require('../server/RequestHandler');
-const {VirtualSequenceDiagram} = require('../../lib/sequence-diagram');
+import {RequestHandler} from '../server/RequestHandler.mjs';
+import {VirtualSequenceDiagram} from '../../lib/sequence-diagram.mjs';
 
 const UNSAFE_HTML = /[^a-zA-Z0-9 :;.,]/g;
 const escChar = (c) => `&#x${c.charCodeAt(0).toString(16).padStart(4, '0')};`;
 const escapeHTML = (v) => v.replaceAll(UNSAFE_HTML, escChar);
 
-class PreviewRequestHandler extends RequestHandler {
+export class PreviewRequestHandler extends RequestHandler {
 	constructor(baseUrlPattern) {
 		super('GET', new RegExp(`^${baseUrlPattern}/?(.*)$`, 'i'));
 		this.info = `Rendering preview at ${baseUrlPattern}/`;
@@ -56,5 +56,3 @@ class PreviewRequestHandler extends RequestHandler {
 		writeEncoded(encoding, content);
 	}
 }
-
-module.exports = {PreviewRequestHandler};

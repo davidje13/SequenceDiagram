@@ -40,7 +40,7 @@ export default class PatternedLine {
 		if(this.pattern && patterned) {
 			const len = Math.sqrt(
 				(x - this.x) * (x - this.x) +
-				(y - this.y) * (y - this.y)
+				(y - this.y) * (y - this.y),
 			);
 			const dx1 = (x - this.x) / len;
 			const dy1 = (y - this.y) / len;
@@ -51,7 +51,7 @@ export default class PatternedLine {
 				const delta = this._nextDelta();
 				this.points.push(
 					(this.x + pos * dx1 + delta * dx2) + ' ' +
-					(this.y + pos * dy1 + delta * dy2)
+					(this.y + pos * dy1 + delta * dy2),
 				);
 			}
 			this.disconnect = 1;
@@ -68,7 +68,7 @@ export default class PatternedLine {
 	arc(cx, cy, theta) {
 		const radius = Math.sqrt(
 			(cx - this.x) * (cx - this.x) +
-			(cy - this.y) * (cy - this.y)
+			(cy - this.y) * (cy - this.y),
 		);
 		const theta1 = Math.atan2(this.x - cx, cy - this.y);
 		const nextX = cx + Math.sin(theta1 + theta) * radius;
@@ -82,7 +82,7 @@ export default class PatternedLine {
 				const delta = this._nextDelta() * dir;
 				this.points.push(
 					(cx + Math.sin(t) * (radius + delta)) + ' ' +
-					(cy - Math.cos(t) * (radius + delta))
+					(cy - Math.cos(t) * (radius + delta)),
 				);
 			}
 			this.disconnect = 1;
@@ -92,7 +92,7 @@ export default class PatternedLine {
 				'A' + radius + ' ' + radius + ' 0 ' +
 				((Math.abs(theta) >= Math.PI) ? '1 ' : '0 ') +
 				((theta < 0) ? '0 ' : '1 ') +
-				nextX + ' ' + nextY
+				nextX + ' ' + nextY,
 			);
 			this.disconnect = 0;
 		}

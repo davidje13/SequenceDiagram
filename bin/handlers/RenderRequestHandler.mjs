@@ -1,6 +1,6 @@
-const {HttpError} = require('../server/HttpError');
-const {RequestHandler} = require('../server/RequestHandler');
-const {VirtualSequenceDiagram} = require('../../lib/sequence-diagram');
+import {HttpError} from '../server/HttpError.mjs';
+import {RequestHandler} from '../server/RequestHandler.mjs';
+import {VirtualSequenceDiagram} from '../../lib/sequence-diagram.mjs';
 
 const NUM_MATCH = '[0-9]+(?:\\.[0-9]+)?';
 
@@ -37,7 +37,7 @@ function readEncoded(str, encoding) {
 	}
 }
 
-class RenderRequestHandler extends RequestHandler {
+export class RenderRequestHandler extends RequestHandler {
 	constructor(baseUrlPattern) {
 		super('GET', new RegExp(
 			`^${baseUrlPattern}/` +
@@ -45,7 +45,7 @@ class RenderRequestHandler extends RequestHandler {
 			'(?:(uri|b64)/)?' +
 			'(.*?)' +
 			'(?:\\.(svg))?$',
-			'i'
+			'i',
 		));
 		this.info = `Rendering sequence diagrams at ${baseUrlPattern}/`;
 	}
@@ -77,5 +77,3 @@ class RenderRequestHandler extends RequestHandler {
 		}
 	}
 }
-
-module.exports = {RenderRequestHandler};

@@ -1,14 +1,10 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
-const {VirtualSequenceDiagram} = require('../lib/sequence-diagram');
-const { Readable } = require('stream');
-const fs = require('fs');
-const PngCrush = require('pngcrush');
-const svg2png = require('svg2png');
-const util = require('util');
-
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
+import {readFile, writeFile} from 'node:fs/promises';
+import PngCrush from 'pngcrush';
+import {Readable} from 'node:stream';
+import {VirtualSequenceDiagram} from '../lib/sequence-diagram.mjs';
+import svg2png from 'svg2png';
 
 function make(parent, tag, attrs = {}) {
 	const doc = parent.ownerDocument;
@@ -57,7 +53,7 @@ function getReadmeFile() {
 const RESOLUTION = 4;
 
 const SAMPLE_REGEX = new RegExp(
-	/<img src="([^"]*)"[^>]*>[\s]*```(?!shell).*\n([^]+?)```/g
+	/<img src="([^"]*)"[^>]*>[\s]*```(?!shell).*\n([^]+?)```/g,
 );
 
 function findSamples(content) {
@@ -180,7 +176,7 @@ function renderSample({file, code, mutator, size}) {
 		.then(() => process.stdout.write(file + ' complete\n'))
 		.catch((err) => process.stderr.write(
 			'Failed to generate ' + file + ': ' +
-			processError(err) + '\n'
+			processError(err) + '\n',
 		));
 }
 

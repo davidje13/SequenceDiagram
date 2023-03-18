@@ -122,7 +122,7 @@ class TextSizerWrapper {
 						cacheLine,
 						data: this.sizer.prepMeasurement(
 							attrs,
-							cacheLine.formatted
+							cacheLine.formatted,
 						),
 					});
 				}
@@ -309,7 +309,7 @@ export default class SVG {
 					(x1 - flick) + ' ' + (y0 + flick) + ' ' +
 					x1 + ' ' + (y0 + flick)
 				))
-				.attrs(flickAttrs)
+				.attrs(flickAttrs),
 		);
 	}
 

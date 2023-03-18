@@ -90,14 +90,14 @@ describe('SVG', () => {
 				'33 20 ' +
 				'40 27 ' +
 				'40 60 ' +
-				'10 60'
+				'10 60',
 			);
 
 			expect(flick.getAttribute('zig')).toEqual('zag');
 			expect(flick.getAttribute('points')).toEqual(
 				'33 20 ' +
 				'33 27 ' +
-				'40 27'
+				'40 27',
 			);
 		});
 	});

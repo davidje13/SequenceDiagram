@@ -245,7 +245,7 @@ describe('Sequence Tokeniser', () => {
 
 		it('rejects unterminated quoted values', () => {
 			expect(() => tokeniser.tokenise('"nope')).toThrow(new Error(
-				'Unterminated literal (began at line 1, character 0)'
+				'Unterminated literal (began at line 1, character 0)',
 			));
 		});
 

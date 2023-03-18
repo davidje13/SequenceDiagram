@@ -1,10 +1,10 @@
-const {HttpError} = require('./HttpError');
-const {Readable} = require('stream');
-const zlib = require('zlib');
+import {HttpError} from './HttpError.mjs';
+import {Readable} from 'node:stream';
+import zlib from 'zlib';
 
 const MATCH_ACCEPT = new RegExp('^ *([^;]+)(?:;q=([0-9]+(?:\\.[0-9]+)?))? *$');
 
-function parseAcceptEncoding(accept) {
+export function parseAcceptEncoding(accept) {
 	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.3
 
 	const opts = (accept || 'identity;q=1, *;q=0.5').split(',');
@@ -28,7 +28,7 @@ function parseAcceptEncoding(accept) {
 	return types;
 }
 
-function pickAcceptEncoding(types, preferred) {
+export function pickAcceptEncoding(types, preferred) {
 	let best = null;
 	let bestQ = -1;
 	const wildcard = types.get('*');
@@ -46,7 +46,7 @@ function pickAcceptEncoding(types, preferred) {
 	return best;
 }
 
-function writeEncoded(res, encoding, compressionOpts, data) {
+export function writeEncoded(res, encoding, compressionOpts, data) {
 	if(encoding === 'identity') {
 		res.end(data);
 		return;
@@ -69,9 +69,3 @@ function writeEncoded(res, encoding, compressionOpts, data) {
 		throw new HttpError(500, 'Failed to encode');
 	}
 }
-
-module.exports = {
-	parseAcceptEncoding,
-	pickAcceptEncoding,
-	writeEncoded,
-};

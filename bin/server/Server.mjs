@@ -1,14 +1,16 @@
-const {HttpError} = require('./HttpError');
-const http = require('http');
-const {
+import {
 	parseAcceptEncoding,
 	pickAcceptEncoding,
 	writeEncoded,
-} = require('./encoding');
+} from './encoding.mjs';
+import {HttpError} from './HttpError.mjs';
+import http from 'node:http';
 
 const PREF_ENCODINGS = ['gzip', 'deflate', 'identity'];
 
-class Server {
+export { HttpError };
+
+export class Server {
 	constructor() {
 		this.running = false;
 		this.handlers = [];
@@ -55,19 +57,19 @@ class Server {
 
 	_makeInfo(req, res) {
 		const acceptEncoding = parseAcceptEncoding(
-			req.headers['accept-encoding']
+			req.headers['accept-encoding'],
 		);
 		return {
 			log: this.log,
 			pickEncoding: (opts) => pickAcceptEncoding(
 				acceptEncoding,
-				opts || PREF_ENCODINGS
+				opts || PREF_ENCODINGS,
 			),
 			writeEncoded: (encoding, data) => writeEncoded(
 				res,
 				encoding,
 				this.compressionOptions,
-				data
+				data,
 			),
 		};
 	}
@@ -142,5 +144,3 @@ class Server {
 		target.write('Available at ' + this.baseurl() + '\n\n');
 	}
 }
-
-module.exports = {HttpError, Server};

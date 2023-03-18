@@ -59,7 +59,7 @@ class CapBox {
 				width: text.width,
 				x: x - text.width / 2,
 				y,
-			})
+			}),
 		);
 
 		return {
@@ -105,7 +105,7 @@ class CapCross {
 				width: d * 2,
 				x: x - d,
 				y,
-			})
+			}),
 		);
 
 		return {
@@ -165,7 +165,7 @@ class CapBar {
 				width,
 				x: x - width / 2,
 				y,
-			})
+			}),
 		);
 
 		return {
@@ -317,7 +317,7 @@ export default class AgentCap extends BaseComponent {
 			env.addSpacing(id, sep);
 			agentInfo.currentMaxRad = Math.max(
 				agentInfo.currentMaxRad,
-				sep.radius
+				sep.radius,
 			);
 		});
 	}

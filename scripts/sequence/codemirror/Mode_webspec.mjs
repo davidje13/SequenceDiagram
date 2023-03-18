@@ -1,6 +1,6 @@
 import SequenceDiagram from '../SequenceDiagram.mjs';
 
-const CM = window.CodeMirror;
+const CM = globalThis.CodeMirror;
 
 describe('Code Mirror Mode', () => {
 	SequenceDiagram.registerCodeMirrorMode(CM);
@@ -279,7 +279,7 @@ describe('Code Mirror Mode', () => {
 				'else\n' +
 				'end\n' +
 				'repeat a few times\n' +
-				'group foo\n'
+				'group foo\n',
 			);
 
 			expect(getTokens(0)).toEqual([
@@ -323,7 +323,7 @@ describe('Code Mirror Mode', () => {
 			cm.getDoc().setValue(
 				'if: something\n' +
 				'else if: another thing\n' +
-				'repeat: a few times'
+				'repeat: a few times',
 			);
 
 			expect(getTokens(0)).toEqual([
@@ -355,7 +355,7 @@ describe('Code Mirror Mode', () => {
 				'note over A, B: hi\n' +
 				'note left of A, B: hi\n' +
 				'note right of A, B: hi\n' +
-				'note between A, B: hi'
+				'note between A, B: hi',
 			);
 
 			expect(getTokens(0)).toEqual([

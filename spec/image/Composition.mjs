@@ -14,7 +14,7 @@ function compose(input1, input2, fn, {target = null} = {}) {
 			for(let d = 0; d < dim; ++ d) {
 				tgt.values[pt + d] = fn(
 					input1.values[p1 + d],
-					input2.values[p2 + d]
+					input2.values[p2 + d],
 				);
 			}
 		}

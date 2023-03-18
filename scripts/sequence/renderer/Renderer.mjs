@@ -138,8 +138,8 @@ export default class Renderer extends EventObject {
 				.add(
 					this.agentLines,
 					this.blocks,
-					this.shapes
-				)
+					this.shapes,
+				),
 		);
 	}
 
@@ -282,7 +282,7 @@ export default class Renderer extends EventObject {
 				this.addSeparation(
 					agentIDR,
 					agentIDL,
-					sepR.left + sepL.right + this.theme.agentMargin
+					sepR.left + sepL.right + this.theme.agentMargin,
 				);
 			});
 		});
@@ -364,7 +364,7 @@ export default class Renderer extends EventObject {
 	forwardEvent(source, sourceEvent, forwardEvent, forwardArgs) {
 		source.on(
 			sourceEvent,
-			this.trigger.bind(this, forwardEvent, forwardArgs)
+			this.trigger.bind(this, forwardEvent, forwardArgs),
 		);
 	}
 
@@ -558,7 +558,7 @@ export default class Renderer extends EventObject {
 		this.unmaskedShapes.empty();
 		this.defs.add(
 			this.fullMask.add(this.fullMaskReveal),
-			this.lineMask.add(this.lineMaskReveal)
+			this.lineMask.add(this.lineMaskReveal),
 		);
 		this._resetState();
 	}

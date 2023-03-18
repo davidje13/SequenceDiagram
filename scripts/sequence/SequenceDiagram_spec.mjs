@@ -52,7 +52,7 @@ describe('SequenceDiagram', () => {
 			'<g mask="url(#FullMask)">' +
 			'<g mask="url(#LineMask)"></g>' +
 			'</g>' +
-			'</svg>'
+			'</svg>',
 		);
 	});
 
@@ -85,7 +85,7 @@ describe('SequenceDiagram', () => {
 			'<g mask="url(#FullMask)">' +
 			'<g mask="url(#LineMask)"></g>' +
 			'</g>' +
-			'</svg>'
+			'</svg>',
 		);
 	});
 
@@ -102,46 +102,46 @@ describe('SequenceDiagram', () => {
 		const content = getSimplifiedContent(diagram);
 
 		expect(content).toContain(
-			'<svg viewBox="-5 -5 82 56">'
+			'<svg viewBox="-5 -5 82 56">',
 		);
 
 		// Agent 1
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="20.5" x2="20.5" y1="11" y2="46" class="agent-1-line"'
+			' x1="20.5" x2="20.5" y1="11" y2="46" class="agent-1-line"',
 		);
 
 		expect(content).toContain(
 			'<rect class="outline" fill="transparent"' +
-			' height="11" width="21" x="10" y="0"'
+			' height="11" width="21" x="10" y="0"',
 		);
 
 		expect(content).toContain(
-			'<text x="20.5"'
+			'<text x="20.5"',
 		);
 
 		// Agent 2
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="51.5" x2="51.5" y1="11" y2="46" class="agent-2-line"'
+			' x1="51.5" x2="51.5" y1="11" y2="46" class="agent-2-line"',
 		);
 
 		expect(content).toContain(
 			'<rect class="outline" fill="transparent"' +
-			' height="11" width="21" x="41" y="0"'
+			' height="11" width="21" x="41" y="0"',
 		);
 
 		expect(content).toContain(
-			'<text x="51.5"'
+			'<text x="51.5"',
 		);
 
 		// Arrow
 		expect(content).toContain(
-			'<path d="M20.5 26L48.5 26"'
+			'<path d="M20.5 26L48.5 26"',
 		);
 
 		expect(content).toContain(
-			'<polygon points="46 31 51 26 46 21"'
+			'<polygon points="46 31 51 26 46 21"',
 		);
 	});
 
@@ -156,18 +156,18 @@ describe('SequenceDiagram', () => {
 		// Agents defined inside the block should still continue after it
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="20" x2="20" y1="7" y2="29"'
+			' x1="20" x2="20" y1="7" y2="29"',
 		);
 
 		expect(content).toContain(
 			'<line fill="none" stroke="#000000" stroke-width="1"' +
-			' x1="30" x2="30" y1="7" y2="29"'
+			' x1="30" x2="30" y1="7" y2="29"',
 		);
 
 		expect(content).toContain(
 			'<rect fill="none" stroke="#000000" stroke-width="1.5"' +
 			' rx="2" ry="2"' +
-			' height="9" width="30" x="10" y="0"'
+			' height="9" width="30" x="10" y="0"',
 		);
 
 		expect(content).toContain('<g class="region collapsed"');

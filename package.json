@@ -14,14 +14,22 @@
   "files": [
     "bin",
     "fonts",
-    "lib/sequence-diagram.js",
-    "lib/sequence-diagram-web.js",
-    "scripts"
+    "lib"
   ],
   "main": "lib/sequence-diagram.js",
-  "module": "scripts/standalone.mjs",
+  "module": "lib/sequence-diagram.mjs",
+  "exports": {
+    "browser": {
+      "import": "./lib/sequence-diagram-web.mjs",
+      "require": "./lib/sequence-diagram-web.js"
+    },
+    "default": {
+      "import": "./lib/sequence-diagram.mjs",
+      "require": "./lib/sequence-diagram.js"
+    }
+  },
   "bin": {
-    "sequence-diagram-svg": "bin/sequence-diagram-svg.js"
+    "sequence-diagram-svg": "bin/sequence-diagram-svg.mjs"
   },
   "eslintIgnore": [
     "lib",
@@ -30,38 +38,37 @@
     "*FontData.mjs"
   ],
   "scripts": {
-    "copy-third-party": "cat node_modules/codemirror/lib/codemirror.css node_modules/codemirror/addon/hint/show-hint.css > web/lib/codemirror.css && uglifyjs --compress --mangle --output web/lib/codemirror.js -- node_modules/codemirror/lib/codemirror.js && uglifyjs --compress --mangle --output web/lib/show-hint.js -- node_modules/codemirror/addon/hint/show-hint.js && uglifyjs --compress --mangle --output web/lib/trailingspace.js -- node_modules/codemirror/addon/edit/trailingspace.js && uglifyjs --compress --mangle --output web/lib/comment.js -- node_modules/codemirror/addon/comment/comment.js && cat node_modules/codemirror/mode/xml/xml.js node_modules/codemirror/mode/javascript/javascript.js node_modules/codemirror/addon/runmode/runmode.js node_modules/codemirror/addon/runmode/colorize.js | uglifyjs --compress --mangle --output web/lib/cm-addons-library.js && uglifyjs --compress --mangle --warn --output web/lib/require.js -- node_modules/requirejs/require.js",
+    "copy-third-party": "cat node_modules/codemirror/lib/codemirror.css node_modules/codemirror/addon/hint/show-hint.css > web/lib/codemirror.css",
     "lint": "eslint . --config eslintrc.js --ext .js --ext .mjs",
-    "generate-screenshots": "bin/generate-screenshots.js README.md",
-    "minify-lib": "rollup --config scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output lib/sequence-diagram-web.min.js -- lib/sequence-diagram-web.js",
-    "minify-web": "rollup --config web/scripts/rollup.config.js && uglifyjs --compress --mangle --warn --output web/lib/editor.min.js -- web/lib/editor.js && npm run copy-third-party",
+    "generate-screenshots": "bin/generate-screenshots.mjs README.md",
+    "minify-lib": "rm -r lib || true; rollup --config scripts/rollup.config.mjs",
+    "minify-web": "rm -r web/lib || true; rollup --config web/scripts/rollup.config.mjs && npm run copy-third-party",
     "minify": "npm run minify-lib && npm run minify-web",
     "prepublishOnly": "npm run minify-lib && npm test",
-    "start": "bin/server.js",
+    "start": "bin/server.mjs",
     "test": "npm run unit-test && npm run web-test && npm run lint && echo 'PASSED :)'",
-    "unit-test": "rollup --config spec/support/rollup.config.js && node -r source-map-support/register node_modules/.bin/jasmine --config=spec/support/jasmine.json",
+    "unit-test": "rollup --config spec/support/rollup.config.mjs && node --enable-source-maps node_modules/.bin/jasmine --config=spec/support/jasmine.json",
     "web-test": "karma start spec/support/karma.conf.js --single-run",
     "web-test:manual": "MANUAL=1 karma start spec/support/karma.conf.js"
   },
   "devDependencies": {
-    "@rollup/plugin-multi-entry": "4.x",
+    "@rollup/plugin-multi-entry": "6.x",
+    "@rollup/plugin-node-resolve": "15.x",
+    "@rollup/plugin-replace": "5.x",
+    "@rollup/plugin-terser": "0.4.x",
     "codemirror": "5.65.x",
-    "eslint": "7.x",
+    "eslint": "8.x",
     "eslint-plugin-jasmine": "4.x",
-    "jasmine": "3.x",
+    "jasmine": "4.x",
     "karma": "6.x",
     "karma-chrome-launcher": "3.x",
     "karma-detect-browsers": "2.x",
     "karma-firefox-launcher": "2.x",
-    "karma-jasmine": "4.x",
+    "karma-jasmine": "5.x",
     "karma-safari-launcher": "1.x",
     "pngcrush": "3.x",
-    "requirejs": "2.x",
-    "rollup": "2.x",
-    "rollup-plugin-hypothetical": "2.x",
-    "source-map-support": "0.x",
-    "svg2png": "4.x",
-    "uglify-es": "3.2.2"
+    "rollup": "3.x",
+    "svg2png": "4.x"
   },
   "dependencies": {
     "opentype.js": "1.x"

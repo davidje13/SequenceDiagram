@@ -60,7 +60,7 @@ export default class EventObject {
 
 	trigger(type, params = []) {
 		(this.listeners.get(type) || []).forEach(
-			(listener) => listener(...params)
+			(listener) => listener(...params),
 		);
 		this.forwards.forEach((fwd) => fwd.trigger(type, params));
 	}

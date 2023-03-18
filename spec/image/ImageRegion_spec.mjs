@@ -100,7 +100,7 @@ describe('ImageRegion', () => {
 			expect(r.dim).toEqual(1);
 			expect(r.values).toBeNear(
 				[0, 0, 0, -1, -1 / 3, 1, -1 / 2, -1 / 6, 1 / 2],
-				PRECISION
+				PRECISION,
 			);
 		});
 	});

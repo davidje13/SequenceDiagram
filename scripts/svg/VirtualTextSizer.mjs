@@ -1,5 +1,5 @@
-const opentype = require('opentype.js');
-const path = require('path');
+import opentype from 'opentype.js';
+import path from 'node:path';
 
 const FONTDIR = process.env.FONTDIR || './fonts/';
 const FONTS = new Map();
@@ -106,7 +106,7 @@ function combineAttrs(base, next) {
 	const nextSize = next['font-size'];
 	if(typeof nextSize === 'string' && nextSize.endsWith('em')) {
 		const ratio = Number.parseFloat(
-			nextSize.substr(0, nextSize.length - 2)
+			nextSize.substr(0, nextSize.length - 2),
 		);
 		result['font-size'] = base['font-size'] * ratio;
 	}

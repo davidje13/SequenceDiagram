@@ -42,7 +42,7 @@ export default class Divider extends BaseComponent {
 		if(formattedLabel) {
 			labelHeight = env.textSizer.measureHeight(
 				config.labelAttrs,
-				formattedLabel
+				formattedLabel,
 			);
 		}
 
@@ -86,7 +86,7 @@ export default class Divider extends BaseComponent {
 				'y': env.primaryY,
 			}),
 			shape,
-			labelText
+			labelText,
 		);
 
 		return env.primaryY + fullHeight + env.theme.actionMargin;

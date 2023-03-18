@@ -191,7 +191,7 @@ export default class Tokeniser {
 		if(state.block) {
 			throw new Error(
 				'Unterminated literal (began at ' +
-				posStr(state.token.b) + ')'
+				posStr(state.token.b) + ')',
 			);
 		}
 		return tokens;

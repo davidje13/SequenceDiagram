@@ -1,35 +1,19 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
-const {Server} = require('./server/Server');
-const {StaticRequestHandler} = require('./server/StaticRequestHandler');
-const {RenderRequestHandler} = require('./handlers/RenderRequestHandler');
-const {PreviewRequestHandler} = require('./handlers/PreviewRequestHandler');
-const path = require('path');
+import {PreviewRequestHandler} from './handlers/PreviewRequestHandler.mjs';
+import {RenderRequestHandler} from './handlers/RenderRequestHandler.mjs';
+import {Server} from './server/Server.mjs';
+import {StaticRequestHandler} from './server/StaticRequestHandler.mjs';
+import path from 'node:path';
 
 const DEV = process.argv.includes('dev');
 const HOSTNAME = '127.0.0.1';
-const BASEDIR = path.join(__dirname, '..') + '/';
+const SELFDIR = path.dirname(new URL(import.meta.url).pathname);
+const BASEDIR = path.join(SELFDIR, '..') + '/';
 
 let PORT = Number.parseInt(process.argv[2], 10);
 if(Number.isNaN(PORT)) {
 	PORT = 8080;
-}
-
-function devMapper(file, type, data) {
-	if(!type.includes('text/html')) {
-		return data;
-	}
-
-	const code = data.toString('utf8');
-	if(DEV) {
-		return code
-			.replace(/<!--* *DEV *-*>?([^]*?)(?:<!)?-* *\/DEV *-->/g, '$1')
-			.replace(/<!--* *LIVE[^]*? *\/LIVE *-->/g, '');
-	} else {
-		return code
-			.replace(/<!--* *LIVE *-*>?([^]*?)(?:<!)?-* *\/LIVE *-->/g, '$1')
-			.replace(/<!--* *DEV[^]*? *\/DEV *-->/g, '');
-	}
 }
 
 const MINUTE = 60;
@@ -74,7 +58,7 @@ const statics = new StaticRequestHandler('')
 	.addHeader('Content-Security-Policy', [
 		'base-uri \'self\'',
 		'default-src \'none\'',
-		'script-src \'self\' https://unpkg.com',
+		'script-src \'self\'',
 		`style-src 'self' '${SKETCH_CSS_SHA}'`,
 		'connect-src \'self\'',
 		'font-src \'self\' data:',
@@ -118,17 +102,9 @@ statics
 		'web/lib',
 		'web/resources',
 		'web/styles',
-	], devMapper);
+	]);
 
 if(DEV) {
-	statics.addResources('/', BASEDIR, [
-		'node_modules/requirejs/require.js',
-		'node_modules/codemirror/lib',
-		'node_modules/codemirror/addon',
-		'node_modules/codemirror/mode',
-		'scripts',
-		'web/scripts',
-	]);
 	statics.setFileWatch(true);
 }
 

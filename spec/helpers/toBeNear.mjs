@@ -5,7 +5,7 @@ function checkNear(actual, expected, range) {
 		range < 0
 	) {
 		throw new Error(
-			'Invalid toBeNear(' + expected + ',' + range + ')'
+			'Invalid toBeNear(' + expected + ',' + range + ')',
 		);
 	}
 	if(typeof actual !== 'number') {
@@ -25,7 +25,7 @@ beforeAll(() => {
 					if(actual.length !== expected.length) {
 						throw new Error(
 							'Expected an array of size ' + expected.length +
-							', got ' + actual
+							', got ' + actual,
 						);
 					}
 					for(let i = 0; i < expected.length; ++ i) {

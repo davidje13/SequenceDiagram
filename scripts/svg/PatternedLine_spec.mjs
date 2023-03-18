@@ -15,7 +15,7 @@ describe('PatternedLine', () => {
 			expect(ln.asPath()).toEqual(
 				'M10 20' +
 				'L30 50' +
-				'L1 2'
+				'L1 2',
 			);
 		});
 
@@ -26,7 +26,7 @@ describe('PatternedLine', () => {
 
 			expect(simplify(ln.asPath(), 0)).toEqual(
 				'M10 20' +
-				'A10 10 0 1 1 10 40'
+				'A10 10 0 1 1 10 40',
 			);
 		});
 
@@ -46,7 +46,7 @@ describe('PatternedLine', () => {
 				'L10 40' +
 				'A10 10 0 0 1 0 30' +
 				'L0 30' +
-				'A10 10 0 0 1 10 20'
+				'A10 10 0 0 1 10 20',
 			);
 		});
 
@@ -61,7 +61,7 @@ describe('PatternedLine', () => {
 				'M10 20' +
 				'L20 20' +
 				'A10 10 0 1 1 20 40' +
-				'L10 40'
+				'L10 40',
 			);
 		});
 
@@ -73,7 +73,7 @@ describe('PatternedLine', () => {
 
 			expect(ln1.asPath()).toEqual(
 				'M10 20' +
-				'L10 40'
+				'L10 40',
 			);
 
 			const ln2 = new PatternedLine()
@@ -83,7 +83,7 @@ describe('PatternedLine', () => {
 
 			expect(simplify(ln2.asPath(), 0)).toEqual(
 				'M10 20' +
-				'A10 10 0 1 1 10 40'
+				'A10 10 0 1 1 10 40',
 			);
 		});
 	});
@@ -108,7 +108,7 @@ describe('PatternedLine', () => {
 				'M10 19' +
 				'L15 21' +
 				'L20 18' +
-				'L25 19'
+				'L25 19',
 			);
 		});
 
@@ -125,7 +125,7 @@ describe('PatternedLine', () => {
 				'L25 19' +
 
 				'L29 20' +
-				'L32 25'
+				'L32 25',
 			);
 		});
 
@@ -144,7 +144,7 @@ describe('PatternedLine', () => {
 
 				'L29 20' +
 				'L32 25' +
-				'L30 33'
+				'L30 33',
 			);
 		});
 
@@ -162,7 +162,7 @@ describe('PatternedLine', () => {
 				'L18.2 33.7' +
 				'L17.2 39.6' +
 				'L10.0 41.0' +
-				'L5.0 39.0'
+				'L5.0 39.0',
 			);
 		});
 	});

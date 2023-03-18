@@ -22,7 +22,7 @@ const SharedGenerator = new Generator();
 const CMMode = SharedParser.getCodeMirrorMode();
 
 function registerCodeMirrorMode(CodeMirror, modeName = 'sequence') {
-	const cm = CodeMirror || window.CodeMirror;
+	const cm = CodeMirror || globalThis.CodeMirror;
 	cm.defineMode(modeName, () => CMMode);
 	cm.registerHelper('hint', modeName, getHints);
 }
@@ -246,7 +246,7 @@ export default class SequenceDiagram extends EventObject {
 				resolution,
 				(url, latest) => {
 					resolve({latest, url});
-				}
+				},
 			);
 		});
 	}
@@ -409,14 +409,14 @@ function convertOne(element, code = null, options = {}) {
 
 	const diagram = new SequenceDiagram(
 		(code === null) ? element.textContent : code,
-		Object.assign(tagOptions, options)
+		Object.assign(tagOptions, options),
 	);
 	const newElement = diagram.dom();
 	const attrs = element.attributes;
 	for(let i = 0; i < attrs.length; ++ i) {
 		newElement.setAttribute(
 			attrs[i].nodeName,
-			attrs[i].nodeValue
+			attrs[i].nodeValue,
 		);
 	}
 	element.parentNode.replaceChild(newElement, element);

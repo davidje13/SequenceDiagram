@@ -24,7 +24,7 @@ export default class Exporter {
 		code = code.replace(
 			FIRST_SVG_TAG,
 			'<svg width="' + (renderer.width || 1) +
-			'" height="' + (renderer.height || 1) + '" '
+			'" height="' + (renderer.height || 1) + '" ',
 		);
 
 		return '<?xml version="1.0" encoding="UTF-8" ?>' + code;
@@ -33,7 +33,7 @@ export default class Exporter {
 	getSVGBlob(renderer) {
 		return new Blob(
 			[this.getSVGContent(renderer)],
-			{type: 'image/svg+xml'}
+			{type: 'image/svg+xml'},
 		);
 	}
 

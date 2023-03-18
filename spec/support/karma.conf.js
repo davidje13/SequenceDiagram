@@ -33,6 +33,7 @@ module.exports = (config) => {
 		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'web/lib/**'],
 		files: [
 			'node_modules/codemirror/lib/codemirror.js',
+			{included: false, pattern: 'node_modules/codemirror/addon/**/*'},
 			{
 				included: manual,
 				pattern: 'spec/support/karma-hang.mjs',

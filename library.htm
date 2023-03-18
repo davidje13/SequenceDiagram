@@ -5,7 +5,7 @@
 <meta http-equiv="content-security-policy" content="
 	base-uri 'self';
 	default-src 'none';
-	script-src 'self' 'unsafe-inline';
+	script-src 'self';
 	style-src 'self' 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E=';
 	font-src 'self' data:;
 	img-src 'self';
@@ -18,27 +18,10 @@
 <link rel="apple-touch-icon" href="web/resources/apple-touch-icon.png">
 
 <link rel="stylesheet" href="web/styles/library.css">
-
-<!-- DEV
-<script src="node_modules/codemirror/lib/codemirror.js"></script>
-<link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
-<script src="node_modules/codemirror/mode/xml/xml.js"></script>
-<script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
-<script src="node_modules/codemirror/addon/runmode/runmode.js"></script>
-<script src="node_modules/codemirror/addon/runmode/colorize.js"></script>
-
-<script src="scripts/standalone-web.mjs" type="module"></script>
-/DEV -->
-
-<!-- LIVE -->
 <link rel="stylesheet" href="web/lib/codemirror.css">
-<script src="web/lib/codemirror.js"></script>
-<script src="web/lib/cm-addons-library.js"></script>
+<link rel="stylesheet" href="web/styles/codemirror-override.css">
 
-<script src="lib/sequence-diagram-web.min.js"></script>
-<!-- /LIVE -->
-
-<script src="web/resources/library.js"></script>
+<script src="web/lib/docs.js" type="module"></script>
 
 </head>
 <body>
@@ -76,18 +59,23 @@ This library renders sequence diagrams from code. It is
 (LGPL-3.0), and including it in a website is as simple as adding the script:</p>
 
 <pre data-lang="text/html">
-&lt;script src="lib/sequence-diagram-web.min.js"&gt;&lt;/script&gt;
+&lt;script src="lib/sequence-diagram-web.js"&gt;&lt;/script&gt;
 </pre>
 
-<p>Or if you are using requirejs:</p>
+<p>If you are using NPM to manage dependencies, you can install with:</p>
+<pre data-lang="shell">
+npm install --save svg-sequence-diagram
+</pre>
 
+<p>And import with:</p>
 <pre data-lang="javascript">
-requirejs(['lib/sequence-diagram-web.min'], (SequenceDiagram) => {
-  SequenceDiagram.convertAll();
-});
+import 'svg-sequence-diagram';
 </pre>
 
-<p>If you are using NPM to manage dependencies, you can install with <code>npm install --save svg-sequence-diagram</code></p>
+<p>Or:</p>
+<pre data-lang="javascript">
+require('svg-sequence-diagram');
+</pre>
 
 <p>
 Any element with the class <code>sequence-diagram</code> will automatically be
@@ -399,6 +387,9 @@ For more advanced usage, an API is available:
 <div id="hold1" class="right"></div>
 
 <pre data-lang="javascript" class="print-reduced">
+import { SequenceDiagram } from 'svg-sequence-diagram';
+// or const { SequenceDiagram } = require('svg-sequence-diagram');
+
 var diagram = new SequenceDiagram();
 diagram.set('A -> B\nB -> A');
 document.body.appendChild(diagram.dom());

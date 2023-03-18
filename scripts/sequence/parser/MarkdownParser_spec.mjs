@@ -320,7 +320,7 @@ describe('Markdown Parser', () => {
 		const block = svg.formattedText({}, formatted).element;
 
 		expect(block.outerHTML).toEqual(
-			'<g><text x="0" y="1">hello everybody</text></g>'
+			'<g><text x="0" y="1">hello everybody</text></g>',
 		);
 	});
 });

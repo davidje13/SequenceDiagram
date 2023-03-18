@@ -375,7 +375,7 @@ export default class SketchTheme extends BaseTheme {
 				'@font-face{' +
 				'font-family:' + Handlee.name + ';' +
 				'src:url("data:font/woff2;base64,' + Handlee.woff2 + '");' +
-				'}'
+				'}',
 			);
 			return style;
 		});
@@ -401,7 +401,7 @@ export default class SketchTheme extends BaseTheme {
 	}) {
 		const length = Math.sqrt(
 			(p2.x - p1.x) * (p2.x - p1.x) +
-			(p2.y - p1.y) * (p2.y - p1.y)
+			(p2.y - p1.y) * (p2.y - p1.y),
 		);
 		const rough = Math.min(Math.sqrt(length) * 0.2, MAX_CHAOS);
 		const x1 = this.vary(var1 * varX * rough, p1.x);
@@ -451,22 +451,22 @@ export default class SketchTheme extends BaseTheme {
 		const lT = this.lineNodes(
 			{x, y},
 			{x: x + width, y},
-			{}
+			{},
 		);
 		const lB = this.lineNodes(
 			{x: x + width, y: y + height},
 			{x, y: y + height},
-			{move: false}
+			{move: false},
 		);
 		const lR = this.lineNodes(
 			lT.p2,
 			lB.p1,
-			{var1: 0, var2: 0, move: false}
+			{var1: 0, var2: 0, move: false},
 		);
 		const lL = this.lineNodes(
 			lB.p2,
 			lT.p1,
-			{var1: 0, var2: 0.3, move: false}
+			{var1: 0, var2: 0.3, move: false},
 		);
 
 		return lT.nodes + lR.nodes + lB.nodes + lL.nodes;
@@ -520,7 +520,7 @@ export default class SketchTheme extends BaseTheme {
 				width: position.width,
 				x: position.x,
 				y: position.y + sy,
-			})
+			}),
 		);
 	}
 
@@ -531,13 +531,13 @@ export default class SketchTheme extends BaseTheme {
 		const l1 = this.lineNodes(
 			{x: pos.x, y: pos.y + tilt},
 			{x: pos.x, y: pos.y + pos.height - tilt},
-			{}
+			{},
 		);
 
 		const l2 = this.lineNodes(
 			{x: pos.x + pos.width, y: pos.y + pos.height - tilt},
 			{x: pos.x + pos.width, y: pos.y + tilt},
-			{move: false}
+			{move: false},
 		);
 
 		const v = this.vary.bind(this);
@@ -570,7 +570,7 @@ export default class SketchTheme extends BaseTheme {
 					' ' + v(1, topX1) + ' ' + v(0.5, topY1)
 				))
 				.attrs(PENCIL.normal)
-				.attr('fill', '#FFFFFF')
+				.attr('fill', '#FFFFFF'),
 		);
 	}
 
@@ -579,37 +579,37 @@ export default class SketchTheme extends BaseTheme {
 		const lT = this.lineNodes(
 			{x, y},
 			{x: x + width - flickSize, y},
-			{}
+			{},
 		);
 		const lF = this.lineNodes(
 			lT.p2,
 			{x: x + width, y: y + flickSize},
-			{move: false, var1: 0}
+			{move: false, var1: 0},
 		);
 		const lB = this.lineNodes(
 			{x: x + width, y: y + height},
 			{x, y: y + height},
-			{move: false}
+			{move: false},
 		);
 		const lR = this.lineNodes(
 			lF.p2,
 			lB.p1,
-			{var1: 0, var2: 0, move: false}
+			{var1: 0, var2: 0, move: false},
 		);
 		const lL = this.lineNodes(
 			lB.p2,
 			lT.p1,
-			{var1: 0, var2: 0.3, move: false}
+			{var1: 0, var2: 0.3, move: false},
 		);
 		const lF1 = this.lineNodes(
 			lF.p1,
 			{x: x + width - flickSize, y: y + flickSize},
-			{var1: 0.3}
+			{var1: 0.3},
 		);
 		const lF2 = this.lineNodes(
 			lF1.p2,
 			lF.p2,
-			{var1: 0, move: false}
+			{var1: 0, move: false},
 		);
 
 		return this.svg.el('g').add(
@@ -630,7 +630,7 @@ export default class SketchTheme extends BaseTheme {
 					'd': lF1.nodes + lF2.nodes,
 					'fill': 'none',
 				})
-				.attrs(PENCIL.normal)
+				.attrs(PENCIL.normal),
 		);
 	}
 
@@ -642,19 +642,19 @@ export default class SketchTheme extends BaseTheme {
 				this.renderLine(
 					{x, y: yPos},
 					{x: x + (width - labelWidth) / 2, y: yPos},
-					{}
+					{},
 				),
 				this.renderLine(
 					{x: x + (width + labelWidth) / 2, y: yPos},
 					{x: x + width, y: yPos},
-					{}
-				)
+					{},
+				),
 			);
 		} else {
 			shape = this.renderLine(
 				{x, y: yPos},
 				{x: x + width, y: yPos},
-				{}
+				{},
 			);
 		}
 		return {shape};
@@ -681,7 +681,7 @@ export default class SketchTheme extends BaseTheme {
 			const ln = this.lineNodes(
 				{x: x1, y: y1},
 				{x: x2, y: y2},
-				{varX: 0.3}
+				{varX: 0.3},
 			);
 			return {
 				shape: this.svg.el('path').attr('d', ln.nodes).attrs(attrs),
@@ -751,17 +751,17 @@ export default class SketchTheme extends BaseTheme {
 		const l1 = this.lineNodes(
 			{x: x + wx - hx, y: y + wy - hy},
 			{x, y},
-			{var1: 2.0, var2: 0.2}
+			{var1: 2.0, var2: 0.2},
 		);
 		const l2 = this.lineNodes(
 			l1.p2,
 			{x: x + wx + hx, y: y + wy + hy},
-			{var1: 0, var2: 2.0, move: false}
+			{var1: 0, var2: 2.0, move: false},
 		);
 		const l3 = (attrs.fill === 'none') ? {nodes: ''} : this.lineNodes(
 			l2.p2,
 			l1.p1,
-			{var1: 0, var2: 0, move: false}
+			{var1: 0, var2: 0, move: false},
 		);
 		return this.svg.el('path')
 			.attr('d', l1.nodes + l2.nodes + l3.nodes)
@@ -842,12 +842,12 @@ export default class SketchTheme extends BaseTheme {
 		const l1 = this.lineNodes(
 			{x: x2 + 3, y},
 			{x: x2 - 2, y: y2},
-			{}
+			{},
 		);
 		const l2 = this.lineNodes(
 			l1.p2,
 			{x, y: y2 + 1},
-			{var1: 0, move: false}
+			{var1: 0, move: false},
 		);
 
 		const line = l1.nodes + l2.nodes;
@@ -863,7 +863,7 @@ export default class SketchTheme extends BaseTheme {
 					'd': line,
 					'fill': '#FFFFFF',
 				})
-				.attrs(PENCIL.normal)
+				.attrs(PENCIL.normal),
 		);
 	}
 
@@ -871,7 +871,7 @@ export default class SketchTheme extends BaseTheme {
 		return this.renderLine(
 			{x: x1, y: y1},
 			{x: x2, y: y2},
-			{thick: true, dash: true}
+			{thick: true, dash: true},
 		);
 	}
 
@@ -884,13 +884,13 @@ export default class SketchTheme extends BaseTheme {
 		const l1 = this.lineNodes(
 			{x: x - r1, y: y - r1},
 			{x: x + r1, y: y + r1},
-			{}
+			{},
 		);
 		const r2 = this.vary(0.2, 1) * radius;
 		const l2 = this.lineNodes(
 			{x: x + r2, y: y - r2},
 			{x: x - r2, y: y + r2},
-			{}
+			{},
 		);
 
 		return this.svg.el('path')
@@ -914,7 +914,7 @@ export default class SketchTheme extends BaseTheme {
 			return this.renderLine(
 				{x, y: y0},
 				{x, y: y1},
-				{varY: 0.3, attrs}
+				{varY: 0.3, attrs},
 			).setClass(className);
 		}
 	}

@@ -81,7 +81,7 @@ export const matchers = {
 					actual,
 					expected,
 					options,
-					'Image comparison (expected similar)'
+					'Image comparison (expected similar)',
 				));
 				message += ' (see below for comparison)';
 			}
@@ -106,7 +106,7 @@ export const matchers = {
 					actual,
 					expected,
 					options,
-					'Image comparison (expected different)'
+					'Image comparison (expected different)',
 				));
 				message += ' (see below for comparison)';
 			}

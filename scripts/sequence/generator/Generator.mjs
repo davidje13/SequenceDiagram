@@ -209,7 +209,7 @@ function checkAgentConflicts(allStages) {
 	const createIDs = flatMap(
 		allStages
 			.filter((stage) => (stage.type === 'agent begin')),
-		(stage) => stage.agentIDs
+		(stage) => stage.agentIDs,
 	);
 
 	for(const stage of allStages) {
@@ -422,13 +422,13 @@ export default class Generator {
 		if(alias) {
 			if(this.agentAliases.has(name)) {
 				throw new Error(
-					'Cannot alias ' + name + '; it is already an alias'
+					'Cannot alias ' + name + '; it is already an alias',
 				);
 			}
 			if(this._aliasInUse(alias)) {
 				throw new Error(
 					'Cannot use ' + alias +
-					' as an alias; it is already in use'
+					' as an alias; it is already in use',
 				);
 			}
 			this.agentAliases.set(alias, name);
@@ -513,7 +513,7 @@ export default class Generator {
 		mergeSets(
 			this.currentNest.gAgents,
 			gAgents.filter((gAgent) => !SPECIAL_AGENT_IDS.includes(gAgent.id)),
-			GAgent.equals
+			GAgent.equals,
 		);
 		mergeSets(this.gAgents, gAgents, GAgent.equals);
 	}
@@ -641,7 +641,7 @@ export default class Generator {
 			const dc = dcs.values().next().value;
 			throw new Error(
 				'Unused delayed connection "' + dc.tag +
-				'" at line ' + (dc.ln + 1)
+				'" at line ' + (dc.ln + 1),
 			);
 		}
 	}
@@ -707,7 +707,7 @@ export default class Generator {
 		if(this.currentNest.blockType !== 'if') {
 			throw new Error(
 				'Invalid block nesting ("else" inside ' +
-				this.currentNest.blockType + ')'
+				this.currentNest.blockType + ')',
 			);
 		}
 		this._checkSectionEnd();
@@ -741,7 +741,7 @@ export default class Generator {
 			this.gAgents,
 			nested.leftGAgent,
 			nested.rightGAgent,
-			nested.gAgents
+			nested.gAgents,
 		);
 		nested.sections.forEach((section) => {
 			this.currentSection.stages.push(section.header);
@@ -767,14 +767,14 @@ export default class Generator {
 		this.replaceGAgentState(rightGAgent, AgentState.LOCKED);
 		this.updateGAgentState(
 			GAgent.make(alias),
-			{blocked: true, group: alias}
+			{blocked: true, group: alias},
 		);
 		this.defineGAgents([...gAgents, leftGAgent, rightGAgent]);
 		const {indexL, indexR} = addBounds(
 			this.gAgents,
 			leftGAgent,
 			rightGAgent,
-			gAgents
+			gAgents,
 		);
 
 		const gAgentsCovered = [];
@@ -805,7 +805,7 @@ export default class Generator {
 		this.activeGroups.set(alias, details);
 		this.addImpStage(
 			this.setGAgentVis(details.gAgents, 'begin', 'box'),
-			{parallel}
+			{parallel},
 		);
 		this.addStage({
 			blockType,
@@ -975,13 +975,13 @@ export default class Generator {
 			this.currentNest.gAgents,
 			gAgentReference,
 			gAgent,
-			offset
+			offset,
 		);
 		GAgent.addNearby(
 			this.gAgents,
 			gAgentReference,
 			gAgent,
-			offset
+			offset,
 		);
 	}
 
@@ -992,7 +992,7 @@ export default class Generator {
 			}
 			if(SPECIAL_AGENT_IDS.includes(gAgents[1].id)) {
 				throw new Error(
-					'Cannot connect found messages to special agents'
+					'Cannot connect found messages to special agents',
 				);
 			}
 			const virtualGAgent = this.makeVirtualAgent(true);
@@ -1002,7 +1002,7 @@ export default class Generator {
 		if(gAgents[1].isVirtualSource) {
 			if(SPECIAL_AGENT_IDS.includes(gAgents[0].id)) {
 				throw new Error(
-					'Cannot connect found messages to special agents'
+					'Cannot connect found messages to special agents',
 				);
 			}
 			const virtualGAgent = this.makeVirtualAgent(false);
@@ -1031,7 +1031,7 @@ export default class Generator {
 		);
 		this.addImpStage(
 			this.setGAgentVis(implicitBeginGAgents, 'begin', 'box'),
-			{parallel}
+			{parallel},
 		);
 
 		return {flags, gAgents};
@@ -1092,7 +1092,7 @@ export default class Generator {
 
 		this.addStage(
 			this._makeConnectParallelStages(flags, connectStage),
-			{parallel}
+			{parallel},
 		);
 	}
 
@@ -1117,7 +1117,7 @@ export default class Generator {
 
 		this.addStage(
 			this._makeConnectParallelStages(flags, connectStage),
-			{parallel}
+			{parallel},
 		);
 	}
 
@@ -1159,7 +1159,7 @@ export default class Generator {
 
 		this.addStage(
 			this._makeConnectParallelStages(flags, connectEndStage),
-			{parallel}
+			{parallel},
 		);
 
 		dcs.delete(tag);
@@ -1303,7 +1303,7 @@ export default class Generator {
 		addBounds(
 			this.gAgents,
 			this.currentNest.leftGAgent,
-			this.currentNest.rightGAgent
+			this.currentNest.rightGAgent,
 		);
 		optimiseStages(globals.stages);
 
@@ -1328,7 +1328,7 @@ export default class Generator {
 		if(this.nesting.length !== 1) {
 			throw new Error(
 				'Unterminated section at line ' +
-				(this.currentSection.header.ln + 1)
+				(this.currentSection.header.ln + 1),
 			);
 		}
 		if(this.activeGroups.size > 0) {

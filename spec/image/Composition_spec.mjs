@@ -33,7 +33,7 @@ describe('Composition', () => {
 			const output = subtract(
 				inputA,
 				inputB,
-				{target: inputA}
+				{target: inputA},
 			);
 
 			expect(output).toBe(inputA);

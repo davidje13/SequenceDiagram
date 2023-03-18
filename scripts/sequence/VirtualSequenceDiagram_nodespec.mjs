@@ -44,7 +44,7 @@ describe('VirtualSequenceDiagram', () => {
 			'<g mask="url(#FullMask)">' +
 			'<g mask="url(#LineMask)"></g>' +
 			'</g>' +
-			'</svg>'
+			'</svg>',
 		);
 	});
 

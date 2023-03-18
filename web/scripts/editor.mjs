@@ -6,7 +6,6 @@ import MultiLocalStorage from './storage/MultiLocalStorage.mjs';
 import SequenceDiagram from '../../scripts/sequence/SequenceDiagram.mjs';
 import SlotLocalStores from './slots/SlotLocalStores.mjs';
 import requestSlot from './slots/requestSlot.mjs';
-import {require} from './requireCDN.mjs';
 
 const defaultCode = (
 	'title Labyrinth\n' +
@@ -94,7 +93,6 @@ window.addEventListener('load', () => {
 			defaultCode,
 			library: ComponentsLibrary,
 			links,
-			require,
 			sequenceDiagram: new SequenceDiagram(),
 			storage: new MultiLocalStorage(hashNav, slotStorage),
 			touchUI: ('ontouchstart' in window),

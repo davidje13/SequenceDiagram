@@ -22,7 +22,7 @@ function checkSample(src) {
 		it('renders without error in ' + themeName + ' theme', () => {
 			expect(() => new SequenceDiagram(
 				'theme ' + themeName + '\n' + src,
-				opts
+				opts,
 			)).not.toThrow();
 		});
 	});

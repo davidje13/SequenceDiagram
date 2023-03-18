@@ -1,7 +1,7 @@
-const {RequestHandler} = require('./RequestHandler');
-const fs = require('fs');
-const util = require('util');
-const zlib = require('zlib');
+import {RequestHandler} from './RequestHandler.mjs';
+import fs from 'node:fs';
+import util from 'node:util';
+import zlib from 'zlib';
 
 const MATCH_INDEX = new RegExp('^(.*/)index\\.[^./]+$', 'i');
 const PREF_ENCODINGS = ['gzip', 'deflate', 'identity'];
@@ -29,7 +29,7 @@ function getIndent(strings) {
 	return indent;
 }
 
-class StaticRequestHandler extends RequestHandler {
+export class StaticRequestHandler extends RequestHandler {
 	constructor(baseUrlPattern) {
 		super('GET', new RegExp('^' + baseUrlPattern + '([^?]*)(\\?.*)?$'));
 
@@ -53,7 +53,7 @@ class StaticRequestHandler extends RequestHandler {
 
 		this.applyCommonHeaders(req, res);
 		const encoding = pickEncoding(
-			PREF_ENCODINGS.filter((enc) => (resource.encodings[enc] !== null))
+			PREF_ENCODINGS.filter((enc) => (resource.encodings[enc] !== null)),
 		);
 		if(encoding !== 'identity') {
 			res.setHeader('Content-Encoding', encoding);
@@ -143,7 +143,7 @@ class StaticRequestHandler extends RequestHandler {
 				path + '/',
 				file + '/',
 				subFiles.filter((sub) => !sub.startsWith('.')),
-				mapper
+				mapper,
 			));
 	}
 
@@ -162,7 +162,7 @@ class StaticRequestHandler extends RequestHandler {
 		return Promise.all(files.map((file) => this._addResource(
 			basePath + file,
 			baseFs + file,
-			mapper
+			mapper,
 		)));
 	}
 
@@ -204,7 +204,7 @@ class StaticRequestHandler extends RequestHandler {
 
 	addResources(basePath, baseFs, files, mapper = null) {
 		this.awaiting.push(
-			this._addResources(basePath, baseFs, files, mapper)
+			this._addResources(basePath, baseFs, files, mapper),
 		);
 		return this;
 	}
@@ -217,7 +217,7 @@ class StaticRequestHandler extends RequestHandler {
 	printInfo(target) {
 		target.write(
 			'Serving static resources at ' +
-			(this.baseUrlPattern || '/') + ':\n'
+			(this.baseUrlPattern || '/') + ':\n',
 		);
 
 		const indent = getIndent(this.resources.keys());
@@ -253,5 +253,3 @@ class StaticRequestHandler extends RequestHandler {
 		});
 	}
 }
-
-module.exports = {StaticRequestHandler};

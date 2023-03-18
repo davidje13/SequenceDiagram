@@ -1,6 +1,30 @@
 import {Event, VirtualDocument} from '../../../spec/stubs/TestDOM.mjs';
 import Interface from './Interface.mjs';
-import stubRequire from '../../../spec/stubs/require.mjs';
+
+function makeFakeCodeMirror() {
+	function CodeMirror(container, options) {
+		/* eslint-disable jasmine/no-unsafe-spy */ // Whole object is a spy
+		const spy = jasmine.createSpyObj('CodeMirror', ['on']);
+		spy.constructor = {
+			container,
+			options,
+		};
+		spy.doc = jasmine.createSpyObj('CodeMirror document', [
+			'getValue',
+			'setSelection',
+		]);
+		/* eslint-enable jasmine/no-unsafe-spy */
+		spy.getDoc = () => spy.doc;
+		return spy;
+	}
+
+	CodeMirror.defineMode = () => null;
+	CodeMirror.registerHelper = () => null;
+
+	return CodeMirror;
+}
+
+globalThis.overrideCodeMirror = makeFakeCodeMirror();
 
 describe('Interface', () => {
 	const defaultCode = 'my default code';
@@ -35,7 +59,6 @@ describe('Interface', () => {
 
 		ui = new Interface({
 			defaultCode,
-			require: stubRequire,
 			sequenceDiagram,
 		});
 	});

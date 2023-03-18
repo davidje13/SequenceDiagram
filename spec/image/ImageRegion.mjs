@@ -10,7 +10,7 @@ function makeCanvas(width, height) {
 function proportionalSize(
 	baseWidth,
 	baseHeight,
-	{width = null, height = null} = {}
+	{width = null, height = null} = {},
 ) {
 	if(width === null) {
 		if(height === null) {
@@ -84,7 +84,7 @@ export default class ImageRegion {
 				' (dim ' + this.dim + ')' +
 				' <> ' +
 				region.width + 'x' + region.height +
-				' (dim ' + region.dim + ')'
+				' (dim ' + region.dim + ')',
 			);
 		}
 	}
@@ -178,7 +178,7 @@ export default class ImageRegion {
 				for(let d = 0; d < this.dim; ++ d) {
 					accum = fn(
 						accum,
-						{d, v: this.values[py + x * this.stepX + d], x, y}
+						{d, v: this.values[py + x * this.stepX + d], x, y},
 					);
 				}
 			}
@@ -197,14 +197,14 @@ export default class ImageRegion {
 	max() {
 		return this.reduce(
 			(accum, {v}) => Math.max(accum, v),
-			this.values[this.origin]
+			this.values[this.origin],
 		);
 	}
 
 	min() {
 		return this.reduce(
 			(accum, {v}) => Math.min(accum, v),
-			this.values[this.origin]
+			this.values[this.origin],
 		);
 	}
 
@@ -226,7 +226,7 @@ export default class ImageRegion {
 				' (dim ' + d + ')' +
 				' but got ' +
 				target.width + 'x' + target.height +
-				' (dim ' + target.dim + ')'
+				' (dim ' + target.dim + ')',
 			);
 		}
 
@@ -469,7 +469,7 @@ ImageRegion.loadSVG = function(svg, size = {}) {
 		(m, w, h) => (
 			'<svg width="' + (w * resolution) +
 			'" height="' + (h * resolution) + '"'
-		)
+		),
 	);
 
 	const blob = new Blob([svgCode], {type: 'image/svg+xml'});

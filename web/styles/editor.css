@@ -750,3 +750,31 @@ svg a:active, svg a:hover {
 		display: none;
 	}
 }
+
+.split-h, .split-v {
+	align-content: stretch;
+	align-items: stretch;
+	display: flex;
+}
+
+.split-h {
+	flex-direction: row;
+}
+
+.split-v {
+	flex-direction: column;
+}
+
+.divider {
+	z-index: 1;
+	flex-basis: 10px;
+	margin: -5px;
+}
+
+.split-h .divider {
+	cursor: col-resize;
+}
+
+.split-v .divider {
+	cursor: row-resize;
+}

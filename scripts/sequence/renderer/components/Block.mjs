@@ -63,7 +63,7 @@ export class BlockSplit extends BaseComponent {
 
 		const labelHeight = Math.max(
 			Math.max(tagRender.height, labelRender.height),
-			config.section.label.minHeight
+			config.section.label.minHeight,
 		);
 
 		blockInfo.hold.add(tagRender.box);
@@ -76,7 +76,7 @@ export class BlockSplit extends BaseComponent {
 				y,
 			}),
 			tagRender.label,
-			labelRender.label
+			labelRender.label,
 		);
 
 		if(!first) {

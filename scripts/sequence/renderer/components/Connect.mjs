@@ -207,7 +207,7 @@ export class Connect extends BaseComponent {
 					info1.currentMaxRad +
 					Math.max(
 						labelWidth + lArrow.width(env.theme),
-						rArrow.width(env.theme)
+						rArrow.width(env.theme),
 					) +
 					config.loopbackRadius
 				),
@@ -223,8 +223,8 @@ export class Connect extends BaseComponent {
 				labelWidth +
 				Math.max(
 					lArrow.width(env.theme),
-					rArrow.width(env.theme)
-				) * 2
+					rArrow.width(env.theme),
+				) * 2,
 			);
 		}
 
@@ -307,7 +307,7 @@ export class Connect extends BaseComponent {
 
 		const xR = Math.max(
 			to.x + to.currentMaxRad + rArrow.width(env.theme),
-			xL + labelW
+			xL + labelW,
 		);
 
 		const raise = Math.max(height, lArrow.height(env.theme) / 2);
@@ -321,7 +321,7 @@ export class Connect extends BaseComponent {
 				'x': from.x,
 				'y': yBegin - raise,
 			}),
-			renderedText.label
+			renderedText.label,
 		);
 
 		this.renderRevArrowLine({
@@ -346,7 +346,7 @@ export class Connect extends BaseComponent {
 
 		const len = Math.sqrt(
 			(x2 - x1) * (x2 - x1) +
-			(y2 - y1) * (y2 - y1)
+			(y2 - y1) * (y2 - y1),
 		);
 		const d1 = lArrow.lineGap(env.theme, line);
 		const d2 = rArrow.lineGap(env.theme, line);
@@ -465,7 +465,7 @@ export class Connect extends BaseComponent {
 
 		const arrowSpread = Math.max(
 			rendered.lArrow.height(env.theme),
-			rendered.rArrow.height(env.theme)
+			rendered.rArrow.height(env.theme),
 		) / 2;
 
 		const lift = Math.max(height, arrowSpread);
@@ -493,7 +493,7 @@ export class Connect extends BaseComponent {
 
 		return env.primaryY + Math.max(
 			arrowSpread + env.theme.minActionMargin,
-			env.theme.actionMargin
+			env.theme.actionMargin,
 		);
 	}
 

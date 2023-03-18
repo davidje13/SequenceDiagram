@@ -599,7 +599,7 @@ describe('Sequence Generator', () => {
 				PARSED.agentDefine([{alias: 'B', name: 'Foo'}]),
 				PARSED.agentDefine([{alias: 'B', name: 'Bar'}]),
 			])).toThrow(new Error(
-				'Cannot use B as an alias; it is already in use at line 1'
+				'Cannot use B as an alias; it is already in use at line 1',
 			));
 		});
 
@@ -608,7 +608,7 @@ describe('Sequence Generator', () => {
 				PARSED.agentDefine([{alias: 'B', name: 'Foo'}]),
 				PARSED.agentDefine([{alias: 'Foo', name: 'Bar'}]),
 			])).toThrow(new Error(
-				'Cannot use Foo as an alias; it is already in use at line 1'
+				'Cannot use Foo as an alias; it is already in use at line 1',
 			));
 		});
 
@@ -747,7 +747,7 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.connect([PARSED_SOURCE, PARSED_SOURCE]),
 			])).toThrow(new Error(
-				'Cannot connect found messages at line 1'
+				'Cannot connect found messages at line 1',
 			));
 		});
 
@@ -755,7 +755,7 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.connect([PARSED_SOURCE, ']']),
 			])).toThrow(new Error(
-				'Cannot connect found messages to special agents at line 1'
+				'Cannot connect found messages to special agents at line 1',
 			));
 		});
 
@@ -929,7 +929,7 @@ describe('Sequence Generator', () => {
 				PARSED.agentActivation(['A'], true),
 				PARSED.agentActivation(['A'], false, {parallel: true}),
 			])).toThrow(new Error(
-				'Conflicting agent activation at line 1'
+				'Conflicting agent activation at line 1',
 			));
 		});
 
@@ -988,7 +988,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectBegin('A', 'foo', {line: 'abc'}),
 				PARSED.connectEnd('B', 'foo', {line: 'def', ln: 1}),
 			])).toThrow(new Error(
-				'Mismatched delayed connection arrows at line 2'
+				'Mismatched delayed connection arrows at line 2',
 			));
 		});
 
@@ -1013,7 +1013,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectEnd('B', 'foo', {ln: 1}),
 				PARSED.connectEnd('B', 'bar', {ln: 2}),
 			])).toThrow(new Error(
-				'Unknown delayed connection "bar" at line 3'
+				'Unknown delayed connection "bar" at line 3',
 			));
 		});
 
@@ -1023,7 +1023,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectEnd('B', 'foo', {ln: 1}),
 				PARSED.connectEnd('B', 'foo', {ln: 2}),
 			])).toThrow(new Error(
-				'Unknown delayed connection "foo" at line 3'
+				'Unknown delayed connection "foo" at line 3',
 			));
 		});
 
@@ -1031,7 +1031,7 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.connectBegin('A', 'foo', {ln: 0}),
 			])).toThrow(new Error(
-				'Unused delayed connection "foo" at line 1'
+				'Unused delayed connection "foo" at line 1',
 			));
 		});
 
@@ -1040,7 +1040,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectBegin('A', 'foo', {ln: 0}),
 				PARSED.connectBegin('B', 'foo', {ln: 1}),
 			])).toThrow(new Error(
-				'Duplicate delayed connection "foo" at line 2'
+				'Duplicate delayed connection "foo" at line 2',
 			));
 		});
 
@@ -1051,7 +1051,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectEnd('B', 'foo', {ln: 1}),
 				PARSED.blockEnd(),
 			])).toThrow(new Error(
-				'Unknown delayed connection "foo" at line 2'
+				'Unknown delayed connection "foo" at line 2',
 			));
 		});
 
@@ -1333,7 +1333,7 @@ describe('Sequence Generator', () => {
 					{flags: ['start', 'stop'], name: 'B'},
 				]),
 			])).toThrow(new Error(
-				'Cannot set agent activation multiple times at line 1'
+				'Cannot set agent activation multiple times at line 1',
 			));
 
 			expect(() => invoke([
@@ -1342,7 +1342,7 @@ describe('Sequence Generator', () => {
 					{flags: ['begin', 'end'], name: 'B'},
 				]),
 			])).toThrow(new Error(
-				'Cannot set agent visibility multiple times at line 1'
+				'Cannot set agent visibility multiple times at line 1',
 			));
 		});
 
@@ -2116,7 +2116,7 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.blockEnd(),
 			])).toThrow(new Error(
-				'Invalid block nesting (too many "end"s) at line 1'
+				'Invalid block nesting (too many "end"s) at line 1',
 			));
 
 			expect(() => invoke([
@@ -2125,7 +2125,7 @@ describe('Sequence Generator', () => {
 				PARSED.blockEnd({ln: 10}),
 				PARSED.blockEnd({ln: 20}),
 			])).toThrow(new Error(
-				'Invalid block nesting (too many "end"s) at line 21'
+				'Invalid block nesting (too many "end"s) at line 21',
 			));
 		});
 
@@ -2133,7 +2133,7 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.blockSplit('else', 'xyz'),
 			])).toThrow(new Error(
-				'Invalid block nesting ("else" inside global) at line 1'
+				'Invalid block nesting ("else" inside global) at line 1',
 			));
 
 			expect(() => invoke([
@@ -2142,7 +2142,7 @@ describe('Sequence Generator', () => {
 				PARSED.blockEnd(),
 				PARSED.blockSplit('else', 'xyz'),
 			])).toThrow(new Error(
-				'Invalid block nesting ("else" inside global) at line 1'
+				'Invalid block nesting ("else" inside global) at line 1',
 			));
 		});
 
@@ -2153,7 +2153,7 @@ describe('Sequence Generator', () => {
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
 			])).toThrow(new Error(
-				'Invalid block nesting ("else" inside repeat) at line 1'
+				'Invalid block nesting ("else" inside repeat) at line 1',
 			));
 		});
 
@@ -2299,13 +2299,13 @@ describe('Sequence Generator', () => {
 			expect(() => invoke([
 				PARSED.connect(['A', 'B'], {parallel: true}),
 			])).toThrow(new Error(
-				'Nothing to run statement in parallel with at line 1'
+				'Nothing to run statement in parallel with at line 1',
 			));
 
 			expect(() => invoke([
 				PARSED.note('over', ['A'], {parallel: true}),
 			])).toThrow(new Error(
-				'Nothing to run statement in parallel with at line 1'
+				'Nothing to run statement in parallel with at line 1',
 			));
 		});
 
@@ -2314,7 +2314,7 @@ describe('Sequence Generator', () => {
 				PARSED.agentBegin(['A']),
 				PARSED.agentEnd(['A'], {parallel: true}),
 			])).toThrow(new Error(
-				'Cannot create and destroy A simultaneously at line 1'
+				'Cannot create and destroy A simultaneously at line 1',
 			));
 		});
 
@@ -2325,7 +2325,7 @@ describe('Sequence Generator', () => {
 				PARSED.connectEnd('B', 'foo', {parallel: true}),
 			])).toThrow(new Error(
 				'Cannot start and finish delayed connection simultaneously' +
-				' at line 1'
+				' at line 1',
 			));
 		});
 
@@ -2335,7 +2335,7 @@ describe('Sequence Generator', () => {
 				PARSED.groupBegin('AB', ['A', 'B'], {label: 'Foo'}),
 				PARSED.agentEnd(['AB'], {parallel: true}),
 			])).toThrow(new Error(
-				'Cannot create and destroy reference simultaneously at line 1'
+				'Cannot create and destroy reference simultaneously at line 1',
 			));
 		});
 
@@ -2344,14 +2344,14 @@ describe('Sequence Generator', () => {
 				PARSED.connect(['A', 'B']),
 				PARSED.mark('foo', {ln: 0, parallel: true}),
 			])).toThrow(new Error(
-				'Cannot use parallel here at line 1'
+				'Cannot use parallel here at line 1',
 			));
 
 			expect(() => invoke([
 				PARSED.mark('foo', {ln: 0}),
 				PARSED.connect(['A', 'B'], {parallel: true}),
 			])).toThrow(new Error(
-				'Cannot use parallel here at line 1'
+				'Cannot use parallel here at line 1',
 			));
 		});
 
@@ -2362,7 +2362,7 @@ describe('Sequence Generator', () => {
 				PARSED.connect(['A', 'B']),
 				PARSED.blockEnd(),
 			])).toThrow(new Error(
-				'Cannot use parallel here at line 1'
+				'Cannot use parallel here at line 1',
 			));
 
 			expect(() => invoke([
@@ -2371,7 +2371,7 @@ describe('Sequence Generator', () => {
 				PARSED.blockEnd(),
 				PARSED.connect(['A', 'B'], {parallel: true}),
 			])).toThrow(new Error(
-				'Cannot use parallel here at line 1'
+				'Cannot use parallel here at line 1',
 			));
 		});
 
@@ -2382,7 +2382,7 @@ describe('Sequence Generator', () => {
 					mode: 'foo',
 				}),
 			])).toThrow(new Error(
-				'note between requires at least 2 agents at line 1'
+				'note between requires at least 2 agents at line 1',
 			));
 		});
 

@@ -93,7 +93,7 @@ class NoteComponent extends BaseComponent {
 		env.makeRegion().add(
 			config.boxRenderer(boundingBox),
 			env.svg.box(OUTLINE_ATTRS, boundingBox),
-			labelNode
+			labelNode,
 		);
 
 		return (
@@ -232,7 +232,7 @@ export class NoteBetween extends NoteComponent {
 			config.margin.left +
 			config.margin.right +
 			infoL.currentMaxRad +
-			infoR.currentMaxRad
+			infoR.currentMaxRad,
 		);
 	}
 

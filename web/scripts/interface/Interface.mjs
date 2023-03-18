@@ -1,5 +1,5 @@
 import './fastClick.mjs';
-import './split.mjs';
+import { HORIZONTAL, VERTICAL } from './split.mjs';
 import {
 	getDroppedFile,
 	getFileContent,
@@ -53,7 +53,6 @@ export default class Interface {
 		defaultCode = '',
 		library = [],
 		links = [],
-		require = null,
 		storage = new VoidStorage(),
 		touchUI = false,
 	}) {
@@ -63,7 +62,6 @@ export default class Interface {
 		this.library = library;
 		this.links = links;
 		this.minScale = 1.5;
-		this.require = require || (() => null);
 		this.touchUI = touchUI;
 
 		this.debounced = null;
@@ -198,26 +196,26 @@ export default class Interface {
 			', ',
 			this.dom.el('label').add('height ', this.urlHeight),
 			this.dom.el('span').setClass('or').add('or'),
-			this.dom.el('label').add('zoom ', this.urlZoom)
+			this.dom.el('label').add('zoom ', this.urlZoom),
 		);
 
 		const urlOpts = this.dom.el('div').setClass('config').add(
 			this.dom.el('div').setClass('export-mode').add(
 				this.dom.el('label').add(this.modeRender, 'View'),
 				this.dom.el('label').add(this.modeEdit, 'Edit'),
-				this.dom.el('label').add(this.modeMarkdown, 'Markdown')
+				this.dom.el('label').add(this.modeMarkdown, 'Markdown'),
 			),
 			this.renderOpts,
 			this.urlOutput,
 			copy,
-			copied
+			copied,
 		);
 
 		const urlBuilder = this.dom.el('div').setClass('urlbuilder')
 			.styles({'display': 'none'})
 			.add(
 				this.dom.el('div').setClass('message')
-					.add('Loading\u2026')
+					.add('Loading\u2026'),
 			);
 
 		const ownURL = (typeof window === 'undefined') ? 'http://localhost' : window.location.href;
@@ -239,7 +237,7 @@ export default class Interface {
 			.catch(() => {
 				urlBuilder.empty().add(
 					this.dom.el('div').setClass('message')
-						.add('No online rendering service available.')
+						.add('No online rendering service available.'),
 				);
 			});
 
@@ -366,7 +364,7 @@ export default class Interface {
 			this.downloadPNG,
 			this.downloadSVG,
 			this.downloadURL,
-			this.urlBuilder
+			this.urlBuilder,
 		);
 
 		return this.optsHold;
@@ -383,7 +381,7 @@ export default class Interface {
 				.fastClick()
 				.on('click', () => this.code.addCodeBlock(
 					lib.code,
-					lib.surround
+					lib.surround,
 				))
 				.attach(container);
 
@@ -412,7 +410,6 @@ export default class Interface {
 
 		this.code = new CodeEditor(this.dom, container, {
 			mode: 'sequence',
-			require: this.require,
 			value: this.storage.get() || this.defaultCode,
 		});
 
@@ -438,7 +435,7 @@ export default class Interface {
 		return this.dom.el('div').setClass('pane-library')
 			.add(this.dom.el('div').setClass('pane-library-scroller')
 				.add(this.buildLibrary(
-					this.dom.el('div').setClass('pane-library-inner')
+					this.dom.el('div').setClass('pane-library-inner'),
 				)));
 	}
 
@@ -454,7 +451,7 @@ export default class Interface {
 			.add(
 				this.dom.el('div').setClass('pane-view-scroller')
 					.add(this.viewPaneInner),
-				this.errorMsg
+				this.errorMsg,
 			);
 	}
 
@@ -505,13 +502,10 @@ export default class Interface {
 				.addClass('touch')
 				.add(
 					this.dom.el('div').setClass('pane-hold')
-						.split([viewPane, codePane], {
-							direction: 'vertical',
-							minSize: [10, 10],
-							require: this.require,
-							sizes: [80, 20],
-							snapOffset: 20,
-						}),
+						.split(this.dom, VERTICAL, { snap: 20 }, [
+							{initialSize: 80, minSize: 10, node: viewPane},
+							{initialSize: 20, minSize: 10, node: codePane},
+						]),
 					libPane.styles({'display': 'none', 'top': '100%'}),
 					this.urlBuilder,
 					this.dom.el('div').setClass('optbar')
@@ -519,32 +513,24 @@ export default class Interface {
 							...links,
 							this.downloadPNG.text('PNG'),
 							this.downloadSVG.text('SVG'),
-							this.downloadURL.text('URL')
-						)
+							this.downloadURL.text('URL'),
+						),
 				);
 		} else {
+			const side = this.dom.el('div').setClass('pane-side')
+				.split(this.dom, VERTICAL, { snap: 5 }, [
+					{initialSize: 70, minSize: 100, node: codePane},
+					{initialSize: 30, minSize: 5, node: libPane},
+				]);
 			this.container
 				.add(
 					this.dom.el('div').setClass('pane-hold')
-						.split([
-							this.dom.el('div').setClass('pane-side')
-								.split([codePane, libPane], {
-									direction: 'vertical',
-									minSize: [100, 5],
-									require: this.require,
-									sizes: [70, 30],
-									snapOffset: 5,
-								}),
-							viewPane,
-						], {
-							direction: 'horizontal',
-							minSize: [10, 10],
-							require: this.require,
-							sizes: [30, 70],
-							snapOffset: 70,
-						}),
+						.split(this.dom, HORIZONTAL, { snap: 70 }, [
+							{initialSize: 30, minSize: 10, node: side},
+							{initialSize: 70, minSize: 10, node: viewPane},
+						]),
 					this.dom.el('div').setClass('options links').add(links),
-					this.buildOptionsDownloads()
+					this.buildOptionsDownloads(),
 				);
 		}
 
