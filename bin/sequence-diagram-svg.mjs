@@ -1,21 +1,7 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
 import {VirtualSequenceDiagram} from '../lib/sequence-diagram.mjs';
-
-function read(pipe) {
-	return new Promise((resolve) => {
-		let all = '';
-		pipe.on('readable', () => {
-			const chunk = pipe.read();
-			if(chunk !== null) {
-				all += chunk;
-			}
-		});
-		pipe.on('end', () => {
-			resolve(all);
-		});
-	});
-}
+import {text} from 'node:stream/consumers';
 
 function processError(err) {
 	if(typeof err === 'object' && err.message) {
@@ -29,8 +15,7 @@ function getCodeArg() {
 	if(process.argv.length > 2 && process.argv[2] !== '-') {
 		return Promise.resolve(process.argv[2]);
 	} else {
-		process.stdin.setEncoding('utf8');
-		return read(process.stdin);
+		return text(process.stdin);
 	}
 }
 

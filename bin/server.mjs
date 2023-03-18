@@ -1,9 +1,9 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
-import {PreviewRequestHandler} from './handlers/PreviewRequestHandler.mjs';
-import {RenderRequestHandler} from './handlers/RenderRequestHandler.mjs';
-import {Server} from './server/Server.mjs';
-import {StaticRequestHandler} from './server/StaticRequestHandler.mjs';
+import {PreviewRequestHandler} from '../dev-bin/handlers/PreviewRequestHandler.mjs';
+import {RenderRequestHandler} from '../dev-bin/handlers/RenderRequestHandler.mjs';
+import {Server} from '../dev-bin/server/Server.mjs';
+import {StaticRequestHandler} from '../dev-bin/server/StaticRequestHandler.mjs';
 import path from 'node:path';
 
 const DEV = process.argv.includes('dev');

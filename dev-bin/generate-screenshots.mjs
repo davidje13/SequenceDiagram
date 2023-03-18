@@ -5,6 +5,7 @@ import PngCrush from 'pngcrush';
 import {Readable} from 'node:stream';
 import {VirtualSequenceDiagram} from '../lib/sequence-diagram.mjs';
 import svg2png from 'svg2png';
+import {text} from 'node:stream/consumers';
 
 function make(parent, tag, attrs = {}) {
 	const doc = parent.ownerDocument;
@@ -18,21 +19,6 @@ function make(parent, tag, attrs = {}) {
 	return element;
 }
 
-function read(pipe) {
-	return new Promise((resolve) => {
-		let all = '';
-		pipe.on('readable', () => {
-			const chunk = pipe.read();
-			if(chunk !== null) {
-				all += chunk;
-			}
-		});
-		pipe.on('end', () => {
-			resolve(all);
-		});
-	});
-}
-
 function processError(err) {
 	if(typeof err === 'object' && err.message) {
 		return err.message;
@@ -43,10 +29,9 @@ function processError(err) {
 
 function getReadmeFile() {
 	if(process.argv.length > 2 && process.argv[2] !== '-') {
-		return readFile(process.argv[2]);
+		return readFile(process.argv[2], { encoding: 'utf8' });
 	} else {
-		process.stdin.setEncoding('utf8');
-		return read(process.stdin);
+		return text(process.stdin);
 	}
 }
 
