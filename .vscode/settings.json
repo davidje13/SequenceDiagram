@@ -1,7 +1,6 @@
 {
   "editor.tabSize": 2,
   "files.exclude": {
-    "*.xcworkspace": true,
     "**/node_modules": true,
     "**/package-lock.json": true,
     "lib": true,
