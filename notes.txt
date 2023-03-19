@@ -1,3 +1,0 @@
-Add Android manifest & Offline cache service worker
-See: https://github.com/davidje13/SequenceDiagram/compare/master...anuragvohraec:master
-(bad implementation of same, but can be used as source of feature requests)
