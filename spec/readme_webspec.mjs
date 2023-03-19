@@ -4,7 +4,7 @@ import SequenceDiagram from '../scripts/sequence/SequenceDiagram.mjs';
 const RESOLUTION = 4;
 
 const SAMPLE_REGEX = new RegExp(
-	/(?:<img src="([^"]*)"[^>]*>[\s]*)?```(?!shell).*\n([^]+?)```/g,
+	/(?:<img src="([^"]*)"[^>]*>[\s]*)?```(.*)\n([^]+?)```/g,
 );
 
 const SCREENSHOT_BLACKLIST = [
@@ -28,8 +28,11 @@ function findSamples(content) {
 		if(!match) {
 			break;
 		}
+		if(match[2] === 'shell' || match[2] === 'javascript') {
+			continue;
+		}
 		results.push({
-			code: match[2],
+			code: match[3],
 			file: match[1],
 		});
 	}

@@ -29,7 +29,7 @@
     }
   },
   "bin": {
-    "sequence-diagram-svg": "bin/sequence-diagram-svg.mjs"
+    "svg-sequence-diagram": "bin/svg-sequence-diagram.mjs"
   },
   "eslintIgnore": [
     "lib",

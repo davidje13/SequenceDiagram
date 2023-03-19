@@ -1,12 +1,35 @@
-# Sequence Diagram
+# SVG Sequence Diagram
 
 A tool for creating sequence diagrams from a Domain-Specific Language.
+Runs in nodejs and browsers.
 
-[See it in action!](https://davidje13.github.io/SequenceDiagram/)
+[See it in action in the online editor](https://sequence.davidje13.com/)
 
-This project includes a web page for editing the diagrams, but the core
-logic is available as a component which can be
-[included in other projects](https://davidje13.github.io/SequenceDiagram/library.htm).
+The core rendering capability is also available as a library:
+
+```shell
+npm install --save svg-sequence-diagram
+```
+
+```javascript
+import { SequenceDiagram } from 'svg-sequence-diagram';
+
+const myDiagram = new SequenceDiagram(`
+title Foo
+A -> B
+B -> A
+`);
+
+document.body.appendChild(myDiagram.dom());
+```
+
+[See here for full API documentation](https://sequence.davidje13.com/library.htm).
+
+Or generate SVGs from the commandline:
+
+```shell
+npx svg-sequence-diagram < source.txt > diagram.svg
+```
 
 ## Examples
 

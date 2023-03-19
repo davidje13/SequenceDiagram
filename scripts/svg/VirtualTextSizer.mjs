@@ -1,7 +1,8 @@
+import {BASEDIR} from '../base.mjs';
 import opentype from 'opentype.js';
 import path from 'node:path';
 
-const FONTDIR = process.env.FONTDIR || './fonts/';
+const FONTDIR = process.env.FONTDIR || path.join(BASEDIR, '..', 'fonts');
 const FONTS = new Map();
 const BLANK_PATH = new opentype.Path();
 
