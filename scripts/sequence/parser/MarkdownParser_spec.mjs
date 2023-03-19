@@ -195,12 +195,22 @@ describe('Markdown Parser', () => {
 		]]);
 	});
 
-	it('recognises highlight styling', () => {
+	it('recognises mark styling', () => {
+		const formatted = parser('a <mark>b</mark> c');
+
+		expect(formatted).toEqual([[
+			{attrs: null, text: 'a '},
+			{attrs: {'filter': 'mark'}, text: 'b'},
+			{attrs: null, text: ' c'},
+		]]);
+	});
+
+	it('recognises legacy highlight styling', () => {
 		const formatted = parser('a <highlight>b</highlight> c');
 
 		expect(formatted).toEqual([[
 			{attrs: null, text: 'a '},
-			{attrs: {'filter': 'highlight'}, text: 'b'},
+			{attrs: {'filter': 'mark'}, text: 'b'},
 			{attrs: null, text: ' c'},
 		]]);
 	});

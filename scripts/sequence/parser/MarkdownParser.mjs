@@ -60,7 +60,11 @@ const STYLES = [
 		begin: {matcher: /<red>/g, skip: 0},
 		end: {matcher: /<\/red>/g, skip: 0},
 	}, {
-		attrs: {'filter': 'highlight'},
+		attrs: {'filter': 'mark'},
+		begin: {matcher: /<mark>/g, skip: 0},
+		end: {matcher: /<\/mark>/g, skip: 0},
+	}, {
+		attrs: {'filter': 'mark'},
 		begin: {matcher: /<highlight>/g, skip: 0},
 		end: {matcher: /<\/highlight>/g, skip: 0},
 	}, {

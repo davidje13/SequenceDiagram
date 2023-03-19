@@ -328,8 +328,8 @@ export default [
 		title: 'Red markdown',
 	},
 	{
-		code: '<highlight>{text}</highlight>',
-		preview: 'A -> B: <highlight>highlight</highlight>',
+		code: '<mark>{text}</mark>',
+		preview: 'A -> B: <mark>highlight</mark>',
 		surround: true,
 		title: 'Highlight markdown',
 	},

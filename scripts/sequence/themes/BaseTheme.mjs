@@ -61,7 +61,7 @@ export default class BaseTheme {
 		// Thanks, https://stackoverflow.com/a/12263962/1180785
 		// https://bugs.chromium.org/p/chromium/issues/detail?id=603157
 		// https://bugzilla.mozilla.org/show_bug.cgi?id=917766
-		textBuilder('highlight', () => this.svg.el('filter')
+		textBuilder('mark', () => this.svg.el('filter')
 			.add(
 				// Morph makes characters consistent
 				this.svg.el('feMorphology').attrs({

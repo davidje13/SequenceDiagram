@@ -174,10 +174,10 @@ describe('SequenceDiagram', () => {
 	});
 
 	it('includes text filters if used', () => {
-		const diagram = makeDiagram('title <highlight>foo</highlight>');
+		const diagram = makeDiagram('title <mark>foo</mark>');
 		const content = getSimplifiedContent(diagram);
 
-		expect(content).toContain('<filter id="highlight"');
+		expect(content).toContain('<filter id="mark"');
 	});
 
 	it('returns a full SVG with explicit sizes when exported', () => {
