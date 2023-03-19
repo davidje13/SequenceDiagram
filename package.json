@@ -1,6 +1,6 @@
 {
   "name": "svg-sequence-diagram",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Generates SVG Sequence Diagrams from code in the browser",
   "homepage": "https://github.com/davidje13/SequenceDiagram",
   "repository": {
