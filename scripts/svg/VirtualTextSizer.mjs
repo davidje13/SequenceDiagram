@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const FONTDIR = process.env.FONTDIR || './fonts/';
 const FONTS = new Map();
+const BLANK_PATH = new opentype.Path();
 
 function loadFont(relativePath) {
 	// Must be synchronous so that measurements are ready once startup completes
@@ -16,6 +17,12 @@ function addFont(name, variants) {
 	for(const v in variants) {
 		if(Object.prototype.hasOwnProperty.call(variants, v)) {
 			const font = loadFont(variants[v]);
+			// Reduce runtime memory usage by replacing unused data
+			for(let i = 0; i < font.glyphs.length; i ++) {
+				const glyph = font.glyphs.get(i);
+				glyph.path = BLANK_PATH;
+				glyph.name = null;
+			}
 			font.id = name + '-' + v;
 			types.set(v, font);
 		}

@@ -14,7 +14,9 @@ buffer(process.stdin).then((raw) => {
 
 	const BLANK_PATH = new opentype.Path();
 	for(let i = 0; i < font.glyphs.length; i ++) {
-		font.glyphs.get(i).path = BLANK_PATH;
+		const glyph = font.glyphs.get(i);
+		glyph.path = BLANK_PATH;
+		glyph.name = '';
 	}
 
 	// Omit empty data to work around error when saving:

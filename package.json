@@ -46,7 +46,7 @@
     "minify-web": "rm -r web/lib || true; rollup --config web/scripts/rollup.config.mjs && npm run copy-third-party",
     "minify": "npm run minify-lib && npm run minify-web",
     "prepublishOnly": "npm run minify-lib && npm test",
-    "start": "bin/server.mjs",
+    "start": "dev-bin/server.mjs",
     "test": "npm run unit-test && npm run web-test && npm run lint && echo 'PASSED :)'",
     "unit-test": "rollup --config spec/support/rollup.config.mjs && node --enable-source-maps node_modules/.bin/jasmine --config=spec/support/jasmine.json",
     "web-test": "karma start spec/support/karma.conf.js --single-run",
