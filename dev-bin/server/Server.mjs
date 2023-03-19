@@ -18,6 +18,11 @@ export class Server {
 		this.server = http.createServer(this._handleRequest.bind(this));
 		this.log = this.log.bind(this);
 		this.logTarget = process.stdout;
+		this.liveConnections = new Set();
+		this.server.on('connection', (s) => {
+			this.liveConnections.add(s);
+			s.on('close', () => this.liveConnections.delete(s));
+		});
 		this.shutdownCallbacks = [];
 		this.compressionOptions = {
 			level: 5,
@@ -26,6 +31,7 @@ export class Server {
 		};
 
 		this.close = this.close.bind(this);
+		this.forceClose = this.forceClose.bind(this);
 	}
 
 	addHandler(handler) {
@@ -116,6 +122,14 @@ export class Server {
 			}));
 	}
 
+	forceClose() {
+		if(!this.liveConnections.size) {
+			return;
+		}
+		this.log('Closing ' + this.liveConnections.size + ' connections...');
+		this.liveConnections.forEach((s) => s.destroy());
+	}
+
 	close() {
 		if(!this.running) {
 			return Promise.resolve(this);
@@ -126,8 +140,12 @@ export class Server {
 		};
 		this.logTarget.write('\n'); // Skip line containing Ctrl+C indicator
 		this.log('Shutting down...');
+		const timeout = setTimeout(this.forceClose, 1000);
 		return new Promise((resolve) => this.server.close(() => resolve()))
-			.then(() => Promise.all(this.handlers.map((h) => h.close(env))))
+			.then(() => {
+				clearTimeout(timeout);
+				return Promise.all(this.handlers.map((h) => h.close(env)));
+			})
 			.then(() => {
 				this.shutdownCallbacks.forEach((fn) => fn(this));
 				process.removeListener('SIGINT', this.close);
