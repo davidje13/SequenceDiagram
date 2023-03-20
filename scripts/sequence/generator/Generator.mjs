@@ -15,14 +15,14 @@ class AgentState {
 		blocked = false,
 		covered = false,
 		group = null,
-		activated = false,
+		activation = 0,
 		locked = false,
 		visible = false,
 	} = {}) {
 		this.blocked = blocked;
 		this.covered = covered;
 		this.group = group;
-		this.activated = activated;
+		this.activation = activation;
 		this.locked = locked;
 		this.visible = visible;
 	}
@@ -76,17 +76,20 @@ const SPECIAL_AGENT_IDS = ['[', ']'];
 
 const MERGABLE = {
 	'agent activation': {
-		check: ['activated'],
+		check: ['delta'],
+		checkDistinct: ['agentIDs'],
 		merge: ['agentIDs'],
 		siblings: new Set(['agent begin', 'agent end']),
 	},
 	'agent begin': {
 		check: ['mode'],
+		checkDistinct: [],
 		merge: ['agentIDs'],
 		siblings: new Set(['agent activation']),
 	},
 	'agent end': {
 		check: ['mode'],
+		checkDistinct: [],
 		merge: ['agentIDs'],
 		siblings: new Set(['agent activation']),
 	},
@@ -98,6 +101,9 @@ function mergableParallel(target, copy) {
 		return false;
 	}
 	if(info.check.some((c) => target[c] !== copy[c])) {
+		return false;
+	}
+	if(info.checkDistinct.some((c) => hasIntersection(target[c], copy[c]))) {
 		return false;
 	}
 	return true;
@@ -601,7 +607,7 @@ export default class Generator {
 		};
 	}
 
-	setGAgentActivation(gAgents, activated, checked = false) {
+	setGAgentActivation(gAgents, delta, checked = false) {
 		const filteredGAgents = gAgents.filter((gAgent) => {
 			const state = this.getGAgentState(gAgent);
 			if(state.locked || state.blocked) {
@@ -611,18 +617,24 @@ export default class Generator {
 					return false;
 				}
 			}
-			return state.visible && (state.activated !== activated);
+			if(delta < 0 && state.activation === 0) {
+				return false;
+			}
+			return state.visible;
 		});
 		if(filteredGAgents.length === 0) {
 			return null;
 		}
 		filteredGAgents.forEach((gAgent) => {
-			this.updateGAgentState(gAgent, {activated});
+			const state = this.getGAgentState(gAgent);
+			this.updateGAgentState(gAgent, {
+				activation: Math.max(0, state.activation + delta),
+			});
 		});
 
 		return {
-			activated,
 			agentIDs: filteredGAgents.map((gAgent) => gAgent.id),
+			delta,
 			type: 'agent activation',
 		};
 	}
@@ -1040,9 +1052,9 @@ export default class Generator {
 	_makeConnectParallelStages(flags, connectStage) {
 		return this.makeParallel([
 			this.setGAgentVis(flags.beginGAgents, 'begin', 'box', true),
-			this.setGAgentActivation(flags.startGAgents, true, true),
+			this.setGAgentActivation(flags.startGAgents, 1, true),
 			connectStage,
-			this.setGAgentActivation(flags.stopGAgents, false, true),
+			this.setGAgentActivation(flags.stopGAgents, -1, true),
 			this.setGAgentVis(flags.endGAgents, 'end', 'cross', true),
 		]);
 	}
@@ -1218,14 +1230,14 @@ export default class Generator {
 			});
 	}
 
-	handleAgentActivation({agents, activated, parallel}) {
+	handleAgentActivation({agents, delta, parallel}) {
 		const gAgents = agents.map(this.toGAgent);
 		this.validateGAgents(gAgents);
 		this.defineGAgents(gAgents);
 		this.addImpStage(this.setGAgentVis(gAgents, 'begin', 'box'), {
 			parallel,
 		});
-		this.addStage(this.setGAgentActivation(gAgents, activated), {parallel});
+		this.addStage(this.setGAgentActivation(gAgents, delta), {parallel});
 	}
 
 	handleAgentBegin({agents, mode, parallel}) {
@@ -1266,7 +1278,7 @@ export default class Generator {
 		);
 		this.validateGAgents(gAgents);
 		this.addStage(this.makeParallel([
-			this.setGAgentActivation(gAgents, false),
+			this.setGAgentActivation(gAgents, Number.NEGATIVE_INFINITY),
 			this.setGAgentVis(gAgents, 'end', mode, true),
 			...groupPAgents.map(this.endGroup),
 		]), {parallel});
@@ -1339,7 +1351,7 @@ export default class Generator {
 
 		const terminators = meta.terminators || 'none';
 		this.addStage(this.makeParallel([
-			this.setGAgentActivation(this.gAgents, false),
+			this.setGAgentActivation(this.gAgents, Number.NEGATIVE_INFINITY),
 			this.setGAgentVis(this.gAgents, 'end', terminators),
 		]));
 

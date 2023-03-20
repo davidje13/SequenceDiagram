@@ -25,12 +25,12 @@ describe('Sequence Generator', () => {
 	const [PARSED_SOURCE] = makeParsedAgents([{flags: ['source']}]);
 
 	const PARSED = {
-		agentActivation: (agents, activated, {
+		agentActivation: (agents, delta, {
 			ln = 0,
 			parallel = false,
 		} = {}) => ({
-			activated,
 			agents: makeParsedAgents(agents),
+			delta,
 			ln,
 			parallel,
 			type: 'agent activation',
@@ -251,11 +251,11 @@ describe('Sequence Generator', () => {
 			options,
 		}),
 
-		agentActivation: (agentIDs, activated, {
+		agentActivation: (agentIDs, delta, {
 			ln = any(),
 		} = {}) => ({
-			activated,
 			agentIDs,
+			delta,
 			ln,
 			type: 'agent activation',
 		}),
@@ -873,19 +873,19 @@ describe('Sequence Generator', () => {
 
 		it('propegates activation stages', () => {
 			const sequence = invoke([
-				PARSED.agentActivation(['A', 'B'], true),
+				PARSED.agentActivation(['A', 'B'], 1),
 			]);
 
 			expect(sequence.stages).toEqual([
 				any(),
-				GENERATED.agentActivation(['A', 'B'], true),
+				GENERATED.agentActivation(['A', 'B'], 1),
 				any(),
 			]);
 		});
 
 		it('adds implicit begin stages for activation', () => {
 			const sequence = invoke([
-				PARSED.agentActivation(['A', 'B'], true),
+				PARSED.agentActivation(['A', 'B'], 1),
 			]);
 
 			expect(sequence.stages).toEqual([
@@ -898,13 +898,13 @@ describe('Sequence Generator', () => {
 		it('implicitly combines compatible activation stages', () => {
 			const sequence = invoke([
 				PARSED.agentBegin(['A', 'B']),
-				PARSED.agentActivation(['A'], true),
-				PARSED.agentActivation(['B'], true),
+				PARSED.agentActivation(['A'], 1),
+				PARSED.agentActivation(['B'], 1),
 			]);
 
 			expect(sequence.stages).toEqual([
 				any(),
-				GENERATED.agentActivation(['A', 'B'], true),
+				GENERATED.agentActivation(['A', 'B'], 1),
 				any(),
 			]);
 		});
@@ -912,22 +912,37 @@ describe('Sequence Generator', () => {
 		it('maintains separation of incompatible activation stages', () => {
 			const sequence = invoke([
 				PARSED.agentBegin(['A']),
-				PARSED.agentActivation(['A'], true),
-				PARSED.agentActivation(['A'], false),
+				PARSED.agentActivation(['A'], 1),
+				PARSED.agentActivation(['A'], -1),
 			]);
 
 			expect(sequence.stages).toEqual([
 				any(),
-				GENERATED.agentActivation(['A'], true),
-				GENERATED.agentActivation(['A'], false),
+				GENERATED.agentActivation(['A'], 1),
+				GENERATED.agentActivation(['A'], -1),
+				any(),
+			]);
+		});
+
+		it('maintains separation of sequential activation stages', () => {
+			const sequence = invoke([
+				PARSED.agentBegin(['A']),
+				PARSED.agentActivation(['A'], 1),
+				PARSED.agentActivation(['A'], 1),
+			]);
+
+			expect(sequence.stages).toEqual([
+				any(),
+				GENERATED.agentActivation(['A'], 1),
+				GENERATED.agentActivation(['A'], 1),
 				any(),
 			]);
 		});
 
 		it('rejects conflicting parallel activation stages', () => {
 			expect(() => invoke([
-				PARSED.agentActivation(['A'], true),
-				PARSED.agentActivation(['A'], false, {parallel: true}),
+				PARSED.agentActivation(['A'], 1),
+				PARSED.agentActivation(['A'], -1, {parallel: true}),
 			])).toThrow(new Error(
 				'Conflicting agent activation at line 1',
 			));
@@ -944,12 +959,12 @@ describe('Sequence Generator', () => {
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
-					GENERATED.agentActivation(['A'], true),
+					GENERATED.agentActivation(['A'], 1),
 					GENERATED.connectBegin(['A', 'A'], {label: 'woo!'}),
 				]),
 				GENERATED.parallel([
 					GENERATED.connectEnd(),
-					GENERATED.agentActivation(['A'], false),
+					GENERATED.agentActivation(['A'], -1),
 				]),
 				any(),
 			]);
@@ -1267,12 +1282,12 @@ describe('Sequence Generator', () => {
 			expect(sequence.stages).toEqual([
 				any(),
 				GENERATED.parallel([
-					GENERATED.agentActivation(['B'], true),
+					GENERATED.agentActivation(['B'], 1),
 					GENERATED.connect(['A', 'B']),
 				]),
 				GENERATED.parallel([
 					GENERATED.connect(['A', 'B']),
-					GENERATED.agentActivation(['B'], false),
+					GENERATED.agentActivation(['B'], -1),
 				]),
 				any(),
 			]);
@@ -1319,7 +1334,7 @@ describe('Sequence Generator', () => {
 				any(),
 				GENERATED.parallel([
 					GENERATED.connect(['A', 'B']),
-					GENERATED.agentActivation(['B'], false),
+					GENERATED.agentActivation(['B'], -1),
 					GENERATED.agentEnd(['B']),
 				]),
 				GENERATED.agentEnd(['A']),
@@ -1358,7 +1373,7 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.agentActivation(['B'], false),
+					GENERATED.agentActivation(['B'], Number.NEGATIVE_INFINITY),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);
@@ -1374,7 +1389,7 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.agentActivation(['B'], false),
+					GENERATED.agentActivation(['B'], Number.NEGATIVE_INFINITY),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);
@@ -1394,7 +1409,10 @@ describe('Sequence Generator', () => {
 				any(),
 				any(),
 				GENERATED.parallel([
-					GENERATED.agentActivation(['A', 'B'], false),
+					GENERATED.agentActivation(
+						['A', 'B'],
+						Number.NEGATIVE_INFINITY,
+					),
 					GENERATED.agentEnd(['A', 'B']),
 				]),
 			]);

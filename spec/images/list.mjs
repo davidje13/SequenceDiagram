@@ -12,4 +12,6 @@ export default [
 	'Reference.svg',
 	'ReferenceLayering.svg',
 	'SelfConnect.svg',
+	'NestedActivation.svg',
+	'NestedActivation2.svg',
 ];

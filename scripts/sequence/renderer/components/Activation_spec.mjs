@@ -17,42 +17,54 @@ describe('Activation', () => {
 	});
 
 	it('updates the radius of the agent lines when checking separation', () => {
-		const agentInfo = {currentMaxRad: 1, currentRad: 0};
+		const agentInfo = {
+			currentActivation: 0,
+			currentMaxRad: 1,
+			currentRad: 0,
+		};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
 			agentInfos,
 			theme,
 		};
-		activation.separationPre({activated: true, agentIDs: ['foo']}, env);
+		activation.separationPre({agentIDs: ['foo'], delta: 1}, env);
 
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(2);
 	});
 
 	it('keeps the largest maximum radius', () => {
-		const agentInfo = {currentMaxRad: 3, currentRad: 0};
+		const agentInfo = {
+			currentActivation: 0,
+			currentMaxRad: 3,
+			currentRad: 0,
+		};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
 			agentInfos,
 			theme,
 		};
-		activation.separationPre({activated: true, agentIDs: ['foo']}, env);
+		activation.separationPre({agentIDs: ['foo'], delta: 1}, env);
 
 		expect(agentInfo.currentRad).toEqual(2);
 		expect(agentInfo.currentMaxRad).toEqual(3);
 	});
 
 	it('sets the radius to 0 when activation is disabled', () => {
-		const agentInfo = {currentMaxRad: 1, currentRad: 0};
+		const agentInfo = {
+			currentActivation: 0,
+			currentMaxRad: 1,
+			currentRad: 0,
+		};
 		const agentInfos = new Map();
 		agentInfos.set('foo', agentInfo);
 		const env = {
 			agentInfos,
 			theme,
 		};
-		activation.separationPre({activated: false, agentIDs: ['foo']}, env);
+		activation.separationPre({agentIDs: ['foo'], delta: -1}, env);
 
 		expect(agentInfo.currentRad).toEqual(0);
 		expect(agentInfo.currentMaxRad).toEqual(1);

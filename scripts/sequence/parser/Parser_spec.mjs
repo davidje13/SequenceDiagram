@@ -21,11 +21,11 @@ describe('Sequence Parser', () => {
 	const PARSED = {
 		agentActivation: (agents, {
 			ln = any(),
-			activated = any(),
+			delta = any(),
 			parallel = false,
 		} = {}) => ({
-			activated,
 			agents: makeParsedAgents(agents),
+			delta,
 			ln,
 			parallel,
 			type: 'agent activation',
@@ -723,8 +723,8 @@ describe('Sequence Parser', () => {
 				PARSED.agentBegin(['A', 'B'], {mode: 'box'}),
 				PARSED.agentRelabel([]),
 				PARSED.agentRelabel(['A', 'B']),
-				PARSED.agentActivation(['A', 'B'], {activated: true}),
-				PARSED.agentActivation(['A', 'B'], {activated: false}),
+				PARSED.agentActivation(['A', 'B'], {delta: 1}),
+				PARSED.agentActivation(['A', 'B'], {delta: -1}),
 				PARSED.agentEnd(['A', 'B'], {mode: 'cross'}),
 			]);
 		});

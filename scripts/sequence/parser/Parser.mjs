@@ -172,12 +172,12 @@ AGENT_MANIPULATION_TYPES.set('end', {
 });
 AGENT_MANIPULATION_TYPES.set('activate', {
 	alias: false,
-	base: {activated: true, type: 'agent activation'},
+	base: {delta: 1, type: 'agent activation'},
 	min: 1,
 });
 AGENT_MANIPULATION_TYPES.set('deactivate', {
 	alias: false,
-	base: {activated: false, type: 'agent activation'},
+	base: {delta: -1, type: 'agent activation'},
 	min: 1,
 });
 

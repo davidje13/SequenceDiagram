@@ -480,6 +480,7 @@ export default class Renderer extends EventObject {
 		agents.forEach((agent, index) => {
 			this.agentInfos.set(agent.id, {
 				anchorRight: agent.anchorRight,
+				currentActivation: 0,
 				currentMaxRad: 0,
 				currentRad: 0,
 				formattedLabel: agent.formattedLabel,
@@ -537,6 +538,13 @@ export default class Renderer extends EventObject {
 		});
 		this.currentY = 0;
 		this.hideNest = 0;
+	}
+
+	_resetAgentInfo() {
+		this.agentInfos.forEach((agentInfo) => {
+			agentInfo.currentActivation = 0;
+			agentInfo.currentRad = 0;
+		});
 	}
 
 	_reset(theme) {
@@ -661,6 +669,7 @@ export default class Renderer extends EventObject {
 
 		sequence.stages.forEach(this.prepareMeasurementsStage);
 		this._resetState();
+		this._resetAgentInfo();
 		this.svg.textSizer.performMeasurementsPre();
 	}
 
@@ -672,6 +681,7 @@ export default class Renderer extends EventObject {
 		this.visibleAgentIDs = ['[', ']'];
 		sequence.stages.forEach(this.separationStage);
 		this._resetState();
+		this._resetAgentInfo();
 
 		this.positionAgents();
 
