@@ -53,10 +53,10 @@
     "web-test:manual": "MANUAL=1 karma start spec/support/karma.conf.js"
   },
   "devDependencies": {
-    "@rollup/plugin-multi-entry": "6.x",
-    "@rollup/plugin-node-resolve": "15.x",
-    "@rollup/plugin-replace": "5.x",
-    "@rollup/plugin-terser": "0.4.x",
+    "@rollup/plugin-multi-entry": "7.x",
+    "@rollup/plugin-node-resolve": "16.x",
+    "@rollup/plugin-replace": "6.x",
+    "@rollup/plugin-terser": "1.x",
     "codemirror": "5.65.x",
     "eslint": "8.x",
     "eslint-plugin-jasmine": "4.x",
@@ -68,7 +68,7 @@
     "karma-jasmine": "5.x",
     "karma-safari-launcher": "1.x",
     "pngcrush": "3.x",
-    "rollup": "3.x",
+    "rollup": "4.x",
     "svg2png": "4.x"
   },
   "dependencies": {

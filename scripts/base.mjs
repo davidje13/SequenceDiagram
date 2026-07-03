@@ -1,3 +1,4 @@
-import path from 'node:path';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
-export const BASEDIR = path.dirname(new URL(import.meta.url).pathname);
+export const BASEDIR = dirname(fileURLToPath(import.meta.url));

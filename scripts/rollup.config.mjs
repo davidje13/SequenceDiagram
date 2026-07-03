@@ -17,7 +17,7 @@ export default [
 		plugins: [terser()],
 	},
 	{
-		external: ['node:path', 'opentype.js'],
+		external: ['node:path', 'node:url', 'opentype.js'],
 		input: 'scripts/standalone.mjs',
 		output: [
 			{

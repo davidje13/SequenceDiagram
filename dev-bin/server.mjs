@@ -1,15 +1,16 @@
 #!/usr/bin/env -S node --disable-proto delete --disallow-code-generation-from-strings
 
+import {dirname, join} from 'node:path';
 import {PreviewRequestHandler} from './handlers/PreviewRequestHandler.mjs';
 import {RenderRequestHandler} from './handlers/RenderRequestHandler.mjs';
 import {Server} from './server/Server.mjs';
 import {StaticRequestHandler} from './server/StaticRequestHandler.mjs';
-import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const DEV = process.argv.includes('dev');
 const HOSTNAME = '127.0.0.1';
-const SELFDIR = path.dirname(new URL(import.meta.url).pathname);
-const BASEDIR = path.join(SELFDIR, '..') + '/';
+const SELFDIR = dirname(fileURLToPath(import.meta.url));
+const BASEDIR = join(SELFDIR, '..') + '/';
 
 let PORT = Number.parseInt(process.argv[2], 10);
 if(Number.isNaN(PORT)) {

@@ -1,10 +1,11 @@
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import multiEntry from '@rollup/plugin-multi-entry';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import path from 'node:path';
+import {nodeResolve} from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 
-const SELFDIR = path.dirname(new URL(import.meta.url).pathname);
-const STUBSDIR = path.join(SELFDIR, '..', 'stubs') + '/';
+const SELFDIR = dirname(fileURLToPath(import.meta.url));
+const STUBSDIR = join(SELFDIR, '..', 'stubs') + '/';
 
 export default [
 	{
