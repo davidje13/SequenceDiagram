@@ -1,0 +1,55 @@
+{
+  "$schema": "../node_modules/web-listener/schema.json",
+  "servers": [
+    {
+      "port": 8080,
+      "mount": [
+        {
+          "type": "headers",
+          "headers": {
+            "cache-control": "public, max-age=600, stale-while-revalidate=31536000, stale-if-error=31536000",
+            "content-security-policy": "base-uri 'self'; default-src 'none'; script-src 'self'; style-src 'self' 'sha256-s7UPtBgvov5WNF9C1DlTZDpqwLgEmfiWha5a5p/Zn7E='; connect-src 'self'; font-src 'self' data:; img-src 'self' blob:; form-action 'self'; frame-ancestors 'self'; frame-src 'self'",
+            "cross-origin-embedder-policy": "require-corp",
+            "cross-origin-opener-policy": "same-origin",
+            "cross-origin-resource-policy": "same-origin",
+            "permissions-policy": "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), sync-xhr=(), usb=()",
+            "x-content-type-options": "nosniff",
+            "referrer-policy": "no-referrer"
+          }
+        },
+        {
+          "type": "custom",
+          "path": "/render",
+          "import": "./render.js",
+          "namedExport": "render",
+          "maskSubpaths": true
+        },
+        {
+          "type": "custom",
+          "method": "GET",
+          "path": "/preview",
+          "import": "./render.js",
+          "namedExport": "preview",
+          "maskSubpaths": true
+        },
+        { "type": "redirect", "path": "/library.htm", "target": "/library/", "status": 301 },
+        {
+          "type": "files",
+          "path": "/",
+          "dir": "./static",
+          "options": {
+            "negotiation": [
+              {
+                "feature": "encoding",
+                "options": [
+                  { "value": "br", "file": "{file}.br" },
+                  { "value": "gzip", "file": "{file}.gz" }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

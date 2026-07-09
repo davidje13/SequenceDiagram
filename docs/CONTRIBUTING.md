@@ -16,7 +16,7 @@ To get started, you can clone this repository and run:
 
 ```shell
 npm install;
-npm start -- dev;
+npm start;
 ```
 
 This will launch a server in the project directory. You can now open
@@ -54,8 +54,7 @@ server if you make changes)
 The available commands are:
 
 * `npm start`: runs a webserver on
-  [localhost:8080](http://localhost:8080) (using minified sources)
-* `npm start -- dev`: runs a webserver using non-minified sources
+  [localhost:8080](http://localhost:8080)
 * `npm test`: runs the `unit-test`, `web-test` and `lint` commands
 * `npm run unit-test`: runs non-browser-based unit tests in NodeJS
 * `npm run web-test`: runs browser-based unit tests via Karma
@@ -65,9 +64,7 @@ The available commands are:
   to open the tests in any browser, and the tests will stay open for a
   minute after completing (this helps with debugging failures)
 * `npm run lint`: runs the linter against all source and test files
-* `npm run minify`: runs the `minify-lib` and `minify-web` commands
-* `npm run minify-lib`: minifies the library code in `/lib`
-* `npm run minify-web`: minifies the web code in `/web/lib`
+* `npm run minify`: minifies the library code in `/lib`
 
 ## Project Structure
 
@@ -155,8 +152,8 @@ minified library (this is preferred but not required):
 npm run minify;
 ```
 
-This will update the files in `/lib` and `/web/lib`. The minified code
-is a self-contained copy of the `/scripts/sequence/SequenceDiagram.mjs`
+This will update the files in `/lib`. The minified code is a
+self-contained copy of the `/scripts/sequence/SequenceDiagram.mjs`
 script, with some boiler-plate added to allow loading into a page in a
 variety of ways.
 

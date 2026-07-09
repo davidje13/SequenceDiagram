@@ -30,7 +30,7 @@ module.exports = (config) => {
 			usePhantomJS: false,
 		},
 
-		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'web/lib/**'],
+		exclude: ['node_modules/**/*_spec.*', 'lib/**', 'web/build/**'],
 		files: [
 			'node_modules/codemirror/lib/codemirror.js',
 			{included: false, pattern: 'node_modules/codemirror/addon/**/*'},

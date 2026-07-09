@@ -4,3 +4,6 @@ xcuserdata
 xcshareddata
 /ephemeral
 /concept
+/web/build/
+/web-bundle.zip
+/web-fonts-bundle.zip

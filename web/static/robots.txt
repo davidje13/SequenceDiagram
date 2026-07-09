@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /render
+Disallow: /preview

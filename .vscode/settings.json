@@ -4,7 +4,7 @@
     "**/node_modules": true,
     "**/package-lock.json": true,
     "lib": true,
-    "web/lib": true,
+    "web/build": true,
     "ephemeral": true,
     "concept": true
   },

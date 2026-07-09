@@ -33,20 +33,18 @@
   },
   "eslintIgnore": [
     "lib",
-    "web/lib",
+    "web/build",
     "ephemeral",
     "*FontData.mjs"
   ],
   "scripts": {
-    "copy-third-party": "cat node_modules/codemirror/lib/codemirror.css node_modules/codemirror/addon/hint/show-hint.css > web/lib/codemirror.css",
     "copy-fonts": "rm -r fonts || true; mkdir -p fonts/handlee fonts/liberation-fonts && cp fonts-raw/handlee/LICENSE fonts/handlee && cp fonts-raw/liberation-fonts/LICENSE fonts/liberation-fonts && ./dev-bin/crush-font.mjs < fonts-raw/handlee/Handlee.ttf > fonts/handlee/Handlee.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationMono-Bold.ttf > fonts/liberation-fonts/LiberationMono-Bold.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationMono-BoldItalic.ttf > fonts/liberation-fonts/LiberationMono-BoldItalic.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationMono-Italic.ttf > fonts/liberation-fonts/LiberationMono-Italic.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationMono-Regular.ttf > fonts/liberation-fonts/LiberationMono-Regular.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationSans-Bold.ttf > fonts/liberation-fonts/LiberationSans-Bold.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationSans-BoldItalic.ttf > fonts/liberation-fonts/LiberationSans-BoldItalic.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationSans-Italic.ttf > fonts/liberation-fonts/LiberationSans-Italic.ttf && ./dev-bin/crush-font.mjs < fonts-raw/liberation-fonts/LiberationSans-Regular.ttf > fonts/liberation-fonts/LiberationSans-Regular.ttf",
     "lint": "eslint . --config eslintrc.js --ext .js --ext .mjs",
     "generate-screenshots": "dev-bin/generate-screenshots.mjs README.md",
-    "minify-lib": "rm -r lib || true; rollup --config scripts/rollup.config.mjs",
-    "minify-web": "rm -r web/lib || true; rollup --config web/scripts/rollup.config.mjs && npm run copy-third-party",
-    "minify": "npm run minify-lib && npm run minify-web",
+    "minify": "rm -r lib || true; rollup --config scripts/rollup.config.mjs",
     "prepublishOnly": "npm run minify-lib && npm test",
-    "start": "dev-bin/server.mjs",
+    "start": "PARTIAL=true ./web/build.sh && web-listener -c web/config.json --dir web/build/static --exec 'rollup --config web/rollup.config.mjs --watch' --no-cache",
+    "build-web": "./web/build.sh",
     "test": "npm run unit-test && npm run web-test && npm run lint && echo 'PASSED :)'",
     "unit-test": "rollup --config spec/support/rollup.config.mjs && node --enable-source-maps node_modules/.bin/jasmine --config=spec/support/jasmine.json",
     "web-test": "karma start spec/support/karma.conf.js --single-run",
@@ -69,7 +67,8 @@
     "karma-safari-launcher": "1.x",
     "pngcrush": "3.x",
     "rollup": "4.x",
-    "svg2png": "4.x"
+    "svg2png": "4.x",
+    "web-listener": "1.3.x"
   },
   "dependencies": {
     "opentype.js": "1.x"

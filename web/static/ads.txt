@@ -1,0 +1,2 @@
+# Deny inclusion in any advertising system
+placeholder.example.com, placeholder, DIRECT, placeholder
