@@ -72,5 +72,5 @@ deploy:
   script:
     - apk add --update --no-cache openssl curl
     - POST_DETAIL="$(date -u '+%Y-%m-%dT%H:%M:%SZ');sequence"
-    - POST_SIGN="$(printf '%s' "$POST_DETAIL" | openssl dgst -sha256 -sign "$DEPLOY_SIGNING_KEY" -passin "file:$DEPLOY_SIGNING_KEY_PASS" - | base64)"
+    - POST_SIGN="$(printf '%s' "$POST_DETAIL" | openssl dgst -sha256 -sign "$DEPLOY_SIGNING_KEY" -passin "file:$DEPLOY_SIGNING_KEY_PASS" -binary - | base64)"
     - curl -X POST --data-urlencode "detail=$POST_DETAIL" --data-urlencode "signature=$POST_SIGN" --fail-with-body 'https://davidje13.com/cd/deploy'
