@@ -70,7 +70,7 @@ deploy:
     - sign
   environment: deploy # grant access to DEPLOY_SIGNING_KEY and DEPLOY_SIGNING_KEY_PASS project variables
   script:
-    - apk add --update --no-cache openssl
+    - apk add --update --no-cache openssl curl
     - POST_DETAIL="$(date -u '+%Y-%m-%dT%H:%M:%SZ');sequence"
     - POST_SIGN="$(printf '%s' "$POST_DETAIL" | openssl dgst -sha256 -sign "$DEPLOY_SIGNING_KEY" -passin "file:$DEPLOY_SIGNING_KEY_PASS" -hex -)"
-    #- curl -X POST --data-urlencode "detail=$POST_DETAIL" --data-urlencode "signature=$POST_SIGN" 'https://davidje13.com/cd/deploy'
+    - curl -X POST --data-urlencode "detail=$POST_DETAIL" --data-urlencode "signature=$POST_SIGN" 'https://davidje13.com/cd/deploy'

@@ -24,7 +24,7 @@ several pages:
 
 * [http://localhost:8080/](http://localhost:8080/):
   the main editor
-* [http://localhost:8080/library.htm](http://localhost:8080/library.htm):
+* [http://localhost:8080/library](http://localhost:8080/library):
   the library sample page
 
 To run the tests and linter, run the command:
@@ -45,7 +45,7 @@ To check that the code works with minified sources, run:
 npm start;
 ```
 
-(index.htm and library.htm will now run with minified sources, but note
+(`index.html` and `library` will now run with minified sources, but note
 that it will not perform hot-reloading; you will need to restart the
 server if you make changes)
 
@@ -168,10 +168,9 @@ Note: to use this command, you will need
 [pngcrush](https://pmt.sourceforge.io/pngcrush/) installed on your
 system. On MacOS you can install it with `brew install pngcrush`.
 
-The samples in
-[http://localhost:8080/library.htm](http://localhost:8080/library.htm)
-are dynamically rendered when the user opens the page, so you do not
-need to update those.
+The samples in <http://localhost:8080/library> are dynamically
+rendered when the user opens the page, so you do not need to update
+those.
 
 ## Thank You
 

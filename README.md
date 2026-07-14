@@ -23,7 +23,7 @@ B -> A
 document.body.appendChild(myDiagram.dom());
 ```
 
-[See here for full API documentation](https://sequence.davidje13.com/library.htm).
+[See here for full API documentation](https://sequence.davidje13.com/library).
 
 Or generate SVGs from the commandline:
 
