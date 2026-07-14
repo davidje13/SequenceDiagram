@@ -1,0 +1,76 @@
+image: alpine:latest
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+  - package
+  - deploy
+
+.build_and_test: &build_and_test
+  stage: test
+  script:
+    - npm install --ignore-scripts
+    - npm run unit-test
+    - npm run lint
+
+node:20:
+  <<: *build_and_test
+  image: node:20
+
+node:22:
+  <<: *build_and_test
+  image: node:22
+
+node:24:
+  <<: *build_and_test
+  image: node:24
+  script:
+    - npm install --ignore-scripts
+    - npm run unit-test
+    # browser tests do not currently run on CI
+    - npm run lint
+    - apt-get update && apt-get install -y --no-install-recommends zip
+    - npm run minify
+    - npm run build-web
+  artifacts:
+    name: web
+    expire_in: 20 minutes
+    paths:
+      - web-bundle.zip
+      - web-fonts-bundle.zip
+
+sign:
+  stage: package
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  dependencies:
+    - node:20
+    - node:22
+    - node:24
+  environment: sign # grant access to SIGNING_KEY and SIGNING_KEY_PASS project variables
+  script:
+    - apk add --update --no-cache openssl
+    - openssl dgst -sha256 -sign "$SIGNING_KEY" -passin "file:$SIGNING_KEY_PASS" -out web-bundle.zip.sign web-bundle.zip
+    - openssl dgst -sha256 -sign "$SIGNING_KEY" -passin "file:$SIGNING_KEY_PASS" -out web-fonts-bundle.zip.sign web-fonts-bundle.zip
+  artifacts:
+    expire_in: 20 minutes # latest build does not expire until there is a new successful build https://gitlab.com/gitlab-org/gitlab/-/issues/36358#note_2232186823
+    paths:
+      - web-bundle.zip
+      - web-bundle.zip.sign
+      - web-fonts-bundle.zip
+      - web-fonts-bundle.zip.sign
+
+deploy:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  dependencies:
+    - sign
+  environment: deploy # grant access to DEPLOY_SIGNING_KEY and DEPLOY_SIGNING_KEY_PASS project variables
+  script:
+    - apk add --update --no-cache openssl
+    - POST_DETAIL="$(date -u '+%Y-%m-%dT%H:%M:%SZ');sequence"
+    - POST_SIGN="$(printf '%s' "$POST_DETAIL" | openssl dgst -sha256 -sign "$DEPLOY_SIGNING_KEY" -passin "file:$DEPLOY_SIGNING_KEY_PASS" -hex -)"
+    #- curl -X POST --data-urlencode "detail=$POST_DETAIL" --data-urlencode "signature=$POST_SIGN" 'https://davidje13.com/cd/deploy'
