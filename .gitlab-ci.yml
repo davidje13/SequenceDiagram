@@ -15,10 +15,6 @@ stages:
     - npm run unit-test
     - npm run lint
 
-node:20:
-  <<: *build_and_test
-  image: node:20
-
 node:22:
   <<: *build_and_test
   image: node:22
@@ -26,6 +22,10 @@ node:22:
 node:24:
   <<: *build_and_test
   image: node:24
+
+node:26:
+  <<: *build_and_test
+  image: node:26
   script:
     - npm install --ignore-scripts
     - npm run unit-test
@@ -46,9 +46,9 @@ sign:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   dependencies:
-    - node:20
     - node:22
     - node:24
+    - node:26
   environment: sign # grant access to SIGNING_KEY and SIGNING_KEY_PASS project variables
   script:
     - apk add --update --no-cache openssl
