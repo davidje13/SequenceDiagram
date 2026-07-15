@@ -7,9 +7,3 @@ export const safari = (
 	!nodejs &&
 	(/^((?!chrome|android).)*safari/i).test(window.navigator.userAgent)
 );
-
-// Thanks, https://stackoverflow.com/a/9851769/1180785
-export const firefox = (
-	!nodejs &&
-	typeof window.InstallTrigger !== 'undefined'
-);

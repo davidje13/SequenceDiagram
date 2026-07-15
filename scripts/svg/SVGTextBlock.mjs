@@ -1,5 +1,3 @@
-import {firefox} from '../core/browser.mjs';
-
 function merge(state, newState) {
 	for(const k in state) {
 		if(Object.prototype.hasOwnProperty.call(state, k)) {
@@ -142,11 +140,18 @@ export class TextSizer {
 	constructor(svg) {
 		this.svg = svg;
 		this.testers = this.svg.el('g').attrs({
-			// Firefox fails to measure non-displayed text
-			'display': firefox ? 'block' : 'none',
+			'display': 'none',
 			'visibility': 'hidden',
 		});
 		this.container = svg.body;
+
+		const testNode = this.prepMeasurement({}, [{text: 'X'}]);
+		this.prepComplete();
+		if(!this.performMeasurement(testNode)) {
+			// Firefox fails to measure non-displayed text
+			this.testers.attrs({ 'display': 'block' });
+		}
+		this.teardown();
 	}
 
 	baseline({attrs}) {
