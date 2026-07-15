@@ -22,10 +22,8 @@ npm start;
 This will launch a server in the project directory. You can now open
 several pages:
 
-* [http://localhost:8080/](http://localhost:8080/):
-  the main editor
-* [http://localhost:8080/library](http://localhost:8080/library):
-  the library sample page
+* <http://localhost:8080/>: the main editor
+* <http://localhost:8080/library/>: the library sample page
 
 To run the tests and linter, run the command:
 
@@ -168,7 +166,7 @@ Note: to use this command, you will need
 [pngcrush](https://pmt.sourceforge.io/pngcrush/) installed on your
 system. On MacOS you can install it with `brew install pngcrush`.
 
-The samples in <http://localhost:8080/library> are dynamically
+The samples in <http://localhost:8080/library/> are dynamically
 rendered when the user opens the page, so you do not need to update
 those.
 

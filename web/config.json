@@ -32,7 +32,7 @@
           "namedExport": "preview",
           "maskSubpaths": true
         },
-        { "type": "redirect", "path": "/library.htm", "target": "/library", "status": 301 },
+        { "type": "redirect", "path": "/library.htm", "target": "/library/", "status": 301 },
         {
           "type": "files",
           "path": "/",
