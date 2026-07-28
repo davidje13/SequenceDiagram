@@ -408,8 +408,83 @@ end
 
 If you want to run an online renderer (like
 [https://sequence.davidje13.com/](https://sequence.davidje13.com/)),
-take a look at
-<https://github.com/davidje13/Website/tree/master/sequence>.
+the steps are:
+
+1.  _either_:
+    - Build the web bundle from source with:
+
+      ```sh
+      npm run minify
+      npm run build-web
+      ```
+
+    - _or_: download a [pre-built web bundle](https://gitlab.com/davidje13/sequence-diagram/-/artifacts):
+
+      ```sh
+      curl -L 'https://gitlab.com/api/v4/projects/davidje13%2Fsequence-diagram/jobs/artifacts/main/download?job=sign' > sequence-diagram.zip;
+      unzip sequence-diagram.zip;
+      rm sequence-diagram.zip;
+      ```
+
+      **optional**: if you like, you can check the file signatures
+      using the public key.
+
+      <details><summary>Show details</summary>
+
+      Save this public key to a file `web-listener-public.pem`:
+
+      ```pem
+      -----BEGIN PUBLIC KEY-----
+      MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2m5jX0wOdJxgcoi9nWWj
+      UrkaLUeamxxtRWNwWwH3IQXbXBbiXFe+HkTWjol7FNZ9tsoHoFOK0UfYUks83QTY
+      IyrWJkgIusBBzavC900YeiIa4ZxBDr76KSJX4YzvYjqUn2PHkQQmPOiZ7bFP17iU
+      7ZE//CBr1czjFKMRykJY4d54m/Fc9KvHVBpei9rxiT6OJaC2MVRNMjmHyjd7mTyB
+      4gvfSmvlLckNSVvIFlBrQ7UkQGXpLB03D5GUmyiNmKPNnjGpbCJunR6y4BNBs29i
+      Rb/4iTPIfiYbkNkqM/T6zK6kGLcwSRlzR73UBw7zPRq72J+woaAqAc+LkoTbNjX2
+      0jqV6sUXSSc0B1tgsB+SUeSttMNQ4Rng6pdsPXEOR860gMkuU9kUHI7cL+Hj3/EM
+      aFvVxGOcCczT5XU9gN0NAKUYc2t955WbB+WeesK9ot/Du1Gzw43MWWBqQViWx1fr
+      Ojh2TKaTo50qoy1u9R/DT7DMJzYSBMsoGft++5Sn8FZ4zLhEnkOQ0uJ98jsHJx9F
+      +KO7QJhblat676iQwNToSxdzfWgch19F8iXN05CCLqVUtOlAYB5SPHp+nFR3RqzM
+      REXXJImL8AKfPG2YNJBYTI9dcVKj03D8rmdupDWvf3NgmvKzGJH7t8vxkQdwHBv2
+      b9QCb6pT96LRSFUrz6ZXFycCAwEAAQ==
+      -----END PUBLIC KEY-----
+      ```
+
+      example verification using OpenSSL:
+
+      ```sh
+      openssl dgst -sha256 \
+        -verify "web-listener-public.pem" \
+        -signature "web-bundle.zip.sign" \
+        "web-bundle.zip";
+
+      openssl dgst -sha256 \
+        -verify "web-listener-public.pem" \
+        -signature "web-fonts-bundle.zip.sign" \
+        "web-fonts-bundle.zip";
+      ```
+      </details>
+
+2.  After following either step above, you will now have 2 zip files:
+    `web-bundle.zip` and `web-fonts-bundle.zip`. Move these to your
+    desired install location, then unzip the fonts:
+
+    ```sh
+    unzip web-fonts-bundle.zip;
+    rm web-fonts-bundle.zip;
+    ```
+
+3.  Run the following command to start the server locally on port 8080:
+
+    ```sh
+    npx web-listener -c web-bundle.zip/config.json
+    ```
+
+    You can wrap this in a service if desired to have it persist across
+    restarts. See
+    [web-listener's documentation](https://github.com/davidje13/web-listener/blob/main/docs/CLI.md)
+    for details on how to customise the server (e.g. setting a port,
+    configuring logging).
 
 ## Contributing
 
