@@ -102,16 +102,22 @@ export const render = requestHandler((req, res) => {
 		zoom: getNumeric(urlZoom, 'zoom'),
 	};
 
-	const code = readEncoded(urlCode, urlEncoding.toLowerCase());
+	try {
+		const code = readEncoded(urlCode, urlEncoding.toLowerCase());
 
-	const svg = VirtualSequenceDiagram.render(code, {size});
+		const svg = VirtualSequenceDiagram.render(code, {size});
 
-	switch(urlFormat.toLowerCase()) {
-	case 'svg':
-		res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-		return sendEncoded(req, res, svg, {encoding: 'utf-8'});
-	default:
-		throw new HTTPError(400, {body: 'Unsupported image format'});
+		switch(urlFormat.toLowerCase()) {
+		case 'svg':
+			res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+			return sendEncoded(req, res, svg, {encoding: 'utf-8'});
+		default:
+			throw new HTTPError(400, {body: 'Unsupported image format'});
+		}
+	} catch(e) {
+		res.statusCode = 400;
+		res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+		return res.end(String(e), 'utf-8');
 	}
 });
 

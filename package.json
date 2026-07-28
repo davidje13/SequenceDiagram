@@ -68,7 +68,7 @@
     "pngcrush": "3.x",
     "rollup": "4.x",
     "svg2png": "4.x",
-    "web-listener": "1.4.x"
+    "web-listener": "1.5.x"
   },
   "dependencies": {
     "opentype.js": "1.x"
